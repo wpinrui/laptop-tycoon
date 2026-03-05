@@ -12,9 +12,9 @@ const PROCESSING_SLOTS: { slot: ComponentSlot; label: string }[] = [
 ];
 
 function getAvailableComponents(slot: ComponentSlot, year: number): Component[] {
-  return ALL_COMPONENTS.filter(
-    (c) => c.slot === slot && c.yearIntroduced <= year && c.yearDiscontinued >= year
-  );
+  return ALL_COMPONENTS
+    .filter((c) => c.slot === slot && c.yearIntroduced <= year && c.yearDiscontinued >= year)
+    .sort((a, b) => a.costAtLaunch - b.costAtLaunch);
 }
 
 function formatCost(cost: number): string {
