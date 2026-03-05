@@ -1,14 +1,11 @@
 import { useWizard } from "../WizardContext";
+import { GAME_YEAR, formatWeight } from "../constants";
 import { SCREEN_SIZES } from "../../../data/screenSizes";
 import { getBatteryEra } from "../../../data/batteryEras";
+import { StatCard } from "./StatCard";
 
-const GAME_YEAR = 2000; // TODO: inject from game state
 const MIN_CAPACITY = 20;
 const STEP = 5;
-
-function formatWeight(grams: number): string {
-  return grams >= 1000 ? `${(grams / 1000).toFixed(1)} kg` : `${grams} g`;
-}
 
 export function BatteryStep() {
   const { state, dispatch } = useWizard();
@@ -78,23 +75,6 @@ export function BatteryStep() {
         <StatCard label="Weight" value={formatWeight(weight)} />
         <StatCard label="Technology" value={era.techLabel} />
       </div>
-    </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div
-      style={{
-        background: "#2a2a2a",
-        border: "1px solid #444",
-        borderRadius: "8px",
-        padding: "16px",
-        textAlign: "center",
-      }}
-    >
-      <div style={{ color: "#888", fontSize: "12px", marginBottom: "8px" }}>{label}</div>
-      <div style={{ color: "#e0e0e0", fontSize: "20px", fontWeight: "bold" }}>{value}</div>
     </div>
   );
 }

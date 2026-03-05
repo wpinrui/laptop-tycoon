@@ -1,9 +1,8 @@
 import { useWizard } from "../WizardContext";
+import { GAME_YEAR } from "../constants";
 import { ALL_COMPONENTS } from "../../../data/components";
 import { SCREEN_SIZES } from "../../../data/screenSizes";
 import { Component, ComponentSlot, ScreenSizeDefinition } from "../../../data/types";
-
-const GAME_YEAR = 2000; // TODO: inject from game state
 
 const DISPLAY_SLOTS: ComponentSlot[] = ["resolution", "displayTech", "displaySurface"];
 
@@ -12,16 +11,10 @@ export interface SlotDef {
   label: string;
 }
 
-function getAvailableComponents(
-  slot: ComponentSlot,
-  year: number,
-  screenSizeDef: ScreenSizeDefinition
-): Component[] {
-  let components = ALL_COMPONENTS.filter(
-    (c) => c.slot === slot && c.yearIntroduced <= year && c.yearDiscontinued >= year
-  );
-
-  return components.sort((a, b) => a.costAtLaunch - b.costAtLaunch);
+function getAvailableComponents(slot: ComponentSlot, year: number): Component[] {
+  return ALL_COMPONENTS
+    .filter((c) => c.slot === slot && c.yearIntroduced <= year && c.yearDiscontinued >= year)
+    .sort((a, b) => a.costAtLaunch - b.costAtLaunch);
 }
 
 function isDisplaySlot(slot: ComponentSlot): boolean {
@@ -144,7 +137,7 @@ function SlotSection({
   onSelect: (component: Component) => void;
   screenSizeDef: ScreenSizeDefinition;
 }) {
-  const available = getAvailableComponents(slot, GAME_YEAR, screenSizeDef);
+  const available = getAvailableComponents(slot, GAME_YEAR);
   const multiplier = screenSizeDef.displayMultiplier;
 
   return (
