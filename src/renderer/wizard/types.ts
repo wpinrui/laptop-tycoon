@@ -4,6 +4,7 @@ import {
   Component,
   ChassisOption,
 } from "../../data/types";
+import { SCREEN_SIZES } from "../../data/screenSizes";
 
 export type WizardStep =
   | "metadata"
@@ -41,7 +42,7 @@ export interface WizardState {
   name: string;
   modelType: ModelType;
   predecessorId: string | null;
-  screenSize: ScreenSizeInches | null;
+  screenSize: ScreenSizeInches;
   components: Partial<Record<ComponentSlot, Component>>;
   chassis: {
     material: ChassisOption | null;
@@ -55,7 +56,7 @@ export const INITIAL_WIZARD_STATE: WizardState = {
   name: "",
   modelType: "brandNew",
   predecessorId: null,
-  screenSize: null,
+  screenSize: SCREEN_SIZES[Math.floor(SCREEN_SIZES.length / 2)].size,
   components: {},
   chassis: {
     material: null,
