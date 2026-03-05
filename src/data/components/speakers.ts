@@ -1,0 +1,70 @@
+import { Component } from "../types";
+
+export const SPEAKERS: Component[] = [
+  {
+    id: "basic_mono",
+    name: "Basic Mono Speaker",
+    slot: "speakers",
+    yearIntroduced: 2000,
+    yearDiscontinued: 2003,
+    costAtLaunch: 3,
+    powerDrawW: 1,
+    weightG: 20,
+    specs: { type: "Mono", output: "0.5W" },
+    stats: { speakers: 15 },
+  },
+  {
+    id: "stereo_basic",
+    name: "Stereo Speakers",
+    slot: "speakers",
+    yearIntroduced: 2000,
+    yearDiscontinued: 2005,
+    costAtLaunch: 8,
+    powerDrawW: 1,
+    weightG: 30,
+    specs: { type: "Stereo", output: "1W x2" },
+    stats: { speakers: 35 },
+  },
+
+  // --- 2002 ---
+  {
+    id: "stereo_enhanced",
+    name: "Enhanced Stereo Speakers",
+    slot: "speakers",
+    yearIntroduced: 2002,
+    yearDiscontinued: 2006,
+    costAtLaunch: 12,
+    powerDrawW: 1,
+    weightG: 35,
+    specs: { type: "Stereo", output: "1.5W x2" },
+    stats: { speakers: 45 },
+  },
+
+  // --- 2004 ---
+  {
+    id: "jbl_branded",
+    name: "JBL-branded Stereo Speakers",
+    slot: "speakers",
+    yearIntroduced: 2004,
+    yearDiscontinued: 2007,
+    costAtLaunch: 20,
+    powerDrawW: 2,
+    weightG: 40,
+    specs: { type: "Stereo", output: "2W x2", brand: "JBL" },
+    stats: { speakers: 60 },
+  },
+
+  // --- 2005 ---
+  {
+    id: "harman_kardon",
+    name: "Harman Kardon Speakers",
+    slot: "speakers",
+    yearIntroduced: 2005,
+    yearDiscontinued: 2008,
+    costAtLaunch: 25,
+    powerDrawW: 2,
+    weightG: 45,
+    specs: { type: "Stereo", output: "2.5W x2", brand: "Harman Kardon" },
+    stats: { speakers: 70 },
+  },
+];
