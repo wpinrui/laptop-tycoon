@@ -11,17 +11,17 @@ import { BatteryStep } from "./steps/BatteryStep";
 import { BodyStep } from "./steps/BodyStep";
 import { ReviewStep } from "./steps/ReviewStep";
 
+const COMPONENT_STEP_SLOTS: Partial<Record<WizardStep, ComponentSlot[]>> = {
+  processing: ["cpu", "gpu", "ram", "storage"],
+  display: ["resolution", "displayTech", "displaySurface"],
+  mediaConnectivity: ["webcam", "speakers", "wifi", "ports"],
+};
+
 function WizardContent() {
   const { state, dispatch } = useWizard();
   const currentIdx = WIZARD_STEPS.indexOf(state.currentStep);
   const isFirst = currentIdx === 0;
   const isLast = currentIdx === WIZARD_STEPS.length - 1;
-
-  const COMPONENT_STEP_SLOTS: Record<string, ComponentSlot[]> = {
-    processing: ["cpu", "gpu", "ram", "storage"],
-    display: ["resolution", "displayTech", "displaySurface"],
-    mediaConnectivity: ["webcam", "speakers", "wifi", "ports"],
-  };
 
   const needsMetadata =
     state.currentStep === "metadata" &&

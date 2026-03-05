@@ -1,16 +1,13 @@
 import { useWizard } from "../WizardContext";
-import { GAME_YEAR, formatWeight } from "../constants";
+import { GAME_YEAR, formatWeight, MIN_BATTERY_WH, BATTERY_STEP_WH } from "../constants";
 import { SCREEN_SIZES } from "../../../data/screenSizes";
 import { getBatteryEra } from "../../../data/batteryEras";
 import { StatCard } from "./StatCard";
 
-const MIN_CAPACITY = 20;
-const STEP = 5;
-
 export function BatteryStep() {
   const { state, dispatch } = useWizard();
   const screenSizeDef = SCREEN_SIZES.find((s) => s.size === state.screenSize)!;
-  const maxCapacity = Math.floor(screenSizeDef.baseBatteryCapacityWh / STEP) * STEP;
+  const maxCapacity = Math.floor(screenSizeDef.baseBatteryCapacityWh / BATTERY_STEP_WH) * BATTERY_STEP_WH;
   const era = getBatteryEra(GAME_YEAR);
 
   const capacity = state.batteryCapacityWh;
@@ -40,7 +37,7 @@ export function BatteryStep() {
             marginBottom: "12px",
           }}
         >
-          <span style={{ color: "#888", fontSize: "14px" }}>{MIN_CAPACITY} Wh</span>
+          <span style={{ color: "#888", fontSize: "14px" }}>{MIN_BATTERY_WH} Wh</span>
           <span
             style={{
               fontSize: "48px",
@@ -55,9 +52,9 @@ export function BatteryStep() {
 
         <input
           type="range"
-          min={MIN_CAPACITY}
+          min={MIN_BATTERY_WH}
           max={maxCapacity}
-          step={STEP}
+          step={BATTERY_STEP_WH}
           value={capacity}
           onChange={(e) => handleChange(Number(e.target.value))}
           style={{ width: "100%", accentColor: "#90caf9" }}
