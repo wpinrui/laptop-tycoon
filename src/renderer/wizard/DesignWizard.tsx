@@ -44,10 +44,14 @@ function WizardContent() {
         padding: "24px",
         fontFamily: "system-ui, sans-serif",
         color: "#e0e0e0",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
       }}
     >
-      <h1 style={{ fontSize: "24px", marginBottom: "8px" }}>Design Wizard</h1>
-      <p style={{ color: "#888", marginBottom: "24px" }}>
+      <h1 style={{ fontSize: "24px", marginBottom: "8px", flexShrink: 0 }}>Design Wizard</h1>
+      <p style={{ color: "#888", marginBottom: "24px", flexShrink: 0 }}>
         Design your new laptop model
       </p>
 
@@ -63,7 +67,9 @@ function WizardContent() {
           border: "1px solid #333",
           borderRadius: "8px",
           padding: "24px",
-          minHeight: "300px",
+          flex: 1,
+          overflowY: "auto",
+          minHeight: 0,
         }}
       >
         {stepContent}
@@ -74,6 +80,7 @@ function WizardContent() {
           display: "flex",
           justifyContent: "space-between",
           marginTop: "16px",
+          flexShrink: 0,
         }}
       >
         <button
