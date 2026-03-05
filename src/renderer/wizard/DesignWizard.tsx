@@ -15,6 +15,9 @@ function WizardContent() {
   const isFirst = currentIdx === 0;
   const isLast = currentIdx === WIZARD_STEPS.length - 1;
 
+  const needsPredecessor = state.modelType !== "brandNew" && !state.predecessorId;
+  const canAdvance = !(state.currentStep === "metadata" && needsPredecessor);
+
   function canNavigateTo(step: WizardStep) {
     const targetIdx = WIZARD_STEPS.indexOf(step);
     return targetIdx <= currentIdx;
@@ -110,13 +113,14 @@ function WizardContent() {
               dispatch({ type: "NEXT_STEP" });
             }
           }}
+          disabled={!canAdvance}
           style={{
             padding: "10px 24px",
             border: "none",
             borderRadius: "6px",
-            background: isLast ? "#4caf50" : "#1976d2",
-            color: "#fff",
-            cursor: "pointer",
+            background: !canAdvance ? "#2a2a2a" : isLast ? "#4caf50" : "#1976d2",
+            color: !canAdvance ? "#666" : "#fff",
+            cursor: !canAdvance ? "default" : "pointer",
             fontFamily: "inherit",
             fontSize: "14px",
             fontWeight: "bold",

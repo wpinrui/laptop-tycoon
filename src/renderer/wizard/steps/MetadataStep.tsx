@@ -59,6 +59,7 @@ export function MetadataStep() {
                 onClick={() => dispatch({ type: "SET_MODEL_TYPE", modelType: opt.value })}
                 style={{
                   flex: "1 1 200px",
+                  display: "block",
                   padding: "12px 16px",
                   background: isSelected ? "#1e3a5f" : "#2a2a2a",
                   border: isSelected ? "2px solid #90caf9" : "2px solid #444",
