@@ -1,5 +1,5 @@
 import { useWizard } from "../WizardContext";
-import { GAME_YEAR } from "../constants";
+import { GAME_YEAR, formatWeight } from "../constants";
 import { ALL_COMPONENTS } from "../../../data/components";
 import { SCREEN_SIZES } from "../../../data/screenSizes";
 import { Component, ComponentSlot, ScreenSizeDefinition } from "../../../data/types";
@@ -56,20 +56,16 @@ export function ComponentStepLayout({
   const screenSizeDef = SCREEN_SIZES.find((s) => s.size === state.screenSize)!;
   const multiplier = screenSizeDef.displayMultiplier;
 
-  const totalCost = slots.reduce((sum, { slot }) => {
-    const c = state.components[slot];
-    return sum + (c ? applyMultiplier(c.costAtLaunch, slot, multiplier) : 0);
-  }, 0);
+  function sumProp(prop: "costAtLaunch" | "powerDrawW" | "weightG"): number {
+    return slots.reduce((sum, { slot }) => {
+      const c = state.components[slot];
+      return sum + (c ? applyMultiplier(c[prop], slot, multiplier) : 0);
+    }, 0);
+  }
 
-  const totalPower = slots.reduce((sum, { slot }) => {
-    const c = state.components[slot];
-    return sum + (c ? applyMultiplier(c.powerDrawW, slot, multiplier) : 0);
-  }, 0);
-
-  const totalWeight = slots.reduce((sum, { slot }) => {
-    const c = state.components[slot];
-    return sum + (c ? applyMultiplier(c.weightG, slot, multiplier) : 0);
-  }, 0);
+  const totalCost = sumProp("costAtLaunch");
+  const totalPower = sumProp("powerDrawW");
+  const totalWeight = sumProp("weightG");
 
   return (
     <div style={{ display: "flex", gap: "24px", height: "100%" }}>
@@ -109,7 +105,7 @@ export function ComponentStepLayout({
         </div>
         <TotalRow label="Cost" value={formatCost(totalCost)} />
         <TotalRow label="Power Draw" value={`${totalPower} W`} />
-        <TotalRow label="Weight" value={`${totalWeight} g`} />
+        <TotalRow label="Weight" value={formatWeight(totalWeight)} />
       </div>
     </div>
   );
