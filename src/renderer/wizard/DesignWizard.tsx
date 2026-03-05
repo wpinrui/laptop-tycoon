@@ -2,7 +2,9 @@ import { WizardProvider, useWizard } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
 import { WizardStep, WIZARD_STEPS } from "./types";
 import { ScreenSizeStep } from "./steps/ScreenSizeStep";
-import { ComponentsStep } from "./steps/ComponentsStep";
+import { ProcessingStep } from "./steps/ProcessingStep";
+import { DisplayMediaStep } from "./steps/DisplayMediaStep";
+import { ConnectivityPowerStep } from "./steps/ConnectivityPowerStep";
 import { BodyStep } from "./steps/BodyStep";
 import { ReviewStep } from "./steps/ReviewStep";
 
@@ -21,8 +23,12 @@ function WizardContent() {
     switch (state.currentStep) {
       case "screenSize":
         return <ScreenSizeStep />;
-      case "components":
-        return <ComponentsStep />;
+      case "processing":
+        return <ProcessingStep />;
+      case "displayMedia":
+        return <DisplayMediaStep />;
+      case "connectivityPower":
+        return <ConnectivityPowerStep />;
       case "body":
         return <BodyStep />;
       case "review":

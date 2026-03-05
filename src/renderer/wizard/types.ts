@@ -5,18 +5,28 @@ import {
   ChassisOption,
 } from "../../data/types";
 
-export type WizardStep = "screenSize" | "components" | "body" | "review";
+export type WizardStep =
+  | "screenSize"
+  | "processing"
+  | "displayMedia"
+  | "connectivityPower"
+  | "body"
+  | "review";
 
 export const WIZARD_STEPS: WizardStep[] = [
   "screenSize",
-  "components",
+  "processing",
+  "displayMedia",
+  "connectivityPower",
   "body",
   "review",
 ];
 
 export const WIZARD_STEP_LABELS: Record<WizardStep, string> = {
   screenSize: "Screen Size",
-  components: "Components",
+  processing: "Processing",
+  displayMedia: "Display & Media",
+  connectivityPower: "Connectivity & Power",
   body: "Body",
   review: "Review",
 };

@@ -1,10 +1,12 @@
 import { Fragment } from "react";
-import { Monitor, Cpu, Laptop, ClipboardCheck, Check, LucideIcon } from "lucide-react";
+import { Monitor, Cpu, MonitorSpeaker, Wifi, Laptop, ClipboardCheck, Check, LucideIcon } from "lucide-react";
 import { WizardStep, WIZARD_STEPS, WIZARD_STEP_LABELS } from "./types";
 
 const STEP_ICONS: Record<WizardStep, LucideIcon> = {
   screenSize: Monitor,
-  components: Cpu,
+  processing: Cpu,
+  displayMedia: MonitorSpeaker,
+  connectivityPower: Wifi,
   body: Laptop,
   review: ClipboardCheck,
 };
@@ -23,7 +25,7 @@ export function StepIndicator({
   const currentIdx = WIZARD_STEPS.indexOf(currentStep);
 
   return (
-    <div style={{ display: "flex", gap: "4px", marginBottom: "24px" }}>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "24px" }}>
       {WIZARD_STEPS.map((step, idx) => {
         const isActive = step === currentStep;
         const isCompleted = idx < currentIdx;
@@ -34,7 +36,7 @@ export function StepIndicator({
             {idx > 0 && (
               <div
                 style={{
-                  flex: "0 0 32px",
+                  width: "16px",
                   height: "2px",
                   alignSelf: "center",
                   background: isCompleted ? "#4caf50" : "#444",
