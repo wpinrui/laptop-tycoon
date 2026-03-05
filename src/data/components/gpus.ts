@@ -142,7 +142,7 @@ export const GPUS: Component[] = [
     powerDrawW: 15,
     weightG: 30,
     specs: { type: "Dedicated", memory: "128 MB DDR", core: "400 MHz", directX: "9.0" },
-    stats: { gamingPerformance: 58 },
+    stats: { gamingPerformance: 62 },
   },
   {
     id: "nvidia_geforce_go_6800",
