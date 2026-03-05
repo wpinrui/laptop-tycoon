@@ -1,7 +1,6 @@
-import React from "react";
 import { WizardProvider, useWizard } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
-import { WIZARD_STEPS } from "./types";
+import { WizardStep, WIZARD_STEPS } from "./types";
 import { ScreenSizeStep } from "./steps/ScreenSizeStep";
 import { ComponentsStep } from "./steps/ComponentsStep";
 import { BodyStep } from "./steps/BodyStep";
@@ -13,9 +12,8 @@ function WizardContent() {
   const isFirst = currentIdx === 0;
   const isLast = currentIdx === WIZARD_STEPS.length - 1;
 
-  function canNavigateTo(step: string) {
-    const targetIdx = WIZARD_STEPS.indexOf(step as typeof state.currentStep);
-    // Can go back to any completed step, or stay on current
+  function canNavigateTo(step: WizardStep) {
+    const targetIdx = WIZARD_STEPS.indexOf(step);
     return targetIdx <= currentIdx;
   }
 

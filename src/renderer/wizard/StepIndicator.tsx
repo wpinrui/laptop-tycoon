@@ -1,4 +1,4 @@
-import React from "react";
+import { Fragment } from "react";
 import { Monitor, Cpu, Laptop, ClipboardCheck, Check, LucideIcon } from "lucide-react";
 import { WizardStep, WIZARD_STEPS, WIZARD_STEP_LABELS } from "./types";
 
@@ -30,7 +30,7 @@ export function StepIndicator({
         const canClick = canNavigateTo(step);
 
         return (
-          <React.Fragment key={step}>
+          <Fragment key={step}>
             {idx > 0 && (
               <div
                 style={{
@@ -67,14 +67,14 @@ export function StepIndicator({
                 opacity: canClick ? 1 : 0.5,
               }}
             >
-              {isCompleted ? (
-                <Check size={16} />
-              ) : (
-                React.createElement(STEP_ICONS[step], { size: 16 })
-              )}
+              {(() => {
+                if (isCompleted) return <Check size={16} />;
+                const Icon = STEP_ICONS[step];
+                return <Icon size={16} />;
+              })()}
               {WIZARD_STEP_LABELS[step]}
             </button>
-          </React.Fragment>
+          </Fragment>
         );
       })}
     </div>

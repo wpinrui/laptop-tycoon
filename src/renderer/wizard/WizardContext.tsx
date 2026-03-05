@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, ReactNode } from "react";
+import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
 import {
   WizardState,
   WizardStep,
@@ -72,7 +72,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 
 interface WizardContextValue {
   state: WizardState;
-  dispatch: React.Dispatch<WizardAction>;
+  dispatch: Dispatch<WizardAction>;
 }
 
 const WizardContext = createContext<WizardContextValue | null>(null);
