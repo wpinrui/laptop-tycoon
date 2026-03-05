@@ -90,7 +90,7 @@ export function ScreenSizeStep() {
       >
         <StatCard label="Cooling Capacity" value={`${sizeDef.baseCoolingCapacityW} W`} />
         <StatCard label="Max Battery Capacity" value={`${sizeDef.baseBatteryCapacityWh} Wh`} />
-        <StatCard label="Base Weight" value={formatWeight(sizeDef.baseWeightG)} />
+        <StatCard label="Minimum Weight" value={formatWeight(sizeDef.baseWeightG)} />
       </div>
     </div>
   );
