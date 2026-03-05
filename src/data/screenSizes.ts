@@ -1,4 +1,8 @@
-import { ScreenSizeDefinition } from "./types";
+import { ScreenSizeDefinition, ScreenSizeInches } from "./types";
+
+export function getScreenSizeDef(size: ScreenSizeInches): ScreenSizeDefinition {
+  return SCREEN_SIZES.find((s) => s.size === size) ?? SCREEN_SIZES[0];
+}
 
 export const SCREEN_SIZES: ScreenSizeDefinition[] = [
   { size: 10, baseCoolingCapacityW: 20, baseBatteryCapacityWh: 35, baseWeightG: 400, displayMultiplier: 0.65 },

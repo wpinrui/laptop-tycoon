@@ -1,6 +1,6 @@
 import { useWizard } from "../WizardContext";
 import { formatWeight } from "../constants";
-import { SCREEN_SIZES } from "../../../data/screenSizes";
+import { SCREEN_SIZES, getScreenSizeDef } from "../../../data/screenSizes";
 import { StatCard } from "./StatCard";
 
 const MIN_SIZE = SCREEN_SIZES[0].size;
@@ -8,7 +8,7 @@ const MAX_SIZE = SCREEN_SIZES[SCREEN_SIZES.length - 1].size;
 
 export function ScreenSizeStep() {
   const { state, dispatch } = useWizard();
-  const sizeDef = SCREEN_SIZES.find((s) => s.size === state.screenSize)!;
+  const sizeDef = getScreenSizeDef(state.screenSize);
 
   function handleChange(value: number) {
     const closest = SCREEN_SIZES.reduce((prev, curr) =>

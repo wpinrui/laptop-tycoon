@@ -1,12 +1,12 @@
 import { useWizard } from "../WizardContext";
 import { GAME_YEAR, formatWeight, MIN_BATTERY_WH, BATTERY_STEP_WH, maxBatteryWh } from "../constants";
-import { SCREEN_SIZES } from "../../../data/screenSizes";
+import { getScreenSizeDef } from "../../../data/screenSizes";
 import { getBatteryEra } from "../../../data/batteryEras";
 import { StatCard } from "./StatCard";
 
 export function BatteryStep() {
   const { state, dispatch } = useWizard();
-  const screenSizeDef = SCREEN_SIZES.find((s) => s.size === state.screenSize)!;
+  const screenSizeDef = getScreenSizeDef(state.screenSize);
   const maxCapacity = maxBatteryWh(screenSizeDef.baseBatteryCapacityWh);
   const era = getBatteryEra(GAME_YEAR);
 

@@ -1,7 +1,7 @@
 import { useWizard } from "../WizardContext";
 import { GAME_YEAR, formatWeight } from "../constants";
 import { ALL_COMPONENTS } from "../../../data/components";
-import { SCREEN_SIZES } from "../../../data/screenSizes";
+import { getScreenSizeDef } from "../../../data/screenSizes";
 import { Component, ComponentSlot, ScreenSizeDefinition } from "../../../data/types";
 
 const DISPLAY_SLOTS: ComponentSlot[] = ["resolution", "displayTech", "displaySurface"];
@@ -53,7 +53,7 @@ export function ComponentStepLayout({
   slots: SlotDef[];
 }) {
   const { state, dispatch } = useWizard();
-  const screenSizeDef = SCREEN_SIZES.find((s) => s.size === state.screenSize)!;
+  const screenSizeDef = getScreenSizeDef(state.screenSize);
   const multiplier = screenSizeDef.displayMultiplier;
 
   function sumProp(prop: "costAtLaunch" | "powerDrawW" | "weightG"): number {
