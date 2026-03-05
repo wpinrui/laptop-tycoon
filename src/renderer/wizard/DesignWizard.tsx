@@ -1,6 +1,7 @@
 import { WizardProvider, useWizard } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
 import { WizardStep, WIZARD_STEPS } from "./types";
+import { ComponentSlot } from "../../data/types";
 import { MetadataStep } from "./steps/MetadataStep";
 import { ScreenSizeStep } from "./steps/ScreenSizeStep";
 import { ProcessingStep } from "./steps/ProcessingStep";
@@ -19,7 +20,10 @@ function WizardContent() {
     state.currentStep === "metadata" &&
     (!state.name.trim() || (state.modelType !== "brandNew" && !state.predecessorId));
   const needsScreenSize = state.currentStep === "screenSize" && !state.screenSize;
-  const canAdvance = !needsMetadata && !needsScreenSize;
+  const needsProcessing =
+    state.currentStep === "processing" &&
+    !["cpu", "gpu", "ram", "storage"].every((slot) => state.components[slot as ComponentSlot]);
+  const canAdvance = !needsMetadata && !needsScreenSize && !needsProcessing;
 
   function canNavigateTo(step: WizardStep) {
     const targetIdx = WIZARD_STEPS.indexOf(step);
