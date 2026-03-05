@@ -39,7 +39,7 @@ function WizardContent() {
   return (
     <div
       style={{
-        maxWidth: "900px",
+        maxWidth: "1200px",
         margin: "0 auto",
         padding: "24px",
         fontFamily: "system-ui, sans-serif",
