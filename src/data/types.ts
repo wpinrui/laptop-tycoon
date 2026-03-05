@@ -32,6 +32,8 @@ export interface ScreenSizeDefinition {
   baseCoolingCapacityW: number;
   baseBatteryCapacityWh: number;
   baseWeightG: number;
+  /** Multiplier for display component cost/power/weight. 14" = 1.0 reference. */
+  displayMultiplier: number;
 }
 
 // --- Components ---
@@ -41,7 +43,9 @@ export type ComponentSlot =
   | "gpu"
   | "ram"
   | "storage"
-  | "display"
+  | "resolution"
+  | "displayTech"
+  | "displaySurface"
   | "battery"
   | "wifi"
   | "webcam"

@@ -1,18 +1,43 @@
 import { useWizard } from "../WizardContext";
 import { ALL_COMPONENTS } from "../../../data/components";
-import { Component, ComponentSlot } from "../../../data/types";
+import { SCREEN_SIZES } from "../../../data/screenSizes";
+import { Component, ComponentSlot, ScreenSizeDefinition } from "../../../data/types";
 
 const GAME_YEAR = 2000; // TODO: inject from game state
+
+const DISPLAY_SLOTS: ComponentSlot[] = ["resolution", "displayTech", "displaySurface"];
 
 export interface SlotDef {
   slot: ComponentSlot;
   label: string;
 }
 
-function getAvailableComponents(slot: ComponentSlot, year: number): Component[] {
-  return ALL_COMPONENTS
-    .filter((c) => c.slot === slot && c.yearIntroduced <= year && c.yearDiscontinued >= year)
-    .sort((a, b) => a.costAtLaunch - b.costAtLaunch);
+function getAvailableComponents(
+  slot: ComponentSlot,
+  year: number,
+  screenSizeDef: ScreenSizeDefinition
+): Component[] {
+  let components = ALL_COMPONENTS.filter(
+    (c) => c.slot === slot && c.yearIntroduced <= year && c.yearDiscontinued >= year
+  );
+
+  if (slot === "battery") {
+    components = components.filter((c) => {
+      const wh = parseFloat(c.specs.capacity ?? "0");
+      return wh <= screenSizeDef.baseBatteryCapacityWh;
+    });
+  }
+
+  return components.sort((a, b) => a.costAtLaunch - b.costAtLaunch);
+}
+
+function isDisplaySlot(slot: ComponentSlot): boolean {
+  return DISPLAY_SLOTS.includes(slot);
+}
+
+function applyMultiplier(value: number, slot: ComponentSlot, multiplier: number): number {
+  if (!isDisplaySlot(slot)) return value;
+  return Math.round(value * multiplier);
 }
 
 function formatCost(cost: number): string {
@@ -42,20 +67,22 @@ export function ComponentStepLayout({
   slots: SlotDef[];
 }) {
   const { state, dispatch } = useWizard();
+  const screenSizeDef = SCREEN_SIZES.find((s) => s.size === state.screenSize)!;
+  const multiplier = screenSizeDef.displayMultiplier;
 
   const totalCost = slots.reduce((sum, { slot }) => {
     const c = state.components[slot];
-    return sum + (c ? c.costAtLaunch : 0);
+    return sum + (c ? applyMultiplier(c.costAtLaunch, slot, multiplier) : 0);
   }, 0);
 
   const totalPower = slots.reduce((sum, { slot }) => {
     const c = state.components[slot];
-    return sum + (c ? c.powerDrawW : 0);
+    return sum + (c ? applyMultiplier(c.powerDrawW, slot, multiplier) : 0);
   }, 0);
 
   const totalWeight = slots.reduce((sum, { slot }) => {
     const c = state.components[slot];
-    return sum + (c ? c.weightG : 0);
+    return sum + (c ? applyMultiplier(c.weightG, slot, multiplier) : 0);
   }, 0);
 
   return (
@@ -73,6 +100,7 @@ export function ComponentStepLayout({
             label={label}
             selected={state.components[slot] ?? null}
             onSelect={(c) => dispatch({ type: "SET_COMPONENT", slot, component: c })}
+            screenSizeDef={screenSizeDef}
           />
         ))}
       </div>
@@ -115,18 +143,26 @@ function SlotSection({
   label,
   selected,
   onSelect,
+  screenSizeDef,
 }: {
   slot: ComponentSlot;
   label: string;
   selected: Component | null;
   onSelect: (component: Component) => void;
+  screenSizeDef: ScreenSizeDefinition;
 }) {
-  const available = getAvailableComponents(slot, GAME_YEAR);
+  const available = getAvailableComponents(slot, GAME_YEAR, screenSizeDef);
+  const multiplier = screenSizeDef.displayMultiplier;
 
   return (
     <div style={{ marginBottom: "24px" }}>
       <div style={{ fontSize: "14px", fontWeight: "bold", color: "#ccc", marginBottom: "8px" }}>
         {label}
+        {isDisplaySlot(slot) && multiplier !== 1.0 && (
+          <span style={{ color: "#888", fontWeight: "normal", fontSize: "12px", marginLeft: "8px" }}>
+            ({screenSizeDef.size}" size: {multiplier}x)
+          </span>
+        )}
       </div>
       <div
         style={{
@@ -141,6 +177,8 @@ function SlotSection({
             component={component}
             isSelected={selected?.id === component.id}
             onSelect={() => onSelect(component)}
+            slot={slot}
+            multiplier={multiplier}
           />
         ))}
       </div>
@@ -152,11 +190,19 @@ function ComponentCard({
   component,
   isSelected,
   onSelect,
+  slot,
+  multiplier,
 }: {
   component: Component;
   isSelected: boolean;
   onSelect: () => void;
+  slot: ComponentSlot;
+  multiplier: number;
 }) {
+  const cost = applyMultiplier(component.costAtLaunch, slot, multiplier);
+  const power = applyMultiplier(component.powerDrawW, slot, multiplier);
+  const weight = applyMultiplier(component.weightG, slot, multiplier);
+
   return (
     <button
       onClick={onSelect}
@@ -186,9 +232,9 @@ function ComponentCard({
         {specSummary(component)}
       </div>
       <div style={{ display: "flex", gap: "12px", fontSize: "11px" }}>
-        <span style={{ color: "#4caf50" }}>{formatCost(component.costAtLaunch)}</span>
-        <span style={{ color: "#ff9800" }}>{component.powerDrawW}W</span>
-        <span style={{ color: "#888" }}>{component.weightG}g</span>
+        <span style={{ color: "#4caf50" }}>{formatCost(cost)}</span>
+        {power > 0 && <span style={{ color: "#ff9800" }}>{power}W</span>}
+        {weight > 0 && <span style={{ color: "#888" }}>{weight}g</span>}
       </div>
     </button>
   );

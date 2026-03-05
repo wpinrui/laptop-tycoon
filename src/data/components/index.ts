@@ -3,7 +3,9 @@ import { CPUS } from "./cpus";
 import { GPUS } from "./gpus";
 import { RAM } from "./ram";
 import { STORAGE } from "./storage";
-import { DISPLAYS } from "./displays";
+import { RESOLUTIONS } from "./resolutions";
+import { DISPLAY_TECH } from "./displayTech";
+import { DISPLAY_SURFACES } from "./displaySurfaces";
 import { BATTERIES } from "./batteries";
 import { WIFI } from "./wifi";
 import { WEBCAMS } from "./webcams";
@@ -15,7 +17,9 @@ export const ALL_COMPONENTS: Component[] = [
   ...GPUS,
   ...RAM,
   ...STORAGE,
-  ...DISPLAYS,
+  ...RESOLUTIONS,
+  ...DISPLAY_TECH,
+  ...DISPLAY_SURFACES,
   ...BATTERIES,
   ...WIFI,
   ...WEBCAMS,
@@ -23,4 +27,4 @@ export const ALL_COMPONENTS: Component[] = [
   ...PORTS,
 ];
 
-export { CPUS, GPUS, RAM, STORAGE, DISPLAYS, BATTERIES, WIFI, WEBCAMS, SPEAKERS, PORTS };
+export { CPUS, GPUS, RAM, STORAGE, RESOLUTIONS, DISPLAY_TECH, DISPLAY_SURFACES, BATTERIES, WIFI, WEBCAMS, SPEAKERS, PORTS };

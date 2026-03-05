@@ -18,7 +18,7 @@ function WizardContent() {
 
   const COMPONENT_STEP_SLOTS: Record<string, ComponentSlot[]> = {
     processing: ["cpu", "gpu", "ram", "storage"],
-    displayMedia: ["display", "webcam", "speakers"],
+    displayMedia: ["resolution", "displayTech", "displaySurface", "webcam", "speakers"],
     connectivityPower: ["battery", "wifi", "ports"],
   };
 
