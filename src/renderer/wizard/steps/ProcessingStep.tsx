@@ -22,7 +22,16 @@ function formatCost(cost: number): string {
 }
 
 function specSummary(component: Component): string {
-  return Object.values(component.specs).join(" · ");
+  return Object.entries(component.specs)
+    .map(([key, value]) => `${formatSpecKey(key)}: ${value}`)
+    .join(" · ");
+}
+
+function formatSpecKey(key: string): string {
+  return key
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (c) => c.toUpperCase())
+    .trim();
 }
 
 export function ProcessingStep() {
