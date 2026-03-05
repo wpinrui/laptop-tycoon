@@ -10,7 +10,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "dist/renderer",
-    "rootDir": "src/renderer"
+    "rootDir": "src"
   },
-  "include": ["src/renderer"]
+  "include": ["src/renderer", "src/data"]
 }
