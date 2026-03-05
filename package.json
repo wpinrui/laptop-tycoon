@@ -1,0 +1,29 @@
+{
+  "name": "laptop-tycoon",
+  "version": "0.1.0",
+  "description": "Text-driven laptop company tycoon game",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "dev": "concurrently \"yarn dev:renderer\" \"yarn dev:main\"",
+    "dev:renderer": "vite",
+    "dev:main": "tsc -p tsconfig.main.json && electron .",
+    "build": "tsc -p tsconfig.main.json && vite build",
+    "start": "electron ."
+  },
+  "author": "",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "concurrently": "^9.1.0",
+    "electron": "^34.0.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.1.0"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}
