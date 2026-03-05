@@ -113,14 +113,11 @@ export interface Demographic {
   name: string;
   priceSensitivity: PriceSensitivity;
   screenSizePreference: ScreenSizePreference;
+  /** Weights across all 16 stats. Must sum to 1.0. */
   statWeights: Record<LaptopStat, number>;
   description: string;
 }
 
-// --- Era Anchors ---
+// --- Starting Demand ---
 
-export interface EraAnchor {
-  year: number;
-  demandPool: Record<DemographicId, number>;
-  description: string;
-}
+export type StartingDemandPool = Record<DemographicId, number>;

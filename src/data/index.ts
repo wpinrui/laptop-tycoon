@@ -4,4 +4,4 @@ export { SLOT_CONFIGS } from "./slotConfigs";
 export { SCREEN_SIZES } from "./screenSizes";
 export { ALL_CHASSIS_OPTIONS, MATERIALS, KEYBOARD_FEATURES, TRACKPAD_FEATURES } from "./chassisOptions";
 export { DEMOGRAPHICS } from "./demographics";
-export { ERA_ANCHORS } from "./eraAnchors";
+export { STARTING_DEMAND_POOL } from "./startingDemand";
