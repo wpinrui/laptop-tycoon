@@ -1,9 +1,17 @@
+import { ComponentStepLayout, SlotDef } from "./ComponentStepLayout";
+
+const SLOTS: SlotDef[] = [
+  { slot: "display", label: "Display Panel" },
+  { slot: "webcam", label: "Webcam" },
+  { slot: "speakers", label: "Speakers" },
+];
+
 export function DisplayMediaStep() {
   return (
-    <div>
-      <h2>Display & Media</h2>
-      <p style={{ color: "#aaa" }}>Select your display, webcam, and speakers.</p>
-      <p style={{ color: "#666", fontStyle: "italic" }}>Display & media selection coming soon.</p>
-    </div>
+    <ComponentStepLayout
+      title="Display & Media"
+      description="Select your display, webcam, and speakers."
+      slots={SLOTS}
+    />
   );
 }

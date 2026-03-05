@@ -16,14 +16,18 @@ function WizardContent() {
   const isFirst = currentIdx === 0;
   const isLast = currentIdx === WIZARD_STEPS.length - 1;
 
+  const COMPONENT_STEP_SLOTS: Record<string, ComponentSlot[]> = {
+    processing: ["cpu", "gpu", "ram", "storage"],
+    displayMedia: ["display", "webcam", "speakers"],
+    connectivityPower: ["battery", "wifi", "ports"],
+  };
+
   const needsMetadata =
     state.currentStep === "metadata" &&
     (!state.name.trim() || (state.modelType !== "brandNew" && !state.predecessorId));
-  const needsScreenSize = state.currentStep === "screenSize" && !state.screenSize;
-  const needsProcessing =
-    state.currentStep === "processing" &&
-    !["cpu", "gpu", "ram", "storage"].every((slot) => state.components[slot as ComponentSlot]);
-  const canAdvance = !needsMetadata && !needsScreenSize && !needsProcessing;
+  const requiredSlots = COMPONENT_STEP_SLOTS[state.currentStep];
+  const needsComponents = requiredSlots && !requiredSlots.every((slot) => state.components[slot]);
+  const canAdvance = !needsMetadata && !needsComponents;
 
   function canNavigateTo(step: WizardStep) {
     const targetIdx = WIZARD_STEPS.indexOf(step);
