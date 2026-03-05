@@ -16,7 +16,9 @@ function WizardContent() {
   const isLast = currentIdx === WIZARD_STEPS.length - 1;
 
   const needsPredecessor = state.modelType !== "brandNew" && !state.predecessorId;
-  const canAdvance = !(state.currentStep === "metadata" && needsPredecessor);
+  const needsScreenSize = state.currentStep === "screenSize" && !state.screenSize;
+  const canAdvance =
+    !(state.currentStep === "metadata" && needsPredecessor) && !needsScreenSize;
 
   function canNavigateTo(step: WizardStep) {
     const targetIdx = WIZARD_STEPS.indexOf(step);

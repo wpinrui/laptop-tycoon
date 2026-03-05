@@ -38,24 +38,9 @@ Name the laptop and choose model type (Brand New, Successor, or Spec Bump). For 
 
 #### Step 2 — Screen Size
 
-Choose a screen size class. This gates all downstream decisions (chassis options, cooling capacity, battery space, weight).
+Choose a screen size (10"–18") via slider. This gates all downstream decisions (chassis options, cooling capacity, battery space, weight). Each size has fixed base stats for cooling capacity (W), battery capacity (Wh), and base weight (g). Larger screens offer more cooling and battery headroom but are heavier.
 
-| Class | Size | Notes |
-|-------|------|-------|
-| Ultraportable | 10–12" | Peaks during netbook era (~2008–2012), then niche |
-| Mainstream Portable | 13–14" | Business, students, creatives post-2015 |
-| Standard | 15–16" | Biggest general market bucket for most of the timeline |
-| Desktop Replacement | 17"+ | Niche but loyal — gamers, some enterprise |
-
-Screen size acts as a **soft filter with penalties** in the sales simulation. Each buyer segment has a preferred screen size class. Offering a different size applies a purchase-likelihood penalty that scales with how far you are from their preference:
-
-| Distance from preferred class | Penalty |
-|-------------------------------|---------|
-| Same class | None |
-| 1 class away | Moderate (e.g. ~30-50% reduction) |
-| 2+ classes away | Severe (e.g. ~70-90% reduction) |
-
-For example, the 15–16" gamer crowd is the largest gaming segment. A 13–14" gaming laptop would still reach them but with a moderate penalty, while a 10–12" gaming laptop would face a severe penalty. This means an off-size laptop *can* sell to mismatched segments — just at significantly reduced volume.
+Screen size acts as a **soft filter with penalties** in the sales simulation. Each buyer segment has a preferred screen size range. Offering a different size applies a purchase-likelihood penalty that scales with how far you are from their preference (per-inch penalty defined per demographic).
 
 #### Step 3 — Components
 
