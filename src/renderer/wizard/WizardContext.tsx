@@ -36,17 +36,11 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       const { [action.slot]: _, ...rest } = state.components;
       return { ...state, components: rest };
     }
-    case "SET_CHASSIS_OPTION": {
-      const chassisKey = action.slot === "material"
-        ? "material"
-        : action.slot === "keyboardFeature"
-          ? "keyboardFeature"
-          : "trackpadFeature";
+    case "SET_CHASSIS_OPTION":
       return {
         ...state,
-        chassis: { ...state.chassis, [chassisKey]: action.option },
+        chassis: { ...state.chassis, [action.slot]: action.option },
       };
-    }
     case "GO_TO_STEP":
       return { ...state, currentStep: action.step };
     case "NEXT_STEP": {
