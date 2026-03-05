@@ -7,9 +7,9 @@ export const DEMOGRAPHICS: Demographic[] = [
     description: "IT departments buying in bulk. Value reliability, support, and keyboards. Steady presence throughout.",
     priceSensitivity: "low",
     screenSizePreference: {
-      preferred: "standard",
-      oneAwayPenalty: 0.35,
-      twoAwayPenalty: 0.80,
+      preferredMin: 14,
+      preferredMax: 15,
+      penaltyPerInch: 0.15,
     },
     statWeights: {
       performance: 0.06,
@@ -36,9 +36,9 @@ export const DEMOGRAPHICS: Demographic[] = [
     description: "Road warriors who need portability, good keyboards, and a professional look. Growing segment.",
     priceSensitivity: "moderate",
     screenSizePreference: {
-      preferred: "mainstreamPortable",
-      oneAwayPenalty: 0.30,
-      twoAwayPenalty: 0.75,
+      preferredMin: 13,
+      preferredMax: 14,
+      penaltyPerInch: 0.18,
     },
     statWeights: {
       performance: 0.10,
@@ -65,9 +65,9 @@ export const DEMOGRAPHICS: Demographic[] = [
     description: "Price-conscious buyers who need something portable that lasts through lectures. Huge population.",
     priceSensitivity: "veryHigh",
     screenSizePreference: {
-      preferred: "standard",
-      oneAwayPenalty: 0.25,
-      twoAwayPenalty: 0.70,
+      preferredMin: 13,
+      preferredMax: 15,
+      penaltyPerInch: 0.12,
     },
     statWeights: {
       performance: 0.10,
@@ -94,9 +94,9 @@ export const DEMOGRAPHICS: Demographic[] = [
     description: "Designers, photographers, video editors. Will pay a premium for display and performance. Small but growing.",
     priceSensitivity: "low",
     screenSizePreference: {
-      preferred: "standard",
-      oneAwayPenalty: 0.30,
-      twoAwayPenalty: 0.80,
+      preferredMin: 15,
+      preferredMax: 17,
+      penaltyPerInch: 0.15,
     },
     statWeights: {
       performance: 0.15,
@@ -123,9 +123,9 @@ export const DEMOGRAPHICS: Demographic[] = [
     description: "All about gaming performance, display, and thermals. Tiny segment pre-2005, explodes after.",
     priceSensitivity: "moderate",
     screenSizePreference: {
-      preferred: "standard",
-      oneAwayPenalty: 0.35,
-      twoAwayPenalty: 0.85,
+      preferredMin: 15,
+      preferredMax: 17,
+      penaltyPerInch: 0.18,
     },
     statWeights: {
       performance: 0.08,
@@ -152,9 +152,9 @@ export const DEMOGRAPHICS: Demographic[] = [
     description: "Tastemakers. Care about performance, value, repairability, and connectivity. Small but outsized brand influence.",
     priceSensitivity: "moderate",
     screenSizePreference: {
-      preferred: "standard",
-      oneAwayPenalty: 0.25,
-      twoAwayPenalty: 0.65,
+      preferredMin: 13,
+      preferredMax: 15,
+      penaltyPerInch: 0.10,
     },
     statWeights: {
       performance: 0.18,
@@ -181,9 +181,9 @@ export const DEMOGRAPHICS: Demographic[] = [
     description: "Largest group. Buys based on price, brand recognition, and looks. Heavily influenced by marketing.",
     priceSensitivity: "high",
     screenSizePreference: {
-      preferred: "standard",
-      oneAwayPenalty: 0.30,
-      twoAwayPenalty: 0.75,
+      preferredMin: 14,
+      preferredMax: 16,
+      penaltyPerInch: 0.12,
     },
     statWeights: {
       performance: 0.08,
@@ -210,9 +210,9 @@ export const DEMOGRAPHICS: Demographic[] = [
     description: "Price above all else. Tolerates bad everything if cheap. No brand loyalty.",
     priceSensitivity: "extreme",
     screenSizePreference: {
-      preferred: "standard",
-      oneAwayPenalty: 0.20,
-      twoAwayPenalty: 0.60,
+      preferredMin: 14,
+      preferredMax: 16,
+      penaltyPerInch: 0.08,
     },
     statWeights: {
       performance: 0.15,

@@ -25,27 +25,14 @@ export type StatVector = Partial<Record<LaptopStat, number>>;
 
 // --- Screen Size ---
 
-export type ScreenSizeClass =
-  | "ultraportable"
-  | "mainstreamPortable"
-  | "standard"
-  | "desktopReplacement";
+export type ScreenSizeInches = 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
 
 export interface ScreenSizeDefinition {
-  id: ScreenSizeClass;
-  name: string;
-  sizeRange: string;
+  size: ScreenSizeInches;
   baseCoolingCapacityW: number;
   baseBatteryCapacityWh: number;
   baseWeightG: number;
 }
-
-export const SCREEN_SIZE_ORDER: ScreenSizeClass[] = [
-  "ultraportable",
-  "mainstreamPortable",
-  "standard",
-  "desktopReplacement",
-];
 
 // --- Components ---
 
@@ -116,9 +103,9 @@ export type DemographicId =
 export type PriceSensitivity = "low" | "moderate" | "high" | "veryHigh" | "extreme";
 
 export interface ScreenSizePreference {
-  preferred: ScreenSizeClass;
-  oneAwayPenalty: number;
-  twoAwayPenalty: number;
+  preferredMin: ScreenSizeInches;
+  preferredMax: ScreenSizeInches;
+  penaltyPerInch: number;
 }
 
 export interface Demographic {

@@ -1,36 +1,13 @@
 import { ScreenSizeDefinition } from "./types";
 
 export const SCREEN_SIZES: ScreenSizeDefinition[] = [
-  {
-    id: "ultraportable",
-    name: "Ultraportable",
-    sizeRange: "10–12\"",
-    baseCoolingCapacityW: 25,
-    baseBatteryCapacityWh: 35,
-    baseWeightG: 1200,
-  },
-  {
-    id: "mainstreamPortable",
-    name: "Mainstream Portable",
-    sizeRange: "13–14\"",
-    baseCoolingCapacityW: 45,
-    baseBatteryCapacityWh: 50,
-    baseWeightG: 1800,
-  },
-  {
-    id: "standard",
-    name: "Standard",
-    sizeRange: "15–16\"",
-    baseCoolingCapacityW: 65,
-    baseBatteryCapacityWh: 60,
-    baseWeightG: 2500,
-  },
-  {
-    id: "desktopReplacement",
-    name: "Desktop Replacement",
-    sizeRange: "17\"+",
-    baseCoolingCapacityW: 90,
-    baseBatteryCapacityWh: 75,
-    baseWeightG: 3200,
-  },
+  { size: 10, baseCoolingCapacityW: 20, baseBatteryCapacityWh: 28, baseWeightG: 1000 },
+  { size: 11, baseCoolingCapacityW: 25, baseBatteryCapacityWh: 32, baseWeightG: 1100 },
+  { size: 12, baseCoolingCapacityW: 30, baseBatteryCapacityWh: 38, baseWeightG: 1300 },
+  { size: 13, baseCoolingCapacityW: 38, baseBatteryCapacityWh: 45, baseWeightG: 1600 },
+  { size: 14, baseCoolingCapacityW: 45, baseBatteryCapacityWh: 52, baseWeightG: 1900 },
+  { size: 15, baseCoolingCapacityW: 58, baseBatteryCapacityWh: 58, baseWeightG: 2300 },
+  { size: 16, baseCoolingCapacityW: 65, baseBatteryCapacityWh: 62, baseWeightG: 2600 },
+  { size: 17, baseCoolingCapacityW: 80, baseBatteryCapacityWh: 70, baseWeightG: 3000 },
+  { size: 18, baseCoolingCapacityW: 95, baseBatteryCapacityWh: 78, baseWeightG: 3400 },
 ];
