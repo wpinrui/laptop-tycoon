@@ -14,7 +14,7 @@ import {
   ChassisOptionSlot,
 } from "../../data/types";
 import { SCREEN_SIZES } from "../../data/screenSizes";
-import { MIN_BATTERY_WH, BATTERY_STEP_WH } from "./constants";
+import { MIN_BATTERY_WH, maxBatteryWh } from "./constants";
 
 type WizardAction =
   | { type: "SET_NAME"; name: string }
@@ -44,7 +44,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       return { ...state, predecessorId: action.predecessorId };
     case "SET_SCREEN_SIZE": {
       const sizeDef = SCREEN_SIZES.find((s) => s.size === action.size)!;
-      const maxWh = Math.floor(sizeDef.baseBatteryCapacityWh / BATTERY_STEP_WH) * BATTERY_STEP_WH;
+      const maxWh = maxBatteryWh(sizeDef.baseBatteryCapacityWh);
       return {
         ...state,
         screenSize: action.size,
