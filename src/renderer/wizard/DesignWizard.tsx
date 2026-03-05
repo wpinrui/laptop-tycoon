@@ -28,8 +28,7 @@ function WizardContent() {
     (!state.name.trim() || (state.modelType !== "brandNew" && !state.predecessorId));
   const requiredSlots = COMPONENT_STEP_SLOTS[state.currentStep];
   const needsComponents = requiredSlots && !requiredSlots.every((slot) => state.components[slot]);
-  const needsBattery = state.currentStep === "battery" && !state.batteryCapacityWh;
-  const canAdvance = !needsMetadata && !needsComponents && !needsBattery;
+  const canAdvance = !needsMetadata && !needsComponents;
 
   function canNavigateTo(step: WizardStep) {
     const targetIdx = WIZARD_STEPS.indexOf(step);

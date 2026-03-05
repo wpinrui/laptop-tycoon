@@ -47,7 +47,7 @@ export interface WizardState {
   predecessorId: string | null;
   screenSize: ScreenSizeInches;
   components: Partial<Record<ComponentSlot, Component>>;
-  batteryCapacityWh: number | null;
+  batteryCapacityWh: number;
   chassis: {
     material: ChassisOption | null;
     keyboardFeature: ChassisOption | null;
@@ -62,7 +62,11 @@ export const INITIAL_WIZARD_STATE: WizardState = {
   predecessorId: null,
   screenSize: SCREEN_SIZES[Math.floor(SCREEN_SIZES.length / 2)].size,
   components: {},
-  batteryCapacityWh: null,
+  batteryCapacityWh: (() => {
+    const mid = SCREEN_SIZES[Math.floor(SCREEN_SIZES.length / 2)];
+    const max = Math.floor(mid.baseBatteryCapacityWh / 5) * 5;
+    return Math.round((20 + max) / 2 / 5) * 5;
+  })(),
   chassis: {
     material: null,
     keyboardFeature: null,

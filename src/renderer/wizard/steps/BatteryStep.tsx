@@ -16,7 +16,7 @@ export function BatteryStep() {
   const maxCapacity = Math.floor(screenSizeDef.baseBatteryCapacityWh / STEP) * STEP;
   const era = getBatteryEra(GAME_YEAR);
 
-  const capacity = state.batteryCapacityWh ?? Math.round((MIN_CAPACITY + maxCapacity) / 2 / STEP) * STEP;
+  const capacity = state.batteryCapacityWh;
   const cost = Math.round(capacity * era.costPerWh);
   const weight = Math.round(capacity * era.weightPerWh);
 
@@ -48,7 +48,7 @@ export function BatteryStep() {
             style={{
               fontSize: "48px",
               fontWeight: "bold",
-              color: state.batteryCapacityWh ? "#90caf9" : "#666",
+              color: "#90caf9",
             }}
           >
             {capacity} Wh
