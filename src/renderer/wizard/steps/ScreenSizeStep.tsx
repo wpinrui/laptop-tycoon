@@ -1,9 +1,9 @@
 import { useWizard } from "../WizardContext";
 import { SCREEN_SIZES } from "../../../data/screenSizes";
-import { ScreenSizeInches } from "../../../data/types";
 
 const MIN_SIZE = SCREEN_SIZES[0].size;
 const MAX_SIZE = SCREEN_SIZES[SCREEN_SIZES.length - 1].size;
+const MID_INDEX = Math.floor(SCREEN_SIZES.length / 2);
 
 function formatWeight(grams: number): string {
   return grams >= 1000 ? `${(grams / 1000).toFixed(1)} kg` : `${grams} g`;
@@ -11,14 +11,14 @@ function formatWeight(grams: number): string {
 
 export function ScreenSizeStep() {
   const { state, dispatch } = useWizard();
-  const selected = state.screenSize ?? 14;
-  const sizeDef = SCREEN_SIZES.find((s) => s.size === selected)!;
+  const sliderValue = state.screenSize ?? SCREEN_SIZES[MID_INDEX].size;
+  const sizeDef = SCREEN_SIZES.find((s) => s.size === sliderValue)!;
 
   function handleChange(value: number) {
     const closest = SCREEN_SIZES.reduce((prev, curr) =>
       Math.abs(curr.size - value) < Math.abs(prev.size - value) ? curr : prev
     );
-    dispatch({ type: "SET_SCREEN_SIZE", size: closest.size as ScreenSizeInches });
+    dispatch({ type: "SET_SCREEN_SIZE", size: closest.size });
   }
 
   return (
@@ -40,8 +40,14 @@ export function ScreenSizeStep() {
           }}
         >
           <span style={{ color: "#888", fontSize: "14px" }}>{MIN_SIZE}"</span>
-          <span style={{ fontSize: "48px", fontWeight: "bold", color: "#90caf9" }}>
-            {selected}"
+          <span
+            style={{
+              fontSize: "48px",
+              fontWeight: "bold",
+              color: state.screenSize ? "#90caf9" : "#666",
+            }}
+          >
+            {sliderValue}"
           </span>
           <span style={{ color: "#888", fontSize: "14px" }}>{MAX_SIZE}"</span>
         </div>
@@ -51,7 +57,7 @@ export function ScreenSizeStep() {
           min={MIN_SIZE}
           max={MAX_SIZE}
           step={1}
-          value={selected}
+          value={sliderValue}
           onChange={(e) => handleChange(Number(e.target.value))}
           style={{ width: "100%", accentColor: "#90caf9" }}
         />
@@ -68,8 +74,8 @@ export function ScreenSizeStep() {
               key={s.size}
               style={{
                 fontSize: "11px",
-                color: s.size === selected ? "#90caf9" : "#666",
-                fontWeight: s.size === selected ? "bold" : "normal",
+                color: state.screenSize === s.size ? "#90caf9" : "#666",
+                fontWeight: state.screenSize === s.size ? "bold" : "normal",
                 width: 0,
                 textAlign: "center",
                 overflow: "visible",
