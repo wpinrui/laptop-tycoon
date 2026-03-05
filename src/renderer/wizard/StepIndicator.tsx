@@ -1,5 +1,13 @@
 import React from "react";
+import { Monitor, Cpu, Laptop, ClipboardCheck, Check, LucideIcon } from "lucide-react";
 import { WizardStep, WIZARD_STEPS, WIZARD_STEP_LABELS } from "./types";
+
+const STEP_ICONS: Record<WizardStep, LucideIcon> = {
+  screenSize: Monitor,
+  components: Cpu,
+  body: Laptop,
+  review: ClipboardCheck,
+};
 
 interface StepIndicatorProps {
   currentStep: WizardStep;
@@ -59,26 +67,11 @@ export function StepIndicator({
                 opacity: canClick ? 1 : 0.5,
               }}
             >
-              <span
-                style={{
-                  width: "24px",
-                  height: "24px",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "12px",
-                  fontWeight: "bold",
-                  background: isActive
-                    ? "#90caf9"
-                    : isCompleted
-                      ? "#4caf50"
-                      : "#555",
-                  color: isActive || isCompleted ? "#000" : "#ccc",
-                }}
-              >
-                {isCompleted ? "\u2713" : idx + 1}
-              </span>
+              {isCompleted ? (
+                <Check size={16} />
+              ) : (
+                React.createElement(STEP_ICONS[step], { size: 16 })
+              )}
               {WIZARD_STEP_LABELS[step]}
             </button>
           </React.Fragment>
