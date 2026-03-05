@@ -21,13 +21,6 @@ function getAvailableComponents(
     (c) => c.slot === slot && c.yearIntroduced <= year && c.yearDiscontinued >= year
   );
 
-  if (slot === "battery") {
-    components = components.filter((c) => {
-      const wh = parseFloat(c.specs.capacity ?? "0");
-      return wh <= screenSizeDef.baseBatteryCapacityWh;
-    });
-  }
-
   return components.sort((a, b) => a.costAtLaunch - b.costAtLaunch);
 }
 

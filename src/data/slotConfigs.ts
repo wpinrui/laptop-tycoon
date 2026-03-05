@@ -60,14 +60,6 @@ export const SLOT_CONFIGS: ComponentSlotConfig[] = [
     },
   },
   {
-    slot: "battery",
-    name: "Battery",
-    costDecayRate: 0.10,
-    statDecay: {
-      batteryLife: 0.05,
-    },
-  },
-  {
     slot: "wifi",
     name: "WiFi / Bluetooth",
     costDecayRate: 0.15,

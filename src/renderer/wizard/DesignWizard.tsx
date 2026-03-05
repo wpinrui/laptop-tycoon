@@ -5,8 +5,9 @@ import { ComponentSlot } from "../../data/types";
 import { MetadataStep } from "./steps/MetadataStep";
 import { ScreenSizeStep } from "./steps/ScreenSizeStep";
 import { ProcessingStep } from "./steps/ProcessingStep";
-import { DisplayMediaStep } from "./steps/DisplayMediaStep";
-import { ConnectivityPowerStep } from "./steps/ConnectivityPowerStep";
+import { DisplayStep } from "./steps/DisplayStep";
+import { MediaConnectivityStep } from "./steps/MediaConnectivityStep";
+import { BatteryStep } from "./steps/BatteryStep";
 import { BodyStep } from "./steps/BodyStep";
 import { ReviewStep } from "./steps/ReviewStep";
 
@@ -18,8 +19,8 @@ function WizardContent() {
 
   const COMPONENT_STEP_SLOTS: Record<string, ComponentSlot[]> = {
     processing: ["cpu", "gpu", "ram", "storage"],
-    displayMedia: ["resolution", "displayTech", "displaySurface", "webcam", "speakers"],
-    connectivityPower: ["battery", "wifi", "ports"],
+    display: ["resolution", "displayTech", "displaySurface"],
+    mediaConnectivity: ["webcam", "speakers", "wifi", "ports"],
   };
 
   const needsMetadata =
@@ -27,7 +28,8 @@ function WizardContent() {
     (!state.name.trim() || (state.modelType !== "brandNew" && !state.predecessorId));
   const requiredSlots = COMPONENT_STEP_SLOTS[state.currentStep];
   const needsComponents = requiredSlots && !requiredSlots.every((slot) => state.components[slot]);
-  const canAdvance = !needsMetadata && !needsComponents;
+  const needsBattery = state.currentStep === "battery" && !state.batteryCapacityWh;
+  const canAdvance = !needsMetadata && !needsComponents && !needsBattery;
 
   function canNavigateTo(step: WizardStep) {
     const targetIdx = WIZARD_STEPS.indexOf(step);
@@ -42,10 +44,12 @@ function WizardContent() {
         return <ScreenSizeStep />;
       case "processing":
         return <ProcessingStep />;
-      case "displayMedia":
-        return <DisplayMediaStep />;
-      case "connectivityPower":
-        return <ConnectivityPowerStep />;
+      case "display":
+        return <DisplayStep />;
+      case "mediaConnectivity":
+        return <MediaConnectivityStep />;
+      case "battery":
+        return <BatteryStep />;
       case "body":
         return <BodyStep />;
       case "review":

@@ -10,8 +10,9 @@ export type WizardStep =
   | "metadata"
   | "screenSize"
   | "processing"
-  | "displayMedia"
-  | "connectivityPower"
+  | "display"
+  | "mediaConnectivity"
+  | "battery"
   | "body"
   | "review";
 
@@ -19,8 +20,9 @@ export const WIZARD_STEPS: WizardStep[] = [
   "metadata",
   "screenSize",
   "processing",
-  "displayMedia",
-  "connectivityPower",
+  "display",
+  "mediaConnectivity",
+  "battery",
   "body",
   "review",
 ];
@@ -29,8 +31,9 @@ export const WIZARD_STEP_LABELS: Record<WizardStep, string> = {
   metadata: "Metadata",
   screenSize: "Screen Size",
   processing: "Processing",
-  displayMedia: "Display & Media",
-  connectivityPower: "Connectivity & Power",
+  display: "Display",
+  mediaConnectivity: "Media & Connectivity",
+  battery: "Battery",
   body: "Body",
   review: "Review",
 };
@@ -44,6 +47,7 @@ export interface WizardState {
   predecessorId: string | null;
   screenSize: ScreenSizeInches;
   components: Partial<Record<ComponentSlot, Component>>;
+  batteryCapacityWh: number | null;
   chassis: {
     material: ChassisOption | null;
     keyboardFeature: ChassisOption | null;
@@ -58,6 +62,7 @@ export const INITIAL_WIZARD_STATE: WizardState = {
   predecessorId: null,
   screenSize: SCREEN_SIZES[Math.floor(SCREEN_SIZES.length / 2)].size,
   components: {},
+  batteryCapacityWh: null,
   chassis: {
     material: null,
     keyboardFeature: null,

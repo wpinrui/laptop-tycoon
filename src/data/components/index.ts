@@ -6,7 +6,6 @@ import { STORAGE } from "./storage";
 import { RESOLUTIONS } from "./resolutions";
 import { DISPLAY_TECH } from "./displayTech";
 import { DISPLAY_SURFACES } from "./displaySurfaces";
-import { BATTERIES } from "./batteries";
 import { WIFI } from "./wifi";
 import { WEBCAMS } from "./webcams";
 import { SPEAKERS } from "./speakers";
@@ -20,11 +19,10 @@ export const ALL_COMPONENTS: Component[] = [
   ...RESOLUTIONS,
   ...DISPLAY_TECH,
   ...DISPLAY_SURFACES,
-  ...BATTERIES,
   ...WIFI,
   ...WEBCAMS,
   ...SPEAKERS,
   ...PORTS,
 ];
 
-export { CPUS, GPUS, RAM, STORAGE, RESOLUTIONS, DISPLAY_TECH, DISPLAY_SURFACES, BATTERIES, WIFI, WEBCAMS, SPEAKERS, PORTS };
+export { CPUS, GPUS, RAM, STORAGE, RESOLUTIONS, DISPLAY_TECH, DISPLAY_SURFACES, WIFI, WEBCAMS, SPEAKERS, PORTS };

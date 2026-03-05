@@ -46,7 +46,6 @@ export type ComponentSlot =
   | "resolution"
   | "displayTech"
   | "displaySurface"
-  | "battery"
   | "wifi"
   | "webcam"
   | "speakers"
@@ -90,6 +89,16 @@ export interface ChassisOption {
   weightG: number;
   stats: StatVector;
   specs: Record<string, string>;
+}
+
+// --- Battery ---
+
+export interface BatteryEraConfig {
+  yearStart: number;
+  yearEnd: number;
+  costPerWh: number;
+  weightPerWh: number;
+  techLabel: string;
 }
 
 // --- Demographics ---
