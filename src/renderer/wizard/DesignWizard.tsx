@@ -1,6 +1,7 @@
 import { WizardProvider, useWizard } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
 import { WizardStep, WIZARD_STEPS } from "./types";
+import { GAME_YEAR } from "./constants";
 import { ComponentSlot } from "../../data/types";
 import { MetadataStep } from "./steps/MetadataStep";
 import { ScreenSizeStep } from "./steps/ScreenSizeStep";
@@ -72,7 +73,7 @@ function WizardContent() {
     >
       <h1 style={{ fontSize: "24px", marginBottom: "8px", flexShrink: 0 }}>Laptop Builder</h1>
       <p style={{ color: "#888", marginBottom: "24px", flexShrink: 0 }}>
-        Design your new laptop model for {/* TODO: inject current game year */}2000
+        Design your new laptop model for {GAME_YEAR}
       </p>
 
       <StepIndicator

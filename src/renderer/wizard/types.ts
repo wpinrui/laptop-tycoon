@@ -56,16 +56,17 @@ export interface WizardState {
   };
 }
 
+const DEFAULT_SIZE_DEF = SCREEN_SIZES[Math.floor(SCREEN_SIZES.length / 2)];
+
 export const INITIAL_WIZARD_STATE: WizardState = {
   currentStep: "metadata",
   name: "",
   modelType: "brandNew",
   predecessorId: null,
-  screenSize: SCREEN_SIZES[Math.floor(SCREEN_SIZES.length / 2)].size,
+  screenSize: DEFAULT_SIZE_DEF.size,
   components: {},
   batteryCapacityWh: (() => {
-    const mid = SCREEN_SIZES[Math.floor(SCREEN_SIZES.length / 2)];
-    const max = maxBatteryWh(mid.baseBatteryCapacityWh);
+    const max = maxBatteryWh(DEFAULT_SIZE_DEF.baseBatteryCapacityWh);
     return Math.round((MIN_BATTERY_WH + max) / 2 / BATTERY_STEP_WH) * BATTERY_STEP_WH;
   })(),
   chassis: {
