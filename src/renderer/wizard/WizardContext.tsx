@@ -2,6 +2,7 @@ import { createContext, useContext, useReducer, ReactNode, Dispatch } from "reac
 import {
   WizardState,
   WizardStep,
+  ModelType,
   INITIAL_WIZARD_STATE,
   WIZARD_STEPS,
 } from "./types";
@@ -14,6 +15,9 @@ import {
 } from "../../data/types";
 
 type WizardAction =
+  | { type: "SET_NAME"; name: string }
+  | { type: "SET_MODEL_TYPE"; modelType: ModelType }
+  | { type: "SET_PREDECESSOR"; predecessorId: string | null }
   | { type: "SET_SCREEN_SIZE"; size: ScreenSizeInches }
   | { type: "SET_COMPONENT"; slot: ComponentSlot; component: Component }
   | { type: "REMOVE_COMPONENT"; slot: ComponentSlot }
@@ -25,6 +29,16 @@ type WizardAction =
 
 function wizardReducer(state: WizardState, action: WizardAction): WizardState {
   switch (action.type) {
+    case "SET_NAME":
+      return { ...state, name: action.name };
+    case "SET_MODEL_TYPE":
+      return {
+        ...state,
+        modelType: action.modelType,
+        predecessorId: action.modelType === "brandNew" ? null : state.predecessorId,
+      };
+    case "SET_PREDECESSOR":
+      return { ...state, predecessorId: action.predecessorId };
     case "SET_SCREEN_SIZE":
       return { ...state, screenSize: action.size };
     case "SET_COMPONENT":

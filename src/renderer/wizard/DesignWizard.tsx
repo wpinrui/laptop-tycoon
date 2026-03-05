@@ -1,6 +1,7 @@
 import { WizardProvider, useWizard } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
 import { WizardStep, WIZARD_STEPS } from "./types";
+import { MetadataStep } from "./steps/MetadataStep";
 import { ScreenSizeStep } from "./steps/ScreenSizeStep";
 import { ProcessingStep } from "./steps/ProcessingStep";
 import { DisplayMediaStep } from "./steps/DisplayMediaStep";
@@ -21,6 +22,8 @@ function WizardContent() {
 
   const stepContent = (() => {
     switch (state.currentStep) {
+      case "metadata":
+        return <MetadataStep />;
       case "screenSize":
         return <ScreenSizeStep />;
       case "processing":
@@ -50,9 +53,9 @@ function WizardContent() {
         overflow: "hidden",
       }}
     >
-      <h1 style={{ fontSize: "24px", marginBottom: "8px", flexShrink: 0 }}>Design Wizard</h1>
+      <h1 style={{ fontSize: "24px", marginBottom: "8px", flexShrink: 0 }}>Laptop Builder</h1>
       <p style={{ color: "#888", marginBottom: "24px", flexShrink: 0 }}>
-        Design your new laptop model
+        Design your new laptop model for {/* TODO: inject current game year */}2000
       </p>
 
       <StepIndicator

@@ -6,6 +6,7 @@ import {
 } from "../../data/types";
 
 export type WizardStep =
+  | "metadata"
   | "screenSize"
   | "processing"
   | "displayMedia"
@@ -14,6 +15,7 @@ export type WizardStep =
   | "review";
 
 export const WIZARD_STEPS: WizardStep[] = [
+  "metadata",
   "screenSize",
   "processing",
   "displayMedia",
@@ -23,6 +25,7 @@ export const WIZARD_STEPS: WizardStep[] = [
 ];
 
 export const WIZARD_STEP_LABELS: Record<WizardStep, string> = {
+  metadata: "Metadata",
   screenSize: "Screen Size",
   processing: "Processing",
   displayMedia: "Display & Media",
@@ -31,8 +34,13 @@ export const WIZARD_STEP_LABELS: Record<WizardStep, string> = {
   review: "Review",
 };
 
+export type ModelType = "brandNew" | "successor" | "specBump";
+
 export interface WizardState {
   currentStep: WizardStep;
+  name: string;
+  modelType: ModelType;
+  predecessorId: string | null;
   screenSize: ScreenSizeInches | null;
   components: Partial<Record<ComponentSlot, Component>>;
   chassis: {
@@ -43,7 +51,10 @@ export interface WizardState {
 }
 
 export const INITIAL_WIZARD_STATE: WizardState = {
-  currentStep: "screenSize",
+  currentStep: "metadata",
+  name: "",
+  modelType: "brandNew",
+  predecessorId: null,
   screenSize: null,
   components: {},
   chassis: {

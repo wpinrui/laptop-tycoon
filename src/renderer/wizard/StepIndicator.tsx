@@ -1,8 +1,9 @@
 import { Fragment, useRef, useEffect } from "react";
-import { Monitor, Cpu, MonitorSpeaker, Wifi, Laptop, ClipboardCheck, Check, LucideIcon } from "lucide-react";
+import { FileText, Monitor, Cpu, MonitorSpeaker, Wifi, Laptop, ClipboardCheck, Check, LucideIcon } from "lucide-react";
 import { WizardStep, WIZARD_STEPS, WIZARD_STEP_LABELS } from "./types";
 
 const STEP_ICONS: Record<WizardStep, LucideIcon> = {
+  metadata: FileText,
   screenSize: Monitor,
   processing: Cpu,
   displayMedia: MonitorSpeaker,
