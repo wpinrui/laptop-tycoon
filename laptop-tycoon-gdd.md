@@ -12,7 +12,7 @@ A text-driven tycoon game where the player runs a laptop company from 2000 onwar
 
 ## Core Loop
 
-1. **Design a laptop** (screen size → components → body → tweaks → review)
+1. **Design a laptop** (metadata → screen size → components → body → review)
 2. **Set price and order manufacturing quantity**
 3. **Year passes** — sales simulation runs, reviews and awards are generated
 4. **Collect revenue**, review results, read demographic breakdowns
@@ -28,32 +28,21 @@ The player may have up to **2 models** on sale simultaneously. When creating a m
 
 - **Brand New:** Fresh design. No loyalty base. Full body + component design from scratch. Highest cost.
 - **Successor:** Inherits the loyalty base and niche reputation of a previous model. Market expects the niche to carry over — if it doesn't, loyalty erodes. New body + new components.
-- **Spec Bump:** Reuses the previous model's body. No body R&D cost. Component upgrades only. Improvement may be limited by carrying over an older chassis design. Retains loyalty base.
+- **Spec Bump:** Reuses the previous model's body and screen size. Only component slots (Processing, Display & Media, Connectivity & Power) can be changed — Screen Size and Body steps are locked to the predecessor's choices. No body R&D cost, lower overall R&D cost. Retains loyalty base. Improvement may be limited by carrying over an older chassis design.
 
 ### Design Wizard Flow
 
-#### Step 1 — Screen Size
+#### Step 1 — Metadata
 
-Choose a screen size class. This gates all downstream decisions (chassis options, cooling capacity, battery space, weight).
+Name the laptop and choose model type (Brand New, Successor, or Spec Bump). For Successor or Spec Bump, select the predecessor model from a dropdown showing name and year.
 
-| Class | Size | Notes |
-|-------|------|-------|
-| Ultraportable | 10–12" | Peaks during netbook era (~2008–2012), then niche |
-| Mainstream Portable | 13–14" | Business, students, creatives post-2015 |
-| Standard | 15–16" | Biggest general market bucket for most of the timeline |
-| Desktop Replacement | 17"+ | Niche but loyal — gamers, some enterprise |
+#### Step 2 — Screen Size
 
-Screen size acts as a **soft filter with penalties** in the sales simulation. Each buyer segment has a preferred screen size class. Offering a different size applies a purchase-likelihood penalty that scales with how far you are from their preference:
+Choose a screen size (10"–18") via slider. This gates all downstream decisions (chassis options, cooling capacity, battery space, weight). Each size has fixed base stats for cooling capacity (W), battery capacity (Wh), and base weight (g). Larger screens offer more cooling and battery headroom but are heavier.
 
-| Distance from preferred class | Penalty |
-|-------------------------------|---------|
-| Same class | None |
-| 1 class away | Moderate (e.g. ~30-50% reduction) |
-| 2+ classes away | Severe (e.g. ~70-90% reduction) |
+Screen size acts as a **soft filter with penalties** in the sales simulation. Each buyer segment has a preferred screen size range. Offering a different size applies a purchase-likelihood penalty that scales with how far you are from their preference (per-inch penalty defined per demographic).
 
-For example, the 15–16" gamer crowd is the largest gaming segment. A 13–14" gaming laptop would still reach them but with a moderate penalty, while a 10–12" gaming laptop would face a severe penalty. This means an off-size laptop *can* sell to mismatched segments — just at significantly reduced volume.
-
-#### Step 2 — Components
+#### Step 3 — Components
 
 Pick era-appropriate parts for each slot. The wizard displays cost, power draw, and stat contributions. Running totals are shown throughout.
 
@@ -77,7 +66,7 @@ Pick era-appropriate parts for each slot. The wizard displays cost, power draw, 
 - Outdated components disappear from the list after a few years (manufacturer discontinuation).
 - The number of choices per slot grows in later eras.
 
-#### Step 3 — Body / Chassis
+#### Step 4 — Body / Chassis
 
 Given screen size and chosen components, configure the physical shell:
 
@@ -89,7 +78,7 @@ Given screen size and chosen components, configure the physical shell:
 
 The wizard flags issues during this phase: "This chassis can only dissipate 45W — your components draw 65W. Expect thermal throttling and high noise." or "This battery + these components = ~3hr battery life."
 
-#### Step 4 — Review
+#### Step 5 — Review
 
 Full stat block with both raw specs and market-relative scores. Estimated cost per unit. Comparison view against your other model and all competitor models.
 

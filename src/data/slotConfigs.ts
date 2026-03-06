@@ -36,19 +36,27 @@ export const SLOT_CONFIGS: ComponentSlotConfig[] = [
     },
   },
   {
-    slot: "display",
-    name: "Display Panel",
+    slot: "resolution",
+    name: "Resolution",
     costDecayRate: 0.15,
     statDecay: {
-      display: 0.10,
+      display: 0.05,
     },
   },
   {
-    slot: "battery",
-    name: "Battery",
-    costDecayRate: 0.10,
+    slot: "displayTech",
+    name: "Display Technology",
+    costDecayRate: 0.12,
     statDecay: {
-      batteryLife: 0.05,
+      display: 0.05,
+    },
+  },
+  {
+    slot: "displaySurface",
+    name: "Surface Finish",
+    costDecayRate: 0.05,
+    statDecay: {
+      display: 0.02,
     },
   },
   {
@@ -73,14 +81,6 @@ export const SLOT_CONFIGS: ComponentSlotConfig[] = [
     costDecayRate: 0.10,
     statDecay: {
       speakers: 0.05,
-    },
-  },
-  {
-    slot: "ports",
-    name: "Ports / Connectivity",
-    costDecayRate: 0.10,
-    statDecay: {
-      connectivity: 0.10,
     },
   },
 ];

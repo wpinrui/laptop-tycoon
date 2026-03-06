@@ -6,6 +6,8 @@ function createWindow() {
     width: 1280,
     height: 800,
     title: "Laptop Tycoon",
+    autoHideMenuBar: true,
+    fullscreen: true,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,

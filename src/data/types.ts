@@ -32,6 +32,8 @@ export interface ScreenSizeDefinition {
   baseCoolingCapacityW: number;
   baseBatteryCapacityWh: number;
   baseWeightG: number;
+  /** Multiplier for display component cost/power/weight. 14" = 1.0 reference. */
+  displayMultiplier: number;
 }
 
 // --- Components ---
@@ -41,12 +43,12 @@ export type ComponentSlot =
   | "gpu"
   | "ram"
   | "storage"
-  | "display"
-  | "battery"
+  | "resolution"
+  | "displayTech"
+  | "displaySurface"
   | "wifi"
   | "webcam"
-  | "speakers"
-  | "ports";
+  | "speakers";
 
 export interface ComponentSlotConfig {
   slot: ComponentSlot;
@@ -58,34 +60,83 @@ export interface ComponentSlotConfig {
 export interface Component {
   id: string;
   name: string;
+  /** Short player-facing description explaining what this component is and its trade-offs. */
+  description: string;
   slot: ComponentSlot;
   yearIntroduced: number;
   yearDiscontinued: number;
   costAtLaunch: number;
   powerDrawW: number;
   weightG: number;
+  /** Internal volume consumed (cm³). Competes for chassis space. */
+  volumeCm3: number;
+  /** Minimum chassis thickness required to fit this component (cm). 0 = no constraint. */
+  minThicknessCm: number;
   specs: Record<string, string>;
   stats: StatVector;
+}
+
+// --- Ports ---
+
+export interface PortType {
+  id: string;
+  name: string;
+  /** Short player-facing description explaining what this port is used for. */
+  description: string;
+  /** Category for grouping in the UI. */
+  category: "usb" | "video" | "networking" | "expansion" | "audio" | "legacy";
+  yearIntroduced: number;
+  yearDiscontinued: number | null;
+  maxCount: number;
+  costPerPort: number;
+  weightPerPortG: number;
+  /** Volume per port (cm³). */
+  volumePerPortCm3: number;
+  /** Minimum chassis thickness needed for this port (cm). e.g., RJ45 is tall. */
+  minThicknessCm: number;
+  stats: StatVector;
+  specs: Record<string, string>;
 }
 
 // --- Chassis ---
 
 export type ChassisOptionSlot =
   | "material"
+  | "coolingSolution"
   | "keyboardFeature"
   | "trackpadFeature";
 
 export interface ChassisOption {
   id: string;
   name: string;
+  /** Short player-facing description explaining this option's trade-offs. */
+  description: string;
   slot: ChassisOptionSlot;
   yearIntroduced: number;
   yearDiscontinued: number | null;
   costAtLaunch: number;
   costDecayRate: number;
   weightG: number;
+  /** Internal volume consumed (cm³). Cooling solutions take significant space. */
+  volumeCm3: number;
+  /** Minimum chassis thickness required (cm). 0 = no constraint. */
+  minThicknessCm: number;
+  /** Cooling capacity in watts. Only relevant for coolingSolution slot. */
+  coolingCapacityW: number;
+  /** Multiplier on chassis shell density. Only relevant for material slot. 1.0 = plastic baseline. */
+  shellDensityMultiplier: number;
   stats: StatVector;
   specs: Record<string, string>;
+}
+
+// --- Battery ---
+
+export interface BatteryEraConfig {
+  yearStart: number;
+  yearEnd: number;
+  costPerWh: number;
+  weightPerWh: number;
+  techLabel: string;
 }
 
 // --- Demographics ---

@@ -5,12 +5,16 @@ export const CPUS: Component[] = [
   {
     id: "pentium3_800",
     name: "Intel Pentium III 800 MHz",
+    description:
+      "Solid mid-range processor for everyday computing and light multitasking.",
     slot: "cpu",
     yearIntroduced: 2000,
     yearDiscontinued: 2002,
     costAtLaunch: 90,
     powerDrawW: 20,
     weightG: 40,
+    volumeCm3: 35,
+    minThicknessCm: 1.2,
     specs: {
       clockSpeed: "800 MHz",
       cores: "1",
@@ -22,12 +26,16 @@ export const CPUS: Component[] = [
   {
     id: "pentium3_1ghz",
     name: "Intel Pentium III 1.0 GHz",
+    description:
+      "High-end Intel chip with strong single-threaded performance.",
     slot: "cpu",
     yearIntroduced: 2000,
     yearDiscontinued: 2003,
     costAtLaunch: 130,
     powerDrawW: 25,
     weightG: 40,
+    volumeCm3: 38,
+    minThicknessCm: 1.3,
     specs: {
       clockSpeed: "1.0 GHz",
       cores: "1",
@@ -39,12 +47,16 @@ export const CPUS: Component[] = [
   {
     id: "celeron_600",
     name: "Intel Celeron 600 MHz",
+    description:
+      "Budget processor suitable for basic office tasks and web browsing.",
     slot: "cpu",
     yearIntroduced: 2000,
     yearDiscontinued: 2002,
     costAtLaunch: 50,
     powerDrawW: 18,
     weightG: 40,
+    volumeCm3: 30,
+    minThicknessCm: 1.0,
     specs: {
       clockSpeed: "600 MHz",
       cores: "1",
@@ -56,12 +68,16 @@ export const CPUS: Component[] = [
   {
     id: "athlon_900",
     name: "AMD Athlon 900 MHz",
+    description:
+      "AMD's power-hungry but capable alternative to Intel, with a larger cache.",
     slot: "cpu",
     yearIntroduced: 2000,
     yearDiscontinued: 2002,
     costAtLaunch: 85,
     powerDrawW: 28,
     weightG: 45,
+    volumeCm3: 40,
+    minThicknessCm: 1.4,
     specs: {
       clockSpeed: "900 MHz",
       cores: "1",
@@ -75,12 +91,16 @@ export const CPUS: Component[] = [
   {
     id: "pentium4_1_5ghz",
     name: "Intel Pentium 4-M 1.5 GHz",
+    description:
+      "Intel's next-gen architecture brings higher clock speeds but runs hotter.",
     slot: "cpu",
     yearIntroduced: 2001,
     yearDiscontinued: 2003,
     costAtLaunch: 160,
     powerDrawW: 30,
     weightG: 42,
+    volumeCm3: 45,
+    minThicknessCm: 1.5,
     specs: {
       clockSpeed: "1.5 GHz",
       cores: "1",
@@ -92,12 +112,16 @@ export const CPUS: Component[] = [
   {
     id: "pentium4_1_8ghz",
     name: "Intel Pentium 4-M 1.8 GHz",
+    description:
+      "Top-tier Pentium 4 with the fastest clock speed available \u2014 very power-hungry.",
     slot: "cpu",
     yearIntroduced: 2001,
     yearDiscontinued: 2004,
     costAtLaunch: 200,
     powerDrawW: 35,
     weightG: 42,
+    volumeCm3: 48,
+    minThicknessCm: 1.6,
     specs: {
       clockSpeed: "1.8 GHz",
       cores: "1",
@@ -109,12 +133,16 @@ export const CPUS: Component[] = [
   {
     id: "athlon_xp_1500",
     name: "AMD Athlon XP-M 1500+",
+    description:
+      "AMD's efficient mobile chip that competes well against costlier Intel options.",
     slot: "cpu",
     yearIntroduced: 2001,
     yearDiscontinued: 2003,
     costAtLaunch: 110,
     powerDrawW: 25,
     weightG: 42,
+    volumeCm3: 38,
+    minThicknessCm: 1.3,
     specs: {
       clockSpeed: "1.33 GHz",
       cores: "1",
@@ -128,12 +156,16 @@ export const CPUS: Component[] = [
   {
     id: "pentium4_2_2ghz",
     name: "Intel Pentium 4-M 2.2 GHz",
+    description:
+      "The fastest mobile processor available \u2014 demands serious cooling.",
     slot: "cpu",
     yearIntroduced: 2002,
     yearDiscontinued: 2004,
     costAtLaunch: 240,
     powerDrawW: 38,
     weightG: 42,
+    volumeCm3: 50,
+    minThicknessCm: 1.8,
     specs: {
       clockSpeed: "2.2 GHz",
       cores: "1",
@@ -145,12 +177,16 @@ export const CPUS: Component[] = [
   {
     id: "athlon_xp_2200",
     name: "AMD Athlon XP-M 2200+",
+    description:
+      "Strong AMD competitor with good value, but needs decent cooling.",
     slot: "cpu",
     yearIntroduced: 2002,
     yearDiscontinued: 2004,
     costAtLaunch: 140,
     powerDrawW: 30,
     weightG: 42,
+    volumeCm3: 40,
+    minThicknessCm: 1.4,
     specs: {
       clockSpeed: "1.67 GHz",
       cores: "1",
@@ -164,12 +200,16 @@ export const CPUS: Component[] = [
   {
     id: "pentium_m_1_3ghz",
     name: "Intel Pentium M 1.3 GHz (Banias)",
+    description:
+      "Revolutionary mobile chip \u2014 excellent performance with remarkably low power draw.",
     slot: "cpu",
     yearIntroduced: 2003,
     yearDiscontinued: 2005,
     costAtLaunch: 200,
     powerDrawW: 22,
     weightG: 38,
+    volumeCm3: 32,
+    minThicknessCm: 1.1,
     specs: {
       clockSpeed: "1.3 GHz",
       cores: "1",
@@ -181,12 +221,16 @@ export const CPUS: Component[] = [
   {
     id: "pentium_m_1_6ghz",
     name: "Intel Pentium M 1.6 GHz (Banias)",
+    description:
+      "Top-bin Pentium M with the best balance of speed and battery life.",
     slot: "cpu",
     yearIntroduced: 2003,
     yearDiscontinued: 2005,
     costAtLaunch: 260,
     powerDrawW: 24,
     weightG: 38,
+    volumeCm3: 34,
+    minThicknessCm: 1.2,
     specs: {
       clockSpeed: "1.6 GHz",
       cores: "1",
@@ -198,12 +242,16 @@ export const CPUS: Component[] = [
   {
     id: "celeron_m_1ghz",
     name: "Intel Celeron M 1.0 GHz",
+    description:
+      "Budget Centrino-era chip \u2014 efficient but limited for demanding tasks.",
     slot: "cpu",
     yearIntroduced: 2003,
     yearDiscontinued: 2005,
     costAtLaunch: 80,
     powerDrawW: 22,
     weightG: 38,
+    volumeCm3: 30,
+    minThicknessCm: 1.0,
     specs: {
       clockSpeed: "1.0 GHz",
       cores: "1",
@@ -217,12 +265,16 @@ export const CPUS: Component[] = [
   {
     id: "pentium_m_dothan_1_8ghz",
     name: "Intel Pentium M 1.8 GHz (Dothan)",
+    description:
+      "Shrunk to 90nm for better efficiency. The sweet spot for thin laptops.",
     slot: "cpu",
     yearIntroduced: 2004,
     yearDiscontinued: 2006,
     costAtLaunch: 280,
     powerDrawW: 21,
     weightG: 36,
+    volumeCm3: 30,
+    minThicknessCm: 1.0,
     specs: {
       clockSpeed: "1.8 GHz",
       cores: "1",
@@ -234,12 +286,16 @@ export const CPUS: Component[] = [
   {
     id: "pentium_m_dothan_2_1ghz",
     name: "Intel Pentium M 2.1 GHz (Dothan)",
+    description:
+      "Fastest Dothan chip \u2014 premium performance for power users.",
     slot: "cpu",
     yearIntroduced: 2004,
     yearDiscontinued: 2006,
     costAtLaunch: 350,
     powerDrawW: 27,
     weightG: 36,
+    volumeCm3: 34,
+    minThicknessCm: 1.2,
     specs: {
       clockSpeed: "2.1 GHz",
       cores: "1",
@@ -251,12 +307,16 @@ export const CPUS: Component[] = [
   {
     id: "turion_64_ml30",
     name: "AMD Turion 64 ML-30",
+    description:
+      "AMD's first 64-bit mobile chip. Future-proof but slightly power-hungry.",
     slot: "cpu",
     yearIntroduced: 2005,
     yearDiscontinued: 2007,
     costAtLaunch: 180,
     powerDrawW: 25,
     weightG: 40,
+    volumeCm3: 36,
+    minThicknessCm: 1.2,
     specs: {
       clockSpeed: "1.6 GHz",
       cores: "1",
@@ -271,12 +331,16 @@ export const CPUS: Component[] = [
   {
     id: "pentium_m_dothan_2_26ghz",
     name: "Intel Pentium M 2.26 GHz (Dothan)",
+    description:
+      "The ultimate single-core mobile processor \u2014 as fast as it gets.",
     slot: "cpu",
     yearIntroduced: 2005,
     yearDiscontinued: 2007,
     costAtLaunch: 380,
     powerDrawW: 27,
     weightG: 36,
+    volumeCm3: 34,
+    minThicknessCm: 1.2,
     specs: {
       clockSpeed: "2.26 GHz",
       cores: "1",
@@ -288,12 +352,16 @@ export const CPUS: Component[] = [
   {
     id: "turion_64_mt40",
     name: "AMD Turion 64 MT-40",
+    description:
+      "Fast 64-bit AMD chip that trades blows with Intel's best.",
     slot: "cpu",
     yearIntroduced: 2005,
     yearDiscontinued: 2007,
     costAtLaunch: 220,
     powerDrawW: 25,
     weightG: 40,
+    volumeCm3: 38,
+    minThicknessCm: 1.2,
     specs: {
       clockSpeed: "2.2 GHz",
       cores: "1",
@@ -306,12 +374,16 @@ export const CPUS: Component[] = [
   {
     id: "celeron_m_370",
     name: "Intel Celeron M 370",
+    description:
+      "Affordable Dothan-based chip for budget laptops \u2014 surprisingly efficient.",
     slot: "cpu",
     yearIntroduced: 2005,
     yearDiscontinued: 2007,
     costAtLaunch: 70,
     powerDrawW: 21,
     weightG: 36,
+    volumeCm3: 30,
+    minThicknessCm: 1.0,
     specs: {
       clockSpeed: "1.5 GHz",
       cores: "1",
