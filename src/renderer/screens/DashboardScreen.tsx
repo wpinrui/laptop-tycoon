@@ -476,11 +476,11 @@ export function DashboardScreen() {
         <div style={columnStyle}>
           <BrandCard />
           <MarketCard />
-          <ReviewsCard />
         </div>
         <div style={columnStyle}>
           <AdvanceYearCard />
           <FinancialsCard />
+          <ReviewsCard />
         </div>
       </div>
     </ContentPanel>
