@@ -19,6 +19,9 @@ export function BatteryStep() {
 
   const estimatedHours = totalPower > 0 ? capacity / totalPower : 0;
   const batteryWarning = totalPower > 0 && estimatedHours < batteryWarningThresholdH(GAME_YEAR);
+  const batteryH = Math.floor(estimatedHours);
+  const batteryM = Math.round((estimatedHours - batteryH) * 60);
+  const batteryLifeStr = batteryM > 0 ? `~${batteryH}h ${batteryM}m` : `~${batteryH}h`;
 
   function handleChange(value: number) {
     dispatch({ type: "SET_BATTERY_CAPACITY", capacityWh: value });
@@ -83,7 +86,7 @@ export function BatteryStep() {
         {totalPower > 0 && (
           <StatCard
             label="Est. Battery Life"
-            value={`~${estimatedHours.toFixed(1)}h`}
+            value={batteryLifeStr}
             warning={batteryWarning}
           />
         )}
@@ -91,7 +94,7 @@ export function BatteryStep() {
 
       {totalPower > 0 && (
         <div style={{ fontSize: "0.75rem", color: "#888", textAlign: "center" }}>
-          {capacity} Wh ÷ {totalPower} W total power draw = ~{estimatedHours.toFixed(1)} hours
+          {capacity} Wh ÷ {totalPower} W total power draw = {batteryLifeStr}
         </div>
       )}
     </div>
