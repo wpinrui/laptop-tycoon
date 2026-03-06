@@ -2,7 +2,18 @@ import { ComponentType } from "react";
 import { useWizard } from "./WizardContext";
 import { LaptopStat, StatVector } from "../../data/types";
 import { getAllChassisOptions } from "./types";
-import { DISPLAY_SLOTS } from "./constants";
+import {
+  DISPLAY_SLOTS,
+  GAME_YEAR,
+  THICKNESS_MIN_CM,
+  THICKNESS_MAX_CM,
+  BEZEL_MIN_MM,
+  BEZEL_MAX_MM,
+  applyDisplayMultiplier,
+  coolingMultiplier,
+  availableVolumeCm3,
+  totalConsumedVolumeCm3,
+} from "./constants";
 import { getScreenSizeDef } from "../../data/screenSizes";
 import { PORT_TYPES } from "../../data/portTypes";
 import { Tooltip } from "./Tooltip";
@@ -10,7 +21,6 @@ import {
   Zap,
   Gamepad2,
   Monitor,
-  BatteryMedium,
   Wifi,
   Volume2,
   Camera,
@@ -31,7 +41,6 @@ const STAT_CONFIG: StatConfigEntry[] = [
   { stat: "performance", Icon: Zap, label: "Performance" },
   { stat: "gamingPerformance", Icon: Gamepad2, label: "Gaming" },
   { stat: "display", Icon: Monitor, label: "Display" },
-  { stat: "batteryLife", Icon: BatteryMedium, label: "Battery Life" },
   { stat: "connectivity", Icon: Wifi, label: "Connectivity" },
   { stat: "speakers", Icon: Volume2, label: "Speakers" },
   { stat: "webcam", Icon: Camera, label: "Webcam" },
@@ -52,7 +61,6 @@ const STAT_COLORS: Record<string, string> = {
   webcam: "#42a5f5",
   keyboard: "#66bb6a",
   trackpad: "#66bb6a",
-  batteryLife: "#ffa726",
   thermals: "#ffa726",
   connectivity: "#ffa726",
   design: "#ab47bc",
@@ -88,10 +96,42 @@ export function computeStatTotals(state: ReturnType<typeof useWizard>["state"]):
   }
 
   // Chassis options
-  for (const opt of getAllChassisOptions(state.chassis)) {
+  const allChassisOptions = getAllChassisOptions(state.chassis);
+  for (const opt of allChassisOptions) {
     if (!opt) continue;
     for (const [stat, value] of Object.entries(opt.stats)) {
       totals[stat as LaptopStat] = (totals[stat as LaptopStat] ?? 0) + (value as number);
+    }
+  }
+
+  // Design bonus from thinness (50%) and bezel (50%)
+  // Thinner chassis and smaller bezel = better design, scaled 0–10 each half
+  const maxDesignBonus = 10;
+  const thinness = 1 - (state.thicknessCm - THICKNESS_MIN_CM) / (THICKNESS_MAX_CM - THICKNESS_MIN_CM);
+  const bezelSlimness = 1 - (state.bezelMm - BEZEL_MIN_MM) / (BEZEL_MAX_MM - BEZEL_MIN_MM);
+  const designBonus = Math.round((thinness * 0.5 + bezelSlimness * 0.5) * maxDesignBonus);
+  totals.design = (totals.design ?? 0) + designBonus;
+
+  // Performance penalty when cooling is insufficient (quadratic curve)
+  let totalPower = 0;
+  for (const [slot, comp] of Object.entries(state.components)) {
+    if (!comp) continue;
+    totalPower += applyDisplayMultiplier(comp.powerDrawW, slot, displayMult);
+  }
+  if (totalPower > 0) {
+    const coolingFromSolution = state.chassis.coolingSolution?.coolingCapacityW ?? 0;
+    const totalVolume = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, allChassisOptions);
+    const totalAvailable = availableVolumeCm3(state.screenSize, state.bezelMm, state.thicknessCm, GAME_YEAR);
+    const spaceUtil = totalAvailable > 0 ? totalVolume / totalAvailable : 1;
+    const coolMult = coolingMultiplier(state.thicknessCm, state.bezelMm, spaceUtil);
+    const effectiveCooling = coolingFromSolution * coolMult;
+    if (totalPower > effectiveCooling) {
+      const ratio = effectiveCooling / totalPower; // 0–1
+      const penalty = (1 - ratio) * (1 - ratio); // quadratic: 10% over → 1% loss, 50% over → 25% loss
+      const perfLoss = Math.round((totals.performance ?? 0) * penalty);
+      const gamingLoss = Math.round((totals.gamingPerformance ?? 0) * penalty);
+      totals.performance = (totals.performance ?? 0) - perfLoss;
+      totals.gamingPerformance = (totals.gamingPerformance ?? 0) - gamingLoss;
     }
   }
 

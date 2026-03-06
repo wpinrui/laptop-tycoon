@@ -96,7 +96,7 @@ export function WizardSidebar({
     ["performance", "gamingPerformance"],
     ["display", "speakers", "webcam"],
     ["keyboard", "trackpad"],
-    ["batteryLife", "thermals", "connectivity"],
+    ["thermals", "connectivity"],
     ["design", "buildQuality"],
   ];
 
