@@ -83,12 +83,4 @@ export const SLOT_CONFIGS: ComponentSlotConfig[] = [
       speakers: 0.05,
     },
   },
-  {
-    slot: "ports",
-    name: "Ports / Connectivity",
-    costDecayRate: 0.10,
-    statDecay: {
-      connectivity: 0.10,
-    },
-  },
 ];

@@ -13,8 +13,6 @@ import {
   ChassisOption,
   ChassisOptionSlot,
 } from "../../data/types";
-import { getScreenSizeDef } from "../../data/screenSizes";
-import { MIN_BATTERY_WH, maxBatteryWh } from "./constants";
 
 type WizardAction =
   | { type: "SET_NAME"; name: string }
@@ -23,7 +21,10 @@ type WizardAction =
   | { type: "SET_SCREEN_SIZE"; size: ScreenSizeInches }
   | { type: "SET_COMPONENT"; slot: ComponentSlot; component: Component }
   | { type: "REMOVE_COMPONENT"; slot: ComponentSlot }
+  | { type: "SET_PORT_COUNT"; portId: string; count: number }
   | { type: "SET_BATTERY_CAPACITY"; capacityWh: number }
+  | { type: "SET_THICKNESS"; thicknessCm: number }
+  | { type: "SET_BEZEL"; bezelMm: number }
   | { type: "SET_CHASSIS_OPTION"; slot: ChassisOptionSlot; option: ChassisOption }
   | { type: "GO_TO_STEP"; step: WizardStep }
   | { type: "NEXT_STEP" }
@@ -42,15 +43,8 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       };
     case "SET_PREDECESSOR":
       return { ...state, predecessorId: action.predecessorId };
-    case "SET_SCREEN_SIZE": {
-      const sizeDef = getScreenSizeDef(action.size);
-      const maxWh = maxBatteryWh(sizeDef.baseBatteryCapacityWh);
-      return {
-        ...state,
-        screenSize: action.size,
-        batteryCapacityWh: Math.max(MIN_BATTERY_WH, Math.min(state.batteryCapacityWh, maxWh)),
-      };
-    }
+    case "SET_SCREEN_SIZE":
+      return { ...state, screenSize: action.size };
     case "SET_COMPONENT":
       return {
         ...state,
@@ -60,19 +54,38 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       const { [action.slot]: _, ...rest } = state.components;
       return { ...state, components: rest };
     }
+    case "SET_PORT_COUNT": {
+      const newPorts = { ...state.ports };
+      if (action.count <= 0) {
+        delete newPorts[action.portId];
+      } else {
+        newPorts[action.portId] = action.count;
+      }
+      return { ...state, ports: newPorts };
+    }
     case "SET_BATTERY_CAPACITY":
       return { ...state, batteryCapacityWh: action.capacityWh };
+    case "SET_THICKNESS":
+      return { ...state, thicknessCm: action.thicknessCm };
+    case "SET_BEZEL":
+      return { ...state, bezelMm: action.bezelMm };
     case "SET_CHASSIS_OPTION":
       return {
         ...state,
         chassis: { ...state.chassis, [action.slot]: action.option },
       };
-    case "GO_TO_STEP":
-      return { ...state, currentStep: action.step };
+    case "GO_TO_STEP": {
+      const visited = new Set(state.visitedSteps);
+      visited.add(action.step);
+      return { ...state, currentStep: action.step, visitedSteps: visited };
+    }
     case "NEXT_STEP": {
       const idx = WIZARD_STEPS.indexOf(state.currentStep);
       if (idx < WIZARD_STEPS.length - 1) {
-        return { ...state, currentStep: WIZARD_STEPS[idx + 1] };
+        const nextStep = WIZARD_STEPS[idx + 1];
+        const visited = new Set(state.visitedSteps);
+        visited.add(nextStep);
+        return { ...state, currentStep: nextStep, visitedSteps: visited };
       }
       return state;
     }

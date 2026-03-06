@@ -11,6 +11,8 @@ export const CPUS: Component[] = [
     costAtLaunch: 90,
     powerDrawW: 20,
     weightG: 40,
+    volumeCm3: 35,
+    minThicknessCm: 1.2,
     specs: {
       clockSpeed: "800 MHz",
       cores: "1",
@@ -28,6 +30,8 @@ export const CPUS: Component[] = [
     costAtLaunch: 130,
     powerDrawW: 25,
     weightG: 40,
+    volumeCm3: 38,
+    minThicknessCm: 1.3,
     specs: {
       clockSpeed: "1.0 GHz",
       cores: "1",
@@ -45,6 +49,8 @@ export const CPUS: Component[] = [
     costAtLaunch: 50,
     powerDrawW: 18,
     weightG: 40,
+    volumeCm3: 30,
+    minThicknessCm: 1.0,
     specs: {
       clockSpeed: "600 MHz",
       cores: "1",
@@ -62,6 +68,8 @@ export const CPUS: Component[] = [
     costAtLaunch: 85,
     powerDrawW: 28,
     weightG: 45,
+    volumeCm3: 40,
+    minThicknessCm: 1.4,
     specs: {
       clockSpeed: "900 MHz",
       cores: "1",
@@ -81,6 +89,8 @@ export const CPUS: Component[] = [
     costAtLaunch: 160,
     powerDrawW: 30,
     weightG: 42,
+    volumeCm3: 45,
+    minThicknessCm: 1.5,
     specs: {
       clockSpeed: "1.5 GHz",
       cores: "1",
@@ -98,6 +108,8 @@ export const CPUS: Component[] = [
     costAtLaunch: 200,
     powerDrawW: 35,
     weightG: 42,
+    volumeCm3: 48,
+    minThicknessCm: 1.6,
     specs: {
       clockSpeed: "1.8 GHz",
       cores: "1",
@@ -115,6 +127,8 @@ export const CPUS: Component[] = [
     costAtLaunch: 110,
     powerDrawW: 25,
     weightG: 42,
+    volumeCm3: 38,
+    minThicknessCm: 1.3,
     specs: {
       clockSpeed: "1.33 GHz",
       cores: "1",
@@ -134,6 +148,8 @@ export const CPUS: Component[] = [
     costAtLaunch: 240,
     powerDrawW: 38,
     weightG: 42,
+    volumeCm3: 50,
+    minThicknessCm: 1.8,
     specs: {
       clockSpeed: "2.2 GHz",
       cores: "1",
@@ -151,6 +167,8 @@ export const CPUS: Component[] = [
     costAtLaunch: 140,
     powerDrawW: 30,
     weightG: 42,
+    volumeCm3: 40,
+    minThicknessCm: 1.4,
     specs: {
       clockSpeed: "1.67 GHz",
       cores: "1",
@@ -170,6 +188,8 @@ export const CPUS: Component[] = [
     costAtLaunch: 200,
     powerDrawW: 22,
     weightG: 38,
+    volumeCm3: 32,
+    minThicknessCm: 1.1,
     specs: {
       clockSpeed: "1.3 GHz",
       cores: "1",
@@ -187,6 +207,8 @@ export const CPUS: Component[] = [
     costAtLaunch: 260,
     powerDrawW: 24,
     weightG: 38,
+    volumeCm3: 34,
+    minThicknessCm: 1.2,
     specs: {
       clockSpeed: "1.6 GHz",
       cores: "1",
@@ -204,6 +226,8 @@ export const CPUS: Component[] = [
     costAtLaunch: 80,
     powerDrawW: 22,
     weightG: 38,
+    volumeCm3: 30,
+    minThicknessCm: 1.0,
     specs: {
       clockSpeed: "1.0 GHz",
       cores: "1",
@@ -223,6 +247,8 @@ export const CPUS: Component[] = [
     costAtLaunch: 280,
     powerDrawW: 21,
     weightG: 36,
+    volumeCm3: 30,
+    minThicknessCm: 1.0,
     specs: {
       clockSpeed: "1.8 GHz",
       cores: "1",
@@ -240,6 +266,8 @@ export const CPUS: Component[] = [
     costAtLaunch: 350,
     powerDrawW: 27,
     weightG: 36,
+    volumeCm3: 34,
+    minThicknessCm: 1.2,
     specs: {
       clockSpeed: "2.1 GHz",
       cores: "1",
@@ -257,6 +285,8 @@ export const CPUS: Component[] = [
     costAtLaunch: 180,
     powerDrawW: 25,
     weightG: 40,
+    volumeCm3: 36,
+    minThicknessCm: 1.2,
     specs: {
       clockSpeed: "1.6 GHz",
       cores: "1",
@@ -277,6 +307,8 @@ export const CPUS: Component[] = [
     costAtLaunch: 380,
     powerDrawW: 27,
     weightG: 36,
+    volumeCm3: 34,
+    minThicknessCm: 1.2,
     specs: {
       clockSpeed: "2.26 GHz",
       cores: "1",
@@ -294,6 +326,8 @@ export const CPUS: Component[] = [
     costAtLaunch: 220,
     powerDrawW: 25,
     weightG: 40,
+    volumeCm3: 38,
+    minThicknessCm: 1.2,
     specs: {
       clockSpeed: "2.2 GHz",
       cores: "1",
@@ -312,6 +346,8 @@ export const CPUS: Component[] = [
     costAtLaunch: 70,
     powerDrawW: 21,
     weightG: 36,
+    volumeCm3: 30,
+    minThicknessCm: 1.0,
     specs: {
       clockSpeed: "1.5 GHz",
       cores: "1",

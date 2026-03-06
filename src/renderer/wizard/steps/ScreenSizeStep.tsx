@@ -22,7 +22,8 @@ export function ScreenSizeStep() {
       <div>
         <h2>Screen Size</h2>
         <p style={{ color: "#aaa", marginTop: "4px" }}>
-          Choose a screen size. This determines cooling capacity, battery space, and base weight.
+          Choose a screen size. This sets the baseline for your laptop's dimensions, weight,
+          and cooling. Final values depend on chassis thickness and bezel width.
         </p>
       </div>
 
@@ -90,9 +91,9 @@ export function ScreenSizeStep() {
           gap: "12px",
         }}
       >
-        <StatCard label="Cooling Capacity" value={`${sizeDef.baseCoolingCapacityW} W`} />
-        <StatCard label="Max Battery Capacity" value={`${sizeDef.baseBatteryCapacityWh} Wh`} />
-        <StatCard label="Minimum Weight" value={formatWeight(sizeDef.baseWeightG)} />
+        <StatCard label="Est. Base Cooling" value={`~${sizeDef.baseCoolingCapacityW} W`} />
+        <StatCard label="Est. Battery Capacity" value={`~${sizeDef.baseBatteryCapacityWh} Wh`} />
+        <StatCard label="Est. Base Weight" value={`~${formatWeight(sizeDef.baseWeightG)}`} />
       </div>
     </div>
   );
