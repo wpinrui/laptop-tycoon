@@ -8,17 +8,14 @@ import {
   chassisCost,
   totalConsumedVolumeCm3,
   maxHeightConstraintCm,
-  DISPLAY_SLOTS,
+  applyDisplayMultiplier,
+  batteryWarningThresholdH,
 } from "./constants";
 import { getScreenSizeDef } from "../../data/screenSizes";
 import { getBatteryEra } from "../../data/batteryEras";
 import { PORT_TYPES } from "../../data/portTypes";
-import { ChassisOption, ComponentSlot } from "../../data/types";
+import { ChassisOption } from "../../data/types";
 import { getAllChassisOptions } from "./types";
-
-function applyDisplayMultiplier(value: number, slot: string, multiplier: number): number {
-  return DISPLAY_SLOTS.includes(slot as ComponentSlot) ? Math.round(value * multiplier) : value;
-}
 
 export function WizardSidebar({
   showChassisTotals,
@@ -95,9 +92,7 @@ export function WizardSidebar({
 
     // Battery life
     const estimatedHours = totalPower > 0 ? state.batteryCapacityWh / totalPower : 0;
-    const batteryWarningThresholdH =
-      GAME_YEAR <= 2002 ? 1.5 : GAME_YEAR <= 2005 ? 2 : GAME_YEAR <= 2009 ? 2.5 : GAME_YEAR <= 2014 ? 3 : 4;
-    const batteryWarning = totalPower > 0 && estimatedHours < batteryWarningThresholdH;
+    const batteryWarning = totalPower > 0 && estimatedHours < batteryWarningThresholdH(GAME_YEAR);
 
     estimateSection = (
         <div style={{ borderTop: "1px solid #333", marginTop: "12px", paddingTop: "12px" }}>

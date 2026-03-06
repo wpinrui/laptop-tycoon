@@ -21,7 +21,7 @@ import {
 } from "../../../data/chassisOptions";
 import { ChassisOption, ChassisOptionSlot } from "../../../data/types";
 import { getAllChassisOptions } from "../types";
-import { formatSpecKey } from "./ComponentStepLayout";
+import { specSummary } from "../constants";
 
 interface SlotSectionDef {
   slot: ChassisOptionSlot;
@@ -44,12 +44,6 @@ function getAvailableOptions(options: ChassisOption[], year: number): ChassisOpt
         (o.yearDiscontinued === null || o.yearDiscontinued >= year),
     )
     .sort((a, b) => a.costAtLaunch - b.costAtLaunch);
-}
-
-function specSummary(option: ChassisOption): string {
-  return Object.entries(option.specs)
-    .map(([key, value]) => `${formatSpecKey(key)}: ${value}`)
-    .join(" · ");
 }
 
 export function BodyStep() {
@@ -238,7 +232,7 @@ function ChassisCard({
         {option.name}
       </div>
       <div style={{ fontSize: "11px", color: "#888", marginBottom: "8px", lineHeight: "1.4" }}>
-        {specSummary(option)}
+        {specSummary(option.specs)}
       </div>
       <div style={{ display: "flex", gap: "12px", fontSize: "11px", flexWrap: "wrap" }}>
         <span style={{ color: "#4caf50" }}>${cost}</span>

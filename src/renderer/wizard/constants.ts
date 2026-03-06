@@ -126,6 +126,38 @@ export function coolingMultiplier(
 
 export const DISPLAY_SLOTS: ComponentSlot[] = ["resolution", "displayTech", "displaySurface"];
 
+export function applyDisplayMultiplier(value: number, slot: string, multiplier: number): number {
+  return DISPLAY_SLOTS.includes(slot as ComponentSlot) ? Math.round(value * multiplier) : value;
+}
+
+export function specSummary(specs: Record<string, string>): string {
+  return Object.entries(specs)
+    .map(([key, value]) => `${formatSpecKey(key)}: ${value}`)
+    .join(" · ");
+}
+
+export function formatSpecKey(key: string): string {
+  return key
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (c) => c.toUpperCase())
+    .trim();
+}
+
+const BATTERY_WARNING_THRESHOLDS: [number, number][] = [
+  [2002, 1.5],
+  [2005, 2],
+  [2009, 2.5],
+  [2014, 3],
+  [Infinity, 4],
+];
+
+export function batteryWarningThresholdH(year: number): number {
+  for (const [maxYear, threshold] of BATTERY_WARNING_THRESHOLDS) {
+    if (year <= maxYear) return threshold;
+  }
+  return 4;
+}
+
 export function chassisCost(option: ChassisOption, year: number): number {
   const age = year - option.yearIntroduced;
   return Math.round(option.costAtLaunch * Math.pow(1 - option.costDecayRate, age));

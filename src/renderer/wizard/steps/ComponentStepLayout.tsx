@@ -1,5 +1,5 @@
 import { useWizard } from "../WizardContext";
-import { GAME_YEAR, DISPLAY_SLOTS } from "../constants";
+import { GAME_YEAR, DISPLAY_SLOTS, applyDisplayMultiplier, specSummary } from "../constants";
 import { ALL_COMPONENTS } from "../../../data/components";
 import { getScreenSizeDef } from "../../../data/screenSizes";
 import { Component, ComponentSlot, ScreenSizeDefinition } from "../../../data/types";
@@ -17,28 +17,6 @@ function getAvailableComponents(slot: ComponentSlot, year: number): Component[] 
 
 function isDisplaySlot(slot: ComponentSlot): boolean {
   return DISPLAY_SLOTS.includes(slot);
-}
-
-function applyMultiplier(value: number, slot: ComponentSlot, multiplier: number): number {
-  if (!isDisplaySlot(slot)) return value;
-  return Math.round(value * multiplier);
-}
-
-function formatCost(cost: number): string {
-  return `$${cost}`;
-}
-
-function specSummary(component: Component): string {
-  return Object.entries(component.specs)
-    .map(([key, value]) => `${formatSpecKey(key)}: ${value}`)
-    .join(" · ");
-}
-
-export function formatSpecKey(key: string): string {
-  return key
-    .replace(/([A-Z])/g, " $1")
-    .replace(/^./, (c) => c.toUpperCase())
-    .trim();
 }
 
 export function ComponentStepLayout({
@@ -139,9 +117,9 @@ function ComponentCard({
   slot: ComponentSlot;
   multiplier: number;
 }) {
-  const cost = applyMultiplier(component.costAtLaunch, slot, multiplier);
-  const power = applyMultiplier(component.powerDrawW, slot, multiplier);
-  const weight = applyMultiplier(component.weightG, slot, multiplier);
+  const cost = applyDisplayMultiplier(component.costAtLaunch, slot, multiplier);
+  const power = applyDisplayMultiplier(component.powerDrawW, slot, multiplier);
+  const weight = applyDisplayMultiplier(component.weightG, slot, multiplier);
 
   return (
     <button
@@ -169,10 +147,10 @@ function ComponentCard({
         {component.name}
       </div>
       <div style={{ fontSize: "11px", color: "#888", marginBottom: "8px", lineHeight: "1.4" }}>
-        {specSummary(component)}
+        {specSummary(component.specs)}
       </div>
       <div style={{ display: "flex", gap: "12px", fontSize: "11px" }}>
-        <span style={{ color: "#4caf50" }}>{formatCost(cost)}</span>
+        <span style={{ color: "#4caf50" }}>${cost}</span>
         {power > 0 && <span style={{ color: "#ff9800" }}>{power}W</span>}
         {weight > 0 && <span style={{ color: "#888" }}>{weight}g</span>}
       </div>

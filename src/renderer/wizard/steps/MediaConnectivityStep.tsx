@@ -1,6 +1,6 @@
-import { ComponentStepLayout, SlotDef, formatSpecKey } from "./ComponentStepLayout";
+import { ComponentStepLayout, SlotDef } from "./ComponentStepLayout";
 import { useWizard } from "../WizardContext";
-import { GAME_YEAR } from "../constants";
+import { GAME_YEAR, formatSpecKey } from "../constants";
 import { PORT_TYPES } from "../../../data/portTypes";
 import { PortType } from "../../../data/types";
 
