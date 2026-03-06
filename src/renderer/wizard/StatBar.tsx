@@ -1,3 +1,4 @@
+import { ComponentType } from "react";
 import { useWizard } from "./WizardContext";
 import { LaptopStat, StatVector } from "../../data/types";
 import { getAllChassisOptions } from "./types";
@@ -5,20 +6,40 @@ import { DISPLAY_SLOTS } from "./constants";
 import { getScreenSizeDef } from "../../data/screenSizes";
 import { PORT_TYPES } from "../../data/portTypes";
 import { Tooltip } from "./Tooltip";
+import {
+  Zap,
+  Gamepad2,
+  Monitor,
+  BatteryMedium,
+  Wifi,
+  Volume2,
+  Camera,
+  Sparkles,
+  Shield,
+  Keyboard,
+  Mouse,
+  Thermometer,
+} from "lucide-react";
 
-const STAT_CONFIG: { stat: LaptopStat; icon: string; label: string }[] = [
-  { stat: "performance", icon: "\u25B3", label: "Performance" },
-  { stat: "gamingPerformance", icon: "\u25C7", label: "Gaming" },
-  { stat: "display", icon: "\u25A1", label: "Display" },
-  { stat: "batteryLife", icon: "\u25AD", label: "Battery Life" },
-  { stat: "connectivity", icon: "\u25CB", label: "Connectivity" },
-  { stat: "speakers", icon: "\u266A", label: "Speakers" },
-  { stat: "webcam", icon: "\u25CE", label: "Webcam" },
-  { stat: "design", icon: "\u2606", label: "Design" },
-  { stat: "buildQuality", icon: "\u25A0", label: "Build Quality" },
-  { stat: "keyboard", icon: "\u2261", label: "Keyboard" },
-  { stat: "trackpad", icon: "\u25A3", label: "Trackpad" },
-  { stat: "thermals", icon: "\u2103", label: "Thermals" },
+interface StatConfigEntry {
+  stat: LaptopStat;
+  Icon: ComponentType<{ size?: number; strokeWidth?: number }>;
+  label: string;
+}
+
+const STAT_CONFIG: StatConfigEntry[] = [
+  { stat: "performance", Icon: Zap, label: "Performance" },
+  { stat: "gamingPerformance", Icon: Gamepad2, label: "Gaming" },
+  { stat: "display", Icon: Monitor, label: "Display" },
+  { stat: "batteryLife", Icon: BatteryMedium, label: "Battery Life" },
+  { stat: "connectivity", Icon: Wifi, label: "Connectivity" },
+  { stat: "speakers", Icon: Volume2, label: "Speakers" },
+  { stat: "webcam", Icon: Camera, label: "Webcam" },
+  { stat: "design", Icon: Sparkles, label: "Design" },
+  { stat: "buildQuality", Icon: Shield, label: "Build Quality" },
+  { stat: "keyboard", Icon: Keyboard, label: "Keyboard" },
+  { stat: "trackpad", Icon: Mouse, label: "Trackpad" },
+  { stat: "thermals", Icon: Thermometer, label: "Thermals" },
 ];
 
 export { STAT_CONFIG };
@@ -77,7 +98,7 @@ export function StatBar() {
         flexWrap: "wrap",
       }}
     >
-      {STAT_CONFIG.map(({ stat, icon, label }) => {
+      {STAT_CONFIG.map(({ stat, Icon, label }) => {
         const value = totals[stat] ?? 0;
         return (
           <Tooltip key={stat} content={`${label}: ${value}`}>
@@ -93,7 +114,7 @@ export function StatBar() {
                 cursor: "default",
               }}
             >
-              <span style={{ fontSize: "14px" }}>{icon}</span>
+              <Icon size={14} strokeWidth={1.5} />
               <span style={{ fontWeight: "bold", minWidth: "16px", textAlign: "right" }}>{value}</span>
             </div>
           </Tooltip>

@@ -217,9 +217,10 @@ function ChassisTooltipContent({ option }: { option: ChassisOption }) {
           {statEntries.map(([stat, value]) => {
             const config = STAT_CONFIG.find((s) => s.stat === stat);
             if (!config) return null;
+            const { Icon } = config;
             return (
-              <span key={stat} style={{ color: "#90caf9", fontSize: "11px" }}>
-                {config.icon} +{value as number} {config.label}
+              <span key={stat} style={{ color: "#90caf9", fontSize: "11px", display: "inline-flex", alignItems: "center", gap: "2px" }}>
+                <Icon size={11} strokeWidth={1.5} /> +{value as number} {config.label}
               </span>
             );
           })}
