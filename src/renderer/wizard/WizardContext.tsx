@@ -24,6 +24,7 @@ type WizardAction =
   | { type: "SET_COMPONENT"; slot: ComponentSlot; component: Component }
   | { type: "REMOVE_COMPONENT"; slot: ComponentSlot }
   | { type: "SET_BATTERY_CAPACITY"; capacityWh: number }
+  | { type: "SET_THICKNESS"; thicknessCm: number }
   | { type: "SET_CHASSIS_OPTION"; slot: ChassisOptionSlot; option: ChassisOption }
   | { type: "GO_TO_STEP"; step: WizardStep }
   | { type: "NEXT_STEP" }
@@ -62,6 +63,8 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
     }
     case "SET_BATTERY_CAPACITY":
       return { ...state, batteryCapacityWh: action.capacityWh };
+    case "SET_THICKNESS":
+      return { ...state, thicknessCm: action.thicknessCm };
     case "SET_CHASSIS_OPTION":
       return {
         ...state,

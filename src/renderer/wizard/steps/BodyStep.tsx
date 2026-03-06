@@ -1,5 +1,13 @@
 import { useWizard } from "../WizardContext";
-import { GAME_YEAR, formatWeight } from "../constants";
+import {
+  GAME_YEAR,
+  formatWeight,
+  THICKNESS_MIN_CM,
+  THICKNESS_MAX_CM,
+  THICKNESS_STEP_CM,
+  minThicknessCm,
+  coolingMultiplier,
+} from "../constants";
 import { getScreenSizeDef } from "../../../data/screenSizes";
 import { getBatteryEra } from "../../../data/batteryEras";
 import { MATERIALS, KEYBOARD_FEATURES, TRACKPAD_FEATURES } from "../../../data/chassisOptions";
@@ -65,7 +73,16 @@ export function BodyStep() {
   const screenSizeDef = getScreenSizeDef(state.screenSize);
   const era = getBatteryEra(GAME_YEAR);
 
-  // Running totals for chassis selections
+  // --- Thickness ---
+  const thickness = state.thicknessCm;
+  const minThickness = minThicknessCm(state.batteryCapacityWh, state.screenSize);
+  const thicknessTooThin = thickness < minThickness;
+
+  // --- Cooling (adjusted by thickness) ---
+  const baseCooling = screenSizeDef.baseCoolingCapacityW;
+  const effectiveCooling = Math.round(baseCooling * coolingMultiplier(thickness));
+
+  // --- Running totals for chassis selections ---
   const selectedOptions = [
     state.chassis.material,
     state.chassis.keyboardFeature,
@@ -73,19 +90,17 @@ export function BodyStep() {
   ].filter((o): o is ChassisOption => o !== null);
 
   const totalCost = selectedOptions.reduce((sum, o) => sum + chassisCost(o, GAME_YEAR), 0);
-  const totalWeight = selectedOptions.reduce((sum, o) => sum + o.weightG, 0);
+  const totalChassisWeight = selectedOptions.reduce((sum, o) => sum + o.weightG, 0);
 
-  // Thermal warning: total component power vs cooling capacity
+  // --- Thermal warning ---
   const totalPower = totalComponentPowerDraw(
     state.components as Record<string, { powerDrawW: number } | undefined>,
     screenSizeDef.displayMultiplier,
   );
-  const coolingCapacity = screenSizeDef.baseCoolingCapacityW;
-  const thermalWarning = totalPower > coolingCapacity;
+  const thermalWarning = totalPower > effectiveCooling;
 
-  // Battery life warning
+  // --- Battery life ---
   const batteryWeight = Math.round(state.batteryCapacityWh * era.weightPerWh);
-  const baseWeight = screenSizeDef.baseWeightG;
   const componentWeight = Object.entries(state.components).reduce((sum, [slot, comp]) => {
     if (!comp) return sum;
     const w = DISPLAY_SLOTS.includes(slot as ComponentSlot)
@@ -93,7 +108,8 @@ export function BodyStep() {
       : comp.weightG;
     return sum + w;
   }, 0);
-  const estimatedTotalWeight = baseWeight + componentWeight + batteryWeight + totalWeight;
+  const estimatedTotalWeight =
+    screenSizeDef.baseWeightG + componentWeight + batteryWeight + totalChassisWeight;
   const estimatedHours = totalPower > 0 ? state.batteryCapacityWh / totalPower : 0;
   const batteryWarning = totalPower > 0 && estimatedHours < 3;
 
@@ -102,12 +118,90 @@ export function BodyStep() {
       <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
         <h2>Body / Chassis</h2>
         <p style={{ color: "#aaa", marginTop: "4px", marginBottom: "24px" }}>
-          Choose your chassis material, keyboard, and trackpad. These affect build quality,
-          design score, weight, and input experience.
+          Set chassis thickness, choose material, keyboard, and trackpad.
         </p>
 
-        {(thermalWarning || batteryWarning) && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "24px" }}>
+        {/* Thickness slider */}
+        <div style={{ marginBottom: "24px" }}>
+          <div
+            style={{
+              fontSize: "14px",
+              fontWeight: "bold",
+              color: "#ccc",
+              marginBottom: "8px",
+            }}
+          >
+            Chassis Thickness
+          </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "baseline",
+              marginBottom: "8px",
+            }}
+          >
+            <span style={{ color: "#888", fontSize: "13px" }}>{THICKNESS_MIN_CM.toFixed(1)} cm</span>
+            <span
+              style={{
+                fontSize: "36px",
+                fontWeight: "bold",
+                color: thicknessTooThin ? "#ff9800" : "#90caf9",
+              }}
+            >
+              {thickness.toFixed(1)} cm
+            </span>
+            <span style={{ color: "#888", fontSize: "13px" }}>{THICKNESS_MAX_CM.toFixed(1)} cm</span>
+          </div>
+          <input
+            type="range"
+            min={THICKNESS_MIN_CM}
+            max={THICKNESS_MAX_CM}
+            step={THICKNESS_STEP_CM}
+            value={thickness}
+            onChange={(e) =>
+              dispatch({
+                type: "SET_THICKNESS",
+                thicknessCm: Math.round(Number(e.target.value) * 10) / 10,
+              })
+            }
+            style={{ width: "100%", accentColor: thicknessTooThin ? "#ff9800" : "#90caf9" }}
+          />
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginTop: "4px",
+              fontSize: "12px",
+              color: "#888",
+            }}
+          >
+            <span>Thinner — better portability</span>
+            <span>Thicker — more cooling</span>
+          </div>
+        </div>
+
+        {/* Warnings */}
+        {(thicknessTooThin || thermalWarning || batteryWarning) && (
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "24px" }}
+          >
+            {thicknessTooThin && (
+              <div
+                style={{
+                  background: "#4a1c1c",
+                  border: "1px solid #f44336",
+                  borderRadius: "8px",
+                  padding: "12px 16px",
+                  fontSize: "13px",
+                  color: "#ef9a9a",
+                }}
+              >
+                <strong>Thickness too low:</strong> A {state.batteryCapacityWh}Wh battery in a{" "}
+                {state.screenSize}" chassis requires at least {minThickness.toFixed(1)} cm
+                thickness. Reduce battery capacity or increase thickness to proceed.
+              </div>
+            )}
             {thermalWarning && (
               <div
                 style={{
@@ -119,9 +213,9 @@ export function BodyStep() {
                   color: "#ffcc80",
                 }}
               >
-                <strong>Thermal warning:</strong> Your components draw {totalPower}W but this{" "}
-                {state.screenSize}" chassis can only dissipate {coolingCapacity}W. Expect thermal
-                throttling and high fan noise.
+                <strong>Thermal warning:</strong> Your components draw {totalPower}W but at{" "}
+                {thickness.toFixed(1)} cm thickness, this {state.screenSize}" chassis can only
+                dissipate {effectiveCooling}W. Expect thermal throttling and high fan noise.
               </div>
             )}
             {batteryWarning && (
@@ -136,13 +230,14 @@ export function BodyStep() {
                 }}
               >
                 <strong>Battery warning:</strong> With a {state.batteryCapacityWh}Wh battery and{" "}
-                {totalPower}W power draw, estimated battery life is only ~{estimatedHours.toFixed(1)}{" "}
-                hours.
+                {totalPower}W power draw, estimated battery life is only ~
+                {estimatedHours.toFixed(1)} hours.
               </div>
             )}
           </div>
         )}
 
+        {/* Chassis option slots */}
         {CHASSIS_SLOTS.map(({ slot, label, options }) => {
           const available = getAvailableOptions(options, GAME_YEAR);
           const selected = state.chassis[slot];
@@ -170,9 +265,7 @@ export function BodyStep() {
                     key={option.id}
                     option={option}
                     isSelected={selected?.id === option.id}
-                    onSelect={() =>
-                      dispatch({ type: "SET_CHASSIS_OPTION", slot, option })
-                    }
+                    onSelect={() => dispatch({ type: "SET_CHASSIS_OPTION", slot, option })}
                   />
                 ))}
               </div>
@@ -181,6 +274,7 @@ export function BodyStep() {
         })}
       </div>
 
+      {/* Sidebar */}
       <div
         style={{
           width: "200px",
@@ -195,42 +289,27 @@ export function BodyStep() {
         }}
       >
         <div
-          style={{
-            color: "#888",
-            fontSize: "12px",
-            marginBottom: "12px",
-            fontWeight: "bold",
-          }}
+          style={{ color: "#888", fontSize: "12px", marginBottom: "12px", fontWeight: "bold" }}
         >
           RUNNING TOTALS
         </div>
         <TotalRow label="Chassis Cost" value={`$${totalCost}`} />
-        <TotalRow label="Weight Impact" value={formatWeight(totalWeight)} />
-        <div
-          style={{
-            borderTop: "1px solid #333",
-            marginTop: "12px",
-            paddingTop: "12px",
-          }}
-        >
+        <TotalRow label="Weight Impact" value={formatWeight(totalChassisWeight)} />
+        <div style={{ borderTop: "1px solid #333", marginTop: "12px", paddingTop: "12px" }}>
           <div
-            style={{
-              color: "#888",
-              fontSize: "12px",
-              marginBottom: "12px",
-              fontWeight: "bold",
-            }}
+            style={{ color: "#888", fontSize: "12px", marginBottom: "12px", fontWeight: "bold" }}
           >
             LAPTOP ESTIMATE
           </div>
           <TotalRow label="Total Weight" value={formatWeight(estimatedTotalWeight)} />
+          <TotalRow label="Thickness" value={`${thickness.toFixed(1)} cm`} />
           <TotalRow label="Power Draw" value={`${totalPower}W`} />
-          <TotalRow label="Cooling" value={`${coolingCapacity}W`} />
+          <TotalRow
+            label="Cooling"
+            value={`${effectiveCooling}W`}
+          />
           {totalPower > 0 && (
-            <TotalRow
-              label="Battery Life"
-              value={`~${estimatedHours.toFixed(1)}h`}
-            />
+            <TotalRow label="Battery Life" value={`~${estimatedHours.toFixed(1)}h`} />
           )}
         </div>
       </div>

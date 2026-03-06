@@ -5,7 +5,7 @@ import {
   ChassisOption,
 } from "../../data/types";
 import { SCREEN_SIZES } from "../../data/screenSizes";
-import { MIN_BATTERY_WH, BATTERY_STEP_WH, maxBatteryWh } from "./constants";
+import { MIN_BATTERY_WH, BATTERY_STEP_WH, maxBatteryWh, THICKNESS_DEFAULT_CM } from "./constants";
 
 export type WizardStep =
   | "metadata"
@@ -49,6 +49,7 @@ export interface WizardState {
   screenSize: ScreenSizeInches;
   components: Partial<Record<ComponentSlot, Component>>;
   batteryCapacityWh: number;
+  thicknessCm: number;
   chassis: {
     material: ChassisOption | null;
     keyboardFeature: ChassisOption | null;
@@ -69,6 +70,7 @@ export const INITIAL_WIZARD_STATE: WizardState = {
     const max = maxBatteryWh(DEFAULT_SIZE_DEF.baseBatteryCapacityWh);
     return Math.round((MIN_BATTERY_WH + max) / 2 / BATTERY_STEP_WH) * BATTERY_STEP_WH;
   })(),
+  thicknessCm: THICKNESS_DEFAULT_CM,
   chassis: {
     material: null,
     keyboardFeature: null,

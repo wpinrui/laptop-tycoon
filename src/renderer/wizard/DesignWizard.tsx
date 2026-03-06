@@ -1,7 +1,7 @@
 import { WizardProvider, useWizard } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
 import { WizardStep, WIZARD_STEPS } from "./types";
-import { GAME_YEAR } from "./constants";
+import { GAME_YEAR, minThicknessCm } from "./constants";
 import { ComponentSlot } from "../../data/types";
 import { MetadataStep } from "./steps/MetadataStep";
 import { ScreenSizeStep } from "./steps/ScreenSizeStep";
@@ -32,7 +32,10 @@ function WizardContent() {
   const needsChassis =
     state.currentStep === "body" &&
     (!state.chassis.material || !state.chassis.keyboardFeature || !state.chassis.trackpadFeature);
-  const canAdvance = !needsMetadata && !needsComponents && !needsChassis;
+  const thicknessTooThin =
+    state.currentStep === "body" &&
+    state.thicknessCm < minThicknessCm(state.batteryCapacityWh, state.screenSize);
+  const canAdvance = !needsMetadata && !needsComponents && !needsChassis && !thicknessTooThin;
 
   function canNavigateTo(step: WizardStep) {
     const targetIdx = WIZARD_STEPS.indexOf(step);
