@@ -34,9 +34,9 @@ const STATUS_LABELS: Record<ModelStatus, string> = {
 const panelStyle: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  height: "75vh",
-  width: "92vw",
-  maxWidth: 1800,
+  height: tokens.layout.panelHeight,
+  width: tokens.layout.panelWidth,
+  maxWidth: tokens.layout.panelMaxWidth,
 };
 
 const headerStyle: CSSProperties = {
@@ -93,7 +93,7 @@ export function ModelManagementScreen() {
   }
 
   return (
-    <ContentPanel maxWidth={1800} style={panelStyle}>
+    <ContentPanel maxWidth={tokens.layout.panelMaxWidth} style={panelStyle}>
       <div style={headerStyle}>
         <div>
           <h2 style={{ margin: 0, fontSize: tokens.font.sizeTitle }}>Your Models</h2>

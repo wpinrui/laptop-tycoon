@@ -5,17 +5,7 @@ import { ContentPanel } from "./ContentPanel";
 import { MenuButton } from "./MenuButton";
 import { SaveSlotPicker } from "./SaveSlotPicker";
 import { saveToSlot } from "./saveSystem";
-import { tokens } from "./tokens";
-
-const overlayStyle: CSSProperties = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0, 0, 0, 0.7)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: tokens.zIndex.overlay,
-};
+import { tokens, overlayStyle } from "./tokens";
 
 const titleStyle: CSSProperties = {
   margin: 0,

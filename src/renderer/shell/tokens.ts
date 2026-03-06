@@ -1,3 +1,5 @@
+import { CSSProperties } from "react";
+
 /** Shared design tokens for the game shell UI. */
 
 export const tokens = {
@@ -43,4 +45,20 @@ export const tokens = {
     sizeTitle: 24,
     sizeHero: 36,
   },
+  layout: {
+    panelHeight: "75vh",
+    panelWidth: "92vw",
+    panelMaxWidth: 1800,
+  },
 } as const;
+
+/** Reusable modal overlay style (dark scrim + centered flex). */
+export const overlayStyle: CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(0, 0, 0, 0.7)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: tokens.zIndex.overlay,
+};

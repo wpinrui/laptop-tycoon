@@ -2,7 +2,7 @@ import { CSSProperties, useState } from "react";
 import { SaveSlotMeta, getAllSlotMeta, deleteSlot } from "./saveSystem";
 import { ContentPanel } from "./ContentPanel";
 import { MenuButton } from "./MenuButton";
-import { tokens } from "./tokens";
+import { tokens, overlayStyle as baseOverlayStyle } from "./tokens";
 
 interface SaveSlotPickerProps {
   title: string;
@@ -14,12 +14,7 @@ interface SaveSlotPickerProps {
 }
 
 const overlayStyle: CSSProperties = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0, 0, 0, 0.7)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
+  ...baseOverlayStyle,
   zIndex: tokens.zIndex.overlay + 2,
 };
 

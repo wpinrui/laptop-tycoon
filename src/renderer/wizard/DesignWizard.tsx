@@ -14,7 +14,7 @@ import { useNavigation } from "../navigation/NavigationContext";
 import { LaptopDesign } from "../state/gameTypes";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
-import { tokens } from "../shell/tokens";
+import { tokens, overlayStyle } from "../shell/tokens";
 import { MetadataStep } from "./steps/MetadataStep";
 import { ScreenSizeStep } from "./steps/ScreenSizeStep";
 import { ProcessingStep } from "./steps/ProcessingStep";
@@ -95,15 +95,7 @@ function wizardStateToDesign(state: WizardState): LaptopDesign {
 function ConfirmCloseDialog({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
   return (
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0, 0, 0, 0.7)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: tokens.zIndex.overlay,
-      }}
+      style={overlayStyle}
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel();
       }}
