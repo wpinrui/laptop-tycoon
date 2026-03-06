@@ -45,6 +45,7 @@ export function MainMenuScreen() {
 
   return (
     <ContentPanel maxWidth={420}>
+      <div style={{ fontSize: 150, textAlign: "center", lineHeight: 1, paddingBottom: "1.5rem" }}>💻</div>
       <h1 style={titleStyle}>Laptop Tycoon</h1>
       <p style={subtitleStyle}>Design. Build. Dominate.</p>
 
