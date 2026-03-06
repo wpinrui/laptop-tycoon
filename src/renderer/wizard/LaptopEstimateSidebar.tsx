@@ -114,7 +114,7 @@ export function WizardSidebar({
           <SidebarRow label="Power Draw" value={`${totalPower} W`} />
           <SidebarRow
             label="Cooling"
-            value={`${effectiveCooling}W`}
+            value={`${effectiveCooling} W`}
             warning={thermalWarning ? `Components draw ${totalPower}W but cooling only provides ${effectiveCooling}W` : undefined}
           />
           {totalPower > 0 && (
