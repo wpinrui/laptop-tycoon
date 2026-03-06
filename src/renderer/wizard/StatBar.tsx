@@ -119,7 +119,7 @@ export function computeStatTotals(state: ReturnType<typeof useWizard>["state"]):
   }, 0) / (state.selectedColours.length || 1);
   const countBonus = Math.sqrt(state.selectedColours.length) * 8;
   const premiumMultiplier = 1 + (avgColourCost - 2) * 0.02; // slight boost for pricier avg
-  const colourBonus = Math.round(countBonus * premiumMultiplier);
+  const colourBonus = Math.round((countBonus * premiumMultiplier) / 2);
   totals.design = (totals.design ?? 0) + thicknessBonus + bezelBonus + colourBonus;
 
   // Performance penalty when cooling is insufficient (quadratic curve)
