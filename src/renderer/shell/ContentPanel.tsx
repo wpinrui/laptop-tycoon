@@ -1,4 +1,4 @@
-import { CSSProperties, ReactNode } from "react";
+import { CSSProperties, ReactNode, useEffect } from "react";
 import { tokens } from "./tokens";
 
 interface ContentPanelProps {
@@ -28,16 +28,15 @@ const scrollbarCSS = `
 `;
 
 let styleInjected = false;
-function injectScrollbarStyle() {
-  if (styleInjected) return;
-  const style = document.createElement("style");
-  style.textContent = scrollbarCSS;
-  document.head.appendChild(style);
-  styleInjected = true;
-}
 
 export function ContentPanel({ children, maxWidth = 900, style }: ContentPanelProps) {
-  injectScrollbarStyle();
+  useEffect(() => {
+    if (styleInjected) return;
+    const el = document.createElement("style");
+    el.textContent = scrollbarCSS;
+    document.head.appendChild(el);
+    styleInjected = true;
+  }, []);
 
   return (
     <div

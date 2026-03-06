@@ -1,5 +1,6 @@
 import { CSSProperties, ReactNode } from "react";
 import { HUD } from "./HUD";
+import { tokens } from "./tokens";
 
 interface GameLayoutProps {
   children: ReactNode;
@@ -12,7 +13,7 @@ const layoutStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  background: "#121212",
+  background: tokens.colors.background,
   overflow: "hidden",
   position: "relative",
 };
