@@ -1,35 +1,11 @@
 import { CSSProperties, useState } from "react";
 import { useNavigation } from "../navigation/NavigationContext";
 import { useGame } from "../state/GameContext";
-import { GameState } from "../state/gameTypes";
 import { ContentPanel } from "./ContentPanel";
 import { MenuButton } from "./MenuButton";
+import { SaveSlotPicker } from "./SaveSlotPicker";
+import { saveToSlot } from "./saveSystem";
 import { tokens } from "./tokens";
-
-const SAVE_KEY = "laptop-tycoon-save";
-
-function saveGame(state: GameState): boolean {
-  try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export function loadGame(): GameState | null {
-  try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as GameState;
-  } catch {
-    return null;
-  }
-}
-
-export function hasSavedGame(): boolean {
-  return localStorage.getItem(SAVE_KEY) !== null;
-}
 
 const overlayStyle: CSSProperties = {
   position: "fixed",
@@ -76,10 +52,18 @@ export function PauseMenu() {
   const { state } = useGame();
   const [feedback, setFeedback] = useState<string | null>(null);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
+  const [showSaveSlots, setShowSaveSlots] = useState(false);
+  const [quitAfterSave, setQuitAfterSave] = useState(false);
 
-  function handleSave() {
-    const ok = saveGame(state);
-    setFeedback(ok ? "Game saved." : "Save failed.");
+  function handleSaveToSlot(slotIndex: number) {
+    const ok = saveToSlot(slotIndex, state);
+    setShowSaveSlots(false);
+    if (quitAfterSave) {
+      setQuitAfterSave(false);
+      handleQuitToMenu();
+      return;
+    }
+    setFeedback(ok ? `Saved to Slot ${slotIndex + 1}.` : "Save failed.");
     if (ok) setTimeout(() => setFeedback(null), 2000);
   }
 
@@ -98,18 +82,25 @@ export function PauseMenu() {
             <MenuButton variant="accent" onClick={() => setOverlay(null)}>
               Resume
             </MenuButton>
-            <MenuButton onClick={handleSave}>
+            <MenuButton onClick={() => setShowSaveSlots(true)}>
               Save Game
             </MenuButton>
             <MenuButton onClick={() => setShowQuitConfirm(true)}>
               Quit to Main Menu
             </MenuButton>
           </div>
-          <p style={{ ...feedbackStyle, color: feedback === "Save failed." ? tokens.colors.danger : "#4caf50" }}>
+          <p style={{ ...feedbackStyle, color: feedback?.includes("failed") ? tokens.colors.danger : "#4caf50" }}>
             {feedback ?? "\u00A0"}
           </p>
         </ContentPanel>
       </div>
+      {showSaveSlots && (
+        <SaveSlotPicker
+          title="Save Game"
+          onSelect={handleSaveToSlot}
+          onCancel={() => { setShowSaveSlots(false); setQuitAfterSave(false); }}
+        />
+      )}
       {showQuitConfirm && (
         <div
           style={{ ...overlayStyle, background: "transparent", zIndex: tokens.zIndex.overlay + 1 }}
@@ -126,7 +117,7 @@ export function PauseMenu() {
               <MenuButton onClick={() => setShowQuitConfirm(false)} style={{ flex: 1 }}>
                 Cancel
               </MenuButton>
-              <MenuButton onClick={() => { saveGame(state); handleQuitToMenu(); }} style={{ flex: 1 }}>
+              <MenuButton onClick={() => { setShowQuitConfirm(false); setQuitAfterSave(true); setShowSaveSlots(true); }} style={{ flex: 1 }}>
                 Save & Quit
               </MenuButton>
               <MenuButton variant="danger" onClick={handleQuitToMenu} style={{ flex: 1 }}>
