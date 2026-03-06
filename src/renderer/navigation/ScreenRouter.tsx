@@ -10,7 +10,6 @@ import { NewGameScreen } from "../screens/NewGameScreen";
 import { DashboardScreen } from "../screens/dashboard/DashboardScreen";
 import { ModelManagementScreen } from "../screens/ModelManagementScreen";
 
-/** Screens that don't show the HUD (pre-game screens). */
 const NO_HUD_SCREENS: Screen[] = ["mainMenu", "newGame"];
 
 function PlaceholderScreen({ title }: { title: string }) {
