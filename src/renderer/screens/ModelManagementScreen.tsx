@@ -31,11 +31,21 @@ const STATUS_LABELS: Record<ModelStatus, string> = {
   discontinued: "Discontinued",
 };
 
+const panelStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  height: "75vh",
+  width: "92vw",
+  maxWidth: 1800,
+};
+
 const headerStyle: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  marginBottom: tokens.spacing.lg,
+  paddingBottom: tokens.spacing.lg,
+  borderBottom: `1px solid ${tokens.colors.panelBorder}`,
+  flexShrink: 0,
 };
 
 const modelCardStyle: CSSProperties = {
@@ -83,7 +93,7 @@ export function ModelManagementScreen() {
   }
 
   return (
-    <ContentPanel maxWidth={800}>
+    <ContentPanel maxWidth={1800} style={panelStyle}>
       <div style={headerStyle}>
         <div>
           <h2 style={{ margin: 0, fontSize: tokens.font.sizeTitle }}>Your Models</h2>
@@ -107,6 +117,7 @@ export function ModelManagementScreen() {
         </div>
       </div>
 
+      <div style={{ flex: 1, overflowY: "auto", marginTop: tokens.spacing.lg }}>
       {activeModels.length === 0 ? (
         <div style={{
           textAlign: "center",
@@ -172,6 +183,7 @@ export function ModelManagementScreen() {
           )}
         </div>
       )}
+      </div>
     </ContentPanel>
   );
 }
