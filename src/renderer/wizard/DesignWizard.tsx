@@ -29,7 +29,10 @@ function WizardContent() {
     (!state.name.trim() || (state.modelType !== "brandNew" && !state.predecessorId));
   const requiredSlots = COMPONENT_STEP_SLOTS[state.currentStep];
   const needsComponents = requiredSlots && !requiredSlots.every((slot) => state.components[slot]);
-  const canAdvance = !needsMetadata && !needsComponents;
+  const needsChassis =
+    state.currentStep === "body" &&
+    (!state.chassis.material || !state.chassis.keyboardFeature || !state.chassis.trackpadFeature);
+  const canAdvance = !needsMetadata && !needsComponents && !needsChassis;
 
   function canNavigateTo(step: WizardStep) {
     const targetIdx = WIZARD_STEPS.indexOf(step);
