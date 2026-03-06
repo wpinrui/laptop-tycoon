@@ -87,11 +87,11 @@ export function StatBar() {
     <div
       style={{
         display: "flex",
-        gap: "2px",
+        gap: "4px",
         background: "#1a1a1a",
         border: "1px solid #333",
         borderRadius: "8px",
-        padding: "4px 12px",
+        padding: "8px 16px",
         marginTop: "8px",
         flexShrink: 0,
         justifyContent: "center",
@@ -106,15 +106,15 @@ export function StatBar() {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "4px",
-                padding: "4px 8px",
+                gap: "5px",
+                padding: "6px 10px",
                 borderRadius: "4px",
-                fontSize: "13px",
+                fontSize: "14px",
                 color: value > 0 ? "#e0e0e0" : "#555",
                 cursor: "default",
               }}
             >
-              <Icon size={14} strokeWidth={1.5} />
+              <Icon size={16} strokeWidth={1.5} />
               <span style={{ fontWeight: "bold", minWidth: "16px", textAlign: "right" }}>{value}</span>
             </div>
           </Tooltip>
