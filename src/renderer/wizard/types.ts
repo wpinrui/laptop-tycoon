@@ -7,8 +7,6 @@ import {
 import { SCREEN_SIZES } from "../../data/screenSizes";
 import {
   MIN_BATTERY_WH,
-  MAX_BATTERY_WH,
-  BATTERY_STEP_WH,
   THICKNESS_DEFAULT_CM,
   BEZEL_DEFAULT_MM,
 } from "./constants";
