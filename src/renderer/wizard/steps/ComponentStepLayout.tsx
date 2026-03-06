@@ -32,8 +32,8 @@ function StatContributions({ stats }: { stats: Record<string, number> }) {
         if (!config) return null;
         const { Icon } = config;
         return (
-          <span key={stat} style={{ color: getStatColor(stat), fontSize: "0.6875rem", display: "inline-flex", alignItems: "center", gap: "2px" }}>
-            <Icon size={11} strokeWidth={1.5} /> +{value} {config.label}
+          <span key={stat} style={{ color: getStatColor(stat), fontSize: "0.75rem", fontWeight: "bold", display: "inline-flex", alignItems: "center", gap: "2px" }}>
+            <Icon size={16} strokeWidth={2.5} /> +{value} {config.label}
           </span>
         );
       })}
