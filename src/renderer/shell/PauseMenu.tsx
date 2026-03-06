@@ -2,6 +2,7 @@ import { CSSProperties, useState } from "react";
 import { useNavigation } from "../navigation/NavigationContext";
 import { useGame } from "../state/GameContext";
 import { GameState } from "../state/gameTypes";
+import { ContentPanel } from "./ContentPanel";
 import { MenuButton } from "./MenuButton";
 import { tokens } from "./tokens";
 
@@ -40,36 +41,39 @@ const overlayStyle: CSSProperties = {
   zIndex: tokens.zIndex.overlay,
 };
 
-const panelStyle: CSSProperties = {
-  background: "#1e1e1e",
-  border: `1px solid ${tokens.colors.panelBorder}`,
-  borderRadius: tokens.borderRadius.lg,
-  padding: tokens.spacing.xl,
-  minWidth: 320,
-  maxWidth: 400,
+const titleStyle: CSSProperties = {
+  margin: 0,
+  fontSize: tokens.font.sizeHero,
+  fontWeight: 700,
+  textAlign: "center",
+};
+
+const subtitleStyle: CSSProperties = {
+  margin: 0,
+  marginTop: tokens.spacing.xs,
+  fontSize: tokens.font.sizeBase,
+  color: tokens.colors.textMuted,
+  textAlign: "center",
+};
+
+const menuStyle: CSSProperties = {
   display: "flex",
   flexDirection: "column",
   gap: tokens.spacing.sm,
-};
-
-const titleStyle: CSSProperties = {
-  margin: 0,
-  marginBottom: tokens.spacing.md,
-  fontSize: tokens.font.sizeTitle,
-  fontWeight: 700,
-  textAlign: "center",
+  marginTop: tokens.spacing.xl,
 };
 
 const feedbackStyle: CSSProperties = {
   fontSize: tokens.font.sizeSmall,
   textAlign: "center",
   margin: 0,
+  marginTop: tokens.spacing.sm,
   height: 16,
 };
 
 export function PauseMenu() {
   const { setOverlay, navigateTo } = useNavigation();
-  const { state, dispatch } = useGame();
+  const { state } = useGame();
   const [feedback, setFeedback] = useState<string | null>(null);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
 
@@ -87,42 +91,45 @@ export function PauseMenu() {
   if (showQuitConfirm) {
     return (
       <div style={overlayStyle} onClick={(e) => { if (e.target === e.currentTarget) setShowQuitConfirm(false); }}>
-        <div style={panelStyle}>
-          <h2 style={titleStyle}>Quit to Main Menu?</h2>
-          <p style={{ color: "#ccc", fontSize: tokens.font.sizeBase, margin: 0, marginBottom: tokens.spacing.md, textAlign: "center" }}>
-            Unsaved progress will be lost.
-          </p>
-          <MenuButton onClick={handleQuitToMenu} variant="accent">
-            Quit Without Saving
-          </MenuButton>
-          <MenuButton onClick={() => { saveGame(state); handleQuitToMenu(); }}>
-            Save & Quit
-          </MenuButton>
-          <MenuButton onClick={() => setShowQuitConfirm(false)}>
-            Cancel
-          </MenuButton>
-        </div>
+        <ContentPanel maxWidth={420}>
+          <h1 style={titleStyle}>Quit to Main Menu?</h1>
+          <p style={subtitleStyle}>Unsaved progress will be lost.</p>
+          <div style={menuStyle}>
+            <MenuButton variant="accent" onClick={handleQuitToMenu}>
+              Quit Without Saving
+            </MenuButton>
+            <MenuButton onClick={() => { saveGame(state); handleQuitToMenu(); }}>
+              Save & Quit
+            </MenuButton>
+            <MenuButton onClick={() => setShowQuitConfirm(false)}>
+              Cancel
+            </MenuButton>
+          </div>
+        </ContentPanel>
       </div>
     );
   }
 
   return (
     <div style={overlayStyle} onClick={(e) => { if (e.target === e.currentTarget) setOverlay(null); }}>
-      <div style={panelStyle}>
-        <h2 style={titleStyle}>Paused</h2>
-        <MenuButton variant="accent" onClick={() => setOverlay(null)}>
-          Resume
-        </MenuButton>
-        <MenuButton onClick={handleSave}>
-          Save Game
-        </MenuButton>
-        <MenuButton onClick={() => setShowQuitConfirm(true)}>
-          Quit to Main Menu
-        </MenuButton>
+      <ContentPanel maxWidth={420}>
+        <h1 style={titleStyle}>Paused</h1>
+        <p style={subtitleStyle}>{state.companyName}</p>
+        <div style={menuStyle}>
+          <MenuButton variant="accent" onClick={() => setOverlay(null)}>
+            Resume
+          </MenuButton>
+          <MenuButton onClick={handleSave}>
+            Save Game
+          </MenuButton>
+          <MenuButton onClick={() => setShowQuitConfirm(true)}>
+            Quit to Main Menu
+          </MenuButton>
+        </div>
         <p style={{ ...feedbackStyle, color: feedback === "Save failed." ? tokens.colors.danger : "#4caf50" }}>
           {feedback ?? "\u00A0"}
         </p>
-      </div>
+      </ContentPanel>
     </div>
   );
 }
