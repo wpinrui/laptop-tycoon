@@ -112,13 +112,14 @@ export function computeStatTotals(state: ReturnType<typeof useWizard>["state"]):
   // Bezel: slightly less impact, more linear (power of 1.3), up to 30 points
   const bRaw = 1 - (state.bezelMm - BEZEL_MIN_MM) / (BEZEL_MAX_MM - BEZEL_MIN_MM);
   const bezelBonus = Math.round(Math.pow(bRaw, 1.3) * 30);
-  // Colour range: sum of per-colour design value (sqrt of cost), so premium colours contribute more
-  const colourBonus = Math.round(
-    state.selectedColours.reduce((sum, id) => {
-      const opt = COLOUR_OPTIONS.find((c) => c.id === id);
-      return sum + Math.sqrt(opt?.costPerUnit ?? 0) * 3;
-    }, 0),
-  );
+  // Colour range: diminishing returns on count, with a small premium colour bonus
+  const avgColourCost = state.selectedColours.reduce((sum, id) => {
+    const opt = COLOUR_OPTIONS.find((c) => c.id === id);
+    return sum + (opt?.costPerUnit ?? 0);
+  }, 0) / (state.selectedColours.length || 1);
+  const countBonus = Math.sqrt(state.selectedColours.length) * 8;
+  const premiumMultiplier = 1 + (avgColourCost - 2) * 0.02; // slight boost for pricier avg
+  const colourBonus = Math.round(countBonus * premiumMultiplier);
   totals.design = (totals.design ?? 0) + thicknessBonus + bezelBonus + colourBonus;
 
   // Performance penalty when cooling is insufficient (quadratic curve)
