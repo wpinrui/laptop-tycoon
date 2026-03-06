@@ -1,8 +1,14 @@
-import { CSSProperties } from "react";
+import { CSSProperties, useState } from "react";
 import { useNavigation } from "../navigation/NavigationContext";
+import { useGame } from "../state/GameContext";
+import { hasAnySave, loadFromSlot, migrateOldSave } from "../shell/saveSystem";
+import { SaveSlotPicker } from "../shell/SaveSlotPicker";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { tokens } from "../shell/tokens";
+
+// Migrate old single-key save to slot 0 on first load
+migrateOldSave();
 
 const titleStyle: CSSProperties = {
   margin: 0,
@@ -30,21 +36,45 @@ const menuStyle: CSSProperties = {
 
 export function MainMenuScreen() {
   const { navigateTo } = useNavigation();
+  const { dispatch } = useGame();
+  const saved = hasAnySave();
+  const [showLoadSlots, setShowLoadSlots] = useState(false);
+
+  function handleLoadSlot(slotIndex: number) {
+    const state = loadFromSlot(slotIndex);
+    if (state) {
+      setShowLoadSlots(false);
+      dispatch({ type: "LOAD_GAME", state });
+      navigateTo("dashboard");
+    }
+  }
 
   return (
-    <ContentPanel maxWidth={420}>
-      <h1 style={titleStyle}>Laptop Tycoon</h1>
-      <p style={subtitleStyle}>Design. Build. Dominate.</p>
+    <>
+      <ContentPanel maxWidth={420}>
+        <div style={{ fontSize: 150, textAlign: "center", lineHeight: 1, paddingBottom: "1.5rem" }}>💻</div>
+        <h1 style={titleStyle}>Laptop Tycoon</h1>
+        <p style={subtitleStyle}>Design. Build. Dominate.</p>
 
-      <div style={menuStyle}>
-        <MenuButton variant="accent" onClick={() => navigateTo("newGame")}>
-          New Game
-        </MenuButton>
-        <MenuButton disabled>Continue</MenuButton>
-        <MenuButton disabled>Load Game</MenuButton>
-        <MenuButton disabled>Settings</MenuButton>
-        <MenuButton onClick={() => window.close()}>Quit</MenuButton>
-      </div>
-    </ContentPanel>
+        <div style={menuStyle}>
+          <MenuButton variant="accent" onClick={() => navigateTo("newGame")}>
+            New Game
+          </MenuButton>
+          <MenuButton disabled={!saved} onClick={() => setShowLoadSlots(true)}>
+            Load Game
+          </MenuButton>
+          <MenuButton disabled>Settings</MenuButton>
+          <MenuButton onClick={() => window.close()}>Quit</MenuButton>
+        </div>
+      </ContentPanel>
+      {showLoadSlots && (
+        <SaveSlotPicker
+          title="Load Game"
+          onSelect={handleLoadSlot}
+          onCancel={() => setShowLoadSlots(false)}
+          allowDelete
+        />
+      )}
+    </>
   );
 }

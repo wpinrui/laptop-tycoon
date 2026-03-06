@@ -17,7 +17,7 @@ const baseStyle: CSSProperties = {
 interface MenuButtonProps {
   children: ReactNode;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
-  variant?: "surface" | "accent";
+  variant?: "surface" | "accent" | "danger";
   disabled?: boolean;
   style?: CSSProperties;
 }
@@ -29,15 +29,19 @@ export function MenuButton({ children, onClick, variant = "surface", disabled, s
     ? tokens.colors.surface
     : variant === "accent"
       ? hovered ? tokens.colors.accentHover : tokens.colors.accent
-      : hovered ? tokens.colors.surfaceHover : tokens.colors.surface;
+      : variant === "danger"
+        ? hovered ? tokens.colors.dangerHover : tokens.colors.danger
+        : hovered ? tokens.colors.surfaceHover : tokens.colors.surface;
+
+  const isBold = (variant === "accent" || variant === "danger") && !disabled;
 
   return (
     <button
       style={{
         ...baseStyle,
         background: bg,
-        color: variant === "accent" && !disabled ? "#000" : tokens.colors.text,
-        fontWeight: variant === "accent" && !disabled ? 600 : 500,
+        color: isBold ? "#000" : tokens.colors.text,
+        fontWeight: isBold ? 600 : 500,
         opacity: disabled ? 0.4 : 1,
         cursor: disabled ? "not-allowed" : "pointer",
         ...style,

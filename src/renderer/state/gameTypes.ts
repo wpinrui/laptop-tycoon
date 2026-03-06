@@ -40,6 +40,7 @@ export interface GameState {
   companyName: string;
   companyLogo: string | null;
   year: number;
+  yearSimulated: boolean;
   cash: number;
   brandRecognition: number;
   nicheReputation: Record<string, number>;
@@ -57,6 +58,7 @@ export function createInitialGameState(
     companyName,
     companyLogo,
     year: STARTING_YEAR,
+    yearSimulated: false,
     cash: STARTING_CASH,
     brandRecognition: 0,
     nicheReputation: {},

@@ -11,7 +11,7 @@ const panelStyle: CSSProperties = {
   background: tokens.colors.panelBg,
   backdropFilter: tokens.backdrop.blur,
   WebkitBackdropFilter: tokens.backdrop.blur,
-  border: `1px solid ${tokens.colors.panelBorder}`,
+  border: `2px solid ${tokens.colors.panelBorder}`,
   borderRadius: tokens.borderRadius.lg,
   padding: tokens.spacing.xl,
   color: tokens.colors.text,

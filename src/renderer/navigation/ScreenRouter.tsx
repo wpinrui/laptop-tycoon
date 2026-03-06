@@ -1,16 +1,15 @@
+import { useEffect } from "react";
 import { useNavigation } from "./NavigationContext";
-import { Screen } from "./types";
 import { GameLayout } from "../shell/GameLayout";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { tokens } from "../shell/tokens";
+import { PauseMenu } from "../shell/PauseMenu";
 import { DesignWizard } from "../wizard/DesignWizard";
 import { MainMenuScreen } from "../screens/MainMenuScreen";
 import { NewGameScreen } from "../screens/NewGameScreen";
 import { DashboardScreen } from "../screens/dashboard/DashboardScreen";
-
-/** Screens that don't show the HUD (pre-game screens). */
-const NO_HUD_SCREENS: Screen[] = ["mainMenu", "newGame"];
+import { ModelManagementScreen } from "../screens/ModelManagementScreen";
 
 function PlaceholderScreen({ title }: { title: string }) {
   const { navigateTo } = useNavigation();
@@ -39,7 +38,7 @@ function ScreenContent() {
     case "designWizard":
       return <DesignWizard />;
     case "modelManagement":
-      return <PlaceholderScreen title="Model Management" />;
+      return <ModelManagementScreen />;
     case "pricingManufacturing":
       return <PlaceholderScreen title="Pricing & Manufacturing" />;
     case "financialHistory":
@@ -61,13 +60,26 @@ function ScreenContent() {
   }
 }
 
+/** Screens where Escape should NOT open the pause menu. */
+const NO_PAUSE_SCREENS = new Set(["mainMenu", "newGame", "designWizard"]);
+
 export function ScreenRouter() {
-  const { screen } = useNavigation();
-  const showHUD = !NO_HUD_SCREENS.includes(screen);
+  const { screen, overlay, setOverlay } = useNavigation();
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      if (NO_PAUSE_SCREENS.has(screen)) return;
+      setOverlay(overlay === "pauseMenu" ? null : "pauseMenu");
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [screen, overlay, setOverlay]);
 
   return (
-    <GameLayout showHUD={showHUD}>
+    <GameLayout>
       <ScreenContent />
+      {overlay === "pauseMenu" && <PauseMenu />}
     </GameLayout>
   );
 }

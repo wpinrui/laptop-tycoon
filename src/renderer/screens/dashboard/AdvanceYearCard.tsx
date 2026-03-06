@@ -38,7 +38,7 @@ export function AdvanceYearCard() {
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
         style={{ marginTop: tokens.spacing.md, width: "100%" }}
       >
-        Begin Year {state.year + 1}
+        Simulate Year {state.year}
       </MenuButton>
     </BentoCard>
   );

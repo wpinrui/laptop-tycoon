@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { WizardProvider, useWizard } from "./WizardContext";
+import { useEffect, useState } from "react";
+import { useWizard } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
 import { WizardStep, WizardState, WIZARD_STEPS, COMPONENT_STEP_SLOTS, getAllChassisOptions } from "./types";
 import {
@@ -7,7 +7,14 @@ import {
   availableVolumeCm3,
   totalConsumedVolumeCm3,
   maxHeightConstraintCm,
+  computeLaptopTotals,
 } from "./constants";
+import { useGame } from "../state/GameContext";
+import { useNavigation } from "../navigation/NavigationContext";
+import { LaptopDesign } from "../state/gameTypes";
+import { ContentPanel } from "../shell/ContentPanel";
+import { MenuButton } from "../shell/MenuButton";
+import { tokens, overlayStyle } from "../shell/tokens";
 import { MetadataStep } from "./steps/MetadataStep";
 import { ScreenSizeStep } from "./steps/ScreenSizeStep";
 import { ProcessingStep } from "./steps/ProcessingStep";
@@ -56,8 +63,68 @@ function isStepComplete(step: WizardStep, state: WizardState): boolean {
   }
 }
 
+function wizardStateToDesign(state: WizardState): LaptopDesign {
+  const totals = computeLaptopTotals(
+    state.components,
+    state.ports,
+    state.chassis,
+    state.batteryCapacityWh,
+    state.selectedColours,
+    state.screenSize,
+    state.bezelMm,
+    state.thicknessCm,
+    GAME_YEAR,
+  );
+  return {
+    id: state.editingModelId ?? crypto.randomUUID(),
+    name: state.name,
+    modelType: state.modelType,
+    predecessorId: state.predecessorId,
+    screenSize: state.screenSize,
+    components: state.components,
+    ports: state.ports,
+    batteryCapacityWh: state.batteryCapacityWh,
+    thicknessCm: state.thicknessCm,
+    bezelMm: state.bezelMm,
+    chassis: state.chassis,
+    selectedColours: state.selectedColours,
+    unitCost: totals.totalCost,
+  };
+}
+
+function ConfirmCloseDialog({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <div
+      style={overlayStyle}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onCancel();
+      }}
+    >
+      <ContentPanel maxWidth={400}>
+        <h2 style={{ margin: 0, fontSize: tokens.font.sizeTitle, fontWeight: 700, textAlign: "center" }}>
+          Discard Design?
+        </h2>
+        <p style={{ margin: 0, marginTop: tokens.spacing.xs, fontSize: tokens.font.sizeBase, color: tokens.colors.textMuted, textAlign: "center", marginBottom: tokens.spacing.md }}>
+          All unsaved progress on this laptop design will be lost.
+        </p>
+        <div style={{ display: "flex", gap: tokens.spacing.sm }}>
+          <MenuButton onClick={onCancel} style={{ flex: 1 }}>
+            Keep Editing
+          </MenuButton>
+          <MenuButton variant="danger" onClick={onConfirm} style={{ flex: 1 }}>
+            Discard
+          </MenuButton>
+        </div>
+      </ContentPanel>
+    </div>
+  );
+}
+
 function WizardContent() {
   const { state, dispatch } = useWizard();
+  const { state: gameState, dispatch: gameDispatch } = useGame();
+  const { navigateTo } = useNavigation();
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const currentIdx = WIZARD_STEPS.indexOf(state.currentStep);
   const isFirst = currentIdx === 0;
   const isLast = currentIdx === WIZARD_STEPS.length - 1;
@@ -113,9 +180,9 @@ function WizardContent() {
   return (
     <div
       style={{
-        padding: "24px",
-        fontFamily: "system-ui, sans-serif",
-        color: "#e0e0e0",
+        padding: tokens.spacing.lg,
+        fontFamily: tokens.font.family,
+        color: tokens.colors.text,
         width: "100%",
         height: "100%",
         display: "flex",
@@ -123,10 +190,56 @@ function WizardContent() {
         overflow: "hidden",
       }}
     >
-      <h1 style={{ fontSize: "1.5rem", marginBottom: "8px", flexShrink: 0 }}>Laptop Builder</h1>
-      <p style={{ color: "#888", marginBottom: "24px", flexShrink: 0 }}>
-        Design your new laptop model for {GAME_YEAR}
-      </p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexShrink: 0 }}>
+        <div>
+          <h1 style={{ fontSize: tokens.font.sizeTitle, marginBottom: tokens.spacing.sm }}>Laptop Builder</h1>
+          <p style={{ color: tokens.colors.textMuted, marginBottom: tokens.spacing.lg }}>
+            {state.editingModelId ? `Editing ${state.name}` : `Design your new laptop model for ${GAME_YEAR}`}
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: tokens.spacing.sm, flexShrink: 0 }}>
+        <button
+          onClick={() => dispatch({ type: "DEBUG_AUTOFILL" })}
+          style={{
+            background: "none",
+            border: `1px solid ${tokens.colors.panelBorder}`,
+            borderRadius: tokens.borderRadius.sm,
+            color: tokens.colors.accent,
+            fontSize: tokens.font.sizeSmall,
+            padding: `${tokens.spacing.xs + 2}px ${tokens.spacing.sm + 4}px`,
+            cursor: "pointer",
+            fontFamily: "inherit",
+            lineHeight: "1",
+            transition: "border-color 0.15s, color 0.15s",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = tokens.colors.accent; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = tokens.colors.panelBorder; }}
+        >
+          Auto-fill
+        </button>
+        <button
+          onClick={() => setShowCloseConfirm(true)}
+          style={{
+            background: "none",
+            border: `1px solid ${tokens.colors.panelBorder}`,
+            borderRadius: tokens.borderRadius.sm,
+            color: tokens.colors.textMuted,
+            fontSize: tokens.font.sizeLarge,
+            width: "36px",
+            height: "36px",
+            cursor: "pointer",
+            fontFamily: "inherit",
+            lineHeight: "1",
+            flexShrink: 0,
+            transition: "border-color 0.15s, color 0.15s",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = tokens.colors.danger; e.currentTarget.style.color = tokens.colors.danger; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = tokens.colors.panelBorder; e.currentTarget.style.color = tokens.colors.textMuted; }}
+        >
+          ✕
+        </button>
+        </div>
+      </div>
 
       <StepIndicator
         currentStep={state.currentStep}
@@ -137,17 +250,17 @@ function WizardContent() {
       <div
         style={{
           display: "flex",
-          gap: "24px",
+          gap: tokens.spacing.lg,
           flex: 1,
           minHeight: 0,
         }}
       >
         <div
           style={{
-            background: "#1e1e1e",
-            border: "1px solid #333",
-            borderRadius: "8px",
-            padding: "24px",
+            background: tokens.colors.background,
+            border: `1px solid ${tokens.colors.panelBorder}`,
+            borderRadius: tokens.borderRadius.md,
+            padding: tokens.spacing.lg,
             flex: 1,
             overflowY: "auto",
             minHeight: 0,
@@ -167,58 +280,61 @@ function WizardContent() {
         style={{
           display: "flex",
           justifyContent: "space-between",
-          marginTop: "16px",
+          marginTop: tokens.spacing.md,
           flexShrink: 0,
         }}
       >
-        <button
+        <MenuButton
           onClick={() => dispatch({ type: "PREV_STEP" })}
           disabled={isFirst}
-          style={{
-            padding: "10px 24px",
-            border: "1px solid #555",
-            borderRadius: "6px",
-            background: isFirst ? "#2a2a2a" : "#333",
-            color: isFirst ? "#666" : "#e0e0e0",
-            cursor: isFirst ? "default" : "pointer",
-            fontFamily: "inherit",
-            fontSize: "0.875rem",
-          }}
+          style={{ fontSize: tokens.font.sizeBase }}
         >
           Back
-        </button>
-        <button
+        </MenuButton>
+        <MenuButton
+          variant={isLast ? "accent" : "surface"}
           onClick={() => {
             if (isLast) {
-              // TODO: finalize design
+              const design = wizardStateToDesign(state);
+              if (state.editingModelId) {
+                gameDispatch({ type: "UPDATE_MODEL_DESIGN", modelId: state.editingModelId, design });
+              } else {
+                gameDispatch({
+                  type: "ADD_MODEL",
+                  model: {
+                    design,
+                    status: "draft",
+                    retailPrice: null,
+                    manufacturingQuantity: null,
+                    yearDesigned: gameState.year,
+                  },
+                });
+              }
+              dispatch({ type: "RESET" });
+              navigateTo("modelManagement");
             } else {
               dispatch({ type: "NEXT_STEP" });
             }
           }}
           disabled={!canAdvance}
-          style={{
-            padding: "10px 24px",
-            border: "none",
-            borderRadius: "6px",
-            background: !canAdvance ? "#2a2a2a" : isLast ? "#4caf50" : "#1976d2",
-            color: !canAdvance ? "#666" : "#fff",
-            cursor: !canAdvance ? "default" : "pointer",
-            fontFamily: "inherit",
-            fontSize: "0.875rem",
-            fontWeight: "bold",
-          }}
+          style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}
         >
-          {isLast ? "Finalize Design" : "Next"}
-        </button>
+          {isLast ? (state.editingModelId ? "Save Changes" : "Finalize Design") : "Next"}
+        </MenuButton>
       </div>
+      {showCloseConfirm && (
+        <ConfirmCloseDialog
+          onConfirm={() => {
+            dispatch({ type: "RESET" });
+            navigateTo(state.editingModelId ? "modelManagement" : "dashboard");
+          }}
+          onCancel={() => setShowCloseConfirm(false)}
+        />
+      )}
     </div>
   );
 }
 
 export function DesignWizard() {
-  return (
-    <WizardProvider>
-      <WizardContent />
-    </WizardProvider>
-  );
+  return <WizardContent />;
 }

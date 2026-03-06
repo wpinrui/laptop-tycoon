@@ -15,9 +15,10 @@ import { AdvanceYearCard } from "./AdvanceYearCard";
 const panelStyle: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  height: "75vh",
-  width: "92vw",
-  maxWidth: 1800,
+  height: tokens.layout.panelHeight,
+  width: tokens.layout.panelWidth,
+  maxWidth: tokens.layout.panelMaxWidth,
+  overflow: "hidden",
 };
 
 const headerStyle: CSSProperties = {
@@ -53,6 +54,7 @@ const statsRowStyle: CSSProperties = {
   gap: tokens.spacing.lg,
   alignItems: "center",
   fontSize: tokens.font.sizeLarge,
+  fontWeight: 700,
   color: tokens.colors.textMuted,
 };
 
@@ -77,7 +79,7 @@ export function DashboardScreen() {
   const { state } = useGame();
 
   return (
-    <ContentPanel maxWidth={1800} style={panelStyle}>
+    <ContentPanel maxWidth={tokens.layout.panelMaxWidth} style={panelStyle}>
       <div style={headerStyle}>
         <div style={titleRowStyle}>
           {state.companyLogo && (
@@ -86,12 +88,12 @@ export function DashboardScreen() {
           <h1 style={titleStyle}>{state.companyName}</h1>
         </div>
         <div style={statsRowStyle}>
-          <span>📅 {state.year}</span>
+          <span>📅 {state.yearSimulated ? "Dec" : "Jan"} {state.year}</span>
           <span>💰 {formatCash(state.cash)}</span>
         </div>
       </div>
 
-      <div className="content-panel" style={gridStyle}>
+      <div className="content-panel hide-scrollbar" style={gridStyle}>
         <div style={columnStyle}>
           <ModelsCard />
           <NewsCard />
