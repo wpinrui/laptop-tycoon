@@ -2,6 +2,7 @@ import { CSSProperties } from "react";
 import { useGame } from "../../state/GameContext";
 import { ContentPanel } from "../../shell/ContentPanel";
 import { tokens } from "../../shell/tokens";
+import { formatCash } from "../../utils/formatCash";
 import { ModelsCard } from "./ModelsCard";
 import { FinancialsCard } from "./FinancialsCard";
 import { MarketCard } from "./MarketCard";
@@ -47,6 +48,13 @@ const titleStyle: CSSProperties = {
   fontWeight: 700,
 };
 
+const statsRowStyle: CSSProperties = {
+  display: "flex",
+  gap: tokens.spacing.lg,
+  alignItems: "center",
+  fontSize: tokens.font.sizeLarge,
+  color: tokens.colors.textMuted,
+};
 
 const gridStyle: CSSProperties = {
   display: "flex",
@@ -76,6 +84,10 @@ export function DashboardScreen() {
             <img src={state.companyLogo} alt="Logo" style={logoStyle} />
           )}
           <h1 style={titleStyle}>{state.companyName}</h1>
+        </div>
+        <div style={statsRowStyle}>
+          <span>{state.year}</span>
+          <span>{formatCash(state.cash)}</span>
         </div>
       </div>
 

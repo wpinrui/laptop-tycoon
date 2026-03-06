@@ -1,5 +1,4 @@
 import { useNavigation } from "./NavigationContext";
-import { Screen } from "./types";
 import { GameLayout } from "../shell/GameLayout";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
@@ -9,8 +8,6 @@ import { MainMenuScreen } from "../screens/MainMenuScreen";
 import { NewGameScreen } from "../screens/NewGameScreen";
 import { DashboardScreen } from "../screens/dashboard/DashboardScreen";
 import { ModelManagementScreen } from "../screens/ModelManagementScreen";
-
-const NO_HUD_SCREENS: Screen[] = ["mainMenu", "newGame"];
 
 function PlaceholderScreen({ title }: { title: string }) {
   const { navigateTo } = useNavigation();
@@ -62,11 +59,8 @@ function ScreenContent() {
 }
 
 export function ScreenRouter() {
-  const { screen } = useNavigation();
-  const showHUD = !NO_HUD_SCREENS.includes(screen);
-
   return (
-    <GameLayout showHUD={showHUD}>
+    <GameLayout showHUD={false}>
       <ScreenContent />
     </GameLayout>
   );
