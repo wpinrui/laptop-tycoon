@@ -13,8 +13,8 @@ export function formatWeight(grams: number): string {
 
 // --- Thickness ---
 
-export const THICKNESS_MIN_CM = 2.0;
-export const THICKNESS_MAX_CM = 5.0;
+export const THICKNESS_MIN_CM = 0.5;
+export const THICKNESS_MAX_CM = 8.0;
 export const THICKNESS_STEP_CM = 0.1;
 export const THICKNESS_DEFAULT_CM = 3.5;
 
