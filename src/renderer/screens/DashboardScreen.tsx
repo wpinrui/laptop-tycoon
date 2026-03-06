@@ -7,11 +7,21 @@ import { MenuButton } from "../shell/MenuButton";
 import { tokens } from "../shell/tokens";
 import { formatCash } from "../utils/formatCash";
 
+const panelStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  height: "75vh",
+  width: "92vw",
+  maxWidth: 1800,
+};
+
 const headerStyle: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  marginBottom: tokens.spacing.xl,
+  paddingBottom: tokens.spacing.lg,
+  borderBottom: `1px solid ${tokens.colors.panelBorder}`,
+  flexShrink: 0,
 };
 
 const titleStyle: CSSProperties = {
@@ -28,11 +38,13 @@ const statsRowStyle: CSSProperties = {
   color: tokens.colors.textMuted,
 };
 
-const gridStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr 1fr",
-  gridTemplateRows: "auto",
-  gap: tokens.spacing.lg,
+const masonryStyle: CSSProperties = {
+  columnCount: 3,
+  columnGap: tokens.spacing.lg,
+  paddingTop: tokens.spacing.lg,
+  overflowY: "auto",
+  flex: 1,
+  minHeight: 0,
 };
 
 const cardStyle: CSSProperties = {
@@ -42,6 +54,8 @@ const cardStyle: CSSProperties = {
   cursor: "pointer",
   transition: "background 0.15s",
   border: `1px solid ${tokens.colors.panelBorder}`,
+  breakInside: "avoid" as const,
+  marginBottom: tokens.spacing.lg,
 };
 
 const cardTitleStyle: CSSProperties = {
@@ -402,7 +416,7 @@ export function DashboardScreen() {
   const { state } = useGame();
 
   return (
-    <ContentPanel maxWidth={1600} style={{ width: "90vw", maxHeight: "90vh" }}>
+    <ContentPanel maxWidth={1800} style={panelStyle}>
       <div style={headerStyle}>
         <h1 style={titleStyle}>{state.companyName}</h1>
         <div style={statsRowStyle}>
@@ -411,7 +425,7 @@ export function DashboardScreen() {
         </div>
       </div>
 
-      <div style={gridStyle}>
+      <div className="content-panel" style={masonryStyle}>
         <ModelsCard />
         <FinancialsCard />
         <MarketCard />
