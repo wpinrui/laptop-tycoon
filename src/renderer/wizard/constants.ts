@@ -1,6 +1,9 @@
-import { ChassisOption, ChassisOptionSlot, Component, ComponentSlot } from "../../data/types";
+import { ChassisOption, ChassisOptionSlot, Component, ComponentSlot, ScreenSizeInches } from "../../data/types";
 import { PORT_TYPES } from "../../data/portTypes";
 import { ALL_COMPONENTS } from "../../data/components";
+import { COLOUR_OPTIONS } from "../../data/colourOptions";
+import { getScreenSizeDef } from "../../data/screenSizes";
+import { getBatteryEra } from "../../data/batteryEras";
 import {
   MATERIALS,
   COOLING_SOLUTIONS,
@@ -282,4 +285,87 @@ export function getAvailableChassisOptions(options: ChassisOption[], year: numbe
   return options
     .filter((o) => o.yearIntroduced <= year && (o.yearDiscontinued === null || o.yearDiscontinued >= year))
     .sort((a, b) => a.costAtLaunch - b.costAtLaunch);
+}
+
+// --- Laptop totals (shared by Sidebar + ReviewStep) ---
+
+export interface LaptopTotals {
+  componentCost: number;
+  componentPower: number;
+  componentWeight: number;
+  portCost: number;
+  portWeight: number;
+  chassisOptionCost: number;
+  chassisOptionWeight: number;
+  batteryCost: number;
+  batteryWeight: number;
+  colourCost: number;
+  shellWeight: number;
+  /** Sum of all additive weights (components + ports + chassis options + battery + shell). Does NOT include screenSizeDef.baseWeightG. */
+  subtotalWeight: number;
+  totalCost: number;
+  totalPower: number;
+}
+
+export function computeLaptopTotals(
+  components: Partial<Record<ComponentSlot, Component>>,
+  ports: Record<string, number>,
+  chassis: { material: ChassisOption | null; coolingSolution: ChassisOption | null; keyboardFeature: ChassisOption | null; trackpadFeature: ChassisOption | null },
+  batteryCapacityWh: number,
+  selectedColours: string[],
+  screenSize: ScreenSizeInches,
+  bezelMm: number,
+  thicknessCm: number,
+  year: number,
+): LaptopTotals {
+  const screenSizeDef = getScreenSizeDef(screenSize);
+  const era = getBatteryEra(year);
+  const displayMult = screenSizeDef.displayMultiplier;
+
+  let componentCost = 0;
+  let componentPower = 0;
+  let componentWeight = 0;
+  for (const [slot, comp] of Object.entries(components)) {
+    if (!comp) continue;
+    componentCost += applyDisplayMultiplier(comp.costAtLaunch, slot, displayMult);
+    componentPower += applyDisplayMultiplier(comp.powerDrawW, slot, displayMult);
+    componentWeight += applyDisplayMultiplier(comp.weightG, slot, displayMult);
+  }
+
+  let portCost = 0;
+  let portWeight = 0;
+  for (const pt of PORT_TYPES) {
+    const count = ports[pt.id] ?? 0;
+    portCost += count * pt.costPerPort;
+    portWeight += count * pt.weightPerPortG;
+  }
+
+  const allChassisOptions = [chassis.material, chassis.coolingSolution, chassis.keyboardFeature, chassis.trackpadFeature];
+  const selectedChassisOptions = allChassisOptions.filter((o): o is ChassisOption => o !== null);
+  const chassisOptionCost = selectedChassisOptions.reduce((sum, o) => sum + chassisCost(o, year), 0);
+  const chassisOptionWeight = selectedChassisOptions.reduce((sum, o) => sum + o.weightG, 0);
+
+  const batteryCost = Math.round(batteryCapacityWh * era.costPerWh);
+  const batteryWeight = Math.round(batteryCapacityWh * era.weightPerWh);
+
+  const colourCost = selectedColours.reduce((sum, id) => {
+    const opt = COLOUR_OPTIONS.find((c) => c.id === id);
+    return sum + (opt?.costPerUnit ?? 0);
+  }, 0);
+
+  const materialDensity = chassis.material?.shellDensityMultiplier ?? 1.0;
+  const shellWeight = chassisShellWeightG(screenSize, bezelMm, thicknessCm, materialDensity);
+
+  const subtotalWeight = componentWeight + portWeight + chassisOptionWeight + batteryWeight + shellWeight;
+  const totalCost = componentCost + portCost + chassisOptionCost + batteryCost + colourCost;
+  const totalPower = componentPower;
+
+  return {
+    componentCost, componentPower, componentWeight,
+    portCost, portWeight,
+    chassisOptionCost, chassisOptionWeight,
+    batteryCost, batteryWeight,
+    colourCost, shellWeight,
+    subtotalWeight, totalCost, totalPower,
+  };
 }

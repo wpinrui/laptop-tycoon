@@ -7,19 +7,13 @@ import {
   availableVolumeCm3,
   coolingMultiplier,
   minThicknessForVolumeCm,
-  chassisCost,
   totalConsumedVolumeCm3,
   maxHeightConstraintCm,
-  applyDisplayMultiplier,
   batteryWarningThresholdH,
   avgUsageMultiplier,
-  chassisShellWeightG,
+  computeLaptopTotals,
 } from "./constants";
-import { COLOUR_OPTIONS } from "../../data/colourOptions";
 import { getScreenSizeDef } from "../../data/screenSizes";
-import { getBatteryEra } from "../../data/batteryEras";
-import { PORT_TYPES } from "../../data/portTypes";
-import { ChassisOption } from "../../data/types";
 import { getAllChassisOptions } from "./types";
 import { STAT_CONFIG, computeStatTotals, getStatColor } from "./StatBar";
 
@@ -32,52 +26,18 @@ export function WizardSidebar({
 }) {
   const { state } = useWizard();
   const screenSizeDef = getScreenSizeDef(state.screenSize);
-  const era = getBatteryEra(GAME_YEAR);
-  const displayMult = screenSizeDef.displayMultiplier;
 
   const thickness = state.thicknessCm;
   const bezel = state.bezelMm;
 
   // --- Running totals (always computed) ---
-  let componentCost = 0;
-  let componentPower = 0;
-  let componentWeight = 0;
-  for (const [slot, comp] of Object.entries(state.components)) {
-    if (!comp) continue;
-    componentCost += applyDisplayMultiplier(comp.costAtLaunch, slot, displayMult);
-    componentPower += applyDisplayMultiplier(comp.powerDrawW, slot, displayMult);
-    componentWeight += applyDisplayMultiplier(comp.weightG, slot, displayMult);
-  }
-
-  let portCost = 0;
-  let portWeight = 0;
-  for (const pt of PORT_TYPES) {
-    const count = state.ports[pt.id] ?? 0;
-    portCost += count * pt.costPerPort;
-    portWeight += count * pt.weightPerPortG;
-  }
-
   const allChassisOptions = getAllChassisOptions(state.chassis);
-  const selectedChassisOptions = allChassisOptions.filter(
-    (o): o is ChassisOption => o !== null,
+  const totals = computeLaptopTotals(
+    state.components, state.ports, state.chassis,
+    state.batteryCapacityWh, state.selectedColours,
+    state.screenSize, bezel, thickness, GAME_YEAR,
   );
-  const chassisOptionCost = selectedChassisOptions.reduce((sum, o) => sum + chassisCost(o, GAME_YEAR), 0);
-  const chassisOptionWeight = selectedChassisOptions.reduce((sum, o) => sum + o.weightG, 0);
-
-  const batteryCost = Math.round(state.batteryCapacityWh * era.costPerWh);
-  const batteryWeight = Math.round(state.batteryCapacityWh * era.weightPerWh);
-
-  const colourCost = state.selectedColours.reduce((sum, id) => {
-    const opt = COLOUR_OPTIONS.find((c) => c.id === id);
-    return sum + (opt?.costPerUnit ?? 0);
-  }, 0);
-
-  const materialDensity = state.chassis.material?.shellDensityMultiplier ?? 1.0;
-  const shellWeight = chassisShellWeightG(state.screenSize, bezel, thickness, materialDensity);
-
-  const totalCost = componentCost + portCost + chassisOptionCost + batteryCost + colourCost;
-  const totalPower = componentPower;
-  const totalWeight = componentWeight + portWeight + chassisOptionWeight + batteryWeight + shellWeight;
+  const { chassisOptionCost, chassisOptionWeight, totalCost, totalPower, subtotalWeight: totalWeight } = totals;
 
   // --- Statistics ---
   const statTotals = useMemo(() => computeStatTotals(state), [state]);
@@ -129,7 +89,7 @@ export function WizardSidebar({
     const minThickness = Math.max(minFromVolume, minFromHeight);
     const thicknessTooThin = thickness < minThickness;
 
-    const estimatedTotalWeight = screenSizeDef.baseWeightG + totalWeight;
+    const estimatedTotalWeight = screenSizeDef.baseWeightG + totals.subtotalWeight;
 
     const avgPower = totalPower * avgUsageMultiplier(GAME_YEAR);
     const estimatedHours = avgPower > 0 ? state.batteryCapacityWh / avgPower : 0;
