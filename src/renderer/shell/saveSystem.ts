@@ -67,26 +67,6 @@ export function hasAnySave(): boolean {
   return getAllSlotMeta().some((m) => m !== null);
 }
 
-export function getMostRecentSlot(): number | null {
-  const slots = getAllSlotMeta();
-  let best: number | null = null;
-  let bestTime = -1;
-  for (let i = 0; i < slots.length; i++) {
-    const meta = slots[i];
-    if (meta && meta.savedAt > bestTime) {
-      bestTime = meta.savedAt;
-      best = i;
-    }
-  }
-  return best;
-}
-
-export function loadMostRecent(): GameState | null {
-  const slot = getMostRecentSlot();
-  if (slot === null) return null;
-  return loadFromSlot(slot);
-}
-
 export function deleteSlot(index: number): void {
   localStorage.removeItem(slotKey(index));
 }

@@ -61,7 +61,7 @@ function ScreenContent() {
 }
 
 /** Screens where Escape should NOT open the pause menu. */
-const NO_PAUSE_SCREENS = new Set(["mainMenu", "newGame"]);
+const NO_PAUSE_SCREENS = new Set(["mainMenu", "newGame", "designWizard"]);
 
 export function ScreenRouter() {
   const { screen, overlay, setOverlay } = useNavigation();
