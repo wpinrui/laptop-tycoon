@@ -1,4 +1,23 @@
 import { ReactNode } from "react";
+import { StatContributions } from "./StatBar";
+
+export function OptionTooltipContent({
+  name,
+  description,
+  stats,
+}: {
+  name: string;
+  description: string;
+  stats: Record<string, number>;
+}) {
+  return (
+    <div>
+      <div style={{ fontWeight: "bold", marginBottom: "4px", color: "#90caf9" }}>{name}</div>
+      <div style={{ color: "#ccc", marginBottom: "6px" }}>{description}</div>
+      <StatContributions stats={stats} />
+    </div>
+  );
+}
 
 interface SelectionCardProps {
   isSelected: boolean;

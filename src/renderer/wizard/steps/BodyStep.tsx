@@ -19,8 +19,7 @@ import {
 import { ChassisOption } from "../../../data/types";
 import { getAllChassisOptions } from "../types";
 import { Tooltip } from "../Tooltip";
-import { SelectionCard } from "../SelectionCard";
-import { StatContributions } from "../StatBar";
+import { SelectionCard, OptionTooltipContent } from "../SelectionCard";
 import { COLOUR_OPTIONS } from "../../../data/colourOptions";
 
 const VOLUME_WARNING_PERCENT = 85;
@@ -223,16 +222,6 @@ export function BodyStep() {
   );
 }
 
-function ChassisTooltipContent({ option }: { option: ChassisOption }) {
-  return (
-    <div>
-      <div style={{ fontWeight: "bold", marginBottom: "4px", color: "#90caf9" }}>{option.name}</div>
-      <div style={{ color: "#ccc", marginBottom: "6px" }}>{option.description}</div>
-      <StatContributions stats={option.stats as Record<string, number>} />
-    </div>
-  );
-}
-
 function ChassisCard({
   option,
   isSelected,
@@ -245,7 +234,7 @@ function ChassisCard({
   const cost = chassisCost(option, GAME_YEAR);
 
   return (
-    <Tooltip content={<ChassisTooltipContent option={option} />}>
+    <Tooltip content={<OptionTooltipContent name={option.name} description={option.description} stats={option.stats as Record<string, number>} />}>
       <SelectionCard isSelected={isSelected} onClick={onSelect}>
         <div
           style={{

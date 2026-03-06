@@ -3,8 +3,7 @@ import { GAME_YEAR, DISPLAY_SLOTS, applyDisplayMultiplier, specSummary, getAvail
 import { getScreenSizeDef } from "../../../data/screenSizes";
 import { Component, ComponentSlot, ScreenSizeDefinition } from "../../../data/types";
 import { Tooltip } from "../Tooltip";
-import { SelectionCard } from "../SelectionCard";
-import { StatContributions } from "../StatBar";
+import { SelectionCard, OptionTooltipContent } from "../SelectionCard";
 
 export interface SlotDef {
   slot: ComponentSlot;
@@ -13,16 +12,6 @@ export interface SlotDef {
 
 function isDisplaySlot(slot: ComponentSlot): boolean {
   return DISPLAY_SLOTS.includes(slot);
-}
-
-function TooltipContent({ component }: { component: Component }) {
-  return (
-    <div>
-      <div style={{ fontWeight: "bold", marginBottom: "4px", color: "#90caf9" }}>{component.name}</div>
-      <div style={{ color: "#ccc", marginBottom: "6px" }}>{component.description}</div>
-      <StatContributions stats={component.stats as Record<string, number>} />
-    </div>
-  );
 }
 
 export function ComponentStepLayout({
@@ -129,7 +118,7 @@ function ComponentCard({
   const weight = applyDisplayMultiplier(component.weightG, slot, multiplier);
 
   return (
-    <Tooltip content={<TooltipContent component={component} />}>
+    <Tooltip content={<OptionTooltipContent name={component.name} description={component.description} stats={component.stats as Record<string, number>} />}>
       <SelectionCard isSelected={isSelected} onClick={onSelect}>
         <div
           style={{

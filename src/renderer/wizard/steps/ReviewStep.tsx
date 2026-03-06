@@ -36,8 +36,7 @@ import { COLOUR_OPTIONS } from "../../../data/colourOptions";
 import { ChassisOption, ComponentSlot, ChassisOptionSlot, PortType } from "../../../data/types";
 import { StatCard } from "./StatCard";
 import { Tooltip } from "../Tooltip";
-import { SelectionCard } from "../SelectionCard";
-import { StatContributions } from "../StatBar";
+import { SelectionCard, OptionTooltipContent } from "../SelectionCard";
 import {
   Monitor,
   Cpu,
@@ -681,11 +680,7 @@ function SingleComponentEditor({ slot }: { slot: ComponentSlot }) {
           const weight = applyDisplayMultiplier(component.weightG, slot, multiplier);
           return (
             <Tooltip key={component.id} content={
-              <div>
-                <div style={{ fontWeight: "bold", marginBottom: "4px", color: "#90caf9" }}>{component.name}</div>
-                <div style={{ color: "#ccc", marginBottom: "6px" }}>{component.description}</div>
-                <StatContributions stats={component.stats as Record<string, number>} />
-              </div>
+              <OptionTooltipContent name={component.name} description={component.description} stats={component.stats as Record<string, number>} />
             }>
               <SelectionCard
                 isSelected={isSelected}
@@ -873,11 +868,7 @@ function SingleChassisEditor({ slot, options }: { slot: ChassisOptionSlot; optio
         const cost = chassisCost(option, GAME_YEAR);
         return (
           <Tooltip key={option.id} content={
-            <div>
-              <div style={{ fontWeight: "bold", marginBottom: "4px", color: "#90caf9" }}>{option.name}</div>
-              <div style={{ color: "#ccc", marginBottom: "6px" }}>{option.description}</div>
-              <StatContributions stats={option.stats as Record<string, number>} />
-            </div>
+            <OptionTooltipContent name={option.name} description={option.description} stats={option.stats as Record<string, number>} />
           }>
             <SelectionCard
               isSelected={isSelected}
