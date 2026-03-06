@@ -6,6 +6,17 @@ import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { tokens } from "../shell/tokens";
 import { formatCash } from "../utils/formatCash";
+import {
+  Laptop,
+  DollarSign,
+  BarChart3,
+  Sparkles,
+  Trophy,
+  Newspaper,
+  History,
+  FastForward,
+  type LucideIcon,
+} from "lucide-react";
 
 const panelStyle: CSSProperties = {
   display: "flex",
@@ -24,9 +35,22 @@ const headerStyle: CSSProperties = {
   flexShrink: 0,
 };
 
+const titleRowStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: tokens.spacing.md,
+};
+
+const logoStyle: CSSProperties = {
+  width: 40,
+  height: 40,
+  borderRadius: tokens.borderRadius.sm,
+  objectFit: "contain",
+};
+
 const titleStyle: CSSProperties = {
   margin: 0,
-  fontSize: tokens.font.sizeHero,
+  fontSize: tokens.font.sizeTitle,
   fontWeight: 700,
 };
 
@@ -95,11 +119,12 @@ const MAX_MODELS = 2;
 
 interface BentoCardProps {
   title: string;
+  icon: LucideIcon;
   screen?: Screen;
   children: React.ReactNode;
 }
 
-function BentoCard({ title, screen, children }: BentoCardProps) {
+function BentoCard({ title, icon: Icon, screen, children }: BentoCardProps) {
   const { navigateTo } = useNavigation();
 
   return (
@@ -116,7 +141,10 @@ function BentoCard({ title, screen, children }: BentoCardProps) {
         e.currentTarget.style.background = tokens.colors.surface;
       } : undefined}
     >
-      <h3 style={cardTitleStyle}>{title}</h3>
+      <h3 style={cardTitleStyle}>
+        <Icon size={20} color="#fff" style={{ verticalAlign: "text-bottom", marginRight: tokens.spacing.sm }} />
+        {title}
+      </h3>
       {children}
     </div>
   );
@@ -129,7 +157,7 @@ function ModelsCard() {
   const emptySlots = MAX_MODELS - activeModels.length;
 
   return (
-    <BentoCard title="Your Models" screen="modelManagement">
+    <BentoCard title="Your Models" icon={Laptop} screen="modelManagement">
       {activeModels.length === 0 ? (
         <p style={emptyStateStyle}>No models yet. Design your first laptop!</p>
       ) : (
@@ -162,7 +190,7 @@ function ModelsCard() {
 
 function FinancialsCard() {
   return (
-    <BentoCard title="Financials" screen="financialHistory">
+    <BentoCard title="Financials" icon={DollarSign} screen="financialHistory">
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <tbody>
           {[
@@ -197,7 +225,7 @@ function FinancialsCard() {
 
 function MarketCard() {
   return (
-    <BentoCard title="Market" screen="marketOverview">
+    <BentoCard title="Market" icon={BarChart3} screen="marketOverview">
       <p style={cardBodyStyle}>Total Market Size: ~12M units/year</p>
       <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.md, fontWeight: 600 }}>
         Top Competitors
@@ -245,7 +273,7 @@ function BrandCard() {
   ];
 
   return (
-    <BentoCard title="Brand" screen="brandDetail">
+    <BentoCard title="Brand" icon={Sparkles} screen="brandDetail">
       <p style={{ ...cardBodyStyle, fontWeight: 600, marginBottom: tokens.spacing.sm }}>Recognition</p>
       <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm }}>
         <div
@@ -290,7 +318,7 @@ function BrandCard() {
 
 function ReviewsCard() {
   return (
-    <BentoCard title="Reviews & Awards" screen="reviewsAwards">
+    <BentoCard title="Reviews & Awards" icon={Trophy} screen="reviewsAwards">
       <p style={{ ...cardBodyStyle, fontWeight: 600 }}>Latest Reviews</p>
       <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs, fontStyle: "italic" }}>
         No reviews yet — launch your first model!
@@ -322,7 +350,7 @@ function ReviewsCard() {
 
 function NewsCard() {
   return (
-    <BentoCard title="News" screen="news">
+    <BentoCard title="News" icon={Newspaper} screen="news">
       {[
         { date: "Jan 2000", text: "The laptop market enters a new decade with growing consumer demand across all segments." },
         { date: "Jan 2000", text: "BudgetTech announces aggressive pricing strategy, aiming to capture the student and budget buyer markets." },
@@ -343,7 +371,7 @@ function NewsCard() {
 
 function HistoryCard() {
   return (
-    <BentoCard title="History" screen="history">
+    <BentoCard title="History" icon={History} screen="history">
       <p style={{ ...cardBodyStyle, fontWeight: 600 }}>Past Releases</p>
       <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs, fontStyle: "italic" }}>
         No models released yet
@@ -390,7 +418,7 @@ function AdvanceYearCard() {
   }
 
   return (
-    <BentoCard title="Advance Year">
+    <BentoCard title="Advance Year" icon={FastForward}>
       {warnings.length > 0 ? (
         warnings.map((w) => (
           <p key={w} style={{ ...cardBodyStyle, color: tokens.colors.danger }}>
@@ -418,7 +446,12 @@ export function DashboardScreen() {
   return (
     <ContentPanel maxWidth={1800} style={panelStyle}>
       <div style={headerStyle}>
-        <h1 style={titleStyle}>{state.companyName}</h1>
+        <div style={titleRowStyle}>
+          {state.companyLogo && (
+            <img src={state.companyLogo} alt="Logo" style={logoStyle} />
+          )}
+          <h1 style={titleStyle}>{state.companyName}</h1>
+        </div>
         <div style={statsRowStyle}>
           <span>📅 {state.year}</span>
           <span>💰 {formatCash(state.cash)}</span>
