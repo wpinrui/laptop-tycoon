@@ -5,6 +5,7 @@ import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { tokens } from "../shell/tokens";
 import { STARTING_CASH, STARTING_YEAR } from "../state/gameTypes";
+import { formatCash } from "../utils/formatCash";
 
 const LOGO_SIZE = 128;
 
@@ -79,10 +80,6 @@ const buttonRowStyle: CSSProperties = {
   gap: tokens.spacing.sm,
   marginTop: tokens.spacing.sm,
 };
-
-function formatCash(amount: number): string {
-  return `$${(amount / 1_000_000).toFixed(0)}M`;
-}
 
 export function NewGameScreen() {
   const { navigateTo, goBack } = useNavigation();
