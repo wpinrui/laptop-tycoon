@@ -21,7 +21,7 @@ export function BatteryStep() {
   const batteryWarning = totalPower > 0 && estimatedHours < batteryWarningThresholdH(GAME_YEAR);
   const batteryH = Math.floor(estimatedHours);
   const batteryM = Math.round((estimatedHours - batteryH) * 60);
-  const batteryLifeStr = batteryM > 0 ? `~${batteryH}h ${batteryM}m` : `~${batteryH}h`;
+  const batteryLifeStr = batteryM > 0 ? `~${batteryH} hour${batteryH !== 1 ? "s" : ""} ${batteryM} minute${batteryM !== 1 ? "s" : ""}` : `~${batteryH} hour${batteryH !== 1 ? "s" : ""}`;
 
   function handleChange(value: number) {
     dispatch({ type: "SET_BATTERY_CAPACITY", capacityWh: value });
