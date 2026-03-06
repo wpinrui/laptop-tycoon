@@ -1,6 +1,5 @@
 import { useWizard } from "../WizardContext";
-import { GAME_YEAR, DISPLAY_SLOTS, applyDisplayMultiplier, specSummary } from "../constants";
-import { ALL_COMPONENTS } from "../../../data/components";
+import { GAME_YEAR, DISPLAY_SLOTS, applyDisplayMultiplier, specSummary, getAvailableComponents } from "../constants";
 import { getScreenSizeDef } from "../../../data/screenSizes";
 import { Component, ComponentSlot, ScreenSizeDefinition } from "../../../data/types";
 import { Tooltip } from "../Tooltip";
@@ -10,12 +9,6 @@ import { StatContributions } from "../StatBar";
 export interface SlotDef {
   slot: ComponentSlot;
   label: string;
-}
-
-function getAvailableComponents(slot: ComponentSlot, year: number): Component[] {
-  return ALL_COMPONENTS
-    .filter((c) => c.slot === slot && c.yearIntroduced <= year && c.yearDiscontinued >= year)
-    .sort((a, b) => a.costAtLaunch - b.costAtLaunch);
 }
 
 function isDisplaySlot(slot: ComponentSlot): boolean {

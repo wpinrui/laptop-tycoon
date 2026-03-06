@@ -1,5 +1,12 @@
-import { ChassisOption, ComponentSlot } from "../../data/types";
+import { ChassisOption, ChassisOptionSlot, Component, ComponentSlot } from "../../data/types";
 import { PORT_TYPES } from "../../data/portTypes";
+import { ALL_COMPONENTS } from "../../data/components";
+import {
+  MATERIALS,
+  COOLING_SOLUTIONS,
+  KEYBOARD_FEATURES,
+  TRACKPAD_FEATURES,
+} from "../../data/chassisOptions";
 
 export const GAME_YEAR = 2000; // TODO: inject from game state
 
@@ -248,4 +255,31 @@ export function maxHeightConstraintCm(
     if (opt && opt.minThicknessCm > max) max = opt.minThicknessCm;
   }
   return max;
+}
+
+// --- Shared data lookups ---
+
+export interface ChassisSlotDef {
+  slot: ChassisOptionSlot;
+  label: string;
+  options: ChassisOption[];
+}
+
+export const CHASSIS_SLOTS: ChassisSlotDef[] = [
+  { slot: "material", label: "Chassis Material", options: MATERIALS },
+  { slot: "coolingSolution", label: "Cooling Solution", options: COOLING_SOLUTIONS },
+  { slot: "keyboardFeature", label: "Keyboard", options: KEYBOARD_FEATURES },
+  { slot: "trackpadFeature", label: "Trackpad / Pointing Device", options: TRACKPAD_FEATURES },
+];
+
+export function getAvailableComponents(slot: ComponentSlot, year: number): Component[] {
+  return ALL_COMPONENTS
+    .filter((c) => c.slot === slot && c.yearIntroduced <= year && c.yearDiscontinued >= year)
+    .sort((a, b) => a.costAtLaunch - b.costAtLaunch);
+}
+
+export function getAvailableChassisOptions(options: ChassisOption[], year: number): ChassisOption[] {
+  return options
+    .filter((o) => o.yearIntroduced <= year && (o.yearDiscontinued === null || o.yearDiscontinued >= year))
+    .sort((a, b) => a.costAtLaunch - b.costAtLaunch);
 }

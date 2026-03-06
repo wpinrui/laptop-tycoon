@@ -24,20 +24,16 @@ import {
   BEZEL_STEP_MM,
   minThicknessForVolumeCm,
   chassisShellWeightG,
+  CHASSIS_SLOTS,
+  getAvailableComponents,
+  getAvailableChassisOptions,
 } from "../constants";
 import { getAllChassisOptions, WIZARD_STEP_LABELS, WizardStep } from "../types";
 import { getScreenSizeDef, SCREEN_SIZES } from "../../../data/screenSizes";
 import { getBatteryEra } from "../../../data/batteryEras";
 import { PORT_TYPES } from "../../../data/portTypes";
 import { COLOUR_OPTIONS } from "../../../data/colourOptions";
-import { ALL_COMPONENTS } from "../../../data/components";
-import { ChassisOption, ComponentSlot, ChassisOptionSlot, Component, PortType } from "../../../data/types";
-import {
-  MATERIALS,
-  COOLING_SOLUTIONS,
-  KEYBOARD_FEATURES,
-  TRACKPAD_FEATURES,
-} from "../../../data/chassisOptions";
+import { ChassisOption, ComponentSlot, ChassisOptionSlot, PortType } from "../../../data/types";
 import { StatCard } from "./StatCard";
 import { Tooltip } from "../Tooltip";
 import { SelectionCard } from "../SelectionCard";
@@ -99,25 +95,6 @@ const STEP_SLOTS: Partial<Record<WizardStep, ComponentSlot[]>> = {
   display: ["resolution", "displayTech", "displaySurface"],
   mediaConnectivity: ["webcam", "speakers", "wifi"],
 };
-
-const CHASSIS_SLOTS: { slot: ChassisOptionSlot; label: string; options: ChassisOption[] }[] = [
-  { slot: "material", label: "Chassis Material", options: MATERIALS },
-  { slot: "coolingSolution", label: "Cooling Solution", options: COOLING_SOLUTIONS },
-  { slot: "keyboardFeature", label: "Keyboard", options: KEYBOARD_FEATURES },
-  { slot: "trackpadFeature", label: "Trackpad / Pointing Device", options: TRACKPAD_FEATURES },
-];
-
-function getAvailableComponents(slot: ComponentSlot, year: number): Component[] {
-  return ALL_COMPONENTS
-    .filter((c) => c.slot === slot && c.yearIntroduced <= year && c.yearDiscontinued >= year)
-    .sort((a, b) => a.costAtLaunch - b.costAtLaunch);
-}
-
-function getAvailableChassisOptions(options: ChassisOption[], year: number): ChassisOption[] {
-  return options
-    .filter((o) => o.yearIntroduced <= year && (o.yearDiscontinued === null || o.yearDiscontinued >= year))
-    .sort((a, b) => a.costAtLaunch - b.costAtLaunch);
-}
 
 // ---------- Dialog types ----------
 type DialogTarget =
@@ -381,10 +358,6 @@ export function ReviewStep() {
         }
 
         if (slots) {
-          const components = slots
-            .map((s) => ({ slot: s, comp: state.components[s] }))
-            .filter((c) => c.comp);
-
           return (
             <ReviewSection key={step} icon={STEP_ICONS[step]} title={WIZARD_STEP_LABELS[step]}>
               {slots.map((slot) => {

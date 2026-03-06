@@ -13,14 +13,10 @@ import {
   totalConsumedVolumeCm3,
   maxHeightConstraintCm,
   specSummary,
+  CHASSIS_SLOTS,
+  getAvailableChassisOptions,
 } from "../constants";
-import {
-  MATERIALS,
-  COOLING_SOLUTIONS,
-  KEYBOARD_FEATURES,
-  TRACKPAD_FEATURES,
-} from "../../../data/chassisOptions";
-import { ChassisOption, ChassisOptionSlot } from "../../../data/types";
+import { ChassisOption } from "../../../data/types";
 import { getAllChassisOptions } from "../types";
 import { Tooltip } from "../Tooltip";
 import { SelectionCard } from "../SelectionCard";
@@ -28,29 +24,6 @@ import { StatContributions } from "../StatBar";
 import { COLOUR_OPTIONS } from "../../../data/colourOptions";
 
 const VOLUME_WARNING_PERCENT = 85;
-
-interface SlotSectionDef {
-  slot: ChassisOptionSlot;
-  label: string;
-  options: ChassisOption[];
-}
-
-const CHASSIS_SLOTS: SlotSectionDef[] = [
-  { slot: "material", label: "Chassis Material", options: MATERIALS },
-  { slot: "coolingSolution", label: "Cooling Solution", options: COOLING_SOLUTIONS },
-  { slot: "keyboardFeature", label: "Keyboard", options: KEYBOARD_FEATURES },
-  { slot: "trackpadFeature", label: "Trackpad / Pointing Device", options: TRACKPAD_FEATURES },
-];
-
-function getAvailableOptions(options: ChassisOption[], year: number): ChassisOption[] {
-  return options
-    .filter(
-      (o) =>
-        o.yearIntroduced <= year &&
-        (o.yearDiscontinued === null || o.yearDiscontinued >= year),
-    )
-    .sort((a, b) => a.costAtLaunch - b.costAtLaunch);
-}
 
 export function BodyStep() {
   const { state, dispatch } = useWizard();
@@ -183,7 +156,7 @@ export function BodyStep() {
 
         {/* Chassis option slots */}
         {CHASSIS_SLOTS.map(({ slot, label, options }) => {
-          const available = getAvailableOptions(options, GAME_YEAR);
+          const available = getAvailableChassisOptions(options, GAME_YEAR);
           const selected = state.chassis[slot];
           return (
             <div key={slot} style={{ marginBottom: "24px" }}>
