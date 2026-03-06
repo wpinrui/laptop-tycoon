@@ -90,6 +90,6 @@ export const INITIAL_WIZARD_STATE: WizardState = {
     keyboardFeature: null,
     trackpadFeature: null,
   },
-  selectedColours: ["silver"],
+  selectedColours: [],
   visitedSteps: new Set<WizardStep>(["metadata"]),
 };

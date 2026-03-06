@@ -214,7 +214,6 @@ export function BodyStep() {
           <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
             {COLOUR_OPTIONS.map((colour) => {
               const isSelected = state.selectedColours.includes(colour.id);
-              const isLast = isSelected && state.selectedColours.length === 1;
               return (
                 <button
                   key={colour.id}
@@ -227,8 +226,7 @@ export function BodyStep() {
                     background: isSelected ? "#1a3a5c" : "#2a2a2a",
                     border: isSelected ? "2px solid #90caf9" : "2px solid #444",
                     borderRadius: "8px",
-                    cursor: isLast ? "default" : "pointer",
-                    opacity: isLast ? 0.6 : 1,
+                    cursor: "pointer",
                     color: "#e0e0e0",
                     fontFamily: "inherit",
                     transition: "border-color 0.15s, background 0.15s",

@@ -43,7 +43,8 @@ function isStepComplete(step: WizardStep, state: WizardState): boolean {
         !state.chassis.material ||
         !state.chassis.coolingSolution ||
         !state.chassis.keyboardFeature ||
-        !state.chassis.trackpadFeature
+        !state.chassis.trackpadFeature ||
+        state.selectedColours.length === 0
       )
         return false;
 
