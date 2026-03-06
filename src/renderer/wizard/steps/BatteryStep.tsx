@@ -1,5 +1,5 @@
 import { useWizard } from "../WizardContext";
-import { GAME_YEAR, formatWeight, MIN_BATTERY_WH, MAX_BATTERY_WH, BATTERY_STEP_WH, batteryWarningThresholdH } from "../constants";
+import { GAME_YEAR, formatWeight, MIN_BATTERY_WH, MAX_BATTERY_WH, BATTERY_STEP_WH, AVG_USAGE_MULTIPLIER, batteryWarningThresholdH } from "../constants";
 import { getBatteryEra } from "../../../data/batteryEras";
 import { StatCard } from "./StatCard";
 
@@ -17,11 +17,12 @@ export function BatteryStep() {
     if (comp) totalPower += comp.powerDrawW;
   }
 
-  const estimatedHours = totalPower > 0 ? capacity / totalPower : 0;
+  const avgPower = totalPower * AVG_USAGE_MULTIPLIER;
+  const estimatedHours = avgPower > 0 ? capacity / avgPower : 0;
   const batteryWarning = totalPower > 0 && estimatedHours < batteryWarningThresholdH(GAME_YEAR);
   const batteryH = Math.floor(estimatedHours);
   const batteryM = Math.round((estimatedHours - batteryH) * 60);
-  const batteryLifeStr = batteryM > 0 ? `~${batteryH} hour${batteryH !== 1 ? "s" : ""} ${batteryM} minute${batteryM !== 1 ? "s" : ""}` : `~${batteryH} hour${batteryH !== 1 ? "s" : ""}`;
+  const batteryLifeStr = batteryM > 0 ? `${batteryH} hour${batteryH !== 1 ? "s" : ""} ${batteryM} minute${batteryM !== 1 ? "s" : ""}` : `${batteryH} hour${batteryH !== 1 ? "s" : ""}`;
 
   function handleChange(value: number) {
     dispatch({ type: "SET_BATTERY_CAPACITY", capacityWh: value });
@@ -94,7 +95,7 @@ export function BatteryStep() {
 
       {totalPower > 0 && (
         <div style={{ fontSize: "0.75rem", color: "#888", textAlign: "center" }}>
-          {capacity} Wh ÷ {totalPower} W total power draw = {batteryLifeStr}
+          {capacity} Wh ÷ ({totalPower} W × {AVG_USAGE_MULTIPLIER} avg usage) = {batteryLifeStr}
         </div>
       )}
     </div>

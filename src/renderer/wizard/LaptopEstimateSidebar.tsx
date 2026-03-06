@@ -12,6 +12,7 @@ import {
   maxHeightConstraintCm,
   applyDisplayMultiplier,
   batteryWarningThresholdH,
+  AVG_USAGE_MULTIPLIER,
 } from "./constants";
 import { getScreenSizeDef } from "../../data/screenSizes";
 import { getBatteryEra } from "../../data/batteryEras";
@@ -120,7 +121,8 @@ export function WizardSidebar({
 
     const estimatedTotalWeight = screenSizeDef.baseWeightG + totalWeight;
 
-    const estimatedHours = totalPower > 0 ? state.batteryCapacityWh / totalPower : 0;
+    const avgPower = totalPower * AVG_USAGE_MULTIPLIER;
+    const estimatedHours = avgPower > 0 ? state.batteryCapacityWh / avgPower : 0;
     const batteryWarning = totalPower > 0 && estimatedHours < batteryWarningThresholdH(GAME_YEAR);
 
     estimateSection = (

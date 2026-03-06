@@ -151,6 +151,9 @@ const BATTERY_WARNING_THRESHOLDS: [number, number][] = [
   [Infinity, 4],
 ];
 
+/** Average usage multiplier for battery life estimates (40% of max TDP) */
+export const AVG_USAGE_MULTIPLIER = 0.4;
+
 export function batteryWarningThresholdH(year: number): number {
   for (const [maxYear, threshold] of BATTERY_WARNING_THRESHOLDS) {
     if (year <= maxYear) return threshold;
