@@ -23,7 +23,7 @@ import {
 import { ChassisOption, ChassisOptionSlot } from "../../../data/types";
 import { getAllChassisOptions } from "../types";
 import { Tooltip } from "../Tooltip";
-import { STAT_CONFIG } from "../StatBar";
+import { STAT_CONFIG, getStatColor } from "../StatBar";
 
 const VOLUME_WARNING_PERCENT = 85;
 
@@ -219,7 +219,7 @@ function ChassisTooltipContent({ option }: { option: ChassisOption }) {
             if (!config) return null;
             const { Icon } = config;
             return (
-              <span key={stat} style={{ color: "#90caf9", fontSize: "0.6875rem", display: "inline-flex", alignItems: "center", gap: "2px" }}>
+              <span key={stat} style={{ color: getStatColor(stat), fontSize: "0.6875rem", display: "inline-flex", alignItems: "center", gap: "2px" }}>
                 <Icon size={11} strokeWidth={1.5} /> +{value as number} {config.label}
               </span>
             );

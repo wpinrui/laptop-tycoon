@@ -4,7 +4,7 @@ import { ALL_COMPONENTS } from "../../../data/components";
 import { getScreenSizeDef } from "../../../data/screenSizes";
 import { Component, ComponentSlot, ScreenSizeDefinition } from "../../../data/types";
 import { Tooltip } from "../Tooltip";
-import { STAT_CONFIG } from "../StatBar";
+import { STAT_CONFIG, getStatColor } from "../StatBar";
 
 export interface SlotDef {
   slot: ComponentSlot;
@@ -32,7 +32,7 @@ function StatContributions({ stats }: { stats: Record<string, number> }) {
         if (!config) return null;
         const { Icon } = config;
         return (
-          <span key={stat} style={{ color: "#90caf9", fontSize: "0.6875rem", display: "inline-flex", alignItems: "center", gap: "2px" }}>
+          <span key={stat} style={{ color: getStatColor(stat), fontSize: "0.6875rem", display: "inline-flex", alignItems: "center", gap: "2px" }}>
             <Icon size={11} strokeWidth={1.5} /> +{value} {config.label}
           </span>
         );

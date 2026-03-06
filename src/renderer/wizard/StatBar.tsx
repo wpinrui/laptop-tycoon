@@ -44,6 +44,25 @@ const STAT_CONFIG: StatConfigEntry[] = [
 
 export { STAT_CONFIG };
 
+const STAT_COLORS: Record<string, string> = {
+  performance: "#ef5350",
+  gamingPerformance: "#ef5350",
+  display: "#42a5f5",
+  speakers: "#42a5f5",
+  webcam: "#42a5f5",
+  keyboard: "#66bb6a",
+  trackpad: "#66bb6a",
+  batteryLife: "#ffa726",
+  thermals: "#ffa726",
+  connectivity: "#ffa726",
+  design: "#ab47bc",
+  buildQuality: "#ab47bc",
+};
+
+export function getStatColor(stat: string): string {
+  return STAT_COLORS[stat] ?? "#90caf9";
+}
+
 export function computeStatTotals(state: ReturnType<typeof useWizard>["state"]): StatVector {
   const totals: StatVector = {};
   const screenSizeDef = getScreenSizeDef(state.screenSize);

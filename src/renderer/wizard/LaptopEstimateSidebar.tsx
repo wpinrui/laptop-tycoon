@@ -18,7 +18,7 @@ import { getBatteryEra } from "../../data/batteryEras";
 import { PORT_TYPES } from "../../data/portTypes";
 import { ChassisOption } from "../../data/types";
 import { getAllChassisOptions } from "./types";
-import { STAT_CONFIG, computeStatTotals } from "./StatBar";
+import { STAT_CONFIG, computeStatTotals, getStatColor } from "./StatBar";
 
 export function WizardSidebar({
   showChassisTotals,
@@ -90,13 +90,13 @@ export function WizardSidebar({
     return "#e0e0e0";
   }
 
-  // Group stats with dividers and category colors
-  const statGroups: { stats: string[]; color: string }[] = [
-    { stats: ["performance", "gamingPerformance"], color: "#ef5350" },       // red — power/speed
-    { stats: ["display", "speakers", "webcam"], color: "#42a5f5" },          // blue — media
-    { stats: ["keyboard", "trackpad"], color: "#66bb6a" },                   // green — input
-    { stats: ["batteryLife", "thermals", "connectivity"], color: "#ffa726" }, // amber — hardware
-    { stats: ["design", "buildQuality"], color: "#ab47bc" },                 // purple — build
+  // Group stats with dividers
+  const statGroups: string[][] = [
+    ["performance", "gamingPerformance"],
+    ["display", "speakers", "webcam"],
+    ["keyboard", "trackpad"],
+    ["batteryLife", "thermals", "connectivity"],
+    ["design", "buildQuality"],
   ];
 
   // --- Estimate (conditionally rendered) ---
@@ -190,7 +190,7 @@ export function WizardSidebar({
           {groupIdx > 0 && (
             <div style={{ borderTop: "1px solid #2a2a2a", margin: "6px 0" }} />
           )}
-          {group.stats.map((statKey) => {
+          {group.map((statKey) => {
             const config = STAT_CONFIG.find((s) => s.stat === statKey);
             if (!config) return null;
             const { Icon, label } = config;
@@ -210,7 +210,7 @@ export function WizardSidebar({
                     display: "flex",
                     alignItems: "center",
                     gap: "6px",
-                    color: group.color,
+                    color: getStatColor(statKey),
                     fontSize: "0.75rem",
                     fontWeight: "bold",
                   }}
