@@ -188,7 +188,7 @@ export function BodyStep() {
               <div style={{ fontSize: "0.875rem", fontWeight: "bold", color: "#ccc", marginBottom: "8px" }}>
                 {label}
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: "8px" }}>
                 {available.map((option) => (
                   <ChassisCard
                     key={option.id}

@@ -115,8 +115,9 @@ export function MediaConnectivityStep() {
               {!isCollapsed && (
                 <div
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(3, 1fr)",
+                    display: "flex",
+                    flexWrap: "wrap",
+                    alignItems: "flex-start",
                     gap: "8px",
                     marginTop: "6px",
                   }}
