@@ -184,7 +184,8 @@ export function ReviewStep() {
         </div>
       )}
 
-      {/* Spec breakdown by step */}
+      {/* Spec breakdown by step — 2-column masonry */}
+      <div style={{ columnCount: 2, columnGap: "12px" }}>
       {STEP_ORDER.map((step) => {
         const slots = STEP_SLOTS[step];
         if (step === "screenSize") {
@@ -316,6 +317,7 @@ export function ReviewStep() {
 
         return null;
       })}
+      </div>
 
       {/* Cost breakdown */}
       <div
@@ -373,6 +375,7 @@ function ReviewSection({
         borderRadius: "8px",
         padding: "16px",
         marginBottom: "12px",
+        breakInside: "avoid",
       }}
     >
       <div
