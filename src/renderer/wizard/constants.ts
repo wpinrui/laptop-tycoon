@@ -136,7 +136,7 @@ export function specSummary(specs: Record<string, string>): string {
     .join(" · ");
 }
 
-export function formatSpecKey(key: string): string {
+function formatSpecKey(key: string): string {
   return key
     .replace(/([A-Z])/g, " $1")
     .replace(/^./, (c) => c.toUpperCase())

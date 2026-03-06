@@ -1,6 +1,6 @@
 import { ComponentStepLayout, SlotDef } from "./ComponentStepLayout";
 import { useWizard } from "../WizardContext";
-import { GAME_YEAR, formatSpecKey } from "../constants";
+import { GAME_YEAR, specSummary } from "../constants";
 import { PORT_TYPES } from "../../../data/portTypes";
 import { PortType } from "../../../data/types";
 
@@ -109,7 +109,7 @@ function PortSelector({
       </div>
 
       <div style={{ fontSize: "11px", color: "#888", marginBottom: "4px", lineHeight: "1.4" }}>
-        {Object.entries(port.specs).map(([k, v]) => `${formatSpecKey(k)}: ${v}`).join(" · ")}
+        {specSummary(port.specs)}
       </div>
       <div style={{ color: "#888", fontSize: "11px", marginBottom: "8px" }}>
         ${port.costPerPort}/ea · {port.weightPerPortG}g · {port.volumePerPortCm3}cm³
