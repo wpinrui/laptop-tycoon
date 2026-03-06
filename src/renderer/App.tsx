@@ -1,9 +1,13 @@
-import { DesignWizard } from "./wizard/DesignWizard";
+import { GameProvider } from "./state/GameContext";
+import { NavigationProvider } from "./navigation/NavigationContext";
+import { ScreenRouter } from "./navigation/ScreenRouter";
 
 export default function App() {
   return (
-    <div style={{ background: "#121212", height: "100vh", overflow: "hidden" }}>
-      <DesignWizard />
-    </div>
+    <GameProvider>
+      <NavigationProvider>
+        <ScreenRouter />
+      </NavigationProvider>
+    </GameProvider>
   );
 }
