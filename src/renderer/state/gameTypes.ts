@@ -4,6 +4,7 @@ import {
   ChassisOption,
   ScreenSizeInches,
 } from "../../data/types";
+import { FullManufacturingPlan } from "../manufacturing/types";
 
 export interface LaptopDesign {
   id: string;
@@ -34,6 +35,7 @@ export interface LaptopModel {
   retailPrice: number | null;
   manufacturingQuantity: number | null;
   yearDesigned: number;
+  manufacturingPlan: FullManufacturingPlan | null;
 }
 
 export interface GameState {

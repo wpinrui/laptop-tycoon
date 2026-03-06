@@ -307,6 +307,7 @@ function WizardContent() {
                     retailPrice: null,
                     manufacturingQuantity: null,
                     yearDesigned: gameState.year,
+                    manufacturingPlan: null,
                   },
                 });
               }

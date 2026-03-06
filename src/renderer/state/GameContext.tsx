@@ -1,5 +1,6 @@
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
 import { GameState, LaptopDesign, LaptopModel, ModelStatus, createInitialGameState } from "./gameTypes";
+import { FullManufacturingPlan } from "../manufacturing/types";
 
 type GameAction =
   | { type: "NEW_GAME"; companyName: string; companyLogo: string | null }
@@ -9,7 +10,8 @@ type GameAction =
   | { type: "ADD_MODEL"; model: LaptopModel }
   | { type: "UPDATE_MODEL_STATUS"; modelId: string; status: ModelStatus }
   | { type: "SET_MODEL_PRICING"; modelId: string; retailPrice: number; manufacturingQuantity: number }
-  | { type: "UPDATE_MODEL_DESIGN"; modelId: string; design: LaptopDesign };
+  | { type: "UPDATE_MODEL_DESIGN"; modelId: string; design: LaptopDesign }
+  | { type: "SET_MANUFACTURING_PLAN"; modelId: string; plan: FullManufacturingPlan };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
@@ -44,6 +46,21 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         models: state.models.map((m) =>
           m.design.id === action.modelId ? { ...m, design: action.design } : m,
+        ),
+      };
+    case "SET_MANUFACTURING_PLAN":
+      return {
+        ...state,
+        models: state.models.map((m) =>
+          m.design.id === action.modelId
+            ? {
+                ...m,
+                manufacturingPlan: action.plan,
+                retailPrice: action.plan.manufacturing.unitPrice,
+                manufacturingQuantity: action.plan.manufacturing.unitsOrdered,
+                status: "manufacturing" as const,
+              }
+            : m,
         ),
       };
     default:

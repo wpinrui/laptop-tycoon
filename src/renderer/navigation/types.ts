@@ -4,7 +4,7 @@ export type Screen =
   | "dashboard"
   | "designWizard"
   | "modelManagement"
-  | "pricingManufacturing"
+  | "manufacturingWizard"
   | "financialHistory"
   | "marketOverview"
   | "brandDetail"
