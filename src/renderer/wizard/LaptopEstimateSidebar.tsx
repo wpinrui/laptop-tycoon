@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useWizard } from "./WizardContext";
+import { LaptopStat, StatVector } from "../../data/types";
 import {
   GAME_YEAR,
   formatWeight,
@@ -68,6 +70,25 @@ export function WizardSidebar({
 
   // --- Statistics ---
   const statTotals = computeStatTotals(state);
+
+  // Track previous totals: store last-known totals and update *after* render
+  // so the current render can compare current vs previous.
+  const [snapshotTotals, setSnapshotTotals] = useState<StatVector>(statTotals);
+  const [displayTotals, setDisplayTotals] = useState<StatVector>(statTotals);
+
+  const totalsChanged = JSON.stringify(statTotals) !== JSON.stringify(displayTotals);
+  if (totalsChanged) {
+    setSnapshotTotals(displayTotals);
+    setDisplayTotals(statTotals);
+  }
+
+  function statValueColor(stat: LaptopStat): string {
+    const current = statTotals[stat] ?? 0;
+    const prev = snapshotTotals[stat] ?? 0;
+    if (current > prev) return "#66bb6a";
+    if (current < prev) return "#ef5350";
+    return "#e0e0e0";
+  }
 
   // Group stats with dividers and category colors
   const statGroups: { stats: string[]; color: string }[] = [
@@ -199,7 +220,7 @@ export function WizardSidebar({
                 </span>
                 <span
                   style={{
-                    color: "#e0e0e0",
+                    color: statValueColor(config.stat),
                     fontSize: "0.75rem",
                     fontWeight: "bold",
                   }}
