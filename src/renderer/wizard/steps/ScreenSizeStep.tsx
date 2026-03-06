@@ -59,6 +59,10 @@ export function ScreenSizeStep() {
           style={{ width: "100%", accentColor: "#90caf9" }}
         />
 
+        <div style={{ fontSize: "10px", color: "#666", marginTop: "4px" }}>
+          Affects: base weight, internal space, cooling capacity, display component cost
+        </div>
+
         <div
           style={{
             display: "flex",

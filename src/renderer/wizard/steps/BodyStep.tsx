@@ -22,6 +22,8 @@ import {
 } from "../../../data/chassisOptions";
 import { ChassisOption, ChassisOptionSlot } from "../../../data/types";
 import { getAllChassisOptions } from "../types";
+import { Tooltip } from "../Tooltip";
+import { STAT_CONFIG } from "../StatBar";
 
 const VOLUME_WARNING_PERCENT = 85;
 
@@ -118,6 +120,9 @@ export function BodyStep() {
               <span>Thinner</span>
               <span>Thicker</span>
             </div>
+            <div style={{ fontSize: "10px", color: "#666", marginTop: "4px" }}>
+              Affects: internal space, cooling efficiency, weight
+            </div>
           </div>
 
           {/* Bezel slider */}
@@ -144,6 +149,9 @@ export function BodyStep() {
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#666", marginTop: "2px" }}>
               <span>Sleek</span>
               <span>More internal space</span>
+            </div>
+            <div style={{ fontSize: "10px", color: "#666", marginTop: "4px" }}>
+              Affects: internal space, overall footprint, cooling efficiency
             </div>
           </div>
         </div>
@@ -197,6 +205,30 @@ export function BodyStep() {
   );
 }
 
+function ChassisTooltipContent({ option }: { option: ChassisOption }) {
+  const statEntries = Object.entries(option.stats).filter(([, v]) => (v as number) !== 0);
+
+  return (
+    <div>
+      <div style={{ fontWeight: "bold", marginBottom: "4px", color: "#90caf9" }}>{option.name}</div>
+      <div style={{ color: "#ccc", marginBottom: "6px" }}>{option.description}</div>
+      {statEntries.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "6px" }}>
+          {statEntries.map(([stat, value]) => {
+            const config = STAT_CONFIG.find((s) => s.stat === stat);
+            if (!config) return null;
+            return (
+              <span key={stat} style={{ color: "#90caf9", fontSize: "11px" }}>
+                {config.icon} +{value as number} {config.label}
+              </span>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ChassisCard({
   option,
   isSelected,
@@ -209,47 +241,49 @@ function ChassisCard({
   const cost = chassisCost(option, GAME_YEAR);
 
   return (
-    <button
-      onClick={onSelect}
-      style={{
-        background: isSelected ? "#1a3a5c" : "#2a2a2a",
-        border: isSelected ? "2px solid #90caf9" : "1px solid #444",
-        borderRadius: "8px",
-        padding: "12px",
-        textAlign: "left",
-        cursor: "pointer",
-        color: "#e0e0e0",
-        fontFamily: "inherit",
-        transition: "border-color 0.15s, background 0.15s",
-      }}
-    >
-      <div
+    <Tooltip content={<ChassisTooltipContent option={option} />}>
+      <button
+        onClick={onSelect}
         style={{
-          fontSize: "13px",
-          fontWeight: "bold",
-          marginBottom: "6px",
-          color: isSelected ? "#90caf9" : "#e0e0e0",
+          background: isSelected ? "#1a3a5c" : "#2a2a2a",
+          border: isSelected ? "2px solid #90caf9" : "1px solid #444",
+          borderRadius: "8px",
+          padding: "12px",
+          textAlign: "left",
+          cursor: "pointer",
+          color: "#e0e0e0",
+          fontFamily: "inherit",
+          transition: "border-color 0.15s, background 0.15s",
         }}
       >
-        {option.name}
-      </div>
-      <div style={{ fontSize: "11px", color: "#888", marginBottom: "8px", lineHeight: "1.4" }}>
-        {specSummary(option.specs)}
-      </div>
-      <div style={{ display: "flex", gap: "12px", fontSize: "11px", flexWrap: "wrap" }}>
-        <span style={{ color: "#4caf50" }}>${cost}</span>
-        {option.weightG !== 0 && (
-          <span style={{ color: option.weightG < 0 ? "#64b5f6" : "#888" }}>
-            {option.weightG > 0 ? "+" : ""}{option.weightG}g
-          </span>
-        )}
-        {option.volumeCm3 > 0 && (
-          <span style={{ color: "#ce93d8" }}>{option.volumeCm3}cm³</span>
-        )}
-        {option.coolingCapacityW > 0 && (
-          <span style={{ color: "#4fc3f7" }}>{option.coolingCapacityW}W cooling</span>
-        )}
-      </div>
-    </button>
+        <div
+          style={{
+            fontSize: "13px",
+            fontWeight: "bold",
+            marginBottom: "6px",
+            color: isSelected ? "#90caf9" : "#e0e0e0",
+          }}
+        >
+          {option.name}
+        </div>
+        <div style={{ fontSize: "11px", color: "#888", marginBottom: "8px", lineHeight: "1.4" }}>
+          {specSummary(option.specs)}
+        </div>
+        <div style={{ display: "flex", gap: "12px", fontSize: "11px", flexWrap: "wrap" }}>
+          <span style={{ color: "#4caf50" }}>${cost}</span>
+          {option.weightG !== 0 && (
+            <span style={{ color: option.weightG < 0 ? "#64b5f6" : "#888" }}>
+              {option.weightG > 0 ? "+" : ""}{option.weightG}g
+            </span>
+          )}
+          {option.volumeCm3 > 0 && (
+            <span style={{ color: "#ce93d8" }}>{option.volumeCm3}cm³</span>
+          )}
+          {option.coolingCapacityW > 0 && (
+            <span style={{ color: "#4fc3f7" }}>{option.coolingCapacityW}W cooling</span>
+          )}
+        </div>
+      </button>
+    </Tooltip>
   );
 }

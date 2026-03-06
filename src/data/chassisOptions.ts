@@ -4,6 +4,7 @@ export const MATERIALS: ChassisOption[] = [
   {
     id: "plastic_basic",
     name: "Basic Plastic",
+    description: "Cheap and functional. Gets the job done but feels flimsy.",
     slot: "material",
     yearIntroduced: 2000,
     yearDiscontinued: null,
@@ -19,6 +20,7 @@ export const MATERIALS: ChassisOption[] = [
   {
     id: "plastic_soft_touch",
     name: "Soft-touch Plastic",
+    description: "Rubberized coating adds grip and a premium feel at low cost.",
     slot: "material",
     yearIntroduced: 2001,
     yearDiscontinued: null,
@@ -34,6 +36,7 @@ export const MATERIALS: ChassisOption[] = [
   {
     id: "magnesium_alloy",
     name: "Magnesium Alloy",
+    description: "Lightweight metal alloy used in business laptops. Strong and light.",
     slot: "material",
     yearIntroduced: 2000,
     yearDiscontinued: null,
@@ -49,6 +52,7 @@ export const MATERIALS: ChassisOption[] = [
   {
     id: "aluminium",
     name: "Aluminium",
+    description: "Sleek brushed metal that looks premium and conducts heat well.",
     slot: "material",
     yearIntroduced: 2003,
     yearDiscontinued: null,
@@ -64,6 +68,7 @@ export const MATERIALS: ChassisOption[] = [
   {
     id: "carbon_fibre",
     name: "Carbon Fibre",
+    description: "Ultra-light aerospace material. Maximum strength, minimum weight.",
     slot: "material",
     yearIntroduced: 2004,
     yearDiscontinued: null,
@@ -82,6 +87,7 @@ export const COOLING_SOLUTIONS: ChassisOption[] = [
   {
     id: "passive_cooling",
     name: "Passive Cooling (heatsink only)",
+    description: "Silent operation with no fans — limited to low-power components.",
     slot: "coolingSolution",
     yearIntroduced: 2000,
     yearDiscontinued: null,
@@ -97,6 +103,7 @@ export const COOLING_SOLUTIONS: ChassisOption[] = [
   {
     id: "single_fan",
     name: "Single Fan Cooling",
+    description: "Standard cooling for most laptops. Some audible noise under load.",
     slot: "coolingSolution",
     yearIntroduced: 2000,
     yearDiscontinued: null,
@@ -112,6 +119,7 @@ export const COOLING_SOLUTIONS: ChassisOption[] = [
   {
     id: "single_fan_heatpipe",
     name: "Fan + Copper Heatpipe",
+    description: "Copper heatpipe efficiently moves heat away from the CPU.",
     slot: "coolingSolution",
     yearIntroduced: 2001,
     yearDiscontinued: null,
@@ -127,6 +135,7 @@ export const COOLING_SOLUTIONS: ChassisOption[] = [
   {
     id: "dual_fan",
     name: "Dual Fan Cooling",
+    description: "Aggressive cooling for high-performance builds. Gets loud under load.",
     slot: "coolingSolution",
     yearIntroduced: 2002,
     yearDiscontinued: null,
@@ -142,6 +151,7 @@ export const COOLING_SOLUTIONS: ChassisOption[] = [
   {
     id: "dual_fan_heatpipe",
     name: "Dual Fan + Dual Heatpipe",
+    description: "Maximum cooling capacity for power-hungry CPU and GPU combos.",
     slot: "coolingSolution",
     yearIntroduced: 2003,
     yearDiscontinued: null,
@@ -160,6 +170,7 @@ export const KEYBOARD_FEATURES: ChassisOption[] = [
   {
     id: "keyboard_basic",
     name: "Standard Membrane Keyboard",
+    description: "Standard laptop keyboard — adequate but unremarkable.",
     slot: "keyboardFeature",
     yearIntroduced: 2000,
     yearDiscontinued: null,
@@ -175,6 +186,7 @@ export const KEYBOARD_FEATURES: ChassisOption[] = [
   {
     id: "keyboard_quality",
     name: "Quality Membrane Keyboard",
+    description: "Better key feel with full-size layout including numpad on larger models.",
     slot: "keyboardFeature",
     yearIntroduced: 2000,
     yearDiscontinued: null,
@@ -190,6 +202,7 @@ export const KEYBOARD_FEATURES: ChassisOption[] = [
   {
     id: "keyboard_thinkpad_style",
     name: "ThinkPad-style Keyboard",
+    description: "Legendary typing experience with sculpted keys and excellent travel.",
     slot: "keyboardFeature",
     yearIntroduced: 2000,
     yearDiscontinued: null,
@@ -205,6 +218,7 @@ export const KEYBOARD_FEATURES: ChassisOption[] = [
   {
     id: "keyboard_spill_resistant",
     name: "Spill-resistant Keyboard",
+    description: "Built-in drainage protects against accidental spills.",
     slot: "keyboardFeature",
     yearIntroduced: 2002,
     yearDiscontinued: null,
@@ -220,6 +234,7 @@ export const KEYBOARD_FEATURES: ChassisOption[] = [
   {
     id: "keyboard_backlit",
     name: "Backlit Keyboard",
+    description: "LED backlighting for typing in dark environments.",
     slot: "keyboardFeature",
     yearIntroduced: 2005,
     yearDiscontinued: null,
@@ -238,6 +253,7 @@ export const TRACKPAD_FEATURES: ChassisOption[] = [
   {
     id: "trackpad_basic",
     name: "Basic Touchpad with Buttons",
+    description: "Small touchpad with two physical buttons. Gets the job done.",
     slot: "trackpadFeature",
     yearIntroduced: 2000,
     yearDiscontinued: null,
@@ -253,6 +269,7 @@ export const TRACKPAD_FEATURES: ChassisOption[] = [
   {
     id: "trackpad_quality",
     name: "Quality Touchpad",
+    description: "Larger pad with dedicated scroll zone for easier navigation.",
     slot: "trackpadFeature",
     yearIntroduced: 2001,
     yearDiscontinued: null,
@@ -268,6 +285,7 @@ export const TRACKPAD_FEATURES: ChassisOption[] = [
   {
     id: "trackpoint",
     name: "TrackPoint (pointing stick)",
+    description: "Iconic red nub for precise cursor control without leaving the home row.",
     slot: "trackpadFeature",
     yearIntroduced: 2000,
     yearDiscontinued: null,
@@ -283,6 +301,7 @@ export const TRACKPAD_FEATURES: ChassisOption[] = [
   {
     id: "trackpad_plus_trackpoint",
     name: "Touchpad + TrackPoint Combo",
+    description: "Both input methods — maximum flexibility for power users.",
     slot: "trackpadFeature",
     yearIntroduced: 2001,
     yearDiscontinued: null,
@@ -298,6 +317,7 @@ export const TRACKPAD_FEATURES: ChassisOption[] = [
   {
     id: "trackpad_scroll_2d",
     name: "Touchpad with 2D Scroll",
+    description: "Supports both horizontal and vertical scroll gestures.",
     slot: "trackpadFeature",
     yearIntroduced: 2004,
     yearDiscontinued: null,

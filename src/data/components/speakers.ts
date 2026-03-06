@@ -4,6 +4,7 @@ export const SPEAKERS: Component[] = [
   {
     id: "basic_mono",
     name: "Basic Mono Speaker",
+    description: "Tinny single speaker — just enough for system sounds.",
     slot: "speakers",
     yearIntroduced: 2000,
     yearDiscontinued: 2003,
@@ -18,6 +19,7 @@ export const SPEAKERS: Component[] = [
   {
     id: "stereo_basic",
     name: "Stereo Speakers",
+    description: "Dual speakers for basic stereo audio. Standard laptop quality.",
     slot: "speakers",
     yearIntroduced: 2000,
     yearDiscontinued: 2005,
@@ -34,6 +36,7 @@ export const SPEAKERS: Component[] = [
   {
     id: "stereo_enhanced",
     name: "Enhanced Stereo Speakers",
+    description: "Better drivers for clearer mids and slightly more bass.",
     slot: "speakers",
     yearIntroduced: 2002,
     yearDiscontinued: 2006,
@@ -50,6 +53,7 @@ export const SPEAKERS: Component[] = [
   {
     id: "jbl_branded",
     name: "JBL-branded Stereo Speakers",
+    description: "Premium branded speakers with noticeably better sound quality.",
     slot: "speakers",
     yearIntroduced: 2004,
     yearDiscontinued: 2007,
@@ -66,6 +70,7 @@ export const SPEAKERS: Component[] = [
   {
     id: "harman_kardon",
     name: "Harman Kardon Speakers",
+    description: "Top-tier laptop audio — rich, balanced sound for media.",
     slot: "speakers",
     yearIntroduced: 2005,
     yearDiscontinued: 2008,

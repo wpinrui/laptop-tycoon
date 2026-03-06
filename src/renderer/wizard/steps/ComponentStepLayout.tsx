@@ -3,6 +3,8 @@ import { GAME_YEAR, DISPLAY_SLOTS, applyDisplayMultiplier, specSummary } from ".
 import { ALL_COMPONENTS } from "../../../data/components";
 import { getScreenSizeDef } from "../../../data/screenSizes";
 import { Component, ComponentSlot, ScreenSizeDefinition } from "../../../data/types";
+import { Tooltip } from "../Tooltip";
+import { STAT_CONFIG } from "../StatBar";
 
 export interface SlotDef {
   slot: ComponentSlot;
@@ -17,6 +19,35 @@ function getAvailableComponents(slot: ComponentSlot, year: number): Component[] 
 
 function isDisplaySlot(slot: ComponentSlot): boolean {
   return DISPLAY_SLOTS.includes(slot);
+}
+
+function StatContributions({ stats }: { stats: Record<string, number> }) {
+  const entries = Object.entries(stats).filter(([, v]) => v !== 0);
+  if (entries.length === 0) return null;
+
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "6px" }}>
+      {entries.map(([stat, value]) => {
+        const config = STAT_CONFIG.find((s) => s.stat === stat);
+        if (!config) return null;
+        return (
+          <span key={stat} style={{ color: "#90caf9", fontSize: "11px" }}>
+            {config.icon} +{value} {config.label}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function TooltipContent({ component }: { component: Component }) {
+  return (
+    <div>
+      <div style={{ fontWeight: "bold", marginBottom: "4px", color: "#90caf9" }}>{component.name}</div>
+      <div style={{ color: "#ccc", marginBottom: "6px" }}>{component.description}</div>
+      <StatContributions stats={component.stats as Record<string, number>} />
+    </div>
+  );
 }
 
 export function ComponentStepLayout({
@@ -122,38 +153,40 @@ function ComponentCard({
   const weight = applyDisplayMultiplier(component.weightG, slot, multiplier);
 
   return (
-    <button
-      onClick={onSelect}
-      style={{
-        background: isSelected ? "#1a3a5c" : "#2a2a2a",
-        border: isSelected ? "2px solid #90caf9" : "1px solid #444",
-        borderRadius: "8px",
-        padding: "12px",
-        textAlign: "left",
-        cursor: "pointer",
-        color: "#e0e0e0",
-        fontFamily: "inherit",
-        transition: "border-color 0.15s, background 0.15s",
-      }}
-    >
-      <div
+    <Tooltip content={<TooltipContent component={component} />}>
+      <button
+        onClick={onSelect}
         style={{
-          fontSize: "13px",
-          fontWeight: "bold",
-          marginBottom: "6px",
-          color: isSelected ? "#90caf9" : "#e0e0e0",
+          background: isSelected ? "#1a3a5c" : "#2a2a2a",
+          border: isSelected ? "2px solid #90caf9" : "1px solid #444",
+          borderRadius: "8px",
+          padding: "12px",
+          textAlign: "left",
+          cursor: "pointer",
+          color: "#e0e0e0",
+          fontFamily: "inherit",
+          transition: "border-color 0.15s, background 0.15s",
         }}
       >
-        {component.name}
-      </div>
-      <div style={{ fontSize: "11px", color: "#888", marginBottom: "8px", lineHeight: "1.4" }}>
-        {specSummary(component.specs)}
-      </div>
-      <div style={{ display: "flex", gap: "12px", fontSize: "11px" }}>
-        <span style={{ color: "#4caf50" }}>${cost}</span>
-        {power > 0 && <span style={{ color: "#ff9800" }}>{power}W</span>}
-        {weight > 0 && <span style={{ color: "#888" }}>{weight}g</span>}
-      </div>
-    </button>
+        <div
+          style={{
+            fontSize: "13px",
+            fontWeight: "bold",
+            marginBottom: "6px",
+            color: isSelected ? "#90caf9" : "#e0e0e0",
+          }}
+        >
+          {component.name}
+        </div>
+        <div style={{ fontSize: "11px", color: "#888", marginBottom: "8px", lineHeight: "1.4" }}>
+          {specSummary(component.specs)}
+        </div>
+        <div style={{ display: "flex", gap: "12px", fontSize: "11px" }}>
+          <span style={{ color: "#4caf50" }}>${cost}</span>
+          {power > 0 && <span style={{ color: "#ff9800" }}>{power}W</span>}
+          {weight > 0 && <span style={{ color: "#888" }}>{weight}g</span>}
+        </div>
+      </button>
+    </Tooltip>
   );
 }

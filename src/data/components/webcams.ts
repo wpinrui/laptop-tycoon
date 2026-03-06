@@ -4,6 +4,7 @@ export const WEBCAMS: Component[] = [
   {
     id: "no_webcam",
     name: "No Webcam",
+    description: "No built-in camera. Users need an external USB webcam.",
     slot: "webcam",
     yearIntroduced: 2000,
     yearDiscontinued: 2006,
@@ -20,6 +21,7 @@ export const WEBCAMS: Component[] = [
   {
     id: "vga_webcam_03",
     name: "VGA Webcam (0.3 MP)",
+    description: "Basic built-in webcam for video calls — grainy but convenient.",
     slot: "webcam",
     yearIntroduced: 2003,
     yearDiscontinued: 2006,
@@ -36,6 +38,7 @@ export const WEBCAMS: Component[] = [
   {
     id: "webcam_1_3mp",
     name: "1.3 MP Webcam",
+    description: "Higher resolution webcam with noticeably clearer image quality.",
     slot: "webcam",
     yearIntroduced: 2005,
     yearDiscontinued: 2008,

@@ -5,6 +5,7 @@ export const WIFI: Component[] = [
   {
     id: "no_wifi",
     name: "No WiFi",
+    description: "No wireless networking. Users must rely on Ethernet or dial-up.",
     slot: "wifi",
     yearIntroduced: 2000,
     yearDiscontinued: 2005,
@@ -19,6 +20,7 @@ export const WIFI: Component[] = [
   {
     id: "wifi_802_11b",
     name: "802.11b WiFi",
+    description: "First-gen WiFi — slow by modern standards but enables wireless access.",
     slot: "wifi",
     yearIntroduced: 2000,
     yearDiscontinued: 2004,
@@ -35,6 +37,7 @@ export const WIFI: Component[] = [
   {
     id: "wifi_802_11b_bt1",
     name: "802.11b WiFi + Bluetooth 1.1",
+    description: "WiFi plus Bluetooth for connecting wireless peripherals.",
     slot: "wifi",
     yearIntroduced: 2002,
     yearDiscontinued: 2005,
@@ -51,6 +54,7 @@ export const WIFI: Component[] = [
   {
     id: "intel_pro_2100_abg",
     name: "Intel PRO/Wireless 2100 (802.11b/g)",
+    description: "Centrino-era WiFi with much faster speeds. Great value.",
     slot: "wifi",
     yearIntroduced: 2003,
     yearDiscontinued: 2005,
@@ -67,6 +71,7 @@ export const WIFI: Component[] = [
   {
     id: "intel_pro_2200bg_bt",
     name: "Intel PRO/Wireless 2200BG + Bluetooth 1.2",
+    description: "Solid WiFi with Bluetooth combo. Good all-rounder.",
     slot: "wifi",
     yearIntroduced: 2004,
     yearDiscontinued: 2006,
@@ -81,6 +86,7 @@ export const WIFI: Component[] = [
   {
     id: "intel_pro_2915abg",
     name: "Intel PRO/Wireless 2915ABG",
+    description: "Tri-band WiFi for maximum compatibility with different networks.",
     slot: "wifi",
     yearIntroduced: 2004,
     yearDiscontinued: 2006,
@@ -97,6 +103,7 @@ export const WIFI: Component[] = [
   {
     id: "intel_pro_3945abg_bt",
     name: "Intel PRO/Wireless 3945ABG + Bluetooth 2.0",
+    description: "Latest WiFi standard with Bluetooth 2.0. Best wireless available.",
     slot: "wifi",
     yearIntroduced: 2005,
     yearDiscontinued: 2008,

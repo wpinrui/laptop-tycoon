@@ -17,6 +17,7 @@ import { BatteryStep } from "./steps/BatteryStep";
 import { BodyStep } from "./steps/BodyStep";
 import { ReviewStep } from "./steps/ReviewStep";
 import { WizardSidebar } from "./LaptopEstimateSidebar";
+import { StatBar } from "./StatBar";
 
 const COMPONENT_STEP_SLOTS: Partial<Record<WizardStep, ComponentSlot[]>> = {
   processing: ["cpu", "gpu", "ram", "storage"],
@@ -156,6 +157,8 @@ function WizardContent() {
           />
         )}
       </div>
+
+      {showSidebar && <StatBar />}
 
       <div
         style={{

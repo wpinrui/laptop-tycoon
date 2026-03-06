@@ -1,5 +1,5 @@
 import { useWizard } from "../WizardContext";
-import { GAME_YEAR, formatWeight, MIN_BATTERY_WH, MAX_BATTERY_WH, BATTERY_STEP_WH } from "../constants";
+import { GAME_YEAR, formatWeight, MIN_BATTERY_WH, MAX_BATTERY_WH, BATTERY_STEP_WH, batteryWarningThresholdH } from "../constants";
 import { getBatteryEra } from "../../../data/batteryEras";
 import { StatCard } from "./StatCard";
 
@@ -10,6 +10,15 @@ export function BatteryStep() {
   const capacity = state.batteryCapacityWh;
   const cost = Math.round(capacity * era.costPerWh);
   const weight = Math.round(capacity * era.weightPerWh);
+
+  // Calculate total power draw from selected components
+  let totalPower = 0;
+  for (const comp of Object.values(state.components)) {
+    if (comp) totalPower += comp.powerDrawW;
+  }
+
+  const estimatedHours = totalPower > 0 ? capacity / totalPower : 0;
+  const batteryWarning = totalPower > 0 && estimatedHours < batteryWarningThresholdH(GAME_YEAR);
 
   function handleChange(value: number) {
     dispatch({ type: "SET_BATTERY_CAPACITY", capacityWh: value });
@@ -56,19 +65,35 @@ export function BatteryStep() {
           onChange={(e) => handleChange(Number(e.target.value))}
           style={{ width: "100%", accentColor: "#90caf9" }}
         />
+        <div style={{ fontSize: "10px", color: "#666", marginTop: "4px" }}>
+          Affects: battery life, weight, cost, internal space
+        </div>
       </div>
 
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
+          gridTemplateColumns: totalPower > 0 ? "repeat(4, 1fr)" : "repeat(3, 1fr)",
           gap: "12px",
         }}
       >
         <StatCard label="Cost" value={`$${cost}`} />
         <StatCard label="Weight" value={formatWeight(weight)} />
         <StatCard label="Technology" value={era.techLabel} />
+        {totalPower > 0 && (
+          <StatCard
+            label="Est. Battery Life"
+            value={`~${estimatedHours.toFixed(1)}h`}
+            warning={batteryWarning}
+          />
+        )}
       </div>
+
+      {totalPower > 0 && (
+        <div style={{ fontSize: "12px", color: "#888", textAlign: "center" }}>
+          {capacity} Wh ÷ {totalPower} W total power draw = ~{estimatedHours.toFixed(1)} hours
+        </div>
+      )}
     </div>
   );
 }

@@ -8,6 +8,7 @@ export const RESOLUTIONS: Component[] = [
   {
     id: "res_svga",
     name: "SVGA (800x600)",
+    description: "Low resolution — text is large and workspace is limited.",
     slot: "resolution",
     yearIntroduced: 2000,
     yearDiscontinued: 2003,
@@ -22,6 +23,7 @@ export const RESOLUTIONS: Component[] = [
   {
     id: "res_xga",
     name: "XGA (1024x768)",
+    description: "The standard laptop resolution. Good balance of sharpness and performance.",
     slot: "resolution",
     yearIntroduced: 2000,
     yearDiscontinued: 2005,
@@ -38,6 +40,7 @@ export const RESOLUTIONS: Component[] = [
   {
     id: "res_sxga_plus",
     name: "SXGA+ (1400x1050)",
+    description: "High resolution for professionals who need more screen real estate.",
     slot: "resolution",
     yearIntroduced: 2001,
     yearDiscontinued: 2006,
@@ -54,6 +57,7 @@ export const RESOLUTIONS: Component[] = [
   {
     id: "res_wxga",
     name: "WXGA (1280x800)",
+    description: "Widescreen format — better for movies and side-by-side windows.",
     slot: "resolution",
     yearIntroduced: 2003,
     yearDiscontinued: 2007,
@@ -70,6 +74,7 @@ export const RESOLUTIONS: Component[] = [
   {
     id: "res_wsxga_plus",
     name: "WSXGA+ (1680x1050)",
+    description: "High-res widescreen for creative professionals. Sharp and spacious.",
     slot: "resolution",
     yearIntroduced: 2004,
     yearDiscontinued: 2008,
@@ -86,6 +91,7 @@ export const RESOLUTIONS: Component[] = [
   {
     id: "res_wuxga",
     name: "WUXGA (1920x1200)",
+    description: "Ultra-high resolution — stunning clarity but demanding on the GPU.",
     slot: "resolution",
     yearIntroduced: 2005,
     yearDiscontinued: 2009,

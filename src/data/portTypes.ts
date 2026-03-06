@@ -5,6 +5,8 @@ export const PORT_TYPES: PortType[] = [
   {
     id: "usb_1_1",
     name: "USB 1.1",
+    description: "Connect mice, keyboards, and printers. Slow for file transfers.",
+    category: "usb",
     yearIntroduced: 2000,
     yearDiscontinued: 2003,
     maxCount: 4,
@@ -18,6 +20,8 @@ export const PORT_TYPES: PortType[] = [
   {
     id: "usb_2_0",
     name: "USB 2.0",
+    description: "Universal connector for peripherals and storage. Much faster than 1.1.",
+    category: "usb",
     yearIntroduced: 2002,
     yearDiscontinued: null,
     maxCount: 5,
@@ -33,6 +37,8 @@ export const PORT_TYPES: PortType[] = [
   {
     id: "vga",
     name: "VGA (D-Sub)",
+    description: "Standard analog video output for external monitors and projectors.",
+    category: "video",
     yearIntroduced: 2000,
     yearDiscontinued: null,
     maxCount: 1,
@@ -46,6 +52,8 @@ export const PORT_TYPES: PortType[] = [
   {
     id: "dvi",
     name: "DVI",
+    description: "Digital video output for sharper display on external monitors.",
+    category: "video",
     yearIntroduced: 2003,
     yearDiscontinued: null,
     maxCount: 1,
@@ -59,6 +67,8 @@ export const PORT_TYPES: PortType[] = [
   {
     id: "s_video",
     name: "S-Video",
+    description: "Analog video output for connecting to TVs.",
+    category: "video",
     yearIntroduced: 2000,
     yearDiscontinued: 2006,
     maxCount: 1,
@@ -74,6 +84,8 @@ export const PORT_TYPES: PortType[] = [
   {
     id: "ethernet_rj45",
     name: "Ethernet (RJ-45)",
+    description: "Wired internet connection. Faster and more reliable than WiFi.",
+    category: "networking",
     yearIntroduced: 2000,
     yearDiscontinued: null,
     maxCount: 1,
@@ -87,6 +99,8 @@ export const PORT_TYPES: PortType[] = [
   {
     id: "modem_rj11",
     name: "Modem (RJ-11)",
+    description: "Dial-up internet via phone line. Essential where broadband isn't available.",
+    category: "networking",
     yearIntroduced: 2000,
     yearDiscontinued: 2006,
     maxCount: 1,
@@ -102,6 +116,8 @@ export const PORT_TYPES: PortType[] = [
   {
     id: "firewire_400",
     name: "FireWire 400 (IEEE 1394)",
+    description: "Fast port for DV camcorders and external hard drives.",
+    category: "expansion",
     yearIntroduced: 2000,
     yearDiscontinued: 2007,
     maxCount: 2,
@@ -115,6 +131,8 @@ export const PORT_TYPES: PortType[] = [
   {
     id: "pcmcia",
     name: "PCMCIA / CardBus",
+    description: "Expansion slot for add-in cards like WiFi, modems, or extra ports.",
+    category: "expansion",
     yearIntroduced: 2000,
     yearDiscontinued: 2005,
     maxCount: 2,
@@ -128,6 +146,8 @@ export const PORT_TYPES: PortType[] = [
   {
     id: "expresscard",
     name: "ExpressCard/54",
+    description: "Modern expansion slot replacing PCMCIA. Faster PCIe-based interface.",
+    category: "expansion",
     yearIntroduced: 2004,
     yearDiscontinued: null,
     maxCount: 1,
@@ -143,6 +163,8 @@ export const PORT_TYPES: PortType[] = [
   {
     id: "audio_jack",
     name: "3.5mm Audio Jack",
+    description: "Standard headphone and microphone connector.",
+    category: "audio",
     yearIntroduced: 2000,
     yearDiscontinued: null,
     maxCount: 2,
@@ -158,6 +180,8 @@ export const PORT_TYPES: PortType[] = [
   {
     id: "ps2",
     name: "PS/2",
+    description: "Legacy port for older keyboards and mice. Being phased out.",
+    category: "legacy",
     yearIntroduced: 2000,
     yearDiscontinued: 2004,
     maxCount: 1,
@@ -171,6 +195,8 @@ export const PORT_TYPES: PortType[] = [
   {
     id: "serial_port",
     name: "Serial Port (RS-232)",
+    description: "Legacy port for industrial equipment and older peripherals.",
+    category: "legacy",
     yearIntroduced: 2000,
     yearDiscontinued: 2004,
     maxCount: 1,
@@ -184,6 +210,8 @@ export const PORT_TYPES: PortType[] = [
   {
     id: "parallel_port",
     name: "Parallel Port (LPT)",
+    description: "Legacy printer port. Bulky but still needed for some business printers.",
+    category: "legacy",
     yearIntroduced: 2000,
     yearDiscontinued: 2003,
     maxCount: 1,
@@ -197,6 +225,8 @@ export const PORT_TYPES: PortType[] = [
   {
     id: "ir_port",
     name: "Infrared (IrDA)",
+    description: "Short-range wireless data transfer. Used for syncing PDAs.",
+    category: "legacy",
     yearIntroduced: 2000,
     yearDiscontinued: 2005,
     maxCount: 1,
@@ -212,6 +242,8 @@ export const PORT_TYPES: PortType[] = [
   {
     id: "card_reader",
     name: "SD Card Reader",
+    description: "Read photos from digital cameras and transfer files via SD cards.",
+    category: "expansion",
     yearIntroduced: 2004,
     yearDiscontinued: null,
     maxCount: 1,

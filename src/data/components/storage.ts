@@ -5,6 +5,7 @@ export const STORAGE: Component[] = [
   {
     id: "hdd_10gb_4200",
     name: "10 GB HDD (4200 RPM)",
+    description: "Bare minimum storage — fills up fast. Slow but cheap.",
     slot: "storage",
     yearIntroduced: 2000,
     yearDiscontinued: 2002,
@@ -19,6 +20,7 @@ export const STORAGE: Component[] = [
   {
     id: "hdd_20gb_4200",
     name: "20 GB HDD (4200 RPM)",
+    description: "Decent storage for a budget laptop. Standard 4200 RPM speed.",
     slot: "storage",
     yearIntroduced: 2000,
     yearDiscontinued: 2003,
@@ -35,6 +37,7 @@ export const STORAGE: Component[] = [
   {
     id: "hdd_30gb_4200",
     name: "30 GB HDD (4200 RPM)",
+    description: "Comfortable storage at the budget tier. Slow but spacious.",
     slot: "storage",
     yearIntroduced: 2001,
     yearDiscontinued: 2004,
@@ -49,6 +52,7 @@ export const STORAGE: Component[] = [
   {
     id: "hdd_20gb_5400",
     name: "20 GB HDD (5400 RPM)",
+    description: "Faster spindle speed means snappier app loading at a premium price.",
     slot: "storage",
     yearIntroduced: 2001,
     yearDiscontinued: 2003,
@@ -65,6 +69,7 @@ export const STORAGE: Component[] = [
   {
     id: "hdd_40gb_4200",
     name: "40 GB HDD (4200 RPM)",
+    description: "Good capacity for the price, but the slow speed is noticeable.",
     slot: "storage",
     yearIntroduced: 2002,
     yearDiscontinued: 2005,
@@ -79,6 +84,7 @@ export const STORAGE: Component[] = [
   {
     id: "hdd_40gb_5400",
     name: "40 GB HDD (5400 RPM)",
+    description: "Best balance of speed and space for mid-range laptops.",
     slot: "storage",
     yearIntroduced: 2002,
     yearDiscontinued: 2005,
@@ -95,6 +101,7 @@ export const STORAGE: Component[] = [
   {
     id: "hdd_60gb_4200",
     name: "60 GB HDD (4200 RPM)",
+    description: "Spacious budget drive — great for storing files, slow for programs.",
     slot: "storage",
     yearIntroduced: 2003,
     yearDiscontinued: 2006,
@@ -109,6 +116,7 @@ export const STORAGE: Component[] = [
   {
     id: "hdd_60gb_5400",
     name: "60 GB HDD (5400 RPM)",
+    description: "Fast and spacious. A solid mainstream choice.",
     slot: "storage",
     yearIntroduced: 2003,
     yearDiscontinued: 2006,
@@ -123,6 +131,7 @@ export const STORAGE: Component[] = [
   {
     id: "hdd_40gb_7200",
     name: "40 GB HDD (7200 RPM)",
+    description: "Desktop-class speed in a laptop — noticeably faster but draws more power.",
     slot: "storage",
     yearIntroduced: 2003,
     yearDiscontinued: 2006,
@@ -139,6 +148,7 @@ export const STORAGE: Component[] = [
   {
     id: "hdd_80gb_5400",
     name: "80 GB HDD (5400 RPM)",
+    description: "Lots of room with SATA interface for faster data transfer.",
     slot: "storage",
     yearIntroduced: 2004,
     yearDiscontinued: 2007,
@@ -153,6 +163,7 @@ export const STORAGE: Component[] = [
   {
     id: "hdd_60gb_7200",
     name: "60 GB HDD (7200 RPM)",
+    description: "Premium speed with SATA — excellent for power users.",
     slot: "storage",
     yearIntroduced: 2004,
     yearDiscontinued: 2007,
@@ -169,6 +180,7 @@ export const STORAGE: Component[] = [
   {
     id: "hdd_100gb_5400",
     name: "100 GB HDD (5400 RPM)",
+    description: "Massive storage capacity. Great for users with large file collections.",
     slot: "storage",
     yearIntroduced: 2005,
     yearDiscontinued: 2008,
@@ -183,6 +195,7 @@ export const STORAGE: Component[] = [
   {
     id: "hdd_100gb_7200",
     name: "100 GB HDD (7200 RPM)",
+    description: "The fastest and largest drive available — top pick for professionals.",
     slot: "storage",
     yearIntroduced: 2005,
     yearDiscontinued: 2008,
