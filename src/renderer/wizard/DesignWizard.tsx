@@ -43,8 +43,7 @@ function isStepComplete(step: WizardStep, state: WizardState): boolean {
         !state.chassis.material ||
         !state.chassis.coolingSolution ||
         !state.chassis.keyboardFeature ||
-        !state.chassis.trackpadFeature ||
-        state.selectedColours.length === 0
+        !state.chassis.trackpadFeature
       )
         return false;
 
@@ -70,7 +69,8 @@ function WizardContent() {
   const isFirst = currentIdx === 0;
   const isLast = currentIdx === WIZARD_STEPS.length - 1;
 
-  const canAdvance = isStepComplete(state.currentStep, state);
+  const canAdvance = isStepComplete(state.currentStep, state)
+    && (state.currentStep !== "body" || state.selectedColours.length > 0);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
