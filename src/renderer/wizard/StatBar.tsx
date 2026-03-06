@@ -104,13 +104,14 @@ export function computeStatTotals(state: ReturnType<typeof useWizard>["state"]):
     }
   }
 
-  // Design bonus from thinness (50%) and bezel (50%)
-  // Thinner chassis and smaller bezel = better design, scaled 0–10 each half
-  const maxDesignBonus = 10;
-  const thinness = 1 - (state.thicknessCm - THICKNESS_MIN_CM) / (THICKNESS_MAX_CM - THICKNESS_MIN_CM);
-  const bezelSlimness = 1 - (state.bezelMm - BEZEL_MIN_MM) / (BEZEL_MAX_MM - BEZEL_MIN_MM);
-  const designBonus = Math.round((thinness * 0.5 + bezelSlimness * 0.5) * maxDesignBonus);
-  totals.design = (totals.design ?? 0) + designBonus;
+  // Design bonus from thinness and bezel
+  // Thickness: cubic curve (huge impact at extremes), up to 15 points
+  const tRaw = 1 - (state.thicknessCm - THICKNESS_MIN_CM) / (THICKNESS_MAX_CM - THICKNESS_MIN_CM);
+  const thicknessBonus = Math.round(tRaw * tRaw * tRaw * 15);
+  // Bezel: slightly less impact, more linear (power of 1.3), up to 12 points
+  const bRaw = 1 - (state.bezelMm - BEZEL_MIN_MM) / (BEZEL_MAX_MM - BEZEL_MIN_MM);
+  const bezelBonus = Math.round(Math.pow(bRaw, 1.3) * 12);
+  totals.design = (totals.design ?? 0) + thicknessBonus + bezelBonus;
 
   // Performance penalty when cooling is insufficient (quadratic curve)
   let totalPower = 0;
@@ -127,7 +128,8 @@ export function computeStatTotals(state: ReturnType<typeof useWizard>["state"]):
     const effectiveCooling = coolingFromSolution * coolMult;
     if (totalPower > effectiveCooling) {
       const ratio = effectiveCooling / totalPower; // 0–1
-      const penalty = (1 - ratio) * (1 - ratio); // quadratic: 10% over → 1% loss, 50% over → 25% loss
+      const deficit = 1 - ratio;
+      const penalty = deficit * deficit * (1 + deficit); // cubic-ish: ramps hard at severe deficits
       const perfLoss = Math.round((totals.performance ?? 0) * penalty);
       const gamingLoss = Math.round((totals.gamingPerformance ?? 0) * penalty);
       totals.performance = (totals.performance ?? 0) - perfLoss;
