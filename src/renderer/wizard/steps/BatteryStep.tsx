@@ -1,11 +1,13 @@
 import { useWizard } from "../WizardContext";
-import { GAME_YEAR, formatWeight, MIN_BATTERY_WH, MAX_BATTERY_WH, BATTERY_STEP_WH, avgUsageMultiplier, batteryWarningThresholdH } from "../constants";
+import { GAME_YEAR, formatWeight, MIN_BATTERY_WH, MAX_BATTERY_WH, BATTERY_STEP_WH, avgUsageMultiplier, batteryWarningThresholdH, applyDisplayMultiplier } from "../constants";
 import { getBatteryEra } from "../../../data/batteryEras";
+import { getScreenSizeDef } from "../../../data/screenSizes";
 import { StatCard } from "./StatCard";
 
 export function BatteryStep() {
   const { state, dispatch } = useWizard();
   const era = getBatteryEra(GAME_YEAR);
+  const displayMult = getScreenSizeDef(state.screenSize).displayMultiplier;
 
   const capacity = state.batteryCapacityWh;
   const cost = Math.round(capacity * era.costPerWh);
@@ -13,8 +15,8 @@ export function BatteryStep() {
 
   // Calculate total power draw from selected components
   let totalPower = 0;
-  for (const comp of Object.values(state.components)) {
-    if (comp) totalPower += comp.powerDrawW;
+  for (const [slot, comp] of Object.entries(state.components)) {
+    if (comp) totalPower += applyDisplayMultiplier(comp.powerDrawW, slot, displayMult);
   }
 
   const avgPower = totalPower * avgUsageMultiplier(GAME_YEAR);

@@ -23,7 +23,7 @@ import {
 import { ChassisOption, ChassisOptionSlot } from "../../../data/types";
 import { getAllChassisOptions } from "../types";
 import { Tooltip } from "../Tooltip";
-import { STAT_CONFIG, getStatColor } from "../StatBar";
+import { StatContributions } from "../StatBar";
 import { COLOUR_OPTIONS } from "../../../data/colourOptions";
 
 const VOLUME_WARNING_PERCENT = 85;
@@ -262,26 +262,11 @@ export function BodyStep() {
 }
 
 function ChassisTooltipContent({ option }: { option: ChassisOption }) {
-  const statEntries = Object.entries(option.stats).filter(([, v]) => (v as number) !== 0);
-
   return (
     <div>
       <div style={{ fontWeight: "bold", marginBottom: "4px", color: "#90caf9" }}>{option.name}</div>
       <div style={{ color: "#ccc", marginBottom: "6px" }}>{option.description}</div>
-      {statEntries.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "6px" }}>
-          {statEntries.map(([stat, value]) => {
-            const config = STAT_CONFIG.find((s) => s.stat === stat);
-            if (!config) return null;
-            const { Icon } = config;
-            return (
-              <span key={stat} style={{ color: getStatColor(stat), fontSize: "0.75rem", fontWeight: "bold", display: "inline-flex", alignItems: "center", gap: "2px" }}>
-                <Icon size={16} strokeWidth={2.5} /> +{value as number}
-              </span>
-            );
-          })}
-        </div>
-      )}
+      <StatContributions stats={option.stats as Record<string, number>} />
     </div>
   );
 }
@@ -303,7 +288,7 @@ function ChassisCard({
         onClick={onSelect}
         style={{
           background: isSelected ? "#1a3a5c" : "#2a2a2a",
-          border: isSelected ? "2px solid #90caf9" : "1px solid #444",
+          border: isSelected ? "2px solid #90caf9" : "2px solid #444",
           borderRadius: "8px",
           padding: "12px",
           textAlign: "left",

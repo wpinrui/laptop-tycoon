@@ -17,7 +17,6 @@ import {
 import { getScreenSizeDef } from "../../data/screenSizes";
 import { PORT_TYPES } from "../../data/portTypes";
 import { COLOUR_OPTIONS } from "../../data/colourOptions";
-import { Tooltip } from "./Tooltip";
 import {
   Zap,
   Gamepad2,
@@ -154,45 +153,20 @@ export function computeStatTotals(state: ReturnType<typeof useWizard>["state"]):
   return totals;
 }
 
-export function StatBar() {
-  const { state } = useWizard();
-  const totals = computeStatTotals(state);
+export function StatContributions({ stats }: { stats: Record<string, number> }) {
+  const entries = Object.entries(stats).filter(([, v]) => v !== 0);
+  if (entries.length === 0) return null;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        gap: "4px",
-        background: "#1a1a1a",
-        border: "1px solid #333",
-        borderRadius: "8px",
-        padding: "8px 16px",
-        marginTop: "8px",
-        flexShrink: 0,
-        justifyContent: "center",
-        flexWrap: "wrap",
-      }}
-    >
-      {STAT_CONFIG.map(({ stat, Icon, label }) => {
-        const value = totals[stat] ?? 0;
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "6px" }}>
+      {entries.map(([stat, value]) => {
+        const config = STAT_CONFIG.find((s) => s.stat === stat);
+        if (!config) return null;
+        const { Icon } = config;
         return (
-          <Tooltip key={stat} content={`${label}: ${value}`}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-                padding: "6px 10px",
-                borderRadius: "4px",
-                fontSize: "0.875rem",
-                color: value > 0 ? "#e0e0e0" : "#555",
-                cursor: "default",
-              }}
-            >
-              <Icon size={16} strokeWidth={1.5} />
-              <span style={{ fontWeight: "bold", minWidth: "16px", textAlign: "right" }}>{value}</span>
-            </div>
-          </Tooltip>
+          <span key={stat} style={{ color: getStatColor(stat), fontSize: "0.75rem", fontWeight: "bold", display: "inline-flex", alignItems: "center", gap: "2px" }}>
+            <Icon size={16} strokeWidth={2.5} /> +{value}
+          </span>
         );
       })}
     </div>

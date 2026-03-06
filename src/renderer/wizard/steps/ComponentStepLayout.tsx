@@ -4,7 +4,7 @@ import { ALL_COMPONENTS } from "../../../data/components";
 import { getScreenSizeDef } from "../../../data/screenSizes";
 import { Component, ComponentSlot, ScreenSizeDefinition } from "../../../data/types";
 import { Tooltip } from "../Tooltip";
-import { STAT_CONFIG, getStatColor } from "../StatBar";
+import { StatContributions } from "../StatBar";
 
 export interface SlotDef {
   slot: ComponentSlot;
@@ -19,26 +19,6 @@ function getAvailableComponents(slot: ComponentSlot, year: number): Component[] 
 
 function isDisplaySlot(slot: ComponentSlot): boolean {
   return DISPLAY_SLOTS.includes(slot);
-}
-
-function StatContributions({ stats }: { stats: Record<string, number> }) {
-  const entries = Object.entries(stats).filter(([, v]) => v !== 0);
-  if (entries.length === 0) return null;
-
-  return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "6px" }}>
-      {entries.map(([stat, value]) => {
-        const config = STAT_CONFIG.find((s) => s.stat === stat);
-        if (!config) return null;
-        const { Icon } = config;
-        return (
-          <span key={stat} style={{ color: getStatColor(stat), fontSize: "0.75rem", fontWeight: "bold", display: "inline-flex", alignItems: "center", gap: "2px" }}>
-            <Icon size={16} strokeWidth={2.5} /> +{value}
-          </span>
-        );
-      })}
-    </div>
-  );
 }
 
 function TooltipContent({ component }: { component: Component }) {
