@@ -1,6 +1,6 @@
 import { WizardProvider, useWizard } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
-import { WizardStep, WIZARD_STEPS } from "./types";
+import { WizardStep, WizardState, WIZARD_STEPS } from "./types";
 import {
   GAME_YEAR,
   availableVolumeCm3,
@@ -23,60 +23,77 @@ const COMPONENT_STEP_SLOTS: Partial<Record<WizardStep, ComponentSlot[]>> = {
   mediaConnectivity: ["webcam", "speakers", "wifi"],
 };
 
+function isStepComplete(step: WizardStep, state: WizardState): boolean {
+  switch (step) {
+    case "metadata":
+      return !!(state.name.trim() && (state.modelType === "brandNew" || state.predecessorId));
+    case "screenSize":
+    case "battery":
+      return true; // sliders with defaults, always valid
+    case "processing":
+    case "display":
+    case "mediaConnectivity": {
+      const slots = COMPONENT_STEP_SLOTS[step]!;
+      return slots.every((slot) => state.components[slot]);
+    }
+    case "body": {
+      if (
+        !state.chassis.material ||
+        !state.chassis.coolingSolution ||
+        !state.chassis.keyboardFeature ||
+        !state.chassis.trackpadFeature
+      )
+        return false;
+
+      // Volume check
+      let totalVol = batteryVolumeCm3(state.batteryCapacityWh);
+      for (const comp of Object.values(state.components)) {
+        if (comp) totalVol += comp.volumeCm3;
+      }
+      for (const pt of PORT_TYPES) {
+        totalVol += (state.ports[pt.id] ?? 0) * pt.volumePerPortCm3;
+      }
+      for (const opt of Object.values(state.chassis)) {
+        if (opt) totalVol += opt.volumeCm3;
+      }
+      const available = availableVolumeCm3(state.screenSize, state.bezelMm, state.thicknessCm);
+      if (totalVol > available) return false;
+
+      // Height constraint check
+      let maxHeight = 0;
+      for (const comp of Object.values(state.components)) {
+        if (comp && comp.minThicknessCm > maxHeight) maxHeight = comp.minThicknessCm;
+      }
+      for (const pt of PORT_TYPES) {
+        if ((state.ports[pt.id] ?? 0) > 0 && pt.minThicknessCm > maxHeight)
+          maxHeight = pt.minThicknessCm;
+      }
+      for (const opt of Object.values(state.chassis)) {
+        if (opt && opt.minThicknessCm > maxHeight) maxHeight = opt.minThicknessCm;
+      }
+      return state.thicknessCm >= maxHeight;
+    }
+    case "review":
+      return true;
+  }
+}
+
 function WizardContent() {
   const { state, dispatch } = useWizard();
   const currentIdx = WIZARD_STEPS.indexOf(state.currentStep);
   const isFirst = currentIdx === 0;
   const isLast = currentIdx === WIZARD_STEPS.length - 1;
 
-  const needsMetadata =
-    state.currentStep === "metadata" &&
-    (!state.name.trim() || (state.modelType !== "brandNew" && !state.predecessorId));
-  const requiredSlots = COMPONENT_STEP_SLOTS[state.currentStep];
-  const needsComponents = requiredSlots && !requiredSlots.every((slot) => state.components[slot]);
-  const needsChassis =
-    state.currentStep === "body" &&
-    (!state.chassis.material ||
-      !state.chassis.coolingSolution ||
-      !state.chassis.keyboardFeature ||
-      !state.chassis.trackpadFeature);
-
-  // Volume-based thickness check
-  let thicknessTooThin = false;
-  if (state.currentStep === "body") {
-    let totalVol = batteryVolumeCm3(state.batteryCapacityWh);
-    for (const comp of Object.values(state.components)) {
-      if (comp) totalVol += comp.volumeCm3;
-    }
-    for (const pt of PORT_TYPES) {
-      totalVol += (state.ports[pt.id] ?? 0) * pt.volumePerPortCm3;
-    }
-    for (const opt of Object.values(state.chassis)) {
-      if (opt) totalVol += opt.volumeCm3;
-    }
-    const available = availableVolumeCm3(state.screenSize, state.bezelMm, state.thicknessCm);
-    thicknessTooThin = totalVol > available;
-
-    // Also check height constraints
-    let maxHeight = 0;
-    for (const comp of Object.values(state.components)) {
-      if (comp && comp.minThicknessCm > maxHeight) maxHeight = comp.minThicknessCm;
-    }
-    for (const pt of PORT_TYPES) {
-      if ((state.ports[pt.id] ?? 0) > 0 && pt.minThicknessCm > maxHeight)
-        maxHeight = pt.minThicknessCm;
-    }
-    for (const opt of Object.values(state.chassis)) {
-      if (opt && opt.minThicknessCm > maxHeight) maxHeight = opt.minThicknessCm;
-    }
-    if (state.thicknessCm < maxHeight) thicknessTooThin = true;
-  }
-
-  const canAdvance = !needsMetadata && !needsComponents && !needsChassis && !thicknessTooThin;
+  const canAdvance = isStepComplete(state.currentStep, state);
 
   function canNavigateTo(step: WizardStep) {
     const targetIdx = WIZARD_STEPS.indexOf(step);
-    return targetIdx <= currentIdx;
+    if (targetIdx <= currentIdx) return true;
+    // Can jump forward if all prior steps are complete
+    for (let i = 0; i < targetIdx; i++) {
+      if (!isStepComplete(WIZARD_STEPS[i], state)) return false;
+    }
+    return true;
   }
 
   const stepContent = (() => {
