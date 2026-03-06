@@ -2,6 +2,7 @@ import { useNavigation } from "./NavigationContext";
 import { Screen } from "./types";
 import { GameLayout } from "../shell/GameLayout";
 import { ContentPanel } from "../shell/ContentPanel";
+import { tokens } from "../shell/tokens";
 import { DesignWizard } from "../wizard/DesignWizard";
 
 /** Screens that don't show the HUD (pre-game screens). */
@@ -10,8 +11,8 @@ const NO_HUD_SCREENS: Screen[] = ["mainMenu", "newGame"];
 function PlaceholderScreen({ title }: { title: string }) {
   return (
     <ContentPanel maxWidth={600}>
-      <h2 style={{ margin: 0, marginBottom: 8 }}>{title}</h2>
-      <p style={{ color: "#888", margin: 0 }}>Coming soon</p>
+      <h2 style={{ margin: 0, marginBottom: tokens.spacing.sm }}>{title}</h2>
+      <p style={{ color: tokens.colors.textMuted, margin: 0 }}>Coming soon</p>
     </ContentPanel>
   );
 }
@@ -44,6 +45,10 @@ function ScreenContent() {
       return <PlaceholderScreen title="News" />;
     case "history":
       return <PlaceholderScreen title="History" />;
+    default: {
+      const _exhaustive: never = screen;
+      return _exhaustive;
+    }
   }
 }
 
