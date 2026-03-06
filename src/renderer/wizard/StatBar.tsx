@@ -7,18 +7,18 @@ import { PORT_TYPES } from "../../data/portTypes";
 import { Tooltip } from "./Tooltip";
 
 const STAT_CONFIG: { stat: LaptopStat; icon: string; label: string }[] = [
-  { stat: "performance", icon: "\u26A1", label: "Performance" },
-  { stat: "gamingPerformance", icon: "\uD83C\uDFAE", label: "Gaming" },
-  { stat: "display", icon: "\uD83D\uDCFA", label: "Display" },
-  { stat: "batteryLife", icon: "\uD83D\uDD0B", label: "Battery Life" },
-  { stat: "connectivity", icon: "\uD83D\uDD17", label: "Connectivity" },
-  { stat: "speakers", icon: "\uD83D\uDD0A", label: "Speakers" },
-  { stat: "webcam", icon: "\uD83D\uDCF7", label: "Webcam" },
-  { stat: "design", icon: "\u2728", label: "Design" },
-  { stat: "buildQuality", icon: "\uD83D\uDEE1\uFE0F", label: "Build Quality" },
-  { stat: "keyboard", icon: "\u2328\uFE0F", label: "Keyboard" },
-  { stat: "trackpad", icon: "\uD83D\uDDB1\uFE0F", label: "Trackpad" },
-  { stat: "thermals", icon: "\uD83C\uDF21\uFE0F", label: "Thermals" },
+  { stat: "performance", icon: "\u25B3", label: "Performance" },
+  { stat: "gamingPerformance", icon: "\u25C7", label: "Gaming" },
+  { stat: "display", icon: "\u25A1", label: "Display" },
+  { stat: "batteryLife", icon: "\u25AD", label: "Battery Life" },
+  { stat: "connectivity", icon: "\u25CB", label: "Connectivity" },
+  { stat: "speakers", icon: "\u266A", label: "Speakers" },
+  { stat: "webcam", icon: "\u25CE", label: "Webcam" },
+  { stat: "design", icon: "\u2606", label: "Design" },
+  { stat: "buildQuality", icon: "\u25A0", label: "Build Quality" },
+  { stat: "keyboard", icon: "\u2261", label: "Keyboard" },
+  { stat: "trackpad", icon: "\u25A3", label: "Trackpad" },
+  { stat: "thermals", icon: "\u2103", label: "Thermals" },
 ];
 
 export { STAT_CONFIG };
@@ -70,7 +70,8 @@ export function StatBar() {
         background: "#1a1a1a",
         border: "1px solid #333",
         borderRadius: "8px",
-        padding: "6px 12px",
+        padding: "4px 12px",
+        marginTop: "8px",
         flexShrink: 0,
         justifyContent: "center",
         flexWrap: "wrap",

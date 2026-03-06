@@ -52,6 +52,7 @@ export function Tooltip({
               top: -9999,
               left: -9999,
               zIndex: 1000,
+              fontFamily: "system-ui, sans-serif",
               background: "#1a1a1a",
               border: "1px solid #555",
               borderRadius: "8px",
