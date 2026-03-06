@@ -62,13 +62,21 @@ const statsRowStyle: CSSProperties = {
   color: tokens.colors.textMuted,
 };
 
-const masonryStyle: CSSProperties = {
-  columnCount: 3,
-  columnGap: tokens.spacing.lg,
+const gridStyle: CSSProperties = {
+  display: "flex",
+  gap: tokens.spacing.lg,
   paddingTop: tokens.spacing.lg,
   overflowY: "auto",
   flex: 1,
   minHeight: 0,
+};
+
+const columnStyle: CSSProperties = {
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
+  gap: tokens.spacing.lg,
+  minWidth: 0,
 };
 
 const cardStyle: CSSProperties = {
@@ -78,8 +86,6 @@ const cardStyle: CSSProperties = {
   cursor: "pointer",
   transition: "background 0.15s",
   border: `1px solid ${tokens.colors.panelBorder}`,
-  breakInside: "avoid" as const,
-  marginBottom: tokens.spacing.lg,
 };
 
 const cardTitleStyle: CSSProperties = {
@@ -461,15 +467,21 @@ export function DashboardScreen() {
         </div>
       </div>
 
-      <div className="content-panel" style={masonryStyle}>
-        <ModelsCard />
-        <FinancialsCard />
-        <MarketCard />
-        <BrandCard />
-        <ReviewsCard />
-        <NewsCard />
-        <AdvanceYearCard />
-        <HistoryCard />
+      <div className="content-panel" style={gridStyle}>
+        <div style={columnStyle}>
+          <ModelsCard />
+          <NewsCard />
+          <HistoryCard />
+        </div>
+        <div style={columnStyle}>
+          <BrandCard />
+          <MarketCard />
+          <ReviewsCard />
+        </div>
+        <div style={columnStyle}>
+          <AdvanceYearCard />
+          <FinancialsCard />
+        </div>
       </div>
     </ContentPanel>
   );
