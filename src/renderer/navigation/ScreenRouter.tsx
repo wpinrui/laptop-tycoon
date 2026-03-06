@@ -7,7 +7,7 @@ import { tokens } from "../shell/tokens";
 import { DesignWizard } from "../wizard/DesignWizard";
 import { MainMenuScreen } from "../screens/MainMenuScreen";
 import { NewGameScreen } from "../screens/NewGameScreen";
-import { DashboardScreen } from "../screens/DashboardScreen";
+import { DashboardScreen } from "../screens/dashboard/DashboardScreen";
 
 /** Screens that don't show the HUD (pre-game screens). */
 const NO_HUD_SCREENS: Screen[] = ["mainMenu", "newGame"];
