@@ -16,6 +16,7 @@ import {
 } from "./constants";
 import { getScreenSizeDef } from "../../data/screenSizes";
 import { PORT_TYPES } from "../../data/portTypes";
+import { COLOUR_OPTIONS } from "../../data/colourOptions";
 import { Tooltip } from "./Tooltip";
 import {
   Zap,
@@ -111,8 +112,13 @@ export function computeStatTotals(state: ReturnType<typeof useWizard>["state"]):
   // Bezel: slightly less impact, more linear (power of 1.3), up to 30 points
   const bRaw = 1 - (state.bezelMm - BEZEL_MIN_MM) / (BEZEL_MAX_MM - BEZEL_MIN_MM);
   const bezelBonus = Math.round(Math.pow(bRaw, 1.3) * 30);
-  // Colour range: diminishing returns per additional colour
-  const colourBonus = Math.round(Math.sqrt(state.selectedColours.length) * 8);
+  // Colour range: sum of per-colour design value (sqrt of cost), so premium colours contribute more
+  const colourBonus = Math.round(
+    state.selectedColours.reduce((sum, id) => {
+      const opt = COLOUR_OPTIONS.find((c) => c.id === id);
+      return sum + Math.sqrt(opt?.costPerUnit ?? 0) * 3;
+    }, 0),
+  );
   totals.design = (totals.design ?? 0) + thicknessBonus + bezelBonus + colourBonus;
 
   // Performance penalty when cooling is insufficient (quadratic curve)
