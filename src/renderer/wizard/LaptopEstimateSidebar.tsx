@@ -111,7 +111,7 @@ export function WizardSidebar({
             warning={thicknessTooThin ? `Components need at least ${minThickness.toFixed(1)} cm` : undefined}
           />
           <SidebarRow label="Bezel" value={`${bezel} mm`} />
-          <SidebarRow label="Power Draw" value={`${totalPower}W`} />
+          <SidebarRow label="Power Draw" value={`${totalPower} W`} />
           <SidebarRow
             label="Cooling"
             value={`${effectiveCooling}W`}
