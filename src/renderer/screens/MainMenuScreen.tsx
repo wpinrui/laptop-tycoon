@@ -1,5 +1,7 @@
 import { CSSProperties } from "react";
 import { useNavigation } from "../navigation/NavigationContext";
+import { useGame } from "../state/GameContext";
+import { loadGame, hasSavedGame } from "../shell/PauseMenu";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { tokens } from "../shell/tokens";
@@ -30,6 +32,16 @@ const menuStyle: CSSProperties = {
 
 export function MainMenuScreen() {
   const { navigateTo } = useNavigation();
+  const { dispatch } = useGame();
+  const saved = hasSavedGame();
+
+  function handleLoad() {
+    const state = loadGame();
+    if (state) {
+      dispatch({ type: "LOAD_GAME", state });
+      navigateTo("dashboard");
+    }
+  }
 
   return (
     <ContentPanel maxWidth={420}>
@@ -40,8 +52,9 @@ export function MainMenuScreen() {
         <MenuButton variant="accent" onClick={() => navigateTo("newGame")}>
           New Game
         </MenuButton>
-        <MenuButton disabled>Continue</MenuButton>
-        <MenuButton disabled>Load Game</MenuButton>
+        <MenuButton disabled={!saved} onClick={handleLoad}>
+          Continue
+        </MenuButton>
         <MenuButton disabled>Settings</MenuButton>
         <MenuButton onClick={() => window.close()}>Quit</MenuButton>
       </div>
