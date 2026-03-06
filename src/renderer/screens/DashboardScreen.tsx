@@ -142,7 +142,7 @@ function BentoCard({ title, icon: Icon, screen, children }: BentoCardProps) {
       } : undefined}
     >
       <h3 style={cardTitleStyle}>
-        <Icon size={20} color="#fff" style={{ verticalAlign: "text-bottom", marginRight: tokens.spacing.sm }} />
+        <Icon size={20} color="#fff" style={{ display: "inline-block", verticalAlign: "middle", marginRight: tokens.spacing.sm, position: "relative", top: -1 }} />
         {title}
       </h3>
       {children}
