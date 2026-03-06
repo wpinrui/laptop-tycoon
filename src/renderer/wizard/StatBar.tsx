@@ -132,9 +132,14 @@ export function computeStatTotals(state: ReturnType<typeof useWizard>["state"]):
       const penalty = deficit * deficit * (1 + deficit); // cubic-ish: ramps hard at severe deficits
       const perfLoss = Math.round((totals.performance ?? 0) * penalty);
       const gamingLoss = Math.round((totals.gamingPerformance ?? 0) * penalty);
-      totals.performance = (totals.performance ?? 0) - perfLoss;
-      totals.gamingPerformance = (totals.gamingPerformance ?? 0) - gamingLoss;
+      totals.performance = Math.max(0, (totals.performance ?? 0) - perfLoss);
+      totals.gamingPerformance = Math.max(0, (totals.gamingPerformance ?? 0) - gamingLoss);
     }
+  }
+
+  // Clamp all stats to 0 minimum
+  for (const key of Object.keys(totals) as LaptopStat[]) {
+    if ((totals[key] ?? 0) < 0) totals[key] = 0;
   }
 
   return totals;
