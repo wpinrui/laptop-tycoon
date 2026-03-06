@@ -6,6 +6,7 @@ import { tokens } from "../shell/tokens";
 import { DesignWizard } from "../wizard/DesignWizard";
 import { MainMenuScreen } from "../screens/MainMenuScreen";
 import { NewGameScreen } from "../screens/NewGameScreen";
+import { DashboardScreen } from "../screens/DashboardScreen";
 
 /** Screens that don't show the HUD (pre-game screens). */
 const NO_HUD_SCREENS: Screen[] = ["mainMenu", "newGame"];
@@ -28,7 +29,7 @@ function ScreenContent() {
     case "newGame":
       return <NewGameScreen />;
     case "dashboard":
-      return <PlaceholderScreen title="Dashboard" />;
+      return <DashboardScreen />;
     case "designWizard":
       return <DesignWizard />;
     case "modelManagement":

@@ -16,7 +16,7 @@ const baseStyle: CSSProperties = {
 
 interface MenuButtonProps {
   children: ReactNode;
-  onClick?: () => void;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
   variant?: "surface" | "accent";
   disabled?: boolean;
   style?: CSSProperties;
