@@ -157,11 +157,8 @@ export function ReviewStep() {
 
       {/* Laptop name header */}
       <div style={{ marginBottom: "24px" }}>
-        <div style={{ fontSize: "0.8125rem", color: "#888" }}>
-          {COMPANY_NAME}
-        </div>
         <div style={{ fontSize: "1.25rem", fontWeight: "bold", color: "#90caf9" }}>
-          {state.name || "Unnamed Laptop"}
+          {COMPANY_NAME} {state.name || "Unnamed Laptop"}
         </div>
         <div style={{ fontSize: "0.8125rem", color: "#888", marginTop: "4px" }}>
           {state.screenSize}" &middot; {state.modelType === "brandNew" ? "Brand New" : state.modelType === "successor" ? "Successor" : "Spec Bump"} &middot; {GAME_YEAR}
