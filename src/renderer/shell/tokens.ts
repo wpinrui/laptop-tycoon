@@ -11,7 +11,6 @@ export const tokens = {
   colors: {
     panelBg: "rgba(0, 0, 0, 0.82)",
     panelBorder: "rgba(255, 255, 255, 0.18)",
-    hudBg: "rgba(0, 0, 0, 0.6)",
     text: "#e0e0e0",
     textMuted: "#888",
     accent: "#4fc3f7",
@@ -26,7 +25,6 @@ export const tokens = {
     blur: "blur(20px)",
   },
   zIndex: {
-    hud: 100,
     overlay: 500,
     tooltip: 1000,
   },
