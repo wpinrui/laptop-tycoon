@@ -8,6 +8,7 @@ import { DesignWizard } from "../wizard/DesignWizard";
 import { MainMenuScreen } from "../screens/MainMenuScreen";
 import { NewGameScreen } from "../screens/NewGameScreen";
 import { DashboardScreen } from "../screens/dashboard/DashboardScreen";
+import { ModelManagementScreen } from "../screens/ModelManagementScreen";
 
 /** Screens that don't show the HUD (pre-game screens). */
 const NO_HUD_SCREENS: Screen[] = ["mainMenu", "newGame"];
@@ -39,7 +40,7 @@ function ScreenContent() {
     case "designWizard":
       return <DesignWizard />;
     case "modelManagement":
-      return <PlaceholderScreen title="Model Management" />;
+      return <ModelManagementScreen />;
     case "pricingManufacturing":
       return <PlaceholderScreen title="Pricing & Manufacturing" />;
     case "financialHistory":

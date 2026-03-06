@@ -7,7 +7,11 @@ import {
   availableVolumeCm3,
   totalConsumedVolumeCm3,
   maxHeightConstraintCm,
+  computeLaptopTotals,
 } from "./constants";
+import { useGame } from "../state/GameContext";
+import { useNavigation } from "../navigation/NavigationContext";
+import { LaptopDesign } from "../state/gameTypes";
 import { MetadataStep } from "./steps/MetadataStep";
 import { ScreenSizeStep } from "./steps/ScreenSizeStep";
 import { ProcessingStep } from "./steps/ProcessingStep";
@@ -56,8 +60,39 @@ function isStepComplete(step: WizardStep, state: WizardState): boolean {
   }
 }
 
+function wizardStateToDesign(state: WizardState): LaptopDesign {
+  const totals = computeLaptopTotals(
+    state.components,
+    state.ports,
+    state.chassis,
+    state.batteryCapacityWh,
+    state.selectedColours,
+    state.screenSize,
+    state.bezelMm,
+    state.thicknessCm,
+    GAME_YEAR,
+  );
+  return {
+    id: crypto.randomUUID(),
+    name: state.name,
+    modelType: state.modelType,
+    predecessorId: state.predecessorId,
+    screenSize: state.screenSize,
+    components: state.components,
+    ports: state.ports,
+    batteryCapacityWh: state.batteryCapacityWh,
+    thicknessCm: state.thicknessCm,
+    bezelMm: state.bezelMm,
+    chassis: state.chassis,
+    selectedColours: state.selectedColours,
+    unitCost: totals.totalCost,
+  };
+}
+
 function WizardContent() {
   const { state, dispatch } = useWizard();
+  const { state: gameState, dispatch: gameDispatch } = useGame();
+  const { navigateTo } = useNavigation();
   const currentIdx = WIZARD_STEPS.indexOf(state.currentStep);
   const isFirst = currentIdx === 0;
   const isLast = currentIdx === WIZARD_STEPS.length - 1;
@@ -190,7 +225,19 @@ function WizardContent() {
         <button
           onClick={() => {
             if (isLast) {
-              // TODO: finalize design
+              const design = wizardStateToDesign(state);
+              gameDispatch({
+                type: "ADD_MODEL",
+                model: {
+                  design,
+                  status: "draft",
+                  retailPrice: null,
+                  manufacturingQuantity: null,
+                  yearDesigned: gameState.year,
+                },
+              });
+              dispatch({ type: "RESET" });
+              navigateTo("modelManagement");
             } else {
               dispatch({ type: "NEXT_STEP" });
             }
