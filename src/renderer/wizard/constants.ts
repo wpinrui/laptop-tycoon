@@ -18,27 +18,71 @@ export const THICKNESS_MAX_CM = 8.0;
 export const THICKNESS_STEP_CM = 0.1;
 export const THICKNESS_DEFAULT_CM = 3.5;
 
+// --- Bezel ---
+
+export const BEZEL_MIN_MM = 3;
+export const BEZEL_MAX_MM = 40;
+export const BEZEL_STEP_MM = 1;
+export const BEZEL_DEFAULT_MM = 20;
+
+// --- Volume calculation ---
+
 // Li-Ion ~175 Wh/L in 2000 → ~5.7 cm³ per Wh
-const CM3_PER_WH = 5.7;
+export const CM3_PER_WH = 5.7;
 
-// Minimum thickness for motherboard, keyboard mechanism, etc.
-const BASE_MIN_THICKNESS_CM = 1.2;
+// Minimum thickness for motherboard PCB, keyboard mechanism on top, bottom plate.
+const BASE_MIN_THICKNESS_CM = 0.8;
 
-// Approximate internal battery footprint area (cm²) by screen diagonal.
-// Larger screens spread the battery over more area, allowing thinner designs
-// for the same capacity.
-function batteryAreaCm2(screenSizeInches: number): number {
-  // Rough model: area scales with screen size squared, calibrated so
-  // 14" ≈ 250 cm² of usable battery footprint.
-  return (screenSizeInches / 14) * (screenSizeInches / 14) * 250;
+/**
+ * Calculate chassis footprint area (cm²) from screen size and bezel width.
+ * Assumes 4:3 aspect ratio for screens (standard in 2000-2005 era).
+ * The base (bottom half) of the laptop roughly matches the lid dimensions.
+ */
+export function chassisFootprintCm2(screenSizeInches: number, bezelMm: number): number {
+  const diagonalCm = screenSizeInches * 2.54;
+  // 4:3 aspect → width = diagonal * 4/5, height = diagonal * 3/5
+  const screenWidthCm = diagonalCm * (4 / 5);
+  const screenHeightCm = diagonalCm * (3 / 5);
+  const bezelCm = bezelMm / 10;
+  const chassisWidth = screenWidthCm + 2 * bezelCm;
+  const chassisDepth = screenHeightCm + 2 * bezelCm;
+  return chassisWidth * chassisDepth;
 }
 
-/** Minimum chassis thickness (cm) given battery capacity and screen size. */
-export function minThicknessCm(batteryWh: number, screenSizeInches: number): number {
-  const batteryVolume = batteryWh * CM3_PER_WH;
-  const area = batteryAreaCm2(screenSizeInches);
-  const batteryThickness = batteryVolume / area;
-  return Math.ceil((BASE_MIN_THICKNESS_CM + batteryThickness) * 10) / 10; // round up to 1dp
+/**
+ * Available internal volume (cm³) given chassis dimensions.
+ * Subtracts baseMinThickness for PCB/keyboard/case walls from total height.
+ */
+export function availableVolumeCm3(
+  screenSizeInches: number,
+  bezelMm: number,
+  thicknessCm: number,
+): number {
+  const footprint = chassisFootprintCm2(screenSizeInches, bezelMm);
+  const usableHeight = Math.max(0, thicknessCm - BASE_MIN_THICKNESS_CM);
+  return footprint * usableHeight;
+}
+
+/**
+ * Battery volume in cm³.
+ */
+export function batteryVolumeCm3(batteryWh: number): number {
+  return batteryWh * CM3_PER_WH;
+}
+
+/**
+ * Calculate minimum thickness required to fit all components by volume.
+ * Returns the thickness where available volume = total consumed volume.
+ */
+export function minThicknessForVolumeCm(
+  totalVolumeCm3: number,
+  screenSizeInches: number,
+  bezelMm: number,
+): number {
+  const footprint = chassisFootprintCm2(screenSizeInches, bezelMm);
+  if (footprint <= 0) return THICKNESS_MAX_CM;
+  const requiredUsableHeight = totalVolumeCm3 / footprint;
+  return Math.ceil((BASE_MIN_THICKNESS_CM + requiredUsableHeight) * 10) / 10;
 }
 
 /**

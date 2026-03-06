@@ -5,12 +5,23 @@ import {
   THICKNESS_MIN_CM,
   THICKNESS_MAX_CM,
   THICKNESS_STEP_CM,
-  minThicknessCm,
+  BEZEL_MIN_MM,
+  BEZEL_MAX_MM,
+  BEZEL_STEP_MM,
+  availableVolumeCm3,
+  batteryVolumeCm3,
+  minThicknessForVolumeCm,
   coolingMultiplier,
 } from "../constants";
 import { getScreenSizeDef } from "../../../data/screenSizes";
 import { getBatteryEra } from "../../../data/batteryEras";
-import { MATERIALS, KEYBOARD_FEATURES, TRACKPAD_FEATURES } from "../../../data/chassisOptions";
+import {
+  MATERIALS,
+  COOLING_SOLUTIONS,
+  KEYBOARD_FEATURES,
+  TRACKPAD_FEATURES,
+} from "../../../data/chassisOptions";
+import { PORT_TYPES } from "../../../data/portTypes";
 import { ChassisOption, ChassisOptionSlot, ComponentSlot } from "../../../data/types";
 
 const DISPLAY_SLOTS: ComponentSlot[] = ["resolution", "displayTech", "displaySurface"];
@@ -23,6 +34,7 @@ interface SlotSectionDef {
 
 const CHASSIS_SLOTS: SlotSectionDef[] = [
   { slot: "material", label: "Chassis Material", options: MATERIALS },
+  { slot: "coolingSolution", label: "Cooling Solution", options: COOLING_SOLUTIONS },
   { slot: "keyboardFeature", label: "Keyboard", options: KEYBOARD_FEATURES },
   { slot: "trackpadFeature", label: "Trackpad / Pointing Device", options: TRACKPAD_FEATURES },
 ];
@@ -68,27 +80,95 @@ function totalComponentPowerDraw(
   }, 0);
 }
 
+/** Sum all internal volume consumed: components + battery + ports + chassis options. */
+function totalConsumedVolumeCm3(
+  components: Record<string, { volumeCm3: number } | undefined>,
+  batteryWh: number,
+  ports: Record<string, number>,
+  chassisOptions: (ChassisOption | null)[],
+): number {
+  let vol = 0;
+  // Components
+  for (const comp of Object.values(components)) {
+    if (comp) vol += comp.volumeCm3;
+  }
+  // Battery
+  vol += batteryVolumeCm3(batteryWh);
+  // Ports
+  for (const pt of PORT_TYPES) {
+    const count = ports[pt.id] ?? 0;
+    vol += count * pt.volumePerPortCm3;
+  }
+  // Chassis options (cooling solutions take volume)
+  for (const opt of chassisOptions) {
+    if (opt) vol += opt.volumeCm3;
+  }
+  return vol;
+}
+
+/** Max minThicknessCm across all selected items. */
+function maxHeightConstraintCm(
+  components: Record<string, { minThicknessCm: number } | undefined>,
+  ports: Record<string, number>,
+  chassisOptions: (ChassisOption | null)[],
+): number {
+  let max = 0;
+  for (const comp of Object.values(components)) {
+    if (comp && comp.minThicknessCm > max) max = comp.minThicknessCm;
+  }
+  for (const pt of PORT_TYPES) {
+    if ((ports[pt.id] ?? 0) > 0 && pt.minThicknessCm > max) max = pt.minThicknessCm;
+  }
+  for (const opt of chassisOptions) {
+    if (opt && opt.minThicknessCm > max) max = opt.minThicknessCm;
+  }
+  return max;
+}
+
 export function BodyStep() {
   const { state, dispatch } = useWizard();
   const screenSizeDef = getScreenSizeDef(state.screenSize);
   const era = getBatteryEra(GAME_YEAR);
 
-  // --- Thickness ---
   const thickness = state.thicknessCm;
-  const minThickness = minThicknessCm(state.batteryCapacityWh, state.screenSize);
-  const thicknessTooThin = thickness < minThickness;
+  const bezel = state.bezelMm;
 
-  // --- Cooling (adjusted by thickness) ---
-  const baseCooling = screenSizeDef.baseCoolingCapacityW;
-  const effectiveCooling = Math.round(baseCooling * coolingMultiplier(thickness));
-
-  // --- Running totals for chassis selections ---
-  const selectedOptions = [
+  // --- Volume ---
+  const allChassisOptions = [
     state.chassis.material,
+    state.chassis.coolingSolution,
     state.chassis.keyboardFeature,
     state.chassis.trackpadFeature,
-  ].filter((o): o is ChassisOption => o !== null);
+  ];
+  const totalVolume = totalConsumedVolumeCm3(
+    state.components as Record<string, { volumeCm3: number } | undefined>,
+    state.batteryCapacityWh,
+    state.ports,
+    allChassisOptions,
+  );
+  const totalAvailable = availableVolumeCm3(state.screenSize, bezel, thickness);
+  const volumeOverflow = totalVolume > totalAvailable;
+  const volumePercent = totalAvailable > 0 ? Math.min(100, (totalVolume / totalAvailable) * 100) : 100;
 
+  // --- Min thickness (from both volume and height constraints) ---
+  const minFromVolume = minThicknessForVolumeCm(totalVolume, state.screenSize, bezel);
+  const minFromHeight = maxHeightConstraintCm(
+    state.components as Record<string, { minThicknessCm: number } | undefined>,
+    state.ports,
+    allChassisOptions,
+  );
+  const minThickness = Math.max(minFromVolume, minFromHeight);
+  const thicknessTooThin = thickness < minThickness;
+
+  // --- Cooling ---
+  const coolingFromSolution = state.chassis.coolingSolution?.coolingCapacityW ?? 0;
+  const thicknessMultiplier = coolingMultiplier(thickness);
+  const effectiveCooling = Math.round(coolingFromSolution * thicknessMultiplier);
+
+  // --- Running totals for chassis selections ---
+  const selectedOptions = allChassisOptions.filter(
+    (o): o is ChassisOption => o !== null,
+  );
   const totalCost = selectedOptions.reduce((sum, o) => sum + chassisCost(o, GAME_YEAR), 0);
   const totalChassisWeight = selectedOptions.reduce((sum, o) => sum + o.weightG, 0);
 
@@ -108,8 +188,12 @@ export function BodyStep() {
       : comp.weightG;
     return sum + w;
   }, 0);
+  const portWeight = PORT_TYPES.reduce(
+    (sum, p) => sum + (state.ports[p.id] ?? 0) * p.weightPerPortG,
+    0,
+  );
   const estimatedTotalWeight =
-    screenSizeDef.baseWeightG + componentWeight + batteryWeight + totalChassisWeight;
+    screenSizeDef.baseWeightG + componentWeight + batteryWeight + totalChassisWeight + portWeight;
   const estimatedHours = totalPower > 0 ? state.batteryCapacityWh / totalPower : 0;
   const batteryWarning = totalPower > 0 && estimatedHours < 3;
 
@@ -118,120 +202,120 @@ export function BodyStep() {
       <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
         <h2>Body / Chassis</h2>
         <p style={{ color: "#aaa", marginTop: "4px", marginBottom: "24px" }}>
-          Set chassis thickness, choose material, keyboard, and trackpad.
+          Configure chassis dimensions, material, cooling, keyboard, and trackpad.
         </p>
 
-        {/* Thickness slider */}
+        {/* Sliders: thickness and bezel */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "24px" }}>
+          {/* Thickness slider */}
+          <div>
+            <div style={{ fontSize: "14px", fontWeight: "bold", color: "#ccc", marginBottom: "8px" }}>
+              Chassis Thickness
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "4px" }}>
+              <span style={{ color: "#888", fontSize: "12px" }}>{THICKNESS_MIN_CM.toFixed(1)} cm</span>
+              <span
+                style={{
+                  fontSize: "28px",
+                  fontWeight: "bold",
+                  color: thicknessTooThin ? "#ff9800" : "#90caf9",
+                }}
+              >
+                {thickness.toFixed(1)} cm
+              </span>
+              <span style={{ color: "#888", fontSize: "12px" }}>{THICKNESS_MAX_CM.toFixed(1)} cm</span>
+            </div>
+            <input
+              type="range"
+              min={THICKNESS_MIN_CM}
+              max={THICKNESS_MAX_CM}
+              step={THICKNESS_STEP_CM}
+              value={thickness}
+              onChange={(e) =>
+                dispatch({ type: "SET_THICKNESS", thicknessCm: Math.round(Number(e.target.value) * 10) / 10 })
+              }
+              style={{ width: "100%", accentColor: thicknessTooThin ? "#ff9800" : "#90caf9" }}
+            />
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#666", marginTop: "2px" }}>
+              <span>Thinner</span>
+              <span>Thicker</span>
+            </div>
+          </div>
+
+          {/* Bezel slider */}
+          <div>
+            <div style={{ fontSize: "14px", fontWeight: "bold", color: "#ccc", marginBottom: "8px" }}>
+              Bezel Width (uniform)
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "4px" }}>
+              <span style={{ color: "#888", fontSize: "12px" }}>{BEZEL_MIN_MM} mm</span>
+              <span style={{ fontSize: "28px", fontWeight: "bold", color: "#90caf9" }}>
+                {bezel} mm
+              </span>
+              <span style={{ color: "#888", fontSize: "12px" }}>{BEZEL_MAX_MM} mm</span>
+            </div>
+            <input
+              type="range"
+              min={BEZEL_MIN_MM}
+              max={BEZEL_MAX_MM}
+              step={BEZEL_STEP_MM}
+              value={bezel}
+              onChange={(e) => dispatch({ type: "SET_BEZEL", bezelMm: Number(e.target.value) })}
+              style={{ width: "100%", accentColor: "#90caf9" }}
+            />
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#666", marginTop: "2px" }}>
+              <span>Sleek</span>
+              <span>More internal space</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Volume bar */}
         <div style={{ marginBottom: "24px" }}>
-          <div
-            style={{
-              fontSize: "14px",
-              fontWeight: "bold",
-              color: "#ccc",
-              marginBottom: "8px",
-            }}
-          >
-            Chassis Thickness
-          </div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "baseline",
-              marginBottom: "8px",
-            }}
-          >
-            <span style={{ color: "#888", fontSize: "13px" }}>{THICKNESS_MIN_CM.toFixed(1)} cm</span>
-            <span
-              style={{
-                fontSize: "36px",
-                fontWeight: "bold",
-                color: thicknessTooThin ? "#ff9800" : "#90caf9",
-              }}
-            >
-              {thickness.toFixed(1)} cm
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+            <span style={{ fontSize: "12px", fontWeight: "bold", color: "#ccc" }}>
+              Internal Space Usage
             </span>
-            <span style={{ color: "#888", fontSize: "13px" }}>{THICKNESS_MAX_CM.toFixed(1)} cm</span>
+            <span style={{ fontSize: "12px", color: volumeOverflow ? "#f44336" : "#888" }}>
+              {Math.round(totalVolume)} / {Math.round(totalAvailable)} cm³
+            </span>
           </div>
-          <input
-            type="range"
-            min={THICKNESS_MIN_CM}
-            max={THICKNESS_MAX_CM}
-            step={THICKNESS_STEP_CM}
-            value={thickness}
-            onChange={(e) =>
-              dispatch({
-                type: "SET_THICKNESS",
-                thicknessCm: Math.round(Number(e.target.value) * 10) / 10,
-              })
-            }
-            style={{ width: "100%", accentColor: thicknessTooThin ? "#ff9800" : "#90caf9" }}
-          />
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginTop: "4px",
-              fontSize: "12px",
-              color: "#888",
-            }}
-          >
-            <span>Thinner — better portability</span>
-            <span>Thicker — more cooling</span>
+          <div style={{ height: "8px", background: "#2a2a2a", borderRadius: "4px", overflow: "hidden" }}>
+            <div
+              style={{
+                height: "100%",
+                width: `${Math.min(100, volumePercent)}%`,
+                background: volumeOverflow ? "#f44336" : volumePercent > 85 ? "#ff9800" : "#4caf50",
+                borderRadius: "4px",
+                transition: "width 0.2s, background 0.2s",
+              }}
+            />
           </div>
         </div>
 
         {/* Warnings */}
         {(thicknessTooThin || thermalWarning || batteryWarning) && (
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "24px" }}
-          >
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "24px" }}>
             {thicknessTooThin && (
-              <div
-                style={{
-                  background: "#4a1c1c",
-                  border: "1px solid #f44336",
-                  borderRadius: "8px",
-                  padding: "12px 16px",
-                  fontSize: "13px",
-                  color: "#ef9a9a",
-                }}
-              >
-                <strong>Thickness too low:</strong> A {state.batteryCapacityWh}Wh battery in a{" "}
-                {state.screenSize}" chassis requires at least {minThickness.toFixed(1)} cm
-                thickness. Reduce battery capacity or increase thickness to proceed.
+              <div style={{ background: "#4a1c1c", border: "1px solid #f44336", borderRadius: "8px", padding: "12px 16px", fontSize: "13px", color: "#ef9a9a" }}>
+                <strong>Chassis too thin:</strong> Your components, battery, and ports need at
+                least {minThickness.toFixed(1)} cm.
+                {minFromHeight > minFromVolume
+                  ? " A component or port has a height constraint that requires more thickness."
+                  : " Increase thickness, widen bezels, or reduce battery/components to proceed."}
               </div>
             )}
             {thermalWarning && (
-              <div
-                style={{
-                  background: "#3e2723",
-                  border: "1px solid #ff9800",
-                  borderRadius: "8px",
-                  padding: "12px 16px",
-                  fontSize: "13px",
-                  color: "#ffcc80",
-                }}
-              >
-                <strong>Thermal warning:</strong> Your components draw {totalPower}W but at{" "}
-                {thickness.toFixed(1)} cm thickness, this {state.screenSize}" chassis can only
-                dissipate {effectiveCooling}W. Expect thermal throttling and high fan noise.
+              <div style={{ background: "#3e2723", border: "1px solid #ff9800", borderRadius: "8px", padding: "12px 16px", fontSize: "13px", color: "#ffcc80" }}>
+                <strong>Thermal warning:</strong> Your components draw {totalPower}W but effective
+                cooling capacity is only {effectiveCooling}W. Consider a better cooling solution or
+                thicker chassis.
               </div>
             )}
             {batteryWarning && (
-              <div
-                style={{
-                  background: "#33291a",
-                  border: "1px solid #ffa726",
-                  borderRadius: "8px",
-                  padding: "12px 16px",
-                  fontSize: "13px",
-                  color: "#ffe0b2",
-                }}
-              >
-                <strong>Battery warning:</strong> With a {state.batteryCapacityWh}Wh battery and{" "}
-                {totalPower}W power draw, estimated battery life is only ~
-                {estimatedHours.toFixed(1)} hours.
+              <div style={{ background: "#33291a", border: "1px solid #ffa726", borderRadius: "8px", padding: "12px 16px", fontSize: "13px", color: "#ffe0b2" }}>
+                <strong>Battery warning:</strong> Estimated battery life is only ~
+                {estimatedHours.toFixed(1)} hours ({state.batteryCapacityWh}Wh / {totalPower}W).
               </div>
             )}
           </div>
@@ -243,23 +327,10 @@ export function BodyStep() {
           const selected = state.chassis[slot];
           return (
             <div key={slot} style={{ marginBottom: "24px" }}>
-              <div
-                style={{
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  color: "#ccc",
-                  marginBottom: "8px",
-                }}
-              >
+              <div style={{ fontSize: "14px", fontWeight: "bold", color: "#ccc", marginBottom: "8px" }}>
                 {label}
               </div>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
-                  gap: "8px",
-                }}
-              >
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
                 {available.map((option) => (
                   <ChassisCard
                     key={option.id}
@@ -288,26 +359,20 @@ export function BodyStep() {
           top: 0,
         }}
       >
-        <div
-          style={{ color: "#888", fontSize: "12px", marginBottom: "12px", fontWeight: "bold" }}
-        >
+        <div style={{ color: "#888", fontSize: "12px", marginBottom: "12px", fontWeight: "bold" }}>
           RUNNING TOTALS
         </div>
         <TotalRow label="Chassis Cost" value={`$${totalCost}`} />
         <TotalRow label="Weight Impact" value={formatWeight(totalChassisWeight)} />
         <div style={{ borderTop: "1px solid #333", marginTop: "12px", paddingTop: "12px" }}>
-          <div
-            style={{ color: "#888", fontSize: "12px", marginBottom: "12px", fontWeight: "bold" }}
-          >
+          <div style={{ color: "#888", fontSize: "12px", marginBottom: "12px", fontWeight: "bold" }}>
             LAPTOP ESTIMATE
           </div>
           <TotalRow label="Total Weight" value={formatWeight(estimatedTotalWeight)} />
           <TotalRow label="Thickness" value={`${thickness.toFixed(1)} cm`} />
+          <TotalRow label="Bezel" value={`${bezel} mm`} />
           <TotalRow label="Power Draw" value={`${totalPower}W`} />
-          <TotalRow
-            label="Cooling"
-            value={`${effectiveCooling}W`}
-          />
+          <TotalRow label="Cooling" value={`${effectiveCooling}W`} />
           {totalPower > 0 && (
             <TotalRow label="Battery Life" value={`~${estimatedHours.toFixed(1)}h`} />
           )}
@@ -365,13 +430,18 @@ function ChassisCard({
       <div style={{ fontSize: "11px", color: "#888", marginBottom: "8px", lineHeight: "1.4" }}>
         {specSummary(option)}
       </div>
-      <div style={{ display: "flex", gap: "12px", fontSize: "11px" }}>
+      <div style={{ display: "flex", gap: "12px", fontSize: "11px", flexWrap: "wrap" }}>
         <span style={{ color: "#4caf50" }}>${cost}</span>
         {option.weightG !== 0 && (
           <span style={{ color: option.weightG < 0 ? "#64b5f6" : "#888" }}>
-            {option.weightG > 0 ? "+" : ""}
-            {option.weightG}g
+            {option.weightG > 0 ? "+" : ""}{option.weightG}g
           </span>
+        )}
+        {option.volumeCm3 > 0 && (
+          <span style={{ color: "#ce93d8" }}>{option.volumeCm3}cm³</span>
+        )}
+        {option.coolingCapacityW > 0 && (
+          <span style={{ color: "#4fc3f7" }}>{option.coolingCapacityW}W cooling</span>
         )}
       </div>
     </button>

@@ -9,7 +9,6 @@ import { DISPLAY_SURFACES } from "./displaySurfaces";
 import { WIFI } from "./wifi";
 import { WEBCAMS } from "./webcams";
 import { SPEAKERS } from "./speakers";
-import { PORTS } from "./ports";
 
 export const ALL_COMPONENTS: Component[] = [
   ...CPUS,
@@ -22,7 +21,6 @@ export const ALL_COMPONENTS: Component[] = [
   ...WIFI,
   ...WEBCAMS,
   ...SPEAKERS,
-  ...PORTS,
 ];
 
-export { CPUS, GPUS, RAM, STORAGE, RESOLUTIONS, DISPLAY_TECH, DISPLAY_SURFACES, WIFI, WEBCAMS, SPEAKERS, PORTS };
+export { CPUS, GPUS, RAM, STORAGE, RESOLUTIONS, DISPLAY_TECH, DISPLAY_SURFACES, WIFI, WEBCAMS, SPEAKERS };

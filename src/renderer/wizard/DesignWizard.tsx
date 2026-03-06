@@ -1,8 +1,13 @@
 import { WizardProvider, useWizard } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
 import { WizardStep, WIZARD_STEPS } from "./types";
-import { GAME_YEAR, minThicknessCm } from "./constants";
+import {
+  GAME_YEAR,
+  availableVolumeCm3,
+  batteryVolumeCm3,
+} from "./constants";
 import { ComponentSlot } from "../../data/types";
+import { PORT_TYPES } from "../../data/portTypes";
 import { MetadataStep } from "./steps/MetadataStep";
 import { ScreenSizeStep } from "./steps/ScreenSizeStep";
 import { ProcessingStep } from "./steps/ProcessingStep";
@@ -15,7 +20,7 @@ import { ReviewStep } from "./steps/ReviewStep";
 const COMPONENT_STEP_SLOTS: Partial<Record<WizardStep, ComponentSlot[]>> = {
   processing: ["cpu", "gpu", "ram", "storage"],
   display: ["resolution", "displayTech", "displaySurface"],
-  mediaConnectivity: ["webcam", "speakers", "wifi", "ports"],
+  mediaConnectivity: ["webcam", "speakers", "wifi"],
 };
 
 function WizardContent() {
@@ -31,10 +36,42 @@ function WizardContent() {
   const needsComponents = requiredSlots && !requiredSlots.every((slot) => state.components[slot]);
   const needsChassis =
     state.currentStep === "body" &&
-    (!state.chassis.material || !state.chassis.keyboardFeature || !state.chassis.trackpadFeature);
-  const thicknessTooThin =
-    state.currentStep === "body" &&
-    state.thicknessCm < minThicknessCm(state.batteryCapacityWh, state.screenSize);
+    (!state.chassis.material ||
+      !state.chassis.coolingSolution ||
+      !state.chassis.keyboardFeature ||
+      !state.chassis.trackpadFeature);
+
+  // Volume-based thickness check
+  let thicknessTooThin = false;
+  if (state.currentStep === "body") {
+    let totalVol = batteryVolumeCm3(state.batteryCapacityWh);
+    for (const comp of Object.values(state.components)) {
+      if (comp) totalVol += comp.volumeCm3;
+    }
+    for (const pt of PORT_TYPES) {
+      totalVol += (state.ports[pt.id] ?? 0) * pt.volumePerPortCm3;
+    }
+    for (const opt of Object.values(state.chassis)) {
+      if (opt) totalVol += opt.volumeCm3;
+    }
+    const available = availableVolumeCm3(state.screenSize, state.bezelMm, state.thicknessCm);
+    thicknessTooThin = totalVol > available;
+
+    // Also check height constraints
+    let maxHeight = 0;
+    for (const comp of Object.values(state.components)) {
+      if (comp && comp.minThicknessCm > maxHeight) maxHeight = comp.minThicknessCm;
+    }
+    for (const pt of PORT_TYPES) {
+      if ((state.ports[pt.id] ?? 0) > 0 && pt.minThicknessCm > maxHeight)
+        maxHeight = pt.minThicknessCm;
+    }
+    for (const opt of Object.values(state.chassis)) {
+      if (opt && opt.minThicknessCm > maxHeight) maxHeight = opt.minThicknessCm;
+    }
+    if (state.thicknessCm < maxHeight) thicknessTooThin = true;
+  }
+
   const canAdvance = !needsMetadata && !needsComponents && !needsChassis && !thicknessTooThin;
 
   function canNavigateTo(step: WizardStep) {

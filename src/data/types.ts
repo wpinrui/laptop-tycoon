@@ -48,8 +48,7 @@ export type ComponentSlot =
   | "displaySurface"
   | "wifi"
   | "webcam"
-  | "speakers"
-  | "ports";
+  | "speakers";
 
 export interface ComponentSlotConfig {
   slot: ComponentSlot;
@@ -67,14 +66,37 @@ export interface Component {
   costAtLaunch: number;
   powerDrawW: number;
   weightG: number;
+  /** Internal volume consumed (cm³). Competes for chassis space. */
+  volumeCm3: number;
+  /** Minimum chassis thickness required to fit this component (cm). 0 = no constraint. */
+  minThicknessCm: number;
   specs: Record<string, string>;
   stats: StatVector;
+}
+
+// --- Ports ---
+
+export interface PortType {
+  id: string;
+  name: string;
+  yearIntroduced: number;
+  yearDiscontinued: number | null;
+  maxCount: number;
+  costPerPort: number;
+  weightPerPortG: number;
+  /** Volume per port (cm³). */
+  volumePerPortCm3: number;
+  /** Minimum chassis thickness needed for this port (cm). e.g., RJ45 is tall. */
+  minThicknessCm: number;
+  stats: StatVector;
+  specs: Record<string, string>;
 }
 
 // --- Chassis ---
 
 export type ChassisOptionSlot =
   | "material"
+  | "coolingSolution"
   | "keyboardFeature"
   | "trackpadFeature";
 
@@ -87,6 +109,12 @@ export interface ChassisOption {
   costAtLaunch: number;
   costDecayRate: number;
   weightG: number;
+  /** Internal volume consumed (cm³). Cooling solutions take significant space. */
+  volumeCm3: number;
+  /** Minimum chassis thickness required (cm). 0 = no constraint. */
+  minThicknessCm: number;
+  /** Cooling capacity in watts. Only relevant for coolingSolution slot. */
+  coolingCapacityW: number;
   stats: StatVector;
   specs: Record<string, string>;
 }
