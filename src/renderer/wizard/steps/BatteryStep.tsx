@@ -1,5 +1,5 @@
 import { useWizard } from "../WizardContext";
-import { GAME_YEAR, formatWeight, MIN_BATTERY_WH, MAX_BATTERY_WH, BATTERY_STEP_WH, AVG_USAGE_MULTIPLIER, batteryWarningThresholdH } from "../constants";
+import { GAME_YEAR, formatWeight, MIN_BATTERY_WH, MAX_BATTERY_WH, BATTERY_STEP_WH, avgUsageMultiplier, batteryWarningThresholdH } from "../constants";
 import { getBatteryEra } from "../../../data/batteryEras";
 import { StatCard } from "./StatCard";
 
@@ -17,7 +17,7 @@ export function BatteryStep() {
     if (comp) totalPower += comp.powerDrawW;
   }
 
-  const avgPower = totalPower * AVG_USAGE_MULTIPLIER;
+  const avgPower = totalPower * avgUsageMultiplier(GAME_YEAR);
   const estimatedHours = avgPower > 0 ? capacity / avgPower : 0;
   const batteryWarning = totalPower > 0 && estimatedHours < batteryWarningThresholdH(GAME_YEAR);
   const batteryH = Math.floor(estimatedHours);
@@ -95,7 +95,7 @@ export function BatteryStep() {
 
       {totalPower > 0 && (
         <div style={{ fontSize: "0.75rem", color: "#888", textAlign: "center" }}>
-          {capacity} Wh ÷ ({totalPower} W × {AVG_USAGE_MULTIPLIER} avg usage) = {batteryLifeStr}
+          {capacity} Wh ÷ ({totalPower} W × {avgUsageMultiplier(GAME_YEAR)} avg usage) = {batteryLifeStr}
         </div>
       )}
     </div>
