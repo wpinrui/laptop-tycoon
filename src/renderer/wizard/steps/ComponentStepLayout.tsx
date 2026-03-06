@@ -1,11 +1,8 @@
 import { useWizard } from "../WizardContext";
-import { GAME_YEAR, formatWeight } from "../constants";
+import { GAME_YEAR, DISPLAY_SLOTS } from "../constants";
 import { ALL_COMPONENTS } from "../../../data/components";
 import { getScreenSizeDef } from "../../../data/screenSizes";
-import { PORT_TYPES } from "../../../data/portTypes";
 import { Component, ComponentSlot, ScreenSizeDefinition } from "../../../data/types";
-
-const DISPLAY_SLOTS: ComponentSlot[] = ["resolution", "displayTech", "displaySurface"];
 
 export interface SlotDef {
   slot: ComponentSlot;
@@ -57,79 +54,26 @@ export function ComponentStepLayout({
 }) {
   const { state, dispatch } = useWizard();
   const screenSizeDef = getScreenSizeDef(state.screenSize);
-  const multiplier = screenSizeDef.displayMultiplier;
-
-  // Cumulative totals across all selected components
-  function sumAllComponents(prop: "costAtLaunch" | "powerDrawW" | "weightG"): number {
-    let total = 0;
-    for (const [slot, comp] of Object.entries(state.components)) {
-      if (comp) total += applyMultiplier(comp[prop], slot as ComponentSlot, multiplier);
-    }
-    return total;
-  }
-
-  let totalCost = sumAllComponents("costAtLaunch");
-  let totalPower = sumAllComponents("powerDrawW");
-  let totalWeight = sumAllComponents("weightG");
-
-  // Add port totals
-  for (const pt of PORT_TYPES) {
-    const count = state.ports[pt.id] ?? 0;
-    totalCost += count * pt.costPerPort;
-    totalWeight += count * pt.weightPerPortG;
-  }
 
   return (
-    <div style={{ display: "flex", gap: "24px", height: "100%" }}>
-      <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
-        <h2>{title}</h2>
-        <p style={{ color: "#aaa", marginTop: "4px", marginBottom: "24px" }}>
-          {description}
-        </p>
+    <div>
+      <h2>{title}</h2>
+      <p style={{ color: "#aaa", marginTop: "4px", marginBottom: "24px" }}>
+        {description}
+      </p>
 
-        {slots.map(({ slot, label }) => (
-          <SlotSection
-            key={slot}
-            slot={slot}
-            label={label}
-            selected={state.components[slot] ?? null}
-            onSelect={(c) => dispatch({ type: "SET_COMPONENT", slot, component: c })}
-            screenSizeDef={screenSizeDef}
-          />
-        ))}
+      {slots.map(({ slot, label }) => (
+        <SlotSection
+          key={slot}
+          slot={slot}
+          label={label}
+          selected={state.components[slot] ?? null}
+          onSelect={(c) => dispatch({ type: "SET_COMPONENT", slot, component: c })}
+          screenSizeDef={screenSizeDef}
+        />
+      ))}
 
-        {children}
-      </div>
-
-      <div
-        style={{
-          width: "200px",
-          flexShrink: 0,
-          background: "#1a1a1a",
-          border: "1px solid #333",
-          borderRadius: "8px",
-          padding: "16px",
-          alignSelf: "flex-start",
-          position: "sticky",
-          top: 0,
-        }}
-      >
-        <div style={{ color: "#888", fontSize: "12px", marginBottom: "12px", fontWeight: "bold" }}>
-          RUNNING TOTALS
-        </div>
-        <TotalRow label="Cost" value={formatCost(totalCost)} />
-        <TotalRow label="Power Draw" value={`${totalPower} W`} />
-        <TotalRow label="Weight" value={formatWeight(totalWeight)} />
-      </div>
-    </div>
-  );
-}
-
-function TotalRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-      <span style={{ color: "#888", fontSize: "13px" }}>{label}</span>
-      <span style={{ color: "#e0e0e0", fontSize: "13px", fontWeight: "bold" }}>{value}</span>
+      {children}
     </div>
   );
 }

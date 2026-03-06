@@ -4,10 +4,10 @@ import { WizardStep, WizardState, WIZARD_STEPS } from "./types";
 import {
   GAME_YEAR,
   availableVolumeCm3,
-  batteryVolumeCm3,
+  totalConsumedVolumeCm3,
+  maxHeightConstraintCm,
 } from "./constants";
 import { ComponentSlot } from "../../data/types";
-import { PORT_TYPES } from "../../data/portTypes";
 import { MetadataStep } from "./steps/MetadataStep";
 import { ScreenSizeStep } from "./steps/ScreenSizeStep";
 import { ProcessingStep } from "./steps/ProcessingStep";
@@ -16,6 +16,7 @@ import { MediaConnectivityStep } from "./steps/MediaConnectivityStep";
 import { BatteryStep } from "./steps/BatteryStep";
 import { BodyStep } from "./steps/BodyStep";
 import { ReviewStep } from "./steps/ReviewStep";
+import { WizardSidebar } from "./LaptopEstimateSidebar";
 
 const COMPONENT_STEP_SLOTS: Partial<Record<WizardStep, ComponentSlot[]>> = {
   processing: ["cpu", "gpu", "ram", "storage"],
@@ -45,33 +46,21 @@ function isStepComplete(step: WizardStep, state: WizardState): boolean {
       )
         return false;
 
+      const chassisOptions = [
+        state.chassis.material,
+        state.chassis.coolingSolution,
+        state.chassis.keyboardFeature,
+        state.chassis.trackpadFeature,
+      ];
+
       // Volume check
-      let totalVol = batteryVolumeCm3(state.batteryCapacityWh);
-      for (const comp of Object.values(state.components)) {
-        if (comp) totalVol += comp.volumeCm3;
-      }
-      for (const pt of PORT_TYPES) {
-        totalVol += (state.ports[pt.id] ?? 0) * pt.volumePerPortCm3;
-      }
-      for (const opt of Object.values(state.chassis)) {
-        if (opt) totalVol += opt.volumeCm3;
-      }
+      const totalVol = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, chassisOptions);
       const available = availableVolumeCm3(state.screenSize, state.bezelMm, state.thicknessCm, GAME_YEAR);
       if (totalVol > available) return false;
 
       // Height constraint check
-      let maxHeight = 0;
-      for (const comp of Object.values(state.components)) {
-        if (comp && comp.minThicknessCm > maxHeight) maxHeight = comp.minThicknessCm;
-      }
-      for (const pt of PORT_TYPES) {
-        if ((state.ports[pt.id] ?? 0) > 0 && pt.minThicknessCm > maxHeight)
-          maxHeight = pt.minThicknessCm;
-      }
-      for (const opt of Object.values(state.chassis)) {
-        if (opt && opt.minThicknessCm > maxHeight) maxHeight = opt.minThicknessCm;
-      }
-      return state.thicknessCm >= maxHeight;
+      const minHeight = maxHeightConstraintCm(state.components, state.ports, chassisOptions);
+      return state.thicknessCm >= minHeight;
     }
     case "review":
       return true;
@@ -85,6 +74,8 @@ function WizardContent() {
   const isLast = currentIdx === WIZARD_STEPS.length - 1;
 
   const canAdvance = isStepComplete(state.currentStep, state);
+  const allStepsComplete = WIZARD_STEPS.every((s) => isStepComplete(s, state));
+  const showSidebar = state.currentStep !== "metadata";
 
   function canNavigateTo(step: WizardStep) {
     const targetIdx = WIZARD_STEPS.indexOf(step);
@@ -144,16 +135,31 @@ function WizardContent() {
 
       <div
         style={{
-          background: "#1e1e1e",
-          border: "1px solid #333",
-          borderRadius: "8px",
-          padding: "24px",
+          display: "flex",
+          gap: "24px",
           flex: 1,
-          overflowY: "auto",
           minHeight: 0,
         }}
       >
-        {stepContent}
+        <div
+          style={{
+            background: "#1e1e1e",
+            border: "1px solid #333",
+            borderRadius: "8px",
+            padding: "24px",
+            flex: 1,
+            overflowY: "auto",
+            minHeight: 0,
+          }}
+        >
+          {stepContent}
+        </div>
+        {showSidebar && (
+          <WizardSidebar
+            showChassisTotals={state.currentStep === "body"}
+            showEstimate={allStepsComplete}
+          />
+        )}
       </div>
 
       <div

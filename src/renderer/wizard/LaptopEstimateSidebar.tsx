@@ -1,0 +1,188 @@
+import { useWizard } from "./WizardContext";
+import {
+  GAME_YEAR,
+  formatWeight,
+  availableVolumeCm3,
+  coolingMultiplier,
+  minThicknessForVolumeCm,
+  chassisCost,
+  totalConsumedVolumeCm3,
+  maxHeightConstraintCm,
+  DISPLAY_SLOTS,
+} from "./constants";
+import { getScreenSizeDef } from "../../data/screenSizes";
+import { getBatteryEra } from "../../data/batteryEras";
+import { PORT_TYPES } from "../../data/portTypes";
+import { ChassisOption, ComponentSlot } from "../../data/types";
+
+function applyDisplayMultiplier(value: number, slot: string, multiplier: number): number {
+  return DISPLAY_SLOTS.includes(slot as ComponentSlot) ? Math.round(value * multiplier) : value;
+}
+
+export function WizardSidebar({
+  showChassisTotals,
+  showEstimate,
+}: {
+  showChassisTotals?: boolean;
+  showEstimate?: boolean;
+}) {
+  const { state } = useWizard();
+  const screenSizeDef = getScreenSizeDef(state.screenSize);
+  const era = getBatteryEra(GAME_YEAR);
+  const displayMult = screenSizeDef.displayMultiplier;
+
+  const thickness = state.thicknessCm;
+  const bezel = state.bezelMm;
+
+  // --- Running totals (always computed) ---
+  let componentCost = 0;
+  let componentPower = 0;
+  let componentWeight = 0;
+  for (const [slot, comp] of Object.entries(state.components)) {
+    if (!comp) continue;
+    componentCost += applyDisplayMultiplier(comp.costAtLaunch, slot, displayMult);
+    componentPower += applyDisplayMultiplier(comp.powerDrawW, slot, displayMult);
+    componentWeight += applyDisplayMultiplier(comp.weightG, slot, displayMult);
+  }
+
+  let portCost = 0;
+  let portWeight = 0;
+  for (const pt of PORT_TYPES) {
+    const count = state.ports[pt.id] ?? 0;
+    portCost += count * pt.costPerPort;
+    portWeight += count * pt.weightPerPortG;
+  }
+
+  const allChassisOptions = [
+    state.chassis.material,
+    state.chassis.coolingSolution,
+    state.chassis.keyboardFeature,
+    state.chassis.trackpadFeature,
+  ];
+  const selectedChassisOptions = allChassisOptions.filter(
+    (o): o is ChassisOption => o !== null,
+  );
+  const chassisOptionCost = selectedChassisOptions.reduce((sum, o) => sum + chassisCost(o, GAME_YEAR), 0);
+  const chassisOptionWeight = selectedChassisOptions.reduce((sum, o) => sum + o.weightG, 0);
+
+  const batteryCost = Math.round(state.batteryCapacityWh * era.costPerWh);
+  const batteryWeight = Math.round(state.batteryCapacityWh * era.weightPerWh);
+
+  const totalCost = componentCost + portCost + chassisOptionCost + batteryCost;
+  const totalPower = componentPower;
+  const totalWeight = componentWeight + portWeight;
+
+  // --- Estimate (conditionally rendered) ---
+  let estimateSection = null;
+  if (showEstimate) {
+    // Volume
+    const totalVolume = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, allChassisOptions);
+    const totalAvailable = availableVolumeCm3(state.screenSize, bezel, thickness, GAME_YEAR);
+    const volumeOverflow = totalVolume > totalAvailable;
+    const volumePercent = totalAvailable > 0 ? Math.min(100, (totalVolume / totalAvailable) * 100) : 100;
+
+    // Cooling
+    const coolingFromSolution = state.chassis.coolingSolution?.coolingCapacityW ?? 0;
+    const spaceUtilization = totalAvailable > 0 ? totalVolume / totalAvailable : 1;
+    const coolMult = coolingMultiplier(thickness, bezel, spaceUtilization);
+    const effectiveCooling = Math.round(coolingFromSolution * coolMult);
+    const thermalWarning = totalPower > effectiveCooling;
+
+    // Thickness constraint
+    const minFromVolume = minThicknessForVolumeCm(totalVolume, state.screenSize, bezel, GAME_YEAR);
+    const minFromHeight = maxHeightConstraintCm(state.components, state.ports, allChassisOptions);
+    const minThickness = Math.max(minFromVolume, minFromHeight);
+    const thicknessTooThin = thickness < minThickness;
+
+    // Weight
+    const estimatedTotalWeight =
+      screenSizeDef.baseWeightG + componentWeight + batteryWeight + chassisOptionWeight + portWeight;
+
+    // Battery life
+    const estimatedHours = totalPower > 0 ? state.batteryCapacityWh / totalPower : 0;
+    const batteryWarningThresholdH =
+      GAME_YEAR <= 2002 ? 1.5 : GAME_YEAR <= 2005 ? 2 : GAME_YEAR <= 2009 ? 2.5 : GAME_YEAR <= 2014 ? 3 : 4;
+    const batteryWarning = totalPower > 0 && estimatedHours < batteryWarningThresholdH;
+
+    estimateSection = (
+      <>
+        <div style={{ borderTop: "1px solid #333", marginTop: "12px", paddingTop: "12px" }}>
+          <div style={{ color: "#888", fontSize: "12px", marginBottom: "12px", fontWeight: "bold" }}>
+            LAPTOP ESTIMATE
+          </div>
+          <SidebarRow
+            label="Space"
+            value={`${Math.round(volumePercent)}%`}
+            warning={volumeOverflow ? `${Math.round(totalVolume)} cm³ used but only ${Math.round(totalAvailable)} cm³ available` : undefined}
+          />
+          <SidebarRow label="Total Weight" value={formatWeight(estimatedTotalWeight)} />
+          <SidebarRow
+            label="Thickness"
+            value={`${thickness.toFixed(1)} cm`}
+            warning={thicknessTooThin ? `Components need at least ${minThickness.toFixed(1)} cm` : undefined}
+          />
+          <SidebarRow label="Bezel" value={`${bezel} mm`} />
+          <SidebarRow label="Power Draw" value={`${totalPower}W`} />
+          <SidebarRow
+            label="Cooling"
+            value={`${effectiveCooling}W`}
+            warning={thermalWarning ? `Components draw ${totalPower}W but cooling only provides ${effectiveCooling}W` : undefined}
+          />
+          {totalPower > 0 && (
+            <SidebarRow
+              label="Battery Life"
+              value={`~${estimatedHours.toFixed(1)}h`}
+              warning={batteryWarning ? `Very low for ${GAME_YEAR} (${state.batteryCapacityWh}Wh ÷ ${totalPower}W)` : undefined}
+            />
+          )}
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        width: "200px",
+        flexShrink: 0,
+        background: "#1a1a1a",
+        border: "1px solid #333",
+        borderRadius: "8px",
+        padding: "16px",
+        alignSelf: "flex-start",
+        position: "sticky",
+        top: 0,
+      }}
+    >
+      <div style={{ color: "#888", fontSize: "12px", marginBottom: "12px", fontWeight: "bold" }}>
+        RUNNING TOTALS
+      </div>
+      <SidebarRow label="Cost" value={`$${totalCost}`} />
+      <SidebarRow label="Power Draw" value={`${totalPower} W`} />
+      <SidebarRow label="Weight" value={formatWeight(totalWeight)} />
+      {showChassisTotals && (
+        <>
+          <div style={{ borderTop: "1px solid #333", marginTop: "12px", paddingTop: "12px" }}>
+            <SidebarRow label="Chassis Cost" value={`$${chassisOptionCost}`} />
+            <SidebarRow label="Chassis Weight" value={formatWeight(chassisOptionWeight)} />
+          </div>
+        </>
+      )}
+      {estimateSection}
+    </div>
+  );
+}
+
+function SidebarRow({ label, value, warning }: { label: string; value: string; warning?: string }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+      <span style={{ color: "#888", fontSize: "13px" }}>{label}</span>
+      <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+        <span style={{ color: warning ? "#ff9800" : "#e0e0e0", fontSize: "13px", fontWeight: "bold" }}>{value}</span>
+        {warning && (
+          <span title={warning} style={{ color: "#ff9800", fontSize: "14px", cursor: "help" }}>⚠</span>
+        )}
+      </span>
+    </div>
+  );
+}

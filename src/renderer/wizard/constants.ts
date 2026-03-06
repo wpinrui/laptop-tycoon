@@ -1,3 +1,6 @@
+import { ChassisOption, ComponentSlot } from "../../data/types";
+import { PORT_TYPES } from "../../data/portTypes";
+
 export const GAME_YEAR = 2000; // TODO: inject from game state
 
 export const MIN_BATTERY_WH = 20;
@@ -73,7 +76,7 @@ export function availableVolumeCm3(
 /**
  * Battery volume in cm³.
  */
-export function batteryVolumeCm3(batteryWh: number): number {
+function batteryVolumeCm3(batteryWh: number): number {
   return batteryWh * CM3_PER_WH;
 }
 
@@ -94,20 +97,76 @@ export function minThicknessForVolumeCm(
 }
 
 /**
- * Cooling capacity multiplier based on chassis dimensions.
- * Combines thickness (room for heatsinks/fans) and bezel width (larger footprint = more surface area).
+ * Cooling capacity multiplier based on chassis dimensions and internal space usage.
+ * Combines thickness, bezel width, and airflow (free internal space).
  *
  * Thickness factor: 0.5 at min → 1.0 at max (linear).
  * Bezel factor:     0.85 at min → 1.15 at max (linear).
- * Result is the product, so a thin + narrow-bezel laptop gets ~0.43x cooling,
- * while a thick + wide-bezel one gets ~1.15x.
+ * Airflow factor:   1.15 at 0% usage → 0.75 at 100% usage (linear).
+ *   More free space inside = better airflow around components.
  */
-export function coolingMultiplier(thicknessCm: number, bezelMm: number): number {
+export function coolingMultiplier(
+  thicknessCm: number,
+  bezelMm: number,
+  spaceUtilization: number,
+): number {
   const tThick = (thicknessCm - THICKNESS_MIN_CM) / (THICKNESS_MAX_CM - THICKNESS_MIN_CM);
   const thicknessFactor = 0.5 + 0.5 * Math.max(0, Math.min(1, tThick));
 
   const tBezel = (bezelMm - BEZEL_MIN_MM) / (BEZEL_MAX_MM - BEZEL_MIN_MM);
   const bezelFactor = 0.85 + 0.3 * Math.max(0, Math.min(1, tBezel));
 
-  return thicknessFactor * bezelFactor;
+  const utilClamped = Math.max(0, Math.min(1, spaceUtilization));
+  const airflowFactor = 1.15 - 0.4 * utilClamped;
+
+  return thicknessFactor * bezelFactor * airflowFactor;
+}
+
+// --- Shared helpers ---
+
+export const DISPLAY_SLOTS: ComponentSlot[] = ["resolution", "displayTech", "displaySurface"];
+
+export function chassisCost(option: ChassisOption, year: number): number {
+  const age = year - option.yearIntroduced;
+  return Math.round(option.costAtLaunch * Math.pow(1 - option.costDecayRate, age));
+}
+
+/** Sum all internal volume consumed: components + battery + ports + chassis options. */
+export function totalConsumedVolumeCm3(
+  components: Partial<Record<ComponentSlot, { volumeCm3: number }>>,
+  batteryWh: number,
+  ports: Record<string, number>,
+  chassisOptions: (ChassisOption | null)[],
+): number {
+  let vol = 0;
+  for (const comp of Object.values(components)) {
+    if (comp) vol += comp.volumeCm3;
+  }
+  vol += batteryVolumeCm3(batteryWh);
+  for (const pt of PORT_TYPES) {
+    vol += (ports[pt.id] ?? 0) * pt.volumePerPortCm3;
+  }
+  for (const opt of chassisOptions) {
+    if (opt) vol += opt.volumeCm3;
+  }
+  return vol;
+}
+
+/** Max minThicknessCm across all selected items. */
+export function maxHeightConstraintCm(
+  components: Partial<Record<ComponentSlot, { minThicknessCm: number }>>,
+  ports: Record<string, number>,
+  chassisOptions: (ChassisOption | null)[],
+): number {
+  let max = 0;
+  for (const comp of Object.values(components)) {
+    if (comp && comp.minThicknessCm > max) max = comp.minThicknessCm;
+  }
+  for (const pt of PORT_TYPES) {
+    if ((ports[pt.id] ?? 0) > 0 && pt.minThicknessCm > max) max = pt.minThicknessCm;
+  }
+  for (const opt of chassisOptions) {
+    if (opt && opt.minThicknessCm > max) max = opt.minThicknessCm;
+  }
+  return max;
 }
