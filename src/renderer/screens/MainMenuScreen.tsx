@@ -1,7 +1,7 @@
 import { CSSProperties, useState } from "react";
 import { useNavigation } from "../navigation/NavigationContext";
 import { useGame } from "../state/GameContext";
-import { hasAnySave, loadMostRecent, loadFromSlot, migrateOldSave } from "../shell/saveSystem";
+import { hasAnySave, loadFromSlot, migrateOldSave } from "../shell/saveSystem";
 import { SaveSlotPicker } from "../shell/SaveSlotPicker";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
@@ -40,14 +40,6 @@ export function MainMenuScreen() {
   const saved = hasAnySave();
   const [showLoadSlots, setShowLoadSlots] = useState(false);
 
-  function handleContinue() {
-    const state = loadMostRecent();
-    if (state) {
-      dispatch({ type: "LOAD_GAME", state });
-      navigateTo("dashboard");
-    }
-  }
-
   function handleLoadSlot(slotIndex: number) {
     const state = loadFromSlot(slotIndex);
     if (state) {
@@ -67,9 +59,6 @@ export function MainMenuScreen() {
         <div style={menuStyle}>
           <MenuButton variant="accent" onClick={() => navigateTo("newGame")}>
             New Game
-          </MenuButton>
-          <MenuButton disabled={!saved} onClick={handleContinue}>
-            Continue
           </MenuButton>
           <MenuButton disabled={!saved} onClick={() => setShowLoadSlots(true)}>
             Load Game

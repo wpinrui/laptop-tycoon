@@ -107,7 +107,16 @@ export function SaveSlotPicker({ title, onSelect, onCancel, allowDelete }: SaveS
   const [revision, setRevision] = useState(0);
   // Re-read slots from localStorage each render (revision forces re-read after delete)
   void revision;
-  const slots = getAllSlotMeta();
+  const rawSlots = getAllSlotMeta();
+
+  // Build indexed entries and sort: occupied slots by most recent first, empty slots at the end
+  const entries = rawSlots.map((meta, i) => ({ meta, index: i }));
+  entries.sort((a, b) => {
+    if (a.meta && b.meta) return b.meta.savedAt - a.meta.savedAt;
+    if (a.meta) return -1;
+    if (b.meta) return 1;
+    return a.index - b.index;
+  });
 
   function handleDelete(index: number) {
     deleteSlot(index);
@@ -121,14 +130,14 @@ export function SaveSlotPicker({ title, onSelect, onCancel, allowDelete }: SaveS
           {title}
         </h2>
         <div style={{ display: "flex", flexDirection: "column", gap: tokens.spacing.sm, marginTop: tokens.spacing.lg }}>
-          {slots.map((meta, i) => (
+          {entries.map(({ meta, index }) => (
             <SlotRow
-              key={i}
-              index={i}
+              key={index}
+              index={index}
               meta={meta}
               onSelect={onSelect}
               allowDelete={allowDelete}
-              onDeleted={() => handleDelete(i)}
+              onDeleted={() => handleDelete(index)}
             />
           ))}
         </div>
