@@ -18,6 +18,7 @@ const panelStyle: CSSProperties = {
   height: "75vh",
   width: "92vw",
   maxWidth: 1800,
+  overflow: "hidden",
 };
 
 const headerStyle: CSSProperties = {
