@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useWizard } from "../WizardContext";
+import { useGame } from "../../state/GameContext";
 import {
   GAME_YEAR,
   formatWeight,
@@ -34,8 +35,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-const COMPANY_NAME = "Your Company"; // TODO: inject from game state
-
 const COMPONENT_SLOT_LABELS: Record<ComponentSlot, string> = {
   cpu: "CPU",
   gpu: "GPU",
@@ -63,6 +62,7 @@ const STEP_ORDER = WIZARD_STEPS.filter((s) => s !== "metadata" && s !== "review"
 
 export function ReviewStep() {
   const { state } = useWizard();
+  const { state: gameState } = useGame();
   const [dialogTarget, setDialogTarget] = useState<DialogTarget | null>(null);
   const screenSizeDef = getScreenSizeDef(state.screenSize);
   const era = getBatteryEra(GAME_YEAR);
@@ -118,7 +118,7 @@ export function ReviewStep() {
       {/* Laptop name header */}
       <div style={{ marginBottom: "24px" }}>
         <div style={{ fontSize: "1.25rem", fontWeight: "bold", color: "#90caf9" }}>
-          {COMPANY_NAME} {state.name || "Unnamed Laptop"}
+          {gameState.companyName} {state.name || "Unnamed Laptop"}
         </div>
         <div style={{ fontSize: "0.8125rem", color: "#888", marginTop: "4px" }}>
           {state.screenSize}" &middot; {state.modelType === "brandNew" ? "Brand New" : state.modelType === "successor" ? "Successor" : "Spec Bump"} &middot; {GAME_YEAR}
