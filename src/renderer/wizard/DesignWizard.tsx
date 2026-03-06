@@ -69,10 +69,12 @@ function WizardContent() {
   const isFirst = currentIdx === 0;
   const isLast = currentIdx === WIZARD_STEPS.length - 1;
 
-  const canAdvance = isStepComplete(state.currentStep, state);
+  const canAdvance = isStepComplete(state.currentStep, state)
+    && (state.currentStep !== "body" || state.selectedColours.length > 0);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (e.key === "Enter" && canAdvance && !isLast) {
         dispatch({ type: "NEXT_STEP" });
       }

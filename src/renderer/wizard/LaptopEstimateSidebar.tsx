@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useWizard } from "./WizardContext";
 import { LaptopStat, StatVector } from "../../data/types";
 import {
@@ -76,14 +76,14 @@ export function WizardSidebar({
   const totalWeight = componentWeight + portWeight + chassisOptionWeight + batteryWeight;
 
   // --- Statistics ---
-  const statTotals = computeStatTotals(state);
+  const statTotals = useMemo(() => computeStatTotals(state), [state]);
 
   // Track previous totals: store last-known totals and update *after* render
   // so the current render can compare current vs previous.
   const [snapshotTotals, setSnapshotTotals] = useState<StatVector>(statTotals);
   const [displayTotals, setDisplayTotals] = useState<StatVector>(statTotals);
 
-  const totalsChanged = JSON.stringify(statTotals) !== JSON.stringify(displayTotals);
+  const totalsChanged = STAT_CONFIG.some(({ stat }) => (statTotals[stat] ?? 0) !== (displayTotals[stat] ?? 0));
   if (totalsChanged) {
     setSnapshotTotals(displayTotals);
     setDisplayTotals(statTotals);
@@ -98,7 +98,7 @@ export function WizardSidebar({
   }
 
   // Group stats with dividers
-  const statGroups: string[][] = [
+  const statGroups: LaptopStat[][] = [
     ["performance", "gamingPerformance"],
     ["display", "speakers", "webcam"],
     ["keyboard", "trackpad"],
@@ -136,7 +136,7 @@ export function WizardSidebar({
         <SidebarDivider />
         <SidebarHeading>LAPTOP ESTIMATE</SidebarHeading>
         <SidebarRow
-          label="Space"
+          label="Chassis Space Utilisation"
           value={`${Math.round(volumePercent)}%`}
           warning={volumeOverflow ? `${Math.round(totalVolume)} cm³ used but only ${Math.round(totalAvailable)} cm³ available` : undefined}
         />
@@ -146,7 +146,7 @@ export function WizardSidebar({
           value={`${thickness.toFixed(1)} cm`}
           warning={thicknessTooThin ? `Components need at least ${minThickness.toFixed(1)} cm` : undefined}
         />
-        <SidebarRow label="Bezel" value={`${bezel} mm`} />
+        <SidebarRow label="Bezel Width" value={`${bezel} mm`} />
         <SidebarRow label="Power Draw" value={`${totalPower} W`} />
         <SidebarRow
           label="Cooling"
@@ -266,7 +266,7 @@ function SidebarRow({ label, value, warning }: { label: string; value: string; w
       <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
         <span style={{ color: warning ? "#ff9800" : "#e0e0e0", fontSize: "0.8125rem", fontWeight: "bold" }}>{value}</span>
         {warning && (
-          <span title={warning} style={{ color: "#ff9800", fontSize: "0.875rem", cursor: "help" }}>⚠</span>
+          <span style={{ color: "#ff9800", fontSize: "0.875rem" }}>⚠</span>
         )}
       </span>
     </div>

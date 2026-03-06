@@ -77,7 +77,6 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       };
     case "TOGGLE_COLOUR": {
       const has = state.selectedColours.includes(action.colourId);
-      if (has && state.selectedColours.length <= 1) return state; // must have at least 1
       const selectedColours = has
         ? state.selectedColours.filter((c) => c !== action.colourId)
         : [...state.selectedColours, action.colourId];
