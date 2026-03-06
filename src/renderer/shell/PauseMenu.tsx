@@ -111,19 +111,26 @@ export function PauseMenu() {
         </ContentPanel>
       </div>
       {showQuitConfirm && (
-        <div style={{ ...overlayStyle, zIndex: tokens.zIndex.overlay + 1 }} onClick={(e) => { if (e.target === e.currentTarget) setShowQuitConfirm(false); }}>
-          <ContentPanel maxWidth={420}>
-            <h1 style={titleStyle}>Quit to Main Menu?</h1>
-            <p style={subtitleStyle}>Unsaved progress will be lost.</p>
-            <div style={menuStyle}>
-              <MenuButton variant="accent" onClick={handleQuitToMenu}>
-                Quit Without Saving
+        <div
+          style={{ ...overlayStyle, background: "transparent", zIndex: tokens.zIndex.overlay + 1 }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowQuitConfirm(false); }}
+        >
+          <ContentPanel maxWidth={560}>
+            <h2 style={{ margin: 0, fontSize: tokens.font.sizeTitle, fontWeight: 700, textAlign: "center" }}>
+              Quit to Main Menu?
+            </h2>
+            <p style={{ ...subtitleStyle, marginBottom: tokens.spacing.md }}>
+              Unsaved progress will be lost.
+            </p>
+            <div style={{ display: "flex", gap: tokens.spacing.sm }}>
+              <MenuButton onClick={() => setShowQuitConfirm(false)} style={{ flex: 1 }}>
+                Cancel
               </MenuButton>
-              <MenuButton onClick={() => { saveGame(state); handleQuitToMenu(); }}>
+              <MenuButton onClick={() => { saveGame(state); handleQuitToMenu(); }} style={{ flex: 1 }}>
                 Save & Quit
               </MenuButton>
-              <MenuButton onClick={() => setShowQuitConfirm(false)}>
-                Cancel
+              <MenuButton variant="accent" onClick={handleQuitToMenu} style={{ flex: 1 }}>
+                Quit
               </MenuButton>
             </div>
           </ContentPanel>
