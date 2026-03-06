@@ -65,13 +65,6 @@ const COMPONENT_SLOT_LABELS: Record<ComponentSlot, string> = {
   speakers: "Speakers",
 };
 
-const CHASSIS_SLOT_LABELS: Record<string, string> = {
-  material: "Chassis Material",
-  coolingSolution: "Cooling Solution",
-  keyboardFeature: "Keyboard",
-  trackpadFeature: "Trackpad",
-};
-
 const STEP_ICONS: Partial<Record<WizardStep, LucideIcon>> = {
   screenSize: Monitor,
   processing: Cpu,
@@ -298,7 +291,7 @@ export function ReviewStep() {
                 return option ? (
                   <ClickableSpecRow
                     key={slot}
-                    label={CHASSIS_SLOT_LABELS[slot] ?? slot}
+                    label={label}
                     value={option.name}
                     detail={specSummary(option.specs)}
                     onClick={() => setDialogTarget({ kind: "chassis", slot, label, options })}
@@ -306,7 +299,7 @@ export function ReviewStep() {
                 ) : (
                   <ClickableSpecRow
                     key={slot}
-                    label={CHASSIS_SLOT_LABELS[slot] ?? slot}
+                    label={label}
                     value="None"
                     onClick={() => setDialogTarget({ kind: "chassis", slot, label, options })}
                   />
