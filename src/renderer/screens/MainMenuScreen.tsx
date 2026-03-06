@@ -55,6 +55,9 @@ export function MainMenuScreen() {
         <MenuButton disabled={!saved} onClick={handleLoad}>
           Continue
         </MenuButton>
+        <MenuButton disabled={!saved} onClick={handleLoad}>
+          Load Game
+        </MenuButton>
         <MenuButton disabled>Settings</MenuButton>
         <MenuButton onClick={() => window.close()}>Quit</MenuButton>
       </div>
