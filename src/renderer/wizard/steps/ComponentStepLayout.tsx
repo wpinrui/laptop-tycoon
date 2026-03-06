@@ -37,7 +37,7 @@ function specSummary(component: Component): string {
     .join(" · ");
 }
 
-function formatSpecKey(key: string): string {
+export function formatSpecKey(key: string): string {
   return key
     .replace(/([A-Z])/g, " $1")
     .replace(/^./, (c) => c.toUpperCase())
