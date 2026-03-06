@@ -191,6 +191,7 @@ export function WizardSidebar({
                     gap: "6px",
                     color: group.color,
                     fontSize: "0.75rem",
+                    fontWeight: "bold",
                   }}
                 >
                   <Icon size={13} strokeWidth={1.5} />
