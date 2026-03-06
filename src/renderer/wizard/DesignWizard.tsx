@@ -69,8 +69,11 @@ function WizardContent() {
   const isFirst = currentIdx === 0;
   const isLast = currentIdx === WIZARD_STEPS.length - 1;
 
+  const allStepsComplete = WIZARD_STEPS.every((s) => isStepComplete(s, state));
+
   const canAdvance = isStepComplete(state.currentStep, state)
-    && (state.currentStep !== "body" || state.selectedColours.length > 0);
+    && (state.currentStep !== "body" || state.selectedColours.length > 0)
+    && (!isLast || allStepsComplete);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -82,7 +85,6 @@ function WizardContent() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [canAdvance, isLast, dispatch]);
-  const allStepsComplete = WIZARD_STEPS.every((s) => isStepComplete(s, state));
 
   function canNavigateTo(step: WizardStep) {
     const targetIdx = WIZARD_STEPS.indexOf(step);
