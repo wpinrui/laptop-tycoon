@@ -153,8 +153,8 @@ const BATTERY_WARNING_THRESHOLDS: [number, number][] = [
 
 /** Average usage multiplier — early hardware had crude power management, improves over time */
 export function avgUsageMultiplier(year: number): number {
-  // Linear interpolation: 0.7 in 2000 → 0.4 in 2020
-  return Math.max(0.4, Math.min(0.7, 0.7 - ((year - 2000) / 20) * 0.3));
+  // Linear interpolation: 0.85 in 2000 → 0.25 in 2020
+  return Math.max(0.25, Math.min(0.85, 0.85 - ((year - 2000) / 20) * 0.6));
 }
 
 export function batteryWarningThresholdH(year: number): number {
