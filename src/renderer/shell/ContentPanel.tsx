@@ -25,6 +25,8 @@ const scrollbarCSS = `
   .content-panel::-webkit-scrollbar-track { background: transparent; }
   .content-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
   .content-panel::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 `;
 
 let styleInjected = false;

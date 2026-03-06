@@ -92,7 +92,7 @@ export function DashboardScreen() {
         </div>
       </div>
 
-      <div className="content-panel" style={gridStyle}>
+      <div className="content-panel hide-scrollbar" style={gridStyle}>
         <div style={columnStyle}>
           <ModelsCard />
           <NewsCard />
