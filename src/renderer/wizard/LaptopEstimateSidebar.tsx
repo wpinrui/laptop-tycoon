@@ -266,7 +266,7 @@ function SidebarRow({ label, value, warning }: { label: string; value: string; w
       <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
         <span style={{ color: warning ? "#ff9800" : "#e0e0e0", fontSize: "0.8125rem", fontWeight: "bold" }}>{value}</span>
         {warning && (
-          <span title={warning} style={{ color: "#ff9800", fontSize: "0.875rem", cursor: "help" }}>⚠</span>
+          <span style={{ color: "#ff9800", fontSize: "0.875rem" }}>⚠</span>
         )}
       </span>
     </div>
