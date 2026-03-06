@@ -68,7 +68,7 @@ export interface WizardState {
   visitedSteps: Set<WizardStep>;
 }
 
-const DEFAULT_SIZE_DEF = SCREEN_SIZES[Math.floor(SCREEN_SIZES.length / 2)];
+const DEFAULT_SIZE_DEF = SCREEN_SIZES.find((s) => s.size === 10) ?? SCREEN_SIZES[0];
 
 export function getAllChassisOptions(chassis: WizardState["chassis"]): (ChassisOption | null)[] {
   return [chassis.material, chassis.coolingSolution, chassis.keyboardFeature, chassis.trackpadFeature];
@@ -82,7 +82,7 @@ export const INITIAL_WIZARD_STATE: WizardState = {
   screenSize: DEFAULT_SIZE_DEF.size,
   components: {},
   ports: {},
-  batteryCapacityWh: Math.round((MIN_BATTERY_WH + MAX_BATTERY_WH) / 2 / BATTERY_STEP_WH) * BATTERY_STEP_WH,
+  batteryCapacityWh: MIN_BATTERY_WH,
   thicknessCm: THICKNESS_DEFAULT_CM,
   bezelMm: BEZEL_DEFAULT_MM,
   chassis: {
