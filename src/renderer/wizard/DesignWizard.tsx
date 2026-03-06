@@ -56,7 +56,7 @@ function isStepComplete(step: WizardStep, state: WizardState): boolean {
       for (const opt of Object.values(state.chassis)) {
         if (opt) totalVol += opt.volumeCm3;
       }
-      const available = availableVolumeCm3(state.screenSize, state.bezelMm, state.thicknessCm);
+      const available = availableVolumeCm3(state.screenSize, state.bezelMm, state.thicknessCm, GAME_YEAR);
       if (totalVol > available) return false;
 
       // Height constraint check

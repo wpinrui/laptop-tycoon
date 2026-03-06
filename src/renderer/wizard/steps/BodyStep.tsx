@@ -146,12 +146,12 @@ export function BodyStep() {
     state.ports,
     allChassisOptions,
   );
-  const totalAvailable = availableVolumeCm3(state.screenSize, bezel, thickness);
+  const totalAvailable = availableVolumeCm3(state.screenSize, bezel, thickness, GAME_YEAR);
   const volumeOverflow = totalVolume > totalAvailable;
   const volumePercent = totalAvailable > 0 ? Math.min(100, (totalVolume / totalAvailable) * 100) : 100;
 
   // --- Min thickness (from both volume and height constraints) ---
-  const minFromVolume = minThicknessForVolumeCm(totalVolume, state.screenSize, bezel);
+  const minFromVolume = minThicknessForVolumeCm(totalVolume, state.screenSize, bezel, GAME_YEAR);
   const minFromHeight = maxHeightConstraintCm(
     state.components as Record<string, { minThicknessCm: number } | undefined>,
     state.ports,

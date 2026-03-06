@@ -27,8 +27,17 @@ export const BEZEL_DEFAULT_MM = 20;
 // Li-Ion ~175 Wh/L in 2000 → ~5.7 cm³ per Wh
 export const CM3_PER_WH = 5.7;
 
-// Minimum thickness for motherboard PCB, keyboard mechanism on top, bottom plate.
-const BASE_MIN_THICKNESS_CM = 0.8;
+/**
+ * Minimum thickness overhead for structural elements (PCB, keyboard, case walls).
+ * Decreases over time as manufacturing tech improves.
+ * 2000: 0.8 cm (thick PCBs, bulky keyboards)
+ * 2025: 0.4 cm (ultra-thin internals, low-profile switches)
+ * Linear interpolation between.
+ */
+export function baseMinThicknessCm(year: number): number {
+  const t = Math.max(0, Math.min(1, (year - 2000) / 25));
+  return 0.8 - 0.4 * t;
+}
 
 /**
  * Calculate chassis footprint area (cm²) from screen size and bezel width.
@@ -48,15 +57,16 @@ export function chassisFootprintCm2(screenSizeInches: number, bezelMm: number): 
 
 /**
  * Available internal volume (cm³) given chassis dimensions.
- * Subtracts baseMinThickness for PCB/keyboard/case walls from total height.
+ * Subtracts era-dependent base thickness for PCB/keyboard/case walls from total height.
  */
 export function availableVolumeCm3(
   screenSizeInches: number,
   bezelMm: number,
   thicknessCm: number,
+  year: number,
 ): number {
   const footprint = chassisFootprintCm2(screenSizeInches, bezelMm);
-  const usableHeight = Math.max(0, thicknessCm - BASE_MIN_THICKNESS_CM);
+  const usableHeight = Math.max(0, thicknessCm - baseMinThicknessCm(year));
   return footprint * usableHeight;
 }
 
@@ -75,11 +85,12 @@ export function minThicknessForVolumeCm(
   totalVolumeCm3: number,
   screenSizeInches: number,
   bezelMm: number,
+  year: number,
 ): number {
   const footprint = chassisFootprintCm2(screenSizeInches, bezelMm);
   if (footprint <= 0) return THICKNESS_MAX_CM;
   const requiredUsableHeight = totalVolumeCm3 / footprint;
-  return Math.ceil((BASE_MIN_THICKNESS_CM + requiredUsableHeight) * 10) / 10;
+  return Math.ceil((baseMinThicknessCm(year) + requiredUsableHeight) * 10) / 10;
 }
 
 /**
