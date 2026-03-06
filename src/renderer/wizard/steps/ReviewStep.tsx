@@ -174,7 +174,8 @@ export function ReviewStep() {
 
   const totalCost = componentCost + portCost + chassisOptionCost + batteryCost + colourCost;
   const totalPower = componentPower;
-  const shellWeight = chassisShellWeightG(state.screenSize, state.bezelMm, state.thicknessCm);
+  const materialDensity = state.chassis.material?.shellDensityMultiplier ?? 1.0;
+  const shellWeight = chassisShellWeightG(state.screenSize, state.bezelMm, state.thicknessCm, materialDensity);
   const totalWeight = screenSizeDef.baseWeightG + shellWeight + componentWeight + portWeight + chassisOptionWeight + batteryWeight;
 
   // --- Volume & cooling ---

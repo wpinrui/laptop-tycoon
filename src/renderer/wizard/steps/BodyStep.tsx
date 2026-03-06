@@ -294,6 +294,11 @@ function ChassisCard({
               {option.weightG > 0 ? "+" : ""}{option.weightG}g
             </span>
           )}
+          {option.shellDensityMultiplier !== 1.0 && (
+            <span style={{ color: option.shellDensityMultiplier < 1.0 ? "#64b5f6" : "#888" }}>
+              {option.shellDensityMultiplier}x density
+            </span>
+          )}
           {option.volumeCm3 > 0 && (
             <span style={{ color: "#ce93d8" }}>{option.volumeCm3}cm³</span>
           )}

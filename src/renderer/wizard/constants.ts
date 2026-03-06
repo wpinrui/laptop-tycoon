@@ -46,12 +46,13 @@ export const DESIGN_COLOUR_BONUS_DIVISOR = 2;
 
 /**
  * Weight of the chassis shell (top/bottom panels + side walls) in grams.
- * Scales with footprint area and thickness. Material weightG offsets are applied
- * on top of this baseline (e.g. carbon fibre subtracts weight).
+ * Scales with footprint area, thickness, and material density multiplier.
  *
- * density factor ~0.15 g/cm³ yields realistic weights:
- *   14" / 20mm bezel / 3.5cm → ~430g shell
- *   14" / 20mm bezel / 1.5cm → ~185g shell
+ * Base density 0.15 g/cm³ (plastic = 1.0x). Material choice scales this:
+ *   Carbon fibre (0.45x) → much lighter shell
+ *   Magnesium (0.65x)   → light metal
+ *   Aluminium (0.85x)   → moderate savings
+ *   Plastic (1.0x)      → baseline
  */
 const SHELL_DENSITY_G_PER_CM3 = 0.15;
 
@@ -59,9 +60,10 @@ export function chassisShellWeightG(
   screenSizeInches: number,
   bezelMm: number,
   thicknessCm: number,
+  materialDensityMultiplier: number = 1.0,
 ): number {
   const footprint = chassisFootprintCm2(screenSizeInches, bezelMm);
-  return Math.round(footprint * thicknessCm * SHELL_DENSITY_G_PER_CM3);
+  return Math.round(footprint * thicknessCm * SHELL_DENSITY_G_PER_CM3 * materialDensityMultiplier);
 }
 
 // --- Volume calculation ---

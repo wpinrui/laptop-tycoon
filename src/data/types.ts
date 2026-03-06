@@ -123,6 +123,8 @@ export interface ChassisOption {
   minThicknessCm: number;
   /** Cooling capacity in watts. Only relevant for coolingSolution slot. */
   coolingCapacityW: number;
+  /** Multiplier on chassis shell density. Only relevant for material slot. 1.0 = plastic baseline. */
+  shellDensityMultiplier: number;
   stats: StatVector;
   specs: Record<string, string>;
 }

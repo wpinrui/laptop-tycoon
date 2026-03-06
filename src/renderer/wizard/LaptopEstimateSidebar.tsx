@@ -72,7 +72,8 @@ export function WizardSidebar({
     return sum + (opt?.costPerUnit ?? 0);
   }, 0);
 
-  const shellWeight = chassisShellWeightG(state.screenSize, bezel, thickness);
+  const materialDensity = state.chassis.material?.shellDensityMultiplier ?? 1.0;
+  const shellWeight = chassisShellWeightG(state.screenSize, bezel, thickness, materialDensity);
 
   const totalCost = componentCost + portCost + chassisOptionCost + batteryCost + colourCost;
   const totalPower = componentPower;
