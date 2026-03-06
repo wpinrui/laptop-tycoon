@@ -25,6 +25,23 @@ export const BEZEL_MAX_MM = 40;
 export const BEZEL_STEP_MM = 1;
 export const BEZEL_DEFAULT_MM = 20;
 
+// --- Design bonus tuning constants ---
+
+/** Max design points from thinness (cubic curve, huge impact at extremes) */
+export const DESIGN_THICKNESS_MAX_BONUS = 40;
+/** Max design points from narrow bezels (power of 1.3 curve) */
+export const DESIGN_BEZEL_MAX_BONUS = 30;
+/** Base multiplier per colour count (sqrt(count) * this) */
+export const DESIGN_COLOUR_COUNT_MULTIPLIER = 8;
+/** Per-dollar premium colour cost bonus factor */
+export const DESIGN_COLOUR_PREMIUM_FACTOR = 0.02;
+/** Exponent for bezel bonus curve (1 = linear, higher = more reward for narrow bezels) */
+export const DESIGN_BEZEL_EXPONENT = 1.3;
+/** Baseline per-unit colour cost used as reference for premium multiplier */
+export const DESIGN_COLOUR_BASE_COST = 2;
+/** Divisor applied to raw colour bonus (dampens the total) */
+export const DESIGN_COLOUR_BONUS_DIVISOR = 2;
+
 // --- Volume calculation ---
 
 // Li-Ion ~175 Wh/L in 2000 → ~5.7 cm³ per Wh
@@ -150,6 +167,12 @@ const BATTERY_WARNING_THRESHOLDS: [number, number][] = [
   [2014, 3],
   [Infinity, 4],
 ];
+
+/** Average usage multiplier — early hardware had crude power management, improves over time */
+export function avgUsageMultiplier(year: number): number {
+  // Linear interpolation: 0.85 in 2000 → 0.25 in 2020
+  return Math.max(0.25, Math.min(0.85, 0.85 - ((year - 2000) / 20) * 0.6));
+}
 
 export function batteryWarningThresholdH(year: number): number {
   for (const [maxYear, threshold] of BATTERY_WARNING_THRESHOLDS) {

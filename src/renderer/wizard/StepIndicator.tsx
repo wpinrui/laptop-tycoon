@@ -1,9 +1,9 @@
 import { Fragment, useRef, useEffect } from "react";
-import { FileText, Monitor, Cpu, MonitorSmartphone, Camera, Battery, Laptop, ClipboardCheck, Check, LucideIcon } from "lucide-react";
+import { Laptop2, Monitor, Cpu, MonitorSmartphone, Camera, Battery, Laptop, ClipboardCheck, Check, LucideIcon } from "lucide-react";
 import { WizardStep, WIZARD_STEPS, WIZARD_STEP_LABELS } from "./types";
 
 const STEP_ICONS: Record<WizardStep, LucideIcon> = {
-  metadata: FileText,
+  metadata: Laptop2,
   screenSize: Monitor,
   processing: Cpu,
   display: MonitorSmartphone,
@@ -75,7 +75,7 @@ export function StepIndicator({
                       : "#888",
                   cursor: canClick ? "pointer" : "default",
                   fontFamily: "inherit",
-                  fontSize: "14px",
+                  fontSize: "0.875rem",
                   opacity: canClick ? 1 : 0.5,
                 }}
               >

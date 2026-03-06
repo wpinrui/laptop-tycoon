@@ -7,6 +7,7 @@ export const DISPLAY_SURFACES: Component[] = [
   {
     id: "surface_matte",
     name: "Matte Finish",
+    description: "Anti-glare coating reduces reflections. Preferred for office work.",
     slot: "displaySurface",
     yearIntroduced: 2000,
     yearDiscontinued: 2010,
@@ -21,6 +22,7 @@ export const DISPLAY_SURFACES: Component[] = [
   {
     id: "surface_glossy",
     name: "Glossy Finish",
+    description: "Vivid colors and deeper blacks, but reflective in bright environments.",
     slot: "displaySurface",
     yearIntroduced: 2003,
     yearDiscontinued: 2010,

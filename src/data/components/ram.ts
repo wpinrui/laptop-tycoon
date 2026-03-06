@@ -5,6 +5,8 @@ export const RAM: Component[] = [
   {
     id: "sdram_64mb",
     name: "64 MB SDRAM",
+    description:
+      "Bare minimum — enough for Windows 98 but struggles with Windows 2000.",
     slot: "ram",
     yearIntroduced: 2000,
     yearDiscontinued: 2002,
@@ -19,6 +21,8 @@ export const RAM: Component[] = [
   {
     id: "sdram_128mb",
     name: "128 MB SDRAM",
+    description:
+      "Standard amount for the year 2000. Handles everyday tasks comfortably.",
     slot: "ram",
     yearIntroduced: 2000,
     yearDiscontinued: 2003,
@@ -33,6 +37,8 @@ export const RAM: Component[] = [
   {
     id: "sdram_256mb",
     name: "256 MB SDRAM",
+    description:
+      "Premium amount — great for multitasking and future-proofing.",
     slot: "ram",
     yearIntroduced: 2000,
     yearDiscontinued: 2004,
@@ -49,6 +55,7 @@ export const RAM: Component[] = [
   {
     id: "ddr_256mb",
     name: "256 MB DDR",
+    description: "Faster DDR memory at a reasonable price point.",
     slot: "ram",
     yearIntroduced: 2001,
     yearDiscontinued: 2004,
@@ -63,6 +70,8 @@ export const RAM: Component[] = [
   {
     id: "ddr_512mb",
     name: "512 MB DDR",
+    description:
+      "Generous DDR memory for power users and demanding applications.",
     slot: "ram",
     yearIntroduced: 2001,
     yearDiscontinued: 2005,
@@ -79,6 +88,8 @@ export const RAM: Component[] = [
   {
     id: "ddr333_512mb",
     name: "512 MB DDR-333",
+    description:
+      "Faster DDR with improved bandwidth. Good mainstream choice.",
     slot: "ram",
     yearIntroduced: 2003,
     yearDiscontinued: 2006,
@@ -93,6 +104,8 @@ export const RAM: Component[] = [
   {
     id: "ddr333_1gb",
     name: "1 GB DDR-333",
+    description:
+      "Massive amount of RAM — overkill for most, ideal for professionals.",
     slot: "ram",
     yearIntroduced: 2003,
     yearDiscontinued: 2006,
@@ -109,6 +122,8 @@ export const RAM: Component[] = [
   {
     id: "ddr2_512mb",
     name: "512 MB DDR2-533",
+    description:
+      "Next-gen DDR2 with lower power consumption. Solid mid-range pick.",
     slot: "ram",
     yearIntroduced: 2004,
     yearDiscontinued: 2007,
@@ -123,6 +138,8 @@ export const RAM: Component[] = [
   {
     id: "ddr2_1gb",
     name: "1 GB DDR2-533",
+    description:
+      "Plenty of fast DDR2 RAM for multitasking and creative work.",
     slot: "ram",
     yearIntroduced: 2004,
     yearDiscontinued: 2007,
@@ -139,6 +156,8 @@ export const RAM: Component[] = [
   {
     id: "ddr2_667_1gb",
     name: "1 GB DDR2-667",
+    description:
+      "Faster DDR2 at a good price. Sweet spot for 2005 laptops.",
     slot: "ram",
     yearIntroduced: 2005,
     yearDiscontinued: 2008,
@@ -153,6 +172,7 @@ export const RAM: Component[] = [
   {
     id: "ddr2_667_2gb",
     name: "2 GB DDR2-667",
+    description: "Top-tier RAM capacity — future-proof but expensive.",
     slot: "ram",
     yearIntroduced: 2005,
     yearDiscontinued: 2008,

@@ -7,6 +7,7 @@ export const DISPLAY_TECH: Component[] = [
   {
     id: "tech_tn",
     name: "TN Panel",
+    description: "Standard panel — fast response but poor viewing angles and colors.",
     slot: "displayTech",
     yearIntroduced: 2000,
     yearDiscontinued: 2008,
@@ -21,6 +22,7 @@ export const DISPLAY_TECH: Component[] = [
   {
     id: "tech_tn_bright",
     name: "TN Panel (High Brightness)",
+    description: "Brighter TN panel for better outdoor visibility. Still limited angles.",
     slot: "displayTech",
     yearIntroduced: 2003,
     yearDiscontinued: 2008,
@@ -35,6 +37,7 @@ export const DISPLAY_TECH: Component[] = [
   {
     id: "tech_ips_early",
     name: "IPS Panel",
+    description: "Premium panel with wide viewing angles and accurate colors.",
     slot: "displayTech",
     yearIntroduced: 2004,
     yearDiscontinued: 2009,

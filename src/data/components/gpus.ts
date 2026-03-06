@@ -5,6 +5,7 @@ export const GPUS: Component[] = [
   {
     id: "integrated_2000",
     name: "Intel 815EM Integrated Graphics",
+    description: "Basic built-in graphics — free but can barely run games.",
     slot: "gpu",
     yearIntroduced: 2000,
     yearDiscontinued: 2003,
@@ -19,6 +20,7 @@ export const GPUS: Component[] = [
   {
     id: "integrated_extreme_2004",
     name: "Intel GMA 900",
+    description: "Improved integrated graphics — handles basic 3D but not serious gaming.",
     slot: "gpu",
     yearIntroduced: 2004,
     yearDiscontinued: 2006,
@@ -35,6 +37,7 @@ export const GPUS: Component[] = [
   {
     id: "ati_rage_mobility_128",
     name: "ATI Rage Mobility 128",
+    description: "Entry-level dedicated GPU for light gaming and video playback.",
     slot: "gpu",
     yearIntroduced: 2000,
     yearDiscontinued: 2002,
@@ -49,6 +52,7 @@ export const GPUS: Component[] = [
   {
     id: "nvidia_geforce2_go",
     name: "NVIDIA GeForce2 Go",
+    description: "Capable dedicated GPU that handles most current games at low settings.",
     slot: "gpu",
     yearIntroduced: 2000,
     yearDiscontinued: 2002,
@@ -65,6 +69,7 @@ export const GPUS: Component[] = [
   {
     id: "ati_radeon_mobility_7500",
     name: "ATI Radeon Mobility 7500",
+    description: "Efficient mid-range GPU with solid 2D and decent 3D performance.",
     slot: "gpu",
     yearIntroduced: 2001,
     yearDiscontinued: 2003,
@@ -79,6 +84,7 @@ export const GPUS: Component[] = [
   {
     id: "nvidia_geforce4_440_go",
     name: "NVIDIA GeForce4 440 Go",
+    description: "Powerful GPU for gaming laptops — expect higher power draw.",
     slot: "gpu",
     yearIntroduced: 2001,
     yearDiscontinued: 2003,
@@ -95,6 +101,7 @@ export const GPUS: Component[] = [
   {
     id: "ati_radeon_mobility_9000",
     name: "ATI Radeon Mobility 9000",
+    description: "Efficient dedicated GPU with great battery life for a gaming chip.",
     slot: "gpu",
     yearIntroduced: 2002,
     yearDiscontinued: 2004,
@@ -109,6 +116,7 @@ export const GPUS: Component[] = [
   {
     id: "nvidia_geforce4_go_4200",
     name: "NVIDIA GeForce4 Go 4200",
+    description: "High-end mobile GPU for serious gamers — thick chassis recommended.",
     slot: "gpu",
     yearIntroduced: 2002,
     yearDiscontinued: 2004,
@@ -125,6 +133,7 @@ export const GPUS: Component[] = [
   {
     id: "ati_mobility_radeon_9600",
     name: "ATI Mobility Radeon 9600",
+    description: "First DirectX 9 capable mobile GPU — good balance of power and features.",
     slot: "gpu",
     yearIntroduced: 2003,
     yearDiscontinued: 2005,
@@ -139,6 +148,7 @@ export const GPUS: Component[] = [
   {
     id: "nvidia_geforcefx_go5600",
     name: "NVIDIA GeForce FX Go5600",
+    description: "High-performance DirectX 9 GPU — runs hot but handles demanding games.",
     slot: "gpu",
     yearIntroduced: 2003,
     yearDiscontinued: 2005,
@@ -155,6 +165,7 @@ export const GPUS: Component[] = [
   {
     id: "ati_mobility_radeon_x600",
     name: "ATI Mobility Radeon X600",
+    description: "Solid mid-range GPU with good efficiency and DirectX 9 support.",
     slot: "gpu",
     yearIntroduced: 2004,
     yearDiscontinued: 2006,
@@ -169,6 +180,7 @@ export const GPUS: Component[] = [
   {
     id: "nvidia_geforce_go_6800",
     name: "NVIDIA GeForce Go 6800",
+    description: "Desktop-class GPU crammed into a laptop — extreme gaming but huge and hot.",
     slot: "gpu",
     yearIntroduced: 2004,
     yearDiscontinued: 2006,
@@ -185,6 +197,7 @@ export const GPUS: Component[] = [
   {
     id: "ati_mobility_radeon_x700",
     name: "ATI Mobility Radeon X700",
+    description: "Efficient mid-range option balancing gaming capability with battery life.",
     slot: "gpu",
     yearIntroduced: 2005,
     yearDiscontinued: 2007,
@@ -199,6 +212,7 @@ export const GPUS: Component[] = [
   {
     id: "nvidia_geforce_go_7800_gtx",
     name: "NVIDIA GeForce Go 7800 GTX",
+    description: "The most powerful mobile GPU available — needs maximum cooling and space.",
     slot: "gpu",
     yearIntroduced: 2005,
     yearDiscontinued: 2007,

@@ -60,6 +60,8 @@ export interface ComponentSlotConfig {
 export interface Component {
   id: string;
   name: string;
+  /** Short player-facing description explaining what this component is and its trade-offs. */
+  description: string;
   slot: ComponentSlot;
   yearIntroduced: number;
   yearDiscontinued: number;
@@ -79,6 +81,10 @@ export interface Component {
 export interface PortType {
   id: string;
   name: string;
+  /** Short player-facing description explaining what this port is used for. */
+  description: string;
+  /** Category for grouping in the UI. */
+  category: "usb" | "video" | "networking" | "expansion" | "audio" | "legacy";
   yearIntroduced: number;
   yearDiscontinued: number | null;
   maxCount: number;
@@ -103,6 +109,8 @@ export type ChassisOptionSlot =
 export interface ChassisOption {
   id: string;
   name: string;
+  /** Short player-facing description explaining this option's trade-offs. */
+  description: string;
   slot: ChassisOptionSlot;
   yearIntroduced: number;
   yearDiscontinued: number | null;

@@ -36,17 +36,17 @@ export function ScreenSizeStep() {
             marginBottom: "12px",
           }}
         >
-          <span style={{ color: "#888", fontSize: "14px" }}>{MIN_SIZE}"</span>
+          <span style={{ color: "#888", fontSize: "0.875rem" }}>{MIN_SIZE}"</span>
           <span
             style={{
-              fontSize: "48px",
+              fontSize: "3rem",
               fontWeight: "bold",
               color: "#90caf9",
             }}
           >
             {state.screenSize}"
           </span>
-          <span style={{ color: "#888", fontSize: "14px" }}>{MAX_SIZE}"</span>
+          <span style={{ color: "#888", fontSize: "0.875rem" }}>{MAX_SIZE}"</span>
         </div>
 
         <input
@@ -59,6 +59,10 @@ export function ScreenSizeStep() {
           style={{ width: "100%", accentColor: "#90caf9" }}
         />
 
+        <div style={{ fontSize: "0.625rem", color: "#666", marginTop: "4px" }}>
+          Affects: base weight, internal space, cooling capacity, display component cost
+        </div>
+
         <div
           style={{
             display: "flex",
@@ -70,7 +74,7 @@ export function ScreenSizeStep() {
             <span
               key={s.size}
               style={{
-                fontSize: "11px",
+                fontSize: "0.6875rem",
                 color: state.screenSize === s.size ? "#90caf9" : "#666",
                 fontWeight: state.screenSize === s.size ? "bold" : "normal",
                 width: 0,
