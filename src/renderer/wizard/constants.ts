@@ -42,6 +42,28 @@ export const DESIGN_COLOUR_BASE_COST = 2;
 /** Divisor applied to raw colour bonus (dampens the total) */
 export const DESIGN_COLOUR_BONUS_DIVISOR = 2;
 
+// --- Chassis shell weight ---
+
+/**
+ * Weight of the chassis shell (top/bottom panels + side walls) in grams.
+ * Scales with footprint area and thickness. Material weightG offsets are applied
+ * on top of this baseline (e.g. carbon fibre subtracts weight).
+ *
+ * density factor ~0.15 g/cm³ yields realistic weights:
+ *   14" / 20mm bezel / 3.5cm → ~430g shell
+ *   14" / 20mm bezel / 1.5cm → ~185g shell
+ */
+const SHELL_DENSITY_G_PER_CM3 = 0.15;
+
+export function chassisShellWeightG(
+  screenSizeInches: number,
+  bezelMm: number,
+  thicknessCm: number,
+): number {
+  const footprint = chassisFootprintCm2(screenSizeInches, bezelMm);
+  return Math.round(footprint * thicknessCm * SHELL_DENSITY_G_PER_CM3);
+}
+
 // --- Volume calculation ---
 
 // Li-Ion ~175 Wh/L in 2000 → ~5.7 cm³ per Wh

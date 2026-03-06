@@ -23,6 +23,7 @@ import {
   BEZEL_MAX_MM,
   BEZEL_STEP_MM,
   minThicknessForVolumeCm,
+  chassisShellWeightG,
 } from "../constants";
 import { getAllChassisOptions, WIZARD_STEP_LABELS, WizardStep } from "../types";
 import { getScreenSizeDef, SCREEN_SIZES } from "../../../data/screenSizes";
@@ -173,7 +174,8 @@ export function ReviewStep() {
 
   const totalCost = componentCost + portCost + chassisOptionCost + batteryCost + colourCost;
   const totalPower = componentPower;
-  const totalWeight = screenSizeDef.baseWeightG + componentWeight + portWeight + chassisOptionWeight + batteryWeight;
+  const shellWeight = chassisShellWeightG(state.screenSize, state.bezelMm, state.thicknessCm);
+  const totalWeight = screenSizeDef.baseWeightG + shellWeight + componentWeight + portWeight + chassisOptionWeight + batteryWeight;
 
   // --- Volume & cooling ---
   const totalVolume = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, allChassisOptions);

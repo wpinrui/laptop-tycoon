@@ -13,6 +13,7 @@ import {
   applyDisplayMultiplier,
   batteryWarningThresholdH,
   avgUsageMultiplier,
+  chassisShellWeightG,
 } from "./constants";
 import { COLOUR_OPTIONS } from "../../data/colourOptions";
 import { getScreenSizeDef } from "../../data/screenSizes";
@@ -71,9 +72,11 @@ export function WizardSidebar({
     return sum + (opt?.costPerUnit ?? 0);
   }, 0);
 
+  const shellWeight = chassisShellWeightG(state.screenSize, bezel, thickness);
+
   const totalCost = componentCost + portCost + chassisOptionCost + batteryCost + colourCost;
   const totalPower = componentPower;
-  const totalWeight = componentWeight + portWeight + chassisOptionWeight + batteryWeight;
+  const totalWeight = componentWeight + portWeight + chassisOptionWeight + batteryWeight + shellWeight;
 
   // --- Statistics ---
   const statTotals = useMemo(() => computeStatTotals(state), [state]);
