@@ -30,7 +30,7 @@ export function MenuButton({ children, onClick, variant = "surface", disabled, s
     : variant === "accent"
       ? hovered ? tokens.colors.accentHover : tokens.colors.accent
       : variant === "danger"
-        ? hovered ? "#f44336" : tokens.colors.danger
+        ? hovered ? tokens.colors.dangerHover : tokens.colors.danger
         : hovered ? tokens.colors.surfaceHover : tokens.colors.surface;
 
   const isBold = (variant === "accent" || variant === "danger") && !disabled;

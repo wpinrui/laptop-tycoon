@@ -15,6 +15,7 @@ export const tokens = {
     accent: "#4fc3f7",
     accentHover: "#81d4fa",
     danger: "#ef5350",
+    dangerHover: "#f44336",
     background: "#121212",
     surface: "rgba(255, 255, 255, 0.05)",
     surfaceHover: "rgba(255, 255, 255, 0.1)",

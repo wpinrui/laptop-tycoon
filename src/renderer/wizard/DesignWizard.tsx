@@ -210,18 +210,18 @@ function WizardContent() {
           onClick={() => dispatch({ type: "DEBUG_AUTOFILL" })}
           style={{
             background: "none",
-            border: "1px solid #555",
-            borderRadius: "6px",
-            color: "#ff9800",
-            fontSize: "0.75rem",
-            padding: "6px 12px",
+            border: `1px solid ${tokens.colors.panelBorder}`,
+            borderRadius: tokens.borderRadius.sm,
+            color: tokens.colors.accent,
+            fontSize: tokens.font.sizeSmall,
+            padding: `${tokens.spacing.xs + 2}px ${tokens.spacing.sm + 4}px`,
             cursor: "pointer",
             fontFamily: "inherit",
             lineHeight: "1",
             transition: "border-color 0.15s, color 0.15s",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#ff9800"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#555"; }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = tokens.colors.accent; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = tokens.colors.panelBorder; }}
         >
           Auto-fill
         </button>
@@ -229,9 +229,9 @@ function WizardContent() {
           onClick={() => setShowCloseConfirm(true)}
           style={{
             background: "none",
-            border: "1px solid #555",
-            borderRadius: "6px",
-            color: "#aaa",
+            border: `1px solid ${tokens.colors.panelBorder}`,
+            borderRadius: tokens.borderRadius.sm,
+            color: tokens.colors.textMuted,
             fontSize: "1.25rem",
             width: "36px",
             height: "36px",
@@ -241,8 +241,8 @@ function WizardContent() {
             flexShrink: 0,
             transition: "border-color 0.15s, color 0.15s",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#ef5350"; e.currentTarget.style.color = "#ef5350"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#aaa"; }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = tokens.colors.danger; e.currentTarget.style.color = tokens.colors.danger; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = tokens.colors.panelBorder; e.currentTarget.style.color = tokens.colors.textMuted; }}
         >
           ✕
         </button>

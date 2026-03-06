@@ -266,81 +266,73 @@ function ModelCard({
                   <DollarSign size={14} /> Set Pricing
                 </span>
               </MenuButton>
-              {confirmScrap ? (
-                <div style={{ display: "flex", gap: tokens.spacing.xs, alignItems: "center" }}>
-                  <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.danger }}>Scrap this model?</span>
-                  <MenuButton
-                    onClick={onScrapConfirm}
-                    style={{
-                      fontSize: tokens.font.sizeSmall,
-                      padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
-                      background: tokens.colors.danger,
-                      color: "#fff",
-                    }}
-                  >
-                    Yes
-                  </MenuButton>
-                  <MenuButton
-                    onClick={onScrapCancel}
-                    style={{
-                      fontSize: tokens.font.sizeSmall,
-                      padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
-                    }}
-                  >
-                    No
-                  </MenuButton>
-                </div>
-              ) : (
-                <MenuButton
-                  onClick={onScrapClick}
-                  style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
-                >
-                  <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-                    <Trash2 size={14} /> Scrap
-                  </span>
-                </MenuButton>
-              )}
             </>
           )}
-          {(status === "manufacturing" || status === "onSale") && (
-            confirmScrap ? (
-              <div style={{ display: "flex", gap: tokens.spacing.xs, alignItems: "center" }}>
-                <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.danger }}>Discontinue this model?</span>
-                <MenuButton
-                  onClick={onScrapConfirm}
-                  style={{
-                    fontSize: tokens.font.sizeSmall,
-                    padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
-                    background: tokens.colors.danger,
-                    color: "#fff",
-                  }}
-                >
-                  Yes
-                </MenuButton>
-                <MenuButton
-                  onClick={onScrapCancel}
-                  style={{
-                    fontSize: tokens.font.sizeSmall,
-                    padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
-                  }}
-                >
-                  No
-                </MenuButton>
-              </div>
-            ) : (
-              <MenuButton
-                onClick={onScrapClick}
-                style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
-              >
-                <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-                  <Trash2 size={14} /> Discontinue
-                </span>
-              </MenuButton>
-            )
-          )}
+          <InlineConfirm
+            label={status === "draft" ? "Scrap" : "Discontinue"}
+            confirmMessage={status === "draft" ? "Scrap this model?" : "Discontinue this model?"}
+            isConfirming={confirmScrap}
+            onTrigger={onScrapClick}
+            onConfirm={onScrapConfirm}
+            onCancel={onScrapCancel}
+          />
         </div>
       )}
     </div>
+  );
+}
+
+function InlineConfirm({
+  label,
+  confirmMessage,
+  isConfirming,
+  onTrigger,
+  onConfirm,
+  onCancel,
+}: {
+  label: string;
+  confirmMessage: string;
+  isConfirming: boolean;
+  onTrigger: () => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (isConfirming) {
+    return (
+      <div style={{ display: "flex", gap: tokens.spacing.xs, alignItems: "center" }}>
+        <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.danger }}>{confirmMessage}</span>
+        <MenuButton
+          onClick={onConfirm}
+          style={{
+            fontSize: tokens.font.sizeSmall,
+            padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+            background: tokens.colors.danger,
+            color: "#fff",
+          }}
+        >
+          Yes
+        </MenuButton>
+        <MenuButton
+          onClick={onCancel}
+          style={{
+            fontSize: tokens.font.sizeSmall,
+            padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+          }}
+        >
+          No
+        </MenuButton>
+      </div>
+    );
+  }
+  return (
+    <MenuButton
+      onClick={onTrigger}
+      style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+    >
+      <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
+        <Trash2 size={14} /> {label}
+      </span>
+    </MenuButton>
   );
 }
 
