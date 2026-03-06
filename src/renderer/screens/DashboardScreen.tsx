@@ -87,6 +87,9 @@ const cardTitleStyle: CSSProperties = {
   fontSize: tokens.font.sizeTitle,
   fontWeight: 600,
   marginBottom: tokens.spacing.md,
+  display: "flex",
+  alignItems: "center",
+  gap: tokens.spacing.sm,
 };
 
 const cardBodyStyle: CSSProperties = {
@@ -142,7 +145,7 @@ function BentoCard({ title, icon: Icon, screen, children }: BentoCardProps) {
       } : undefined}
     >
       <h3 style={cardTitleStyle}>
-        <Icon size={20} color="#fff" style={{ display: "inline-block", verticalAlign: "middle", marginRight: tokens.spacing.sm, position: "relative", top: -1 }} />
+        <Icon size={20} color="#fff" />
         {title}
       </h3>
       {children}
