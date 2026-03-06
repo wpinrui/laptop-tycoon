@@ -9,6 +9,10 @@ import {
   THICKNESS_MAX_CM,
   BEZEL_MIN_MM,
   BEZEL_MAX_MM,
+  DESIGN_THICKNESS_MAX_BONUS,
+  DESIGN_BEZEL_MAX_BONUS,
+  DESIGN_COLOUR_COUNT_MULTIPLIER,
+  DESIGN_COLOUR_PREMIUM_FACTOR,
   applyDisplayMultiplier,
   coolingMultiplier,
   availableVolumeCm3,
@@ -105,19 +109,16 @@ export function computeStatTotals(state: ReturnType<typeof useWizard>["state"]):
   }
 
   // Design bonus from thinness, bezel, and colour range
-  // Thickness: cubic curve (huge impact at extremes), up to 40 points
   const tRaw = 1 - (state.thicknessCm - THICKNESS_MIN_CM) / (THICKNESS_MAX_CM - THICKNESS_MIN_CM);
-  const thicknessBonus = Math.round(tRaw * tRaw * tRaw * 40);
-  // Bezel: slightly less impact, more linear (power of 1.3), up to 30 points
+  const thicknessBonus = Math.round(tRaw * tRaw * tRaw * DESIGN_THICKNESS_MAX_BONUS);
   const bRaw = 1 - (state.bezelMm - BEZEL_MIN_MM) / (BEZEL_MAX_MM - BEZEL_MIN_MM);
-  const bezelBonus = Math.round(Math.pow(bRaw, 1.3) * 30);
-  // Colour range: diminishing returns on count, with a small premium colour bonus
+  const bezelBonus = Math.round(Math.pow(bRaw, 1.3) * DESIGN_BEZEL_MAX_BONUS);
   const avgColourCost = state.selectedColours.reduce((sum, id) => {
     const opt = COLOUR_OPTIONS.find((c) => c.id === id);
     return sum + (opt?.costPerUnit ?? 0);
   }, 0) / (state.selectedColours.length || 1);
-  const countBonus = Math.sqrt(state.selectedColours.length) * 8;
-  const premiumMultiplier = 1 + (avgColourCost - 2) * 0.02; // slight boost for pricier avg
+  const countBonus = Math.sqrt(state.selectedColours.length) * DESIGN_COLOUR_COUNT_MULTIPLIER;
+  const premiumMultiplier = 1 + (avgColourCost - 2) * DESIGN_COLOUR_PREMIUM_FACTOR;
   const colourBonus = Math.round((countBonus * premiumMultiplier) / 2);
   totals.design = (totals.design ?? 0) + thicknessBonus + bezelBonus + colourBonus;
 

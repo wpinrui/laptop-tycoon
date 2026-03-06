@@ -40,7 +40,7 @@ export function Tooltip({
       ref={triggerRef}
       onMouseEnter={() => setVisible(true)}
       onMouseLeave={() => setVisible(false)}
-      style={{ display: "flex" }}
+      style={{ display: "inline-flex" }}
     >
       {children}
       {visible &&

@@ -25,6 +25,17 @@ export const BEZEL_MAX_MM = 40;
 export const BEZEL_STEP_MM = 1;
 export const BEZEL_DEFAULT_MM = 20;
 
+// --- Design bonus tuning constants ---
+
+/** Max design points from thinness (cubic curve, huge impact at extremes) */
+export const DESIGN_THICKNESS_MAX_BONUS = 40;
+/** Max design points from narrow bezels (power of 1.3 curve) */
+export const DESIGN_BEZEL_MAX_BONUS = 30;
+/** Base multiplier per colour count (sqrt(count) * this) */
+export const DESIGN_COLOUR_COUNT_MULTIPLIER = 8;
+/** Per-dollar premium colour cost bonus factor */
+export const DESIGN_COLOUR_PREMIUM_FACTOR = 0.02;
+
 // --- Volume calculation ---
 
 // Li-Ion ~175 Wh/L in 2000 → ~5.7 cm³ per Wh

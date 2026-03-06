@@ -73,6 +73,7 @@ function WizardContent() {
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (e.key === "Enter" && canAdvance && !isLast) {
         dispatch({ type: "NEXT_STEP" });
       }
