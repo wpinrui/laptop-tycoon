@@ -468,8 +468,8 @@ export function DashboardScreen() {
         <BrandCard />
         <ReviewsCard />
         <NewsCard />
-        <HistoryCard />
         <AdvanceYearCard />
+        <HistoryCard />
       </div>
     </ContentPanel>
   );
