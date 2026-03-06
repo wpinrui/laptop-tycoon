@@ -40,5 +40,6 @@ export const tokens = {
     sizeBase: 14,
     sizeLarge: 18,
     sizeTitle: 24,
+    sizeHero: 36,
   },
 } as const;
