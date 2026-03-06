@@ -194,51 +194,51 @@ export function WizardSidebar({
       <SidebarDivider />
       <SidebarHeading>STATISTICS</SidebarHeading>
       {statGroups.map((group, groupIdx) => (
-          <div key={groupIdx}>
-            {groupIdx > 0 && (
-              <div style={{ borderTop: "1px solid #2a2a2a", margin: "6px 0" }} />
-            )}
-            {group.map((statKey) => {
-              const config = STAT_CONFIG.find((s) => s.stat === statKey);
-              if (!config) return null;
-              const { Icon, label } = config;
-              const value = statTotals[config.stat] ?? 0;
-              return (
-                <div
-                  key={statKey}
+        <div key={groupIdx}>
+          {groupIdx > 0 && (
+            <div style={{ borderTop: "1px solid #2a2a2a", margin: "6px 0" }} />
+          )}
+          {group.map((statKey) => {
+            const config = STAT_CONFIG.find((s) => s.stat === statKey);
+            if (!config) return null;
+            const { Icon, label } = config;
+            const value = statTotals[config.stat] ?? 0;
+            return (
+              <div
+                key={statKey}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "6px",
+                }}
+              >
+                <span
                   style={{
                     display: "flex",
-                    justifyContent: "space-between",
                     alignItems: "center",
-                    marginBottom: "6px",
+                    gap: "6px",
+                    color: getStatColor(statKey),
+                    fontSize: "0.75rem",
+                    fontWeight: "bold",
                   }}
                 >
-                  <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      color: getStatColor(statKey),
-                      fontSize: "0.75rem",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    <Icon size={16} strokeWidth={2.5} />
-                    {label}
-                  </span>
-                  <span
-                    style={{
-                      color: statValueColor(config.stat),
-                      fontSize: "0.75rem",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {value}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+                  <Icon size={16} strokeWidth={2.5} />
+                  {label}
+                </span>
+                <span
+                  style={{
+                    color: statValueColor(config.stat),
+                    fontSize: "0.75rem",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {value}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       ))}
 
       {/* Laptop Estimate */}

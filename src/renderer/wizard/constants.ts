@@ -35,6 +35,12 @@ export const DESIGN_BEZEL_MAX_BONUS = 30;
 export const DESIGN_COLOUR_COUNT_MULTIPLIER = 8;
 /** Per-dollar premium colour cost bonus factor */
 export const DESIGN_COLOUR_PREMIUM_FACTOR = 0.02;
+/** Exponent for bezel bonus curve (1 = linear, higher = more reward for narrow bezels) */
+export const DESIGN_BEZEL_EXPONENT = 1.3;
+/** Baseline per-unit colour cost used as reference for premium multiplier */
+export const DESIGN_COLOUR_BASE_COST = 2;
+/** Divisor applied to raw colour bonus (dampens the total) */
+export const DESIGN_COLOUR_BONUS_DIVISOR = 2;
 
 // --- Volume calculation ---
 

@@ -13,6 +13,9 @@ import {
   DESIGN_BEZEL_MAX_BONUS,
   DESIGN_COLOUR_COUNT_MULTIPLIER,
   DESIGN_COLOUR_PREMIUM_FACTOR,
+  DESIGN_BEZEL_EXPONENT,
+  DESIGN_COLOUR_BASE_COST,
+  DESIGN_COLOUR_BONUS_DIVISOR,
   applyDisplayMultiplier,
   coolingMultiplier,
   availableVolumeCm3,
@@ -112,14 +115,14 @@ export function computeStatTotals(state: ReturnType<typeof useWizard>["state"]):
   const tRaw = 1 - (state.thicknessCm - THICKNESS_MIN_CM) / (THICKNESS_MAX_CM - THICKNESS_MIN_CM);
   const thicknessBonus = Math.round(tRaw * tRaw * tRaw * DESIGN_THICKNESS_MAX_BONUS);
   const bRaw = 1 - (state.bezelMm - BEZEL_MIN_MM) / (BEZEL_MAX_MM - BEZEL_MIN_MM);
-  const bezelBonus = Math.round(Math.pow(bRaw, 1.3) * DESIGN_BEZEL_MAX_BONUS);
+  const bezelBonus = Math.round(Math.pow(bRaw, DESIGN_BEZEL_EXPONENT) * DESIGN_BEZEL_MAX_BONUS);
   const avgColourCost = state.selectedColours.reduce((sum, id) => {
     const opt = COLOUR_OPTIONS.find((c) => c.id === id);
     return sum + (opt?.costPerUnit ?? 0);
   }, 0) / (state.selectedColours.length || 1);
   const countBonus = Math.sqrt(state.selectedColours.length) * DESIGN_COLOUR_COUNT_MULTIPLIER;
-  const premiumMultiplier = 1 + (avgColourCost - 2) * DESIGN_COLOUR_PREMIUM_FACTOR;
-  const colourBonus = Math.round((countBonus * premiumMultiplier) / 2);
+  const premiumMultiplier = 1 + (avgColourCost - DESIGN_COLOUR_BASE_COST) * DESIGN_COLOUR_PREMIUM_FACTOR;
+  const colourBonus = Math.round((countBonus * premiumMultiplier) / DESIGN_COLOUR_BONUS_DIVISOR);
   totals.design = (totals.design ?? 0) + thicknessBonus + bezelBonus + colourBonus;
 
   // Performance penalty when cooling is insufficient (quadratic curve)
