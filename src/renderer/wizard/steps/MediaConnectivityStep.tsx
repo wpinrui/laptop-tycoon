@@ -107,6 +107,10 @@ function PortSelector({
       >
         {port.name}
       </div>
+
+      <div style={{ fontSize: "11px", color: "#888", marginBottom: "4px", lineHeight: "1.4" }}>
+        {Object.entries(port.specs).map(([k, v]) => `${k}: ${v}`).join(" · ")}
+      </div>
       <div style={{ color: "#888", fontSize: "11px", marginBottom: "8px" }}>
         ${port.costPerPort}/ea · {port.weightPerPortG}g · {port.volumePerPortCm3}cm³
         {port.minThicknessCm > 0 && ` · min ${port.minThicknessCm}cm`}
