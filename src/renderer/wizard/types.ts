@@ -65,6 +65,7 @@ export interface WizardState {
     keyboardFeature: ChassisOption | null;
     trackpadFeature: ChassisOption | null;
   };
+  visitedSteps: Set<WizardStep>;
 }
 
 const DEFAULT_SIZE_DEF = SCREEN_SIZES[Math.floor(SCREEN_SIZES.length / 2)];
@@ -89,4 +90,5 @@ export const INITIAL_WIZARD_STATE: WizardState = {
     keyboardFeature: null,
     trackpadFeature: null,
   },
+  visitedSteps: new Set<WizardStep>(["metadata"]),
 };

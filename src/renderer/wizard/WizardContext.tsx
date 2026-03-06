@@ -83,12 +83,18 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         ...state,
         chassis: { ...state.chassis, [action.slot]: action.option },
       };
-    case "GO_TO_STEP":
-      return { ...state, currentStep: action.step };
+    case "GO_TO_STEP": {
+      const visited = new Set(state.visitedSteps);
+      visited.add(action.step);
+      return { ...state, currentStep: action.step, visitedSteps: visited };
+    }
     case "NEXT_STEP": {
       const idx = WIZARD_STEPS.indexOf(state.currentStep);
       if (idx < WIZARD_STEPS.length - 1) {
-        return { ...state, currentStep: WIZARD_STEPS[idx + 1] };
+        const nextStep = WIZARD_STEPS[idx + 1];
+        const visited = new Set(state.visitedSteps);
+        visited.add(nextStep);
+        return { ...state, currentStep: nextStep, visitedSteps: visited };
       }
       return state;
     }

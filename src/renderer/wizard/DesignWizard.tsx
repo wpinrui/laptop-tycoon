@@ -29,7 +29,7 @@ function isStepComplete(step: WizardStep, state: WizardState): boolean {
       return !!(state.name.trim() && (state.modelType === "brandNew" || state.predecessorId));
     case "screenSize":
     case "battery":
-      return true; // sliders with defaults, always valid
+      return state.visitedSteps.has(step);
     case "processing":
     case "display":
     case "mediaConnectivity": {
