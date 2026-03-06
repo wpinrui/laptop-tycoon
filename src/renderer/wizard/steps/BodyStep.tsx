@@ -162,7 +162,7 @@ export function BodyStep() {
 
   // --- Cooling ---
   const coolingFromSolution = state.chassis.coolingSolution?.coolingCapacityW ?? 0;
-  const thicknessMultiplier = coolingMultiplier(thickness);
+  const thicknessMultiplier = coolingMultiplier(thickness, bezel);
   const effectiveCooling = Math.round(coolingFromSolution * thicknessMultiplier);
 
   // --- Running totals for chassis selections ---

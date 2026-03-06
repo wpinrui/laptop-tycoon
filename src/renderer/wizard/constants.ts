@@ -86,14 +86,20 @@ export function minThicknessForVolumeCm(
 }
 
 /**
- * Cooling capacity multiplier based on thickness.
- * Thinner chassis has less room for heatsinks/fans.
- * At THICKNESS_MAX_CM → 1.0 (full cooling).
- * At THICKNESS_MIN_CM → 0.5 (half cooling).
- * Linear interpolation between.
+ * Cooling capacity multiplier based on chassis dimensions.
+ * Combines thickness (room for heatsinks/fans) and bezel width (larger footprint = more surface area).
+ *
+ * Thickness factor: 0.5 at min → 1.0 at max (linear).
+ * Bezel factor:     0.85 at min → 1.15 at max (linear).
+ * Result is the product, so a thin + narrow-bezel laptop gets ~0.43x cooling,
+ * while a thick + wide-bezel one gets ~1.15x.
  */
-export function coolingMultiplier(thicknessCm: number): number {
-  const t = (thicknessCm - THICKNESS_MIN_CM) / (THICKNESS_MAX_CM - THICKNESS_MIN_CM);
-  const clamped = Math.max(0, Math.min(1, t));
-  return 0.5 + 0.5 * clamped;
+export function coolingMultiplier(thicknessCm: number, bezelMm: number): number {
+  const tThick = (thicknessCm - THICKNESS_MIN_CM) / (THICKNESS_MAX_CM - THICKNESS_MIN_CM);
+  const thicknessFactor = 0.5 + 0.5 * Math.max(0, Math.min(1, tThick));
+
+  const tBezel = (bezelMm - BEZEL_MIN_MM) / (BEZEL_MAX_MM - BEZEL_MIN_MM);
+  const bezelFactor = 0.85 + 0.3 * Math.max(0, Math.min(1, tBezel));
+
+  return thicknessFactor * bezelFactor;
 }
