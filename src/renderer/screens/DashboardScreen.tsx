@@ -2,6 +2,7 @@ import { CSSProperties } from "react";
 import { useNavigation } from "../navigation/NavigationContext";
 import { Screen } from "../navigation/types";
 import { useGame } from "../state/GameContext";
+import { GameState } from "../state/gameTypes";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { tokens } from "../shell/tokens";
@@ -118,11 +119,40 @@ const statusBadgeStyle: CSSProperties = {
   background: tokens.colors.panelBorder,
 };
 
-const emptyStateStyle: CSSProperties = {
-  color: tokens.colors.textMuted,
-  fontSize: tokens.font.sizeBase,
+const sectionDividerStyle: CSSProperties = {
+  borderTop: `1px solid ${tokens.colors.panelBorder}`,
+  marginTop: tokens.spacing.md,
+  paddingTop: tokens.spacing.md,
+};
+
+const sectionHeadingStyle: CSSProperties = {
+  ...cardBodyStyle,
+  fontWeight: 600,
+};
+
+const smallTextStyle: CSSProperties = {
+  ...cardBodyStyle,
+  fontSize: tokens.font.sizeSmall,
+};
+
+const hintStyle: CSSProperties = {
+  ...smallTextStyle,
   fontStyle: "italic",
 };
+
+const tableCellStyle: CSSProperties = {
+  ...cardBodyStyle,
+  padding: `${tokens.spacing.xs}px 0`,
+};
+
+const emptyStateStyle: CSSProperties = {
+  ...cardBodyStyle,
+  fontStyle: "italic",
+};
+
+function getActiveModels(state: GameState) {
+  return state.models.filter((m) => m.status !== "discontinued");
+}
 
 const MAX_MODELS = 2;
 
@@ -162,7 +192,7 @@ function BentoCard({ title, icon: Icon, screen, children }: BentoCardProps) {
 function ModelsCard() {
   const { state } = useGame();
   const { navigateTo } = useNavigation();
-  const activeModels = state.models.filter((m) => m.status !== "discontinued");
+  const activeModels = getActiveModels(state);
   const emptySlots = MAX_MODELS - activeModels.length;
 
   return (
@@ -211,20 +241,20 @@ function FinancialsCard() {
             ["Net Profit", "—"],
           ].map(([label, value]) => (
             <tr key={label}>
-              <td style={{ ...cardBodyStyle, padding: `${tokens.spacing.xs}px 0` }}>{label}</td>
-              <td style={{ ...cardBodyStyle, padding: `${tokens.spacing.xs}px 0`, textAlign: "right" }}>{value}</td>
+              <td style={tableCellStyle}>{label}</td>
+              <td style={{ ...tableCellStyle, textAlign: "right" }}>{value}</td>
             </tr>
           ))}
         </tbody>
       </table>
-      <div style={{ borderTop: `1px solid ${tokens.colors.panelBorder}`, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.md }}>
-        <p style={{ ...cardBodyStyle, fontWeight: 600 }}>Cash Flow Trend</p>
+      <div style={sectionDividerStyle}>
+        <p style={sectionHeadingStyle}>Cash Flow Trend</p>
         <div style={{ display: "flex", gap: tokens.spacing.xs, marginTop: tokens.spacing.sm, height: 48, alignItems: "flex-end" }}>
           {[0.3, 0.5, 0.4, 0.7, 0.6, 0.8, 0.65, 0.9].map((h, i) => (
             <div key={i} style={{ flex: 1, height: `${h * 100}%`, background: tokens.colors.accent, borderRadius: 2, opacity: 0.5 }} />
           ))}
         </div>
-        <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.sm, fontStyle: "italic" }}>
+        <p style={{ ...emptyStateStyle, marginTop: tokens.spacing.sm }}>
           Quarterly data available after Year 1
         </p>
       </div>
@@ -236,7 +266,7 @@ function MarketCard() {
   return (
     <BentoCard title="Market" icon={BarChart3} screen="marketOverview">
       <p style={cardBodyStyle}>Total Market Size: ~12M units/year</p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.md, fontWeight: 600 }}>
+      <p style={{ ...sectionHeadingStyle, marginTop: tokens.spacing.md }}>
         Top Competitors
       </p>
       {[
@@ -245,13 +275,13 @@ function MarketCard() {
         { name: "OmniLap", models: 4, avg: "$999", strategy: "Broad range, generalist" },
       ].map((c) => (
         <div key={c.name} style={{ marginTop: tokens.spacing.sm, paddingLeft: tokens.spacing.sm, borderLeft: `2px solid ${tokens.colors.panelBorder}` }}>
-          <p style={{ ...cardBodyStyle, fontWeight: 600 }}>{c.name}</p>
+          <p style={sectionHeadingStyle}>{c.name}</p>
           <p style={cardBodyStyle}>{c.models} models — avg {c.avg}</p>
-          <p style={{ ...cardBodyStyle, fontStyle: "italic", fontSize: tokens.font.sizeSmall }}>{c.strategy}</p>
+          <p style={hintStyle}>{c.strategy}</p>
         </div>
       ))}
-      <div style={{ borderTop: `1px solid ${tokens.colors.panelBorder}`, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.md }}>
-        <p style={{ ...cardBodyStyle, fontWeight: 600 }}>Demographic Split</p>
+      <div style={sectionDividerStyle}>
+        <p style={sectionHeadingStyle}>Demographic Split</p>
         {[
           { name: "Corporate", pct: 22 },
           { name: "Consumer", pct: 28 },
@@ -261,11 +291,11 @@ function MarketCard() {
           { name: "Other", pct: 10 },
         ].map((d) => (
           <div key={d.name} style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm, marginTop: tokens.spacing.xs }}>
-            <span style={{ ...cardBodyStyle, width: 70, fontSize: tokens.font.sizeSmall }}>{d.name}</span>
+            <span style={{ ...smallTextStyle, width: 70 }}>{d.name}</span>
             <div style={{ flex: 1, height: 4, background: tokens.colors.panelBorder, borderRadius: 2, overflow: "hidden" }}>
               <div style={{ width: `${d.pct}%`, height: "100%", background: tokens.colors.accent, borderRadius: 2 }} />
             </div>
-            <span style={{ ...cardBodyStyle, fontSize: tokens.font.sizeSmall, width: 30, textAlign: "right" }}>{d.pct}%</span>
+            <span style={{ ...smallTextStyle, width: 30, textAlign: "right" }}>{d.pct}%</span>
           </div>
         ))}
       </div>
@@ -283,7 +313,7 @@ function BrandCard() {
 
   return (
     <BentoCard title="Brand" icon={Sparkles} screen="brandDetail">
-      <p style={{ ...cardBodyStyle, fontWeight: 600, marginBottom: tokens.spacing.sm }}>Recognition</p>
+      <p style={{ ...sectionHeadingStyle, marginBottom: tokens.spacing.sm }}>Recognition</p>
       <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm }}>
         <div
           style={{
@@ -306,18 +336,18 @@ function BrandCard() {
         </div>
         <span style={cardBodyStyle}>{state.brandRecognition}/100</span>
       </div>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs, fontStyle: "italic", fontSize: tokens.font.sizeSmall }}>
+      <p style={{ ...hintStyle, marginTop: tokens.spacing.xs }}>
         Grows with sales volume and positive reviews
       </p>
-      <div style={{ borderTop: `1px solid ${tokens.colors.panelBorder}`, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.md }}>
-        <p style={{ ...cardBodyStyle, fontWeight: 600 }}>Niche Reputation</p>
+      <div style={sectionDividerStyle}>
+        <p style={sectionHeadingStyle}>Niche Reputation</p>
         {reputationStats.map((stat) => (
           <div key={stat} style={{ display: "flex", justifyContent: "space-between", marginTop: tokens.spacing.xs }}>
-            <span style={{ ...cardBodyStyle, fontSize: tokens.font.sizeSmall }}>{stat}</span>
-            <span style={{ ...cardBodyStyle, fontSize: tokens.font.sizeSmall, fontStyle: "italic" }}>—</span>
+            <span style={smallTextStyle}>{stat}</span>
+            <span style={hintStyle}>—</span>
           </div>
         ))}
-        <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.md, fontStyle: "italic", fontSize: tokens.font.sizeSmall }}>
+        <p style={{ ...hintStyle, marginTop: tokens.spacing.md }}>
           Reputation builds with consistent product focus across multiple years
         </p>
       </div>
@@ -328,12 +358,12 @@ function BrandCard() {
 function ReviewsCard() {
   return (
     <BentoCard title="Reviews & Awards" icon={Trophy} screen="reviewsAwards">
-      <p style={{ ...cardBodyStyle, fontWeight: 600 }}>Latest Reviews</p>
+      <p style={sectionHeadingStyle}>Latest Reviews</p>
       <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs, fontStyle: "italic" }}>
         No reviews yet — launch your first model!
       </p>
-      <div style={{ borderTop: `1px solid ${tokens.colors.panelBorder}`, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.md }}>
-        <p style={{ ...cardBodyStyle, fontWeight: 600 }}>Year-End Awards</p>
+      <div style={sectionDividerStyle}>
+        <p style={sectionHeadingStyle}>Year-End Awards</p>
         {[
           "Best Overall Laptop",
           "Best Value",
@@ -345,11 +375,11 @@ function ReviewsCard() {
           "Best Battery Life",
         ].map((award) => (
           <div key={award} style={{ display: "flex", justifyContent: "space-between", marginTop: tokens.spacing.xs }}>
-            <span style={{ ...cardBodyStyle, fontSize: tokens.font.sizeSmall }}>{award}</span>
-            <span style={{ ...cardBodyStyle, fontSize: tokens.font.sizeSmall, fontStyle: "italic" }}>TBD</span>
+            <span style={smallTextStyle}>{award}</span>
+            <span style={hintStyle}>TBD</span>
           </div>
         ))}
-        <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.sm, fontStyle: "italic", fontSize: tokens.font.sizeSmall }}>
+        <p style={{ ...hintStyle, marginTop: tokens.spacing.sm }}>
           Awards announced after year-end simulation
         </p>
       </div>
@@ -368,9 +398,9 @@ function NewsCard() {
         { date: "Jan 2000", text: "Corporate IT spending surges as Y2K upgrades drive bulk laptop purchases worldwide." },
         { date: "Jan 2000", text: "OmniLap expands product line with 4 new models targeting every price bracket." },
         { date: "Jan 2000", text: "Display technology advances push screen resolutions higher — 1024×768 becomes the new baseline." },
-      ].map((item, i) => (
-        <div key={i} style={{ marginTop: i === 0 ? 0 : tokens.spacing.sm, paddingBottom: tokens.spacing.sm, borderBottom: i < 6 ? `1px solid ${tokens.colors.panelBorder}` : "none" }}>
-          <p style={{ ...cardBodyStyle, fontSize: tokens.font.sizeSmall, color: tokens.colors.accent }}>{item.date}</p>
+      ].map((item, i, arr) => (
+        <div key={i} style={{ marginTop: i === 0 ? 0 : tokens.spacing.sm, paddingBottom: tokens.spacing.sm, borderBottom: i < arr.length - 1 ? `1px solid ${tokens.colors.panelBorder}` : "none" }}>
+          <p style={{ ...smallTextStyle, color: tokens.colors.accent }}>{item.date}</p>
           <p style={cardBodyStyle}>{item.text}</p>
         </div>
       ))}
@@ -381,12 +411,12 @@ function NewsCard() {
 function HistoryCard() {
   return (
     <BentoCard title="History" icon={History} screen="history">
-      <p style={{ ...cardBodyStyle, fontWeight: 600 }}>Past Releases</p>
+      <p style={sectionHeadingStyle}>Past Releases</p>
       <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs, fontStyle: "italic" }}>
         No models released yet
       </p>
-      <div style={{ borderTop: `1px solid ${tokens.colors.panelBorder}`, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.md }}>
-        <p style={{ ...cardBodyStyle, fontWeight: 600 }}>Lifetime Stats</p>
+      <div style={sectionDividerStyle}>
+        <p style={sectionHeadingStyle}>Lifetime Stats</p>
         <table style={{ width: "100%", borderCollapse: "collapse", marginTop: tokens.spacing.sm }}>
           <tbody>
             {[
@@ -400,8 +430,8 @@ function HistoryCard() {
               ["Awards won", "0"],
             ].map(([label, value]) => (
               <tr key={label}>
-                <td style={{ ...cardBodyStyle, padding: `${tokens.spacing.xs}px 0`, fontSize: tokens.font.sizeSmall }}>{label}</td>
-                <td style={{ ...cardBodyStyle, padding: `${tokens.spacing.xs}px 0`, fontSize: tokens.font.sizeSmall, textAlign: "right" }}>{value}</td>
+                <td style={{ ...tableCellStyle, fontSize: tokens.font.sizeSmall }}>{label}</td>
+                <td style={{ ...tableCellStyle, fontSize: tokens.font.sizeSmall, textAlign: "right" }}>{value}</td>
               </tr>
             ))}
           </tbody>
@@ -413,7 +443,7 @@ function HistoryCard() {
 
 function AdvanceYearCard() {
   const { state } = useGame();
-  const activeModels = state.models.filter((m) => m.status !== "discontinued");
+  const activeModels = getActiveModels(state);
   const allHavePlans = activeModels.length > 0 && activeModels.every(
     (m) => m.retailPrice !== null && m.manufacturingQuantity !== null
   );
