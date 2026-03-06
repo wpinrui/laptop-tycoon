@@ -8,9 +8,24 @@ import { tokens } from "../shell/tokens";
 import { formatCash } from "../utils/formatCash";
 
 const headerStyle: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: tokens.spacing.xl,
+};
+
+const titleStyle: CSSProperties = {
   margin: 0,
   fontSize: tokens.font.sizeHero,
   fontWeight: 700,
+};
+
+const statsRowStyle: CSSProperties = {
+  display: "flex",
+  gap: tokens.spacing.lg,
+  alignItems: "center",
+  fontSize: tokens.font.sizeLarge,
+  color: tokens.colors.textMuted,
 };
 
 const gridStyle: CSSProperties = {
@@ -18,7 +33,6 @@ const gridStyle: CSSProperties = {
   gridTemplateColumns: "1fr 1fr 1fr",
   gridTemplateRows: "auto",
   gap: tokens.spacing.lg,
-  marginTop: tokens.spacing.xl,
 };
 
 const cardStyle: CSSProperties = {
@@ -67,27 +81,26 @@ const MAX_MODELS = 2;
 
 interface BentoCardProps {
   title: string;
-  screen: Screen;
-  span?: boolean;
+  screen?: Screen;
   children: React.ReactNode;
 }
 
-function BentoCard({ title, screen, span, children }: BentoCardProps) {
+function BentoCard({ title, screen, children }: BentoCardProps) {
   const { navigateTo } = useNavigation();
 
   return (
     <div
       style={{
         ...cardStyle,
-        gridColumn: span ? "1 / -1" : undefined,
+        cursor: screen ? "pointer" : "default",
       }}
-      onClick={() => navigateTo(screen)}
-      onMouseEnter={(e) => {
+      onClick={screen ? () => navigateTo(screen) : undefined}
+      onMouseEnter={screen ? (e) => {
         e.currentTarget.style.background = tokens.colors.surfaceHover;
-      }}
-      onMouseLeave={(e) => {
+      } : undefined}
+      onMouseLeave={screen ? (e) => {
         e.currentTarget.style.background = tokens.colors.surface;
-      }}
+      } : undefined}
     >
       <h3 style={cardTitleStyle}>{title}</h3>
       {children}
@@ -102,7 +115,7 @@ function ModelsCard() {
   const emptySlots = MAX_MODELS - activeModels.length;
 
   return (
-    <BentoCard title="Your Models" screen="modelManagement" span>
+    <BentoCard title="Your Models" screen="modelManagement">
       {activeModels.length === 0 ? (
         <p style={emptyStateStyle}>No models yet. Design your first laptop!</p>
       ) : (
@@ -134,12 +147,14 @@ function ModelsCard() {
 }
 
 function FinancialsCard() {
-  const { state } = useGame();
-
   return (
     <BentoCard title="Financials" screen="financialHistory">
-      <p style={cardBodyStyle}>Cash: {formatCash(state.cash)}</p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
+      <p style={cardBodyStyle}>Revenue: —</p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>COGS: —</p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>Gross Profit: —</p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>Marketing: —</p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>Net Profit: —</p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.md, fontStyle: "italic" }}>
         P&L data available after first year
       </p>
     </BentoCard>
@@ -149,7 +164,22 @@ function FinancialsCard() {
 function MarketCard() {
   return (
     <BentoCard title="Market" screen="marketOverview">
-      <p style={cardBodyStyle}>Competitor data available soon</p>
+      <p style={cardBodyStyle}>Total Market Size: ~12M units</p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.md, fontWeight: 600 }}>
+        Top Competitors
+      </p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
+        BudgetTech — 3 models, avg $599
+      </p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
+        LuxBook — 2 models, avg $1,899
+      </p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
+        OmniLap — 4 models, avg $999
+      </p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.md, fontStyle: "italic" }}>
+        Demographic breakdown available in detail view
+      </p>
     </BentoCard>
   );
 }
@@ -182,8 +212,20 @@ function BrandCard() {
         </div>
         <span style={cardBodyStyle}>{state.brandRecognition}</span>
       </div>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.md, fontWeight: 600 }}>
+        Niche Reputation
+      </p>
       <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
-        Niche reputation builds over time
+        Performance: unknown
+      </p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
+        Build Quality: unknown
+      </p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
+        Value: unknown
+      </p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.md, fontStyle: "italic" }}>
+        Reputation builds with consistent product focus
       </p>
     </BentoCard>
   );
@@ -192,7 +234,16 @@ function BrandCard() {
 function ReviewsCard() {
   return (
     <BentoCard title="Reviews & Awards" screen="reviewsAwards">
-      <p style={cardBodyStyle}>No reviews yet</p>
+      <p style={{ ...cardBodyStyle, fontWeight: 600 }}>Latest Reviews</p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs, fontStyle: "italic" }}>
+        No reviews yet — launch your first model!
+      </p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.md, fontWeight: 600 }}>
+        Awards This Year
+      </p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs, fontStyle: "italic" }}>
+        Year-end awards announced after simulation
+      </p>
     </BentoCard>
   );
 }
@@ -200,7 +251,19 @@ function ReviewsCard() {
 function NewsCard() {
   return (
     <BentoCard title="News" screen="news">
-      <p style={cardBodyStyle}>No headlines yet</p>
+      <p style={{ ...cardBodyStyle, fontWeight: 600 }}>Headlines</p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
+        The laptop market enters a new decade with growing consumer demand.
+      </p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
+        BudgetTech announces aggressive pricing strategy for 2000.
+      </p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
+        Industry analysts predict 15% growth in the consumer segment.
+      </p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
+        LuxBook unveils premium aluminium chassis design.
+      </p>
     </BentoCard>
   );
 }
@@ -208,7 +271,16 @@ function NewsCard() {
 function HistoryCard() {
   return (
     <BentoCard title="History" screen="history">
-      <p style={cardBodyStyle}>No past releases</p>
+      <p style={{ ...cardBodyStyle, fontWeight: 600 }}>Past Releases</p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs, fontStyle: "italic" }}>
+        No models released yet
+      </p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.md, fontWeight: 600 }}>
+        Lifetime Stats
+      </p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>Units sold: 0</p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>Total revenue: $0</p>
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>Models designed: 0</p>
     </BentoCard>
   );
 }
@@ -229,15 +301,7 @@ function AdvanceYearCard() {
   }
 
   return (
-    <div
-      style={{
-        ...cardStyle,
-        gridColumn: "1 / -1",
-        textAlign: "center",
-        cursor: "default",
-      }}
-    >
-      <h3 style={cardTitleStyle}>Advance Year</h3>
+    <BentoCard title="Advance Year">
       {warnings.length > 0 ? (
         warnings.map((w) => (
           <p key={w} style={{ ...cardBodyStyle, color: tokens.colors.danger }}>
@@ -245,16 +309,17 @@ function AdvanceYearCard() {
           </p>
         ))
       ) : (
-        <p style={cardBodyStyle}>Ready to advance</p>
+        <p style={cardBodyStyle}>All models ready. Advance to simulate the year.</p>
       )}
       <MenuButton
         variant="accent"
         disabled={!allHavePlans}
-        style={{ marginTop: tokens.spacing.md }}
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+        style={{ marginTop: tokens.spacing.md, width: "100%" }}
       >
         Begin Year {state.year + 1}
       </MenuButton>
-    </div>
+    </BentoCard>
   );
 }
 
@@ -262,8 +327,14 @@ export function DashboardScreen() {
   const { state } = useGame();
 
   return (
-    <ContentPanel maxWidth={1200} style={{ width: "80vw", maxHeight: "80vh" }}>
-      <h1 style={headerStyle}>{state.companyName} — Year {state.year}</h1>
+    <ContentPanel maxWidth={1600} style={{ width: "90vw", maxHeight: "90vh" }}>
+      <div style={headerStyle}>
+        <h1 style={titleStyle}>{state.companyName}</h1>
+        <div style={statsRowStyle}>
+          <span>📅 {state.year}</span>
+          <span>💰 {formatCash(state.cash)}</span>
+        </div>
+      </div>
 
       <div style={gridStyle}>
         <ModelsCard />
