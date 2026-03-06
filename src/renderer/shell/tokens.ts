@@ -22,6 +22,11 @@ export const tokens = {
   backdrop: {
     blur: "blur(20px)",
   },
+  zIndex: {
+    hud: 100,
+    overlay: 500,
+    tooltip: 1000,
+  },
   spacing: {
     xs: 4,
     sm: 8,

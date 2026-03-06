@@ -8,7 +8,7 @@ const containerStyle: CSSProperties = {
   right: tokens.spacing.md,
   display: "flex",
   gap: tokens.spacing.md,
-  zIndex: 100,
+  zIndex: tokens.zIndex.hud,
   fontFamily: tokens.font.family,
 };
 
