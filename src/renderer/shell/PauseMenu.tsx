@@ -99,6 +99,7 @@ export function PauseMenu() {
           title="Save Game"
           onSelect={handleSaveToSlot}
           onCancel={() => { setShowSaveSlots(false); setQuitAfterSave(false); }}
+          confirmOverwrite
         />
       )}
       {showQuitConfirm && (

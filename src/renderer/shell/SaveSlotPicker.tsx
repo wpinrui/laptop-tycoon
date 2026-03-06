@@ -9,6 +9,8 @@ interface SaveSlotPickerProps {
   onSelect: (slotIndex: number) => void;
   onCancel: () => void;
   allowDelete?: boolean;
+  /** If true, selecting an occupied slot requires overwrite confirmation. */
+  confirmOverwrite?: boolean;
 }
 
 const overlayStyle: CSSProperties = {
@@ -117,9 +119,10 @@ const subtitleStyle: CSSProperties = {
   textAlign: "center",
 };
 
-export function SaveSlotPicker({ title, onSelect, onCancel, allowDelete }: SaveSlotPickerProps) {
+export function SaveSlotPicker({ title, onSelect, onCancel, allowDelete, confirmOverwrite }: SaveSlotPickerProps) {
   const [revision, setRevision] = useState(0);
   const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(null);
+  const [pendingOverwriteIndex, setPendingOverwriteIndex] = useState<number | null>(null);
   // Re-read slots from localStorage each render (revision forces re-read after delete)
   void revision;
   const rawSlots = getAllSlotMeta();
@@ -140,7 +143,16 @@ export function SaveSlotPicker({ title, onSelect, onCancel, allowDelete }: SaveS
     setRevision((r) => r + 1);
   }
 
+  function handleSlotSelect(index: number) {
+    if (confirmOverwrite && rawSlots[index]) {
+      setPendingOverwriteIndex(index);
+    } else {
+      onSelect(index);
+    }
+  }
+
   const pendingMeta = pendingDeleteIndex !== null ? rawSlots[pendingDeleteIndex] : null;
+  const overwriteMeta = pendingOverwriteIndex !== null ? rawSlots[pendingOverwriteIndex] : null;
 
   return (
     <>
@@ -155,7 +167,7 @@ export function SaveSlotPicker({ title, onSelect, onCancel, allowDelete }: SaveS
                 key={index}
                 index={index}
                 meta={meta}
-                onSelect={onSelect}
+                onSelect={handleSlotSelect}
                 allowDelete={allowDelete}
                 onDeleted={() => setPendingDeleteIndex(index)}
               />
@@ -184,6 +196,29 @@ export function SaveSlotPicker({ title, onSelect, onCancel, allowDelete }: SaveS
               </MenuButton>
               <MenuButton variant="danger" onClick={confirmDelete} style={{ flex: 1 }}>
                 Delete
+              </MenuButton>
+            </div>
+          </ContentPanel>
+        </div>
+      )}
+      {pendingOverwriteIndex !== null && overwriteMeta && (
+        <div
+          style={confirmOverlayStyle}
+          onClick={(e) => { if (e.target === e.currentTarget) setPendingOverwriteIndex(null); }}
+        >
+          <ContentPanel maxWidth={560}>
+            <h2 style={{ margin: 0, fontSize: tokens.font.sizeTitle, fontWeight: 700, textAlign: "center" }}>
+              Overwrite Save?
+            </h2>
+            <p style={{ ...subtitleStyle, marginBottom: tokens.spacing.md }}>
+              Slot {pendingOverwriteIndex + 1}: {overwriteMeta.companyName} — Year {overwriteMeta.year}
+            </p>
+            <div style={{ display: "flex", gap: tokens.spacing.sm }}>
+              <MenuButton onClick={() => setPendingOverwriteIndex(null)} style={{ flex: 1 }}>
+                Cancel
+              </MenuButton>
+              <MenuButton variant="danger" onClick={() => { const i = pendingOverwriteIndex; setPendingOverwriteIndex(null); onSelect(i); }} style={{ flex: 1 }}>
+                Overwrite
               </MenuButton>
             </div>
           </ContentPanel>
