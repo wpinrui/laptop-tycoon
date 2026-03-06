@@ -13,43 +13,16 @@ import {
   totalConsumedVolumeCm3,
   maxHeightConstraintCm,
   specSummary,
+  CHASSIS_SLOTS,
+  getAvailableChassisOptions,
 } from "../constants";
-import {
-  MATERIALS,
-  COOLING_SOLUTIONS,
-  KEYBOARD_FEATURES,
-  TRACKPAD_FEATURES,
-} from "../../../data/chassisOptions";
-import { ChassisOption, ChassisOptionSlot } from "../../../data/types";
+import { ChassisOption } from "../../../data/types";
 import { getAllChassisOptions } from "../types";
 import { Tooltip } from "../Tooltip";
-import { StatContributions } from "../StatBar";
+import { SelectionCard, OptionTooltipContent } from "../SelectionCard";
 import { COLOUR_OPTIONS } from "../../../data/colourOptions";
 
 const VOLUME_WARNING_PERCENT = 85;
-
-interface SlotSectionDef {
-  slot: ChassisOptionSlot;
-  label: string;
-  options: ChassisOption[];
-}
-
-const CHASSIS_SLOTS: SlotSectionDef[] = [
-  { slot: "material", label: "Chassis Material", options: MATERIALS },
-  { slot: "coolingSolution", label: "Cooling Solution", options: COOLING_SOLUTIONS },
-  { slot: "keyboardFeature", label: "Keyboard", options: KEYBOARD_FEATURES },
-  { slot: "trackpadFeature", label: "Trackpad / Pointing Device", options: TRACKPAD_FEATURES },
-];
-
-function getAvailableOptions(options: ChassisOption[], year: number): ChassisOption[] {
-  return options
-    .filter(
-      (o) =>
-        o.yearIntroduced <= year &&
-        (o.yearDiscontinued === null || o.yearDiscontinued >= year),
-    )
-    .sort((a, b) => a.costAtLaunch - b.costAtLaunch);
-}
 
 export function BodyStep() {
   const { state, dispatch } = useWizard();
@@ -182,7 +155,7 @@ export function BodyStep() {
 
         {/* Chassis option slots */}
         {CHASSIS_SLOTS.map(({ slot, label, options }) => {
-          const available = getAvailableOptions(options, GAME_YEAR);
+          const available = getAvailableChassisOptions(options, GAME_YEAR);
           const selected = state.chassis[slot];
           return (
             <div key={slot} style={{ marginBottom: "24px" }}>
@@ -215,56 +188,36 @@ export function BodyStep() {
             {COLOUR_OPTIONS.map((colour) => {
               const isSelected = state.selectedColours.includes(colour.id);
               return (
-                <button
+                <SelectionCard
                   key={colour.id}
+                  isSelected={isSelected}
                   onClick={() => dispatch({ type: "TOGGLE_COLOUR", colourId: colour.id })}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "8px 12px",
-                    background: isSelected ? "#1a3a5c" : "#2a2a2a",
-                    border: isSelected ? "2px solid #90caf9" : "2px solid #444",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    color: "#e0e0e0",
-                    fontFamily: "inherit",
-                    transition: "border-color 0.15s, background 0.15s",
-                  }}
                 >
-                  <div
-                    style={{
-                      width: "20px",
-                      height: "20px",
-                      borderRadius: "50%",
-                      background: colour.hex,
-                      border: "1px solid #555",
-                      flexShrink: 0,
-                    }}
-                  />
-                  <div style={{ textAlign: "left" }}>
-                    <div style={{ fontSize: "0.75rem", fontWeight: "bold", color: isSelected ? "#90caf9" : "#e0e0e0" }}>
-                      {colour.name}
-                    </div>
-                    <div style={{ fontSize: "0.625rem", color: "#888" }}>
-                      +${colour.costPerUnit}/unit
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <div
+                      style={{
+                        width: "20px",
+                        height: "20px",
+                        borderRadius: "50%",
+                        background: colour.hex,
+                        border: "1px solid #555",
+                        flexShrink: 0,
+                      }}
+                    />
+                    <div style={{ textAlign: "left" }}>
+                      <div style={{ fontSize: "0.75rem", fontWeight: "bold", color: isSelected ? "#90caf9" : "#e0e0e0" }}>
+                        {colour.name}
+                      </div>
+                      <div style={{ fontSize: "0.625rem", color: "#888" }}>
+                        +${colour.costPerUnit}/unit
+                      </div>
                     </div>
                   </div>
-                </button>
+                </SelectionCard>
               );
             })}
           </div>
         </div>
-    </div>
-  );
-}
-
-function ChassisTooltipContent({ option }: { option: ChassisOption }) {
-  return (
-    <div>
-      <div style={{ fontWeight: "bold", marginBottom: "4px", color: "#90caf9" }}>{option.name}</div>
-      <div style={{ color: "#ccc", marginBottom: "6px" }}>{option.description}</div>
-      <StatContributions stats={option.stats as Record<string, number>} />
     </div>
   );
 }
@@ -281,21 +234,8 @@ function ChassisCard({
   const cost = chassisCost(option, GAME_YEAR);
 
   return (
-    <Tooltip content={<ChassisTooltipContent option={option} />}>
-      <button
-        onClick={onSelect}
-        style={{
-          background: isSelected ? "#1a3a5c" : "#2a2a2a",
-          border: isSelected ? "2px solid #90caf9" : "2px solid #444",
-          borderRadius: "8px",
-          padding: "12px",
-          textAlign: "left",
-          cursor: "pointer",
-          color: "#e0e0e0",
-          fontFamily: "inherit",
-          transition: "border-color 0.15s, background 0.15s",
-        }}
-      >
+    <Tooltip content={<OptionTooltipContent name={option.name} description={option.description} stats={option.stats} />}>
+      <SelectionCard isSelected={isSelected} onClick={onSelect}>
         <div
           style={{
             fontSize: "0.8125rem",
@@ -316,6 +256,11 @@ function ChassisCard({
               {option.weightG > 0 ? "+" : ""}{option.weightG}g
             </span>
           )}
+          {option.shellDensityMultiplier !== 1.0 && (
+            <span style={{ color: option.shellDensityMultiplier < 1.0 ? "#64b5f6" : "#888" }}>
+              {option.shellDensityMultiplier}x density
+            </span>
+          )}
           {option.volumeCm3 > 0 && (
             <span style={{ color: "#ce93d8" }}>{option.volumeCm3}cm³</span>
           )}
@@ -323,7 +268,7 @@ function ChassisCard({
             <span style={{ color: "#4fc3f7" }}>{option.coolingCapacityW}W cooling</span>
           )}
         </div>
-      </button>
+      </SelectionCard>
     </Tooltip>
   );
 }

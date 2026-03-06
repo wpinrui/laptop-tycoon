@@ -1,34 +1,17 @@
 import { useWizard } from "../WizardContext";
-import { GAME_YEAR, DISPLAY_SLOTS, applyDisplayMultiplier, specSummary } from "../constants";
-import { ALL_COMPONENTS } from "../../../data/components";
+import { GAME_YEAR, DISPLAY_SLOTS, applyDisplayMultiplier, specSummary, getAvailableComponents } from "../constants";
 import { getScreenSizeDef } from "../../../data/screenSizes";
 import { Component, ComponentSlot, ScreenSizeDefinition } from "../../../data/types";
 import { Tooltip } from "../Tooltip";
-import { StatContributions } from "../StatBar";
+import { SelectionCard, OptionTooltipContent } from "../SelectionCard";
 
 export interface SlotDef {
   slot: ComponentSlot;
   label: string;
 }
 
-function getAvailableComponents(slot: ComponentSlot, year: number): Component[] {
-  return ALL_COMPONENTS
-    .filter((c) => c.slot === slot && c.yearIntroduced <= year && c.yearDiscontinued >= year)
-    .sort((a, b) => a.costAtLaunch - b.costAtLaunch);
-}
-
 function isDisplaySlot(slot: ComponentSlot): boolean {
   return DISPLAY_SLOTS.includes(slot);
-}
-
-function TooltipContent({ component }: { component: Component }) {
-  return (
-    <div>
-      <div style={{ fontWeight: "bold", marginBottom: "4px", color: "#90caf9" }}>{component.name}</div>
-      <div style={{ color: "#ccc", marginBottom: "6px" }}>{component.description}</div>
-      <StatContributions stats={component.stats as Record<string, number>} />
-    </div>
-  );
 }
 
 export function ComponentStepLayout({
@@ -135,21 +118,8 @@ function ComponentCard({
   const weight = applyDisplayMultiplier(component.weightG, slot, multiplier);
 
   return (
-    <Tooltip content={<TooltipContent component={component} />}>
-      <button
-        onClick={onSelect}
-        style={{
-          background: isSelected ? "#1a3a5c" : "#2a2a2a",
-          border: isSelected ? "2px solid #90caf9" : "2px solid #444",
-          borderRadius: "8px",
-          padding: "12px",
-          textAlign: "left",
-          cursor: "pointer",
-          color: "#e0e0e0",
-          fontFamily: "inherit",
-          transition: "border-color 0.15s, background 0.15s",
-        }}
-      >
+    <Tooltip content={<OptionTooltipContent name={component.name} description={component.description} stats={component.stats} />}>
+      <SelectionCard isSelected={isSelected} onClick={onSelect}>
         <div
           style={{
             fontSize: "0.8125rem",
@@ -168,7 +138,7 @@ function ComponentCard({
           {power > 0 && <span style={{ color: "#ff9800" }}>{power}W</span>}
           {weight > 0 && <span style={{ color: "#888" }}>{weight}g</span>}
         </div>
-      </button>
+      </SelectionCard>
     </Tooltip>
   );
 }

@@ -1,14 +1,13 @@
 import { useEffect } from "react";
 import { WizardProvider, useWizard } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
-import { WizardStep, WizardState, WIZARD_STEPS, getAllChassisOptions } from "./types";
+import { WizardStep, WizardState, WIZARD_STEPS, COMPONENT_STEP_SLOTS, getAllChassisOptions } from "./types";
 import {
   GAME_YEAR,
   availableVolumeCm3,
   totalConsumedVolumeCm3,
   maxHeightConstraintCm,
 } from "./constants";
-import { ComponentSlot } from "../../data/types";
 import { MetadataStep } from "./steps/MetadataStep";
 import { ScreenSizeStep } from "./steps/ScreenSizeStep";
 import { ProcessingStep } from "./steps/ProcessingStep";
@@ -18,12 +17,6 @@ import { BatteryStep } from "./steps/BatteryStep";
 import { BodyStep } from "./steps/BodyStep";
 import { ReviewStep } from "./steps/ReviewStep";
 import { WizardSidebar } from "./LaptopEstimateSidebar";
-
-const COMPONENT_STEP_SLOTS: Partial<Record<WizardStep, ComponentSlot[]>> = {
-  processing: ["cpu", "gpu", "ram", "storage"],
-  display: ["resolution", "displayTech", "displaySurface"],
-  mediaConnectivity: ["webcam", "speakers", "wifi"],
-};
 
 function isStepComplete(step: WizardStep, state: WizardState): boolean {
   switch (step) {
@@ -69,8 +62,11 @@ function WizardContent() {
   const isFirst = currentIdx === 0;
   const isLast = currentIdx === WIZARD_STEPS.length - 1;
 
+  const allStepsComplete = WIZARD_STEPS.every((s) => isStepComplete(s, state));
+
   const canAdvance = isStepComplete(state.currentStep, state)
-    && (state.currentStep !== "body" || state.selectedColours.length > 0);
+    && (state.currentStep !== "body" || state.selectedColours.length > 0)
+    && (!isLast || allStepsComplete);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -82,7 +78,6 @@ function WizardContent() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [canAdvance, isLast, dispatch]);
-  const allStepsComplete = WIZARD_STEPS.every((s) => isStepComplete(s, state));
 
   function canNavigateTo(step: WizardStep) {
     const targetIdx = WIZARD_STEPS.indexOf(step);
@@ -155,6 +150,8 @@ function WizardContent() {
             flex: 1,
             overflowY: "auto",
             minHeight: 0,
+            position: "relative",
+            zIndex: 0,
           }}
         >
           {stepContent}
