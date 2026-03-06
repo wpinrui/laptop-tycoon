@@ -7,8 +7,8 @@ export const tokens = {
     lg: 20,
   },
   colors: {
-    panelBg: "rgba(0, 0, 0, 0.75)",
-    panelBorder: "rgba(255, 255, 255, 0.08)",
+    panelBg: "rgba(0, 0, 0, 0.82)",
+    panelBorder: "rgba(255, 255, 255, 0.18)",
     hudBg: "rgba(0, 0, 0, 0.6)",
     text: "#e0e0e0",
     textMuted: "#888",

@@ -129,7 +129,7 @@ export function PauseMenu() {
               <MenuButton onClick={() => { saveGame(state); handleQuitToMenu(); }} style={{ flex: 1 }}>
                 Save & Quit
               </MenuButton>
-              <MenuButton variant="accent" onClick={handleQuitToMenu} style={{ flex: 1 }}>
+              <MenuButton variant="danger" onClick={handleQuitToMenu} style={{ flex: 1 }}>
                 Quit
               </MenuButton>
             </div>
