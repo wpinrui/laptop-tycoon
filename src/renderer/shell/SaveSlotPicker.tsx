@@ -103,8 +103,23 @@ function SlotRow({
   );
 }
 
+const confirmOverlayStyle: CSSProperties = {
+  ...overlayStyle,
+  background: "transparent",
+  zIndex: tokens.zIndex.overlay + 3,
+};
+
+const subtitleStyle: CSSProperties = {
+  margin: 0,
+  marginTop: tokens.spacing.xs,
+  fontSize: tokens.font.sizeBase,
+  color: tokens.colors.textMuted,
+  textAlign: "center",
+};
+
 export function SaveSlotPicker({ title, onSelect, onCancel, allowDelete }: SaveSlotPickerProps) {
   const [revision, setRevision] = useState(0);
+  const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(null);
   // Re-read slots from localStorage each render (revision forces re-read after delete)
   void revision;
   const rawSlots = getAllSlotMeta();
@@ -118,33 +133,62 @@ export function SaveSlotPicker({ title, onSelect, onCancel, allowDelete }: SaveS
     return a.index - b.index;
   });
 
-  function handleDelete(index: number) {
-    deleteSlot(index);
+  function confirmDelete() {
+    if (pendingDeleteIndex === null) return;
+    deleteSlot(pendingDeleteIndex);
+    setPendingDeleteIndex(null);
     setRevision((r) => r + 1);
   }
 
+  const pendingMeta = pendingDeleteIndex !== null ? rawSlots[pendingDeleteIndex] : null;
+
   return (
-    <div style={overlayStyle} onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
-      <ContentPanel maxWidth={600}>
-        <h2 style={{ margin: 0, fontSize: tokens.font.sizeTitle, fontWeight: 700, textAlign: "center" }}>
-          {title}
-        </h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: tokens.spacing.sm, marginTop: tokens.spacing.lg }}>
-          {entries.map(({ meta, index }) => (
-            <SlotRow
-              key={index}
-              index={index}
-              meta={meta}
-              onSelect={onSelect}
-              allowDelete={allowDelete}
-              onDeleted={() => handleDelete(index)}
-            />
-          ))}
+    <>
+      <div style={overlayStyle} onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
+        <ContentPanel maxWidth={600}>
+          <h2 style={{ margin: 0, fontSize: tokens.font.sizeTitle, fontWeight: 700, textAlign: "center" }}>
+            {title}
+          </h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: tokens.spacing.sm, marginTop: tokens.spacing.lg }}>
+            {entries.map(({ meta, index }) => (
+              <SlotRow
+                key={index}
+                index={index}
+                meta={meta}
+                onSelect={onSelect}
+                allowDelete={allowDelete}
+                onDeleted={() => setPendingDeleteIndex(index)}
+              />
+            ))}
+          </div>
+          <div style={{ marginTop: tokens.spacing.lg }}>
+            <MenuButton onClick={onCancel} style={{ width: "100%" }}>Cancel</MenuButton>
+          </div>
+        </ContentPanel>
+      </div>
+      {pendingDeleteIndex !== null && pendingMeta && (
+        <div
+          style={confirmOverlayStyle}
+          onClick={(e) => { if (e.target === e.currentTarget) setPendingDeleteIndex(null); }}
+        >
+          <ContentPanel maxWidth={560}>
+            <h2 style={{ margin: 0, fontSize: tokens.font.sizeTitle, fontWeight: 700, textAlign: "center" }}>
+              Delete Save?
+            </h2>
+            <p style={{ ...subtitleStyle, marginBottom: tokens.spacing.md }}>
+              Slot {pendingDeleteIndex + 1}: {pendingMeta.companyName} — Year {pendingMeta.year}
+            </p>
+            <div style={{ display: "flex", gap: tokens.spacing.sm }}>
+              <MenuButton onClick={() => setPendingDeleteIndex(null)} style={{ flex: 1 }}>
+                Cancel
+              </MenuButton>
+              <MenuButton variant="danger" onClick={confirmDelete} style={{ flex: 1 }}>
+                Delete
+              </MenuButton>
+            </div>
+          </ContentPanel>
         </div>
-        <div style={{ marginTop: tokens.spacing.lg }}>
-          <MenuButton onClick={onCancel} style={{ width: "100%" }}>Cancel</MenuButton>
-        </div>
-      </ContentPanel>
-    </div>
+      )}
+    </>
   );
 }
