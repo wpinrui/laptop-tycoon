@@ -35,7 +35,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-
 const COMPONENT_SLOT_LABELS: Record<ComponentSlot, string> = {
   cpu: "CPU",
   gpu: "GPU",

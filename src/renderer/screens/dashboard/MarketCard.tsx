@@ -1,6 +1,7 @@
 import { BarChart3 } from "lucide-react";
 import { tokens } from "../../shell/tokens";
 import { BentoCard } from "./BentoCard";
+import { ProgressBar } from "./ProgressBar";
 import { cardBodyStyle, hintStyle, sectionDividerStyle, sectionHeadingStyle, smallTextStyle } from "./styles";
 
 export function MarketCard() {
@@ -33,9 +34,7 @@ export function MarketCard() {
         ].map((d) => (
           <div key={d.name} style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm, marginTop: tokens.spacing.xs }}>
             <span style={{ ...smallTextStyle, width: 70 }}>{d.name}</span>
-            <div style={{ flex: 1, height: 4, background: tokens.colors.panelBorder, borderRadius: 2, overflow: "hidden" }}>
-              <div style={{ width: `${d.pct}%`, height: "100%", background: tokens.colors.accent, borderRadius: 2 }} />
-            </div>
+            <ProgressBar value={d.pct} />
             <span style={{ ...smallTextStyle, width: 30, textAlign: "right" }}>{d.pct}%</span>
           </div>
         ))}
