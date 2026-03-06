@@ -28,7 +28,7 @@ import {
   getAvailableComponents,
   getAvailableChassisOptions,
 } from "../constants";
-import { getAllChassisOptions, WIZARD_STEP_LABELS, WizardStep } from "../types";
+import { getAllChassisOptions, WIZARD_STEP_LABELS, COMPONENT_STEP_SLOTS, WizardStep } from "../types";
 import { getScreenSizeDef, SCREEN_SIZES } from "../../../data/screenSizes";
 import { getBatteryEra } from "../../../data/batteryEras";
 import { PORT_TYPES } from "../../../data/portTypes";
@@ -89,12 +89,6 @@ const STEP_ORDER: WizardStep[] = [
   "battery",
   "body",
 ];
-
-const STEP_SLOTS: Partial<Record<WizardStep, ComponentSlot[]>> = {
-  processing: ["cpu", "gpu", "ram", "storage"],
-  display: ["resolution", "displayTech", "displaySurface"],
-  mediaConnectivity: ["webcam", "speakers", "wifi"],
-};
 
 // ---------- Dialog types ----------
 type DialogTarget =
@@ -254,7 +248,7 @@ export function ReviewStep() {
         </div>
       )}
       {STEP_ORDER.map((step) => {
-        const slots = STEP_SLOTS[step];
+        const slots = COMPONENT_STEP_SLOTS[step];
         if (step === "screenSize") {
           return (
             <ReviewSection key={step} icon={STEP_ICONS[step]} title={WIZARD_STEP_LABELS[step]}>
@@ -908,6 +902,11 @@ function SingleChassisEditor({ slot, options }: { slot: ChassisOptionSlot; optio
                 {option.weightG !== 0 && (
                   <span style={{ color: option.weightG < 0 ? "#64b5f6" : "#888" }}>
                     {option.weightG > 0 ? "+" : ""}{option.weightG}g
+                  </span>
+                )}
+                {option.shellDensityMultiplier !== 1.0 && (
+                  <span style={{ color: option.shellDensityMultiplier < 1.0 ? "#64b5f6" : "#888" }}>
+                    {option.shellDensityMultiplier}x density
                   </span>
                 )}
                 {option.volumeCm3 > 0 && <span style={{ color: "#ce93d8" }}>{option.volumeCm3}cm³</span>}

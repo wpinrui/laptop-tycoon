@@ -4,6 +4,7 @@ import {
   Component,
   ChassisOption,
 } from "../../data/types";
+
 import { SCREEN_SIZES } from "../../data/screenSizes";
 import {
   MIN_BATTERY_WH,
@@ -41,6 +42,13 @@ export const WIZARD_STEP_LABELS: Record<WizardStep, string> = {
   battery: "Battery",
   body: "Body",
   review: "Review",
+};
+
+/** Maps wizard steps to which component slots they configure. Shared by DesignWizard and ReviewStep. */
+export const COMPONENT_STEP_SLOTS: Partial<Record<WizardStep, ComponentSlot[]>> = {
+  processing: ["cpu", "gpu", "ram", "storage"],
+  display: ["resolution", "displayTech", "displaySurface"],
+  mediaConnectivity: ["webcam", "speakers", "wifi"],
 };
 
 export type ModelType = "brandNew" | "successor" | "specBump";

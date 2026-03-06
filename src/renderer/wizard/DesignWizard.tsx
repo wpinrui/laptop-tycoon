@@ -1,14 +1,13 @@
 import { useEffect } from "react";
 import { WizardProvider, useWizard } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
-import { WizardStep, WizardState, WIZARD_STEPS, getAllChassisOptions } from "./types";
+import { WizardStep, WizardState, WIZARD_STEPS, COMPONENT_STEP_SLOTS, getAllChassisOptions } from "./types";
 import {
   GAME_YEAR,
   availableVolumeCm3,
   totalConsumedVolumeCm3,
   maxHeightConstraintCm,
 } from "./constants";
-import { ComponentSlot } from "../../data/types";
 import { MetadataStep } from "./steps/MetadataStep";
 import { ScreenSizeStep } from "./steps/ScreenSizeStep";
 import { ProcessingStep } from "./steps/ProcessingStep";
@@ -18,12 +17,6 @@ import { BatteryStep } from "./steps/BatteryStep";
 import { BodyStep } from "./steps/BodyStep";
 import { ReviewStep } from "./steps/ReviewStep";
 import { WizardSidebar } from "./LaptopEstimateSidebar";
-
-const COMPONENT_STEP_SLOTS: Partial<Record<WizardStep, ComponentSlot[]>> = {
-  processing: ["cpu", "gpu", "ram", "storage"],
-  display: ["resolution", "displayTech", "displaySurface"],
-  mediaConnectivity: ["webcam", "speakers", "wifi"],
-};
 
 function isStepComplete(step: WizardStep, state: WizardState): boolean {
   switch (step) {
