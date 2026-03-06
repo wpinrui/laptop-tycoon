@@ -193,15 +193,12 @@ export function WizardSidebar({
       {/* Statistics */}
       <SidebarDivider />
       <SidebarHeading>STATISTICS</SidebarHeading>
-      {statGroups.reduce<{ elements: React.ReactNode[]; renderedCount: number }>((acc, group, groupIdx) => {
-        const visibleStats = group.filter((statKey) => (statTotals[statKey] ?? 0) !== 0);
-        if (visibleStats.length === 0) return acc;
-        acc.elements.push(
+      {statGroups.map((group, groupIdx) => (
           <div key={groupIdx}>
-            {acc.renderedCount > 0 && (
+            {groupIdx > 0 && (
               <div style={{ borderTop: "1px solid #2a2a2a", margin: "6px 0" }} />
             )}
-            {visibleStats.map((statKey) => {
+            {group.map((statKey) => {
               const config = STAT_CONFIG.find((s) => s.stat === statKey);
               if (!config) return null;
               const { Icon, label } = config;
@@ -242,10 +239,7 @@ export function WizardSidebar({
               );
             })}
           </div>
-        );
-        acc.renderedCount++;
-        return acc;
-      }, { elements: [], renderedCount: 0 }).elements}
+      ))}
 
       {/* Laptop Estimate */}
       {estimateSection}
