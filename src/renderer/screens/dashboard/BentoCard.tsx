@@ -29,7 +29,7 @@ export function BentoCard({ title, icon: Icon, screen, children }: BentoCardProp
       } : undefined}
     >
       <h3 style={cardTitleStyle}>
-        <Icon size={20} color="#fff" />
+        <Icon size={20} color={tokens.colors.text} />
         {title}
       </h3>
       {children}
