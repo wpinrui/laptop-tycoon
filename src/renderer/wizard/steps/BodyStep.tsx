@@ -12,6 +12,7 @@ import {
   chassisCost,
   totalConsumedVolumeCm3,
   maxHeightConstraintCm,
+  specSummary,
 } from "../constants";
 import {
   MATERIALS,
@@ -21,7 +22,8 @@ import {
 } from "../../../data/chassisOptions";
 import { ChassisOption, ChassisOptionSlot } from "../../../data/types";
 import { getAllChassisOptions } from "../types";
-import { specSummary } from "../constants";
+
+const VOLUME_WARNING_PERCENT = 85;
 
 interface SlotSectionDef {
   slot: ChassisOptionSlot;
@@ -161,7 +163,7 @@ export function BodyStep() {
               style={{
                 height: "100%",
                 width: `${Math.min(100, volumePercent)}%`,
-                background: volumeOverflow ? "#f44336" : volumePercent > 85 ? "#ff9800" : "#4caf50",
+                background: volumeOverflow ? "#f44336" : volumePercent > VOLUME_WARNING_PERCENT ? "#ff9800" : "#4caf50",
                 borderRadius: "4px",
                 transition: "width 0.2s, background 0.2s",
               }}
