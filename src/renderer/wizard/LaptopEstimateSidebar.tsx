@@ -136,7 +136,7 @@ export function WizardSidebar({
         <SidebarDivider />
         <SidebarHeading>LAPTOP ESTIMATE</SidebarHeading>
         <SidebarRow
-          label="Space"
+          label="Chassis Space Utilisation"
           value={`${Math.round(volumePercent)}%`}
           warning={volumeOverflow ? `${Math.round(totalVolume)} cm³ used but only ${Math.round(totalAvailable)} cm³ available` : undefined}
         />
@@ -146,7 +146,7 @@ export function WizardSidebar({
           value={`${thickness.toFixed(1)} cm`}
           warning={thicknessTooThin ? `Components need at least ${minThickness.toFixed(1)} cm` : undefined}
         />
-        <SidebarRow label="Bezel" value={`${bezel} mm`} />
+        <SidebarRow label="Bezel Width" value={`${bezel} mm`} />
         <SidebarRow label="Power Draw" value={`${totalPower} W`} />
         <SidebarRow
           label="Cooling"
