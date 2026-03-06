@@ -47,10 +47,12 @@ export function ComponentStepLayout({
   title,
   description,
   slots,
+  children,
 }: {
   title: string;
   description: string;
   slots: SlotDef[];
+  children?: React.ReactNode;
 }) {
   const { state, dispatch } = useWizard();
   const screenSizeDef = getScreenSizeDef(state.screenSize);
@@ -85,6 +87,8 @@ export function ComponentStepLayout({
             screenSizeDef={screenSizeDef}
           />
         ))}
+
+        {children}
       </div>
 
       <div

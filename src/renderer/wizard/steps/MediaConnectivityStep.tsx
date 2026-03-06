@@ -32,15 +32,11 @@ export function MediaConnectivityStep() {
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "0", height: "100%" }}>
-      <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
-        <ComponentStepLayout
-          title="Media & Connectivity"
-          description="Select your webcam, speakers, and WiFi. Configure ports below."
-          slots={COMPONENT_SLOTS}
-        />
-      </div>
-
+    <ComponentStepLayout
+      title="Media & Connectivity"
+      description="Select your webcam, speakers, and WiFi. Configure ports below."
+      slots={COMPONENT_SLOTS}
+    >
       <div style={{ borderTop: "1px solid #333", paddingTop: "20px", marginTop: "20px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <div>
@@ -76,7 +72,7 @@ export function MediaConnectivityStep() {
           ))}
         </div>
       </div>
-    </div>
+    </ComponentStepLayout>
   );
 }
 
