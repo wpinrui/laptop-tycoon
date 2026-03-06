@@ -5,7 +5,6 @@ export const cardStyle: CSSProperties = {
   background: tokens.colors.surface,
   borderRadius: tokens.borderRadius.md,
   padding: tokens.spacing.xl,
-  cursor: "pointer",
   transition: "background 0.15s",
   border: `1px solid ${tokens.colors.panelBorder}`,
 };
