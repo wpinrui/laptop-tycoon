@@ -9,22 +9,22 @@ import { formatCash } from "../utils/formatCash";
 
 const headerStyle: CSSProperties = {
   margin: 0,
-  fontSize: tokens.font.sizeTitle,
+  fontSize: tokens.font.sizeHero,
   fontWeight: 700,
 };
 
 const gridStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "1fr 1fr",
+  gridTemplateColumns: "1fr 1fr 1fr",
   gridTemplateRows: "auto",
-  gap: tokens.spacing.md,
-  marginTop: tokens.spacing.lg,
+  gap: tokens.spacing.lg,
+  marginTop: tokens.spacing.xl,
 };
 
 const cardStyle: CSSProperties = {
   background: tokens.colors.surface,
   borderRadius: tokens.borderRadius.md,
-  padding: tokens.spacing.lg,
+  padding: tokens.spacing.xl,
   cursor: "pointer",
   transition: "background 0.15s",
   border: `1px solid ${tokens.colors.panelBorder}`,
@@ -32,14 +32,14 @@ const cardStyle: CSSProperties = {
 
 const cardTitleStyle: CSSProperties = {
   margin: 0,
-  fontSize: tokens.font.sizeLarge,
+  fontSize: tokens.font.sizeTitle,
   fontWeight: 600,
-  marginBottom: tokens.spacing.sm,
+  marginBottom: tokens.spacing.md,
 };
 
 const cardBodyStyle: CSSProperties = {
   color: tokens.colors.textMuted,
-  fontSize: tokens.font.sizeSmall,
+  fontSize: tokens.font.sizeBase,
   margin: 0,
 };
 
@@ -52,14 +52,14 @@ const modelRowStyle: CSSProperties = {
 
 const statusBadgeStyle: CSSProperties = {
   fontSize: tokens.font.sizeSmall,
-  padding: `2px ${tokens.spacing.sm}px`,
+  padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
   borderRadius: tokens.borderRadius.sm,
   background: tokens.colors.panelBorder,
 };
 
 const emptyStateStyle: CSSProperties = {
   color: tokens.colors.textMuted,
-  fontSize: tokens.font.sizeSmall,
+  fontSize: tokens.font.sizeBase,
   fontStyle: "italic",
 };
 
@@ -262,7 +262,7 @@ export function DashboardScreen() {
   const { state } = useGame();
 
   return (
-    <ContentPanel maxWidth={700}>
+    <ContentPanel maxWidth={1200} style={{ width: "80vw", maxHeight: "80vh" }}>
       <h1 style={headerStyle}>{state.companyName} — Year {state.year}</h1>
 
       <div style={gridStyle}>
