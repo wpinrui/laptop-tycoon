@@ -175,6 +175,8 @@ export function WizardSidebar({
         padding: "16px",
         overflowY: "auto",
         minHeight: 0,
+        position: "relative",
+        zIndex: 1000,
       }}
     >
       {/* Running Totals */}

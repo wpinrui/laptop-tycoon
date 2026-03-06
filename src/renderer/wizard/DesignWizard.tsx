@@ -155,6 +155,8 @@ function WizardContent() {
             flex: 1,
             overflowY: "auto",
             minHeight: 0,
+            position: "relative",
+            zIndex: 0,
           }}
         >
           {stepContent}

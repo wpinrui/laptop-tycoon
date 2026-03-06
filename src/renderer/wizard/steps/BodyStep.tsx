@@ -23,6 +23,7 @@ import {
 import { ChassisOption, ChassisOptionSlot } from "../../../data/types";
 import { getAllChassisOptions } from "../types";
 import { Tooltip } from "../Tooltip";
+import { SelectionCard } from "../SelectionCard";
 import { StatContributions } from "../StatBar";
 import { COLOUR_OPTIONS } from "../../../data/colourOptions";
 
@@ -215,42 +216,32 @@ export function BodyStep() {
             {COLOUR_OPTIONS.map((colour) => {
               const isSelected = state.selectedColours.includes(colour.id);
               return (
-                <button
+                <SelectionCard
                   key={colour.id}
+                  isSelected={isSelected}
                   onClick={() => dispatch({ type: "TOGGLE_COLOUR", colourId: colour.id })}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "8px 12px",
-                    background: isSelected ? "#1a3a5c" : "#2a2a2a",
-                    border: isSelected ? "2px solid #90caf9" : "2px solid #444",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    color: "#e0e0e0",
-                    fontFamily: "inherit",
-                    transition: "border-color 0.15s, background 0.15s",
-                  }}
                 >
-                  <div
-                    style={{
-                      width: "20px",
-                      height: "20px",
-                      borderRadius: "50%",
-                      background: colour.hex,
-                      border: "1px solid #555",
-                      flexShrink: 0,
-                    }}
-                  />
-                  <div style={{ textAlign: "left" }}>
-                    <div style={{ fontSize: "0.75rem", fontWeight: "bold", color: isSelected ? "#90caf9" : "#e0e0e0" }}>
-                      {colour.name}
-                    </div>
-                    <div style={{ fontSize: "0.625rem", color: "#888" }}>
-                      +${colour.costPerUnit}/unit
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <div
+                      style={{
+                        width: "20px",
+                        height: "20px",
+                        borderRadius: "50%",
+                        background: colour.hex,
+                        border: "1px solid #555",
+                        flexShrink: 0,
+                      }}
+                    />
+                    <div style={{ textAlign: "left" }}>
+                      <div style={{ fontSize: "0.75rem", fontWeight: "bold", color: isSelected ? "#90caf9" : "#e0e0e0" }}>
+                        {colour.name}
+                      </div>
+                      <div style={{ fontSize: "0.625rem", color: "#888" }}>
+                        +${colour.costPerUnit}/unit
+                      </div>
                     </div>
                   </div>
-                </button>
+                </SelectionCard>
               );
             })}
           </div>
@@ -282,20 +273,7 @@ function ChassisCard({
 
   return (
     <Tooltip content={<ChassisTooltipContent option={option} />}>
-      <button
-        onClick={onSelect}
-        style={{
-          background: isSelected ? "#1a3a5c" : "#2a2a2a",
-          border: isSelected ? "2px solid #90caf9" : "2px solid #444",
-          borderRadius: "8px",
-          padding: "12px",
-          textAlign: "left",
-          cursor: "pointer",
-          color: "#e0e0e0",
-          fontFamily: "inherit",
-          transition: "border-color 0.15s, background 0.15s",
-        }}
-      >
+      <SelectionCard isSelected={isSelected} onClick={onSelect}>
         <div
           style={{
             fontSize: "0.8125rem",
@@ -323,7 +301,7 @@ function ChassisCard({
             <span style={{ color: "#4fc3f7" }}>{option.coolingCapacityW}W cooling</span>
           )}
         </div>
-      </button>
+      </SelectionCard>
     </Tooltip>
   );
 }
