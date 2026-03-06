@@ -1,6 +1,7 @@
 import { CSSProperties, useState } from "react";
 import { useGame } from "../state/GameContext";
 import { useNavigation } from "../navigation/NavigationContext";
+import { useWizard } from "../wizard/WizardContext";
 import { LaptopModel, ModelStatus } from "../state/gameTypes";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
@@ -9,6 +10,7 @@ import { getActiveModels, MAX_MODELS } from "./dashboard/utils";
 import {
   Laptop,
   Plus,
+  Pencil,
   DollarSign,
   Trash2,
   ChevronDown,
@@ -62,12 +64,18 @@ const actionBarStyle: CSSProperties = {
 export function ModelManagementScreen() {
   const { state, dispatch } = useGame();
   const { navigateTo } = useNavigation();
+  const { dispatch: wizardDispatch } = useWizard();
   const [confirmScrapId, setConfirmScrapId] = useState<string | null>(null);
   const [showDiscontinued, setShowDiscontinued] = useState(false);
 
   const activeModels = getActiveModels(state);
   const discontinuedModels = state.models.filter((m) => m.status === "discontinued");
   const emptySlots = MAX_MODELS - activeModels.length;
+
+  function handleEdit(model: LaptopModel) {
+    wizardDispatch({ type: "LOAD_DESIGN", design: model.design });
+    navigateTo("designWizard");
+  }
 
   function handleScrap(modelId: string) {
     dispatch({ type: "UPDATE_MODEL_STATUS", modelId, status: "discontinued" });
@@ -117,6 +125,7 @@ export function ModelManagementScreen() {
             key={model.design.id}
             model={model}
             confirmScrap={confirmScrapId === model.design.id}
+            onEdit={() => handleEdit(model)}
             onSetPricing={() => navigateTo("pricingManufacturing")}
             onScrapClick={() => setConfirmScrapId(model.design.id)}
             onScrapConfirm={() => handleScrap(model.design.id)}
@@ -170,6 +179,7 @@ export function ModelManagementScreen() {
 function ModelCard({
   model,
   confirmScrap,
+  onEdit,
   onSetPricing,
   onScrapClick,
   onScrapConfirm,
@@ -178,6 +188,7 @@ function ModelCard({
 }: {
   model: LaptopModel;
   confirmScrap: boolean;
+  onEdit?: () => void;
   onSetPricing: () => void;
   onScrapClick: () => void;
   onScrapConfirm: () => void;
@@ -224,6 +235,16 @@ function ModelCard({
         <div style={actionBarStyle}>
           {status === "draft" && (
             <>
+              {onEdit && (
+                <MenuButton
+                  onClick={onEdit}
+                  style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
+                    <Pencil size={14} /> Edit
+                  </span>
+                </MenuButton>
+              )}
               <MenuButton
                 variant="accent"
                 onClick={onSetPricing}

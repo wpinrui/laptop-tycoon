@@ -13,6 +13,7 @@ import {
   ChassisOption,
   ChassisOptionSlot,
 } from "../../data/types";
+import { LaptopDesign } from "../state/gameTypes";
 
 type WizardAction =
   | { type: "SET_NAME"; name: string }
@@ -30,7 +31,8 @@ type WizardAction =
   | { type: "GO_TO_STEP"; step: WizardStep }
   | { type: "NEXT_STEP" }
   | { type: "PREV_STEP" }
-  | { type: "RESET" };
+  | { type: "RESET" }
+  | { type: "LOAD_DESIGN"; design: LaptopDesign };
 
 function wizardReducer(state: WizardState, action: WizardAction): WizardState {
   switch (action.type) {
@@ -106,6 +108,25 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
     }
     case "RESET":
       return INITIAL_WIZARD_STATE;
+    case "LOAD_DESIGN": {
+      const d = action.design;
+      return {
+        currentStep: "metadata",
+        editingModelId: d.id,
+        name: d.name,
+        modelType: d.modelType,
+        predecessorId: d.predecessorId,
+        screenSize: d.screenSize,
+        components: d.components,
+        ports: d.ports,
+        batteryCapacityWh: d.batteryCapacityWh,
+        thicknessCm: d.thicknessCm,
+        bezelMm: d.bezelMm,
+        chassis: d.chassis,
+        selectedColours: d.selectedColours,
+        visitedSteps: new Set<WizardStep>(WIZARD_STEPS),
+      };
+    }
     default:
       return state;
   }

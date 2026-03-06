@@ -55,6 +55,8 @@ export type ModelType = "brandNew" | "successor" | "specBump";
 
 export interface WizardState {
   currentStep: WizardStep;
+  /** When editing an existing model, holds its design ID. Null for new designs. */
+  editingModelId: string | null;
   name: string;
   modelType: ModelType;
   predecessorId: string | null;
@@ -83,6 +85,7 @@ export function getAllChassisOptions(chassis: WizardState["chassis"]): (ChassisO
 
 export const INITIAL_WIZARD_STATE: WizardState = {
   currentStep: "metadata",
+  editingModelId: null,
   name: "",
   modelType: "brandNew",
   predecessorId: null,

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { WizardProvider, useWizard } from "./WizardContext";
+import { useWizard } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
 import { WizardStep, WizardState, WIZARD_STEPS, COMPONENT_STEP_SLOTS, getAllChassisOptions } from "./types";
 import {
@@ -73,7 +73,7 @@ function wizardStateToDesign(state: WizardState): LaptopDesign {
     GAME_YEAR,
   );
   return {
-    id: crypto.randomUUID(),
+    id: state.editingModelId ?? crypto.randomUUID(),
     name: state.name,
     modelType: state.modelType,
     predecessorId: state.predecessorId,
@@ -160,7 +160,7 @@ function WizardContent() {
     >
       <h1 style={{ fontSize: "1.5rem", marginBottom: "8px", flexShrink: 0 }}>Laptop Builder</h1>
       <p style={{ color: "#888", marginBottom: "24px", flexShrink: 0 }}>
-        Design your new laptop model for {GAME_YEAR}
+        {state.editingModelId ? `Editing ${state.name}` : `Design your new laptop model for ${GAME_YEAR}`}
       </p>
 
       <StepIndicator
@@ -226,16 +226,20 @@ function WizardContent() {
           onClick={() => {
             if (isLast) {
               const design = wizardStateToDesign(state);
-              gameDispatch({
-                type: "ADD_MODEL",
-                model: {
-                  design,
-                  status: "draft",
-                  retailPrice: null,
-                  manufacturingQuantity: null,
-                  yearDesigned: gameState.year,
-                },
-              });
+              if (state.editingModelId) {
+                gameDispatch({ type: "UPDATE_MODEL_DESIGN", modelId: state.editingModelId, design });
+              } else {
+                gameDispatch({
+                  type: "ADD_MODEL",
+                  model: {
+                    design,
+                    status: "draft",
+                    retailPrice: null,
+                    manufacturingQuantity: null,
+                    yearDesigned: gameState.year,
+                  },
+                });
+              }
               dispatch({ type: "RESET" });
               navigateTo("modelManagement");
             } else {
@@ -255,7 +259,7 @@ function WizardContent() {
             fontWeight: "bold",
           }}
         >
-          {isLast ? "Finalize Design" : "Next"}
+          {isLast ? (state.editingModelId ? "Save Changes" : "Finalize Design") : "Next"}
         </button>
       </div>
     </div>
@@ -263,9 +267,5 @@ function WizardContent() {
 }
 
 export function DesignWizard() {
-  return (
-    <WizardProvider>
-      <WizardContent />
-    </WizardProvider>
-  );
+  return <WizardContent />;
 }

@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
-import { GameState, LaptopModel, ModelStatus, createInitialGameState } from "./gameTypes";
+import { GameState, LaptopDesign, LaptopModel, ModelStatus, createInitialGameState } from "./gameTypes";
 
 type GameAction =
   | { type: "NEW_GAME"; companyName: string; companyLogo: string | null }
@@ -8,7 +8,8 @@ type GameAction =
   | { type: "ADVANCE_YEAR" }
   | { type: "ADD_MODEL"; model: LaptopModel }
   | { type: "UPDATE_MODEL_STATUS"; modelId: string; status: ModelStatus }
-  | { type: "SET_MODEL_PRICING"; modelId: string; retailPrice: number; manufacturingQuantity: number };
+  | { type: "SET_MODEL_PRICING"; modelId: string; retailPrice: number; manufacturingQuantity: number }
+  | { type: "UPDATE_MODEL_DESIGN"; modelId: string; design: LaptopDesign };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
@@ -36,6 +37,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           m.design.id === action.modelId
             ? { ...m, retailPrice: action.retailPrice, manufacturingQuantity: action.manufacturingQuantity }
             : m,
+        ),
+      };
+    case "UPDATE_MODEL_DESIGN":
+      return {
+        ...state,
+        models: state.models.map((m) =>
+          m.design.id === action.modelId ? { ...m, design: action.design } : m,
         ),
       };
     default:
