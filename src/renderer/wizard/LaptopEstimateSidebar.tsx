@@ -194,7 +194,7 @@ export function WizardSidebar({
                     fontWeight: "bold",
                   }}
                 >
-                  <Icon size={13} strokeWidth={1.5} />
+                  <Icon size={16} strokeWidth={1.5} />
                   {label}
                 </span>
                 <span
