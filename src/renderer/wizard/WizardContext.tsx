@@ -5,6 +5,7 @@ import {
   ModelType,
   INITIAL_WIZARD_STATE,
   WIZARD_STEPS,
+  COMPONENT_STEP_SLOTS,
 } from "./types";
 import {
   ScreenSizeInches,
@@ -14,6 +15,8 @@ import {
   ChassisOptionSlot,
 } from "../../data/types";
 import { LaptopDesign } from "../state/gameTypes";
+import { GAME_YEAR, getAvailableComponents, getAvailableChassisOptions, CHASSIS_SLOTS } from "./constants";
+import { COLOUR_OPTIONS } from "../../data/colourOptions";
 
 type WizardAction =
   | { type: "SET_NAME"; name: string }
@@ -32,7 +35,8 @@ type WizardAction =
   | { type: "NEXT_STEP" }
   | { type: "PREV_STEP" }
   | { type: "RESET" }
-  | { type: "LOAD_DESIGN"; design: LaptopDesign };
+  | { type: "LOAD_DESIGN"; design: LaptopDesign }
+  | { type: "DEBUG_AUTOFILL" };
 
 function wizardReducer(state: WizardState, action: WizardAction): WizardState {
   switch (action.type) {
@@ -108,6 +112,29 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
     }
     case "RESET":
       return INITIAL_WIZARD_STATE;
+    case "DEBUG_AUTOFILL": {
+      const allSlots: ComponentSlot[] = Object.values(COMPONENT_STEP_SLOTS).flat() as ComponentSlot[];
+      const components: Partial<Record<ComponentSlot, Component>> = {};
+      for (const slot of allSlots) {
+        const available = getAvailableComponents(slot, GAME_YEAR);
+        if (available.length > 0) components[slot] = available[0];
+      }
+      const chassis: WizardState["chassis"] = { material: null, coolingSolution: null, keyboardFeature: null, trackpadFeature: null };
+      for (const def of CHASSIS_SLOTS) {
+        const available = getAvailableChassisOptions(def.options, GAME_YEAR);
+        if (available.length > 0) chassis[def.slot] = available[0];
+      }
+      return {
+        ...state,
+        name: state.name || "Debug Laptop",
+        modelType: "brandNew",
+        components,
+        chassis,
+        selectedColours: [COLOUR_OPTIONS[0].id],
+        visitedSteps: new Set<WizardStep>(WIZARD_STEPS),
+        currentStep: "review",
+      };
+    }
     case "LOAD_DESIGN": {
       const d = action.design;
       return {

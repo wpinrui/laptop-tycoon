@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useWizard } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
 import { WizardStep, WizardState, WIZARD_STEPS, COMPONENT_STEP_SLOTS, getAllChassisOptions } from "./types";
@@ -89,10 +89,87 @@ function wizardStateToDesign(state: WizardState): LaptopDesign {
   };
 }
 
+function ConfirmCloseDialog({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.6)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 500,
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onCancel();
+      }}
+    >
+      <div
+        style={{
+          background: "#1e1e1e",
+          border: "1px solid #444",
+          borderRadius: "12px",
+          padding: "24px",
+          maxWidth: "400px",
+          width: "90vw",
+        }}
+      >
+        <div style={{ fontSize: "1rem", fontWeight: "bold", color: "#90caf9", marginBottom: "12px" }}>
+          Discard Design?
+        </div>
+        <p style={{ color: "#ccc", fontSize: "0.875rem", margin: "0 0 20px" }}>
+          All unsaved progress on this laptop design will be lost.
+        </p>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+          <button
+            onClick={onCancel}
+            style={{
+              background: "none",
+              border: "1px solid #555",
+              borderRadius: "6px",
+              color: "#aaa",
+              fontSize: "0.8125rem",
+              padding: "6px 16px",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              transition: "border-color 0.15s, color 0.15s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#888"; e.currentTarget.style.color = "#ccc"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#aaa"; }}
+          >
+            Keep Editing
+          </button>
+          <button
+            onClick={onConfirm}
+            style={{
+              background: "#5c1a1a",
+              border: "1px solid #ef5350",
+              borderRadius: "6px",
+              color: "#ef5350",
+              fontSize: "0.8125rem",
+              padding: "6px 16px",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              fontWeight: "bold",
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#702020"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#5c1a1a"; }}
+          >
+            Discard
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function WizardContent() {
   const { state, dispatch } = useWizard();
   const { state: gameState, dispatch: gameDispatch } = useGame();
   const { navigateTo } = useNavigation();
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const currentIdx = WIZARD_STEPS.indexOf(state.currentStep);
   const isFirst = currentIdx === 0;
   const isLast = currentIdx === WIZARD_STEPS.length - 1;
@@ -158,10 +235,56 @@ function WizardContent() {
         overflow: "hidden",
       }}
     >
-      <h1 style={{ fontSize: "1.5rem", marginBottom: "8px", flexShrink: 0 }}>Laptop Builder</h1>
-      <p style={{ color: "#888", marginBottom: "24px", flexShrink: 0 }}>
-        {state.editingModelId ? `Editing ${state.name}` : `Design your new laptop model for ${GAME_YEAR}`}
-      </p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexShrink: 0 }}>
+        <div>
+          <h1 style={{ fontSize: "1.5rem", marginBottom: "8px" }}>Laptop Builder</h1>
+          <p style={{ color: "#888", marginBottom: "24px" }}>
+            {state.editingModelId ? `Editing ${state.name}` : `Design your new laptop model for ${GAME_YEAR}`}
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+        <button
+          onClick={() => dispatch({ type: "DEBUG_AUTOFILL" })}
+          style={{
+            background: "none",
+            border: "1px solid #555",
+            borderRadius: "6px",
+            color: "#ff9800",
+            fontSize: "0.75rem",
+            padding: "6px 12px",
+            cursor: "pointer",
+            fontFamily: "inherit",
+            lineHeight: "1",
+            transition: "border-color 0.15s, color 0.15s",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#ff9800"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#555"; }}
+        >
+          Auto-fill
+        </button>
+        <button
+          onClick={() => setShowCloseConfirm(true)}
+          style={{
+            background: "none",
+            border: "1px solid #555",
+            borderRadius: "6px",
+            color: "#aaa",
+            fontSize: "1.25rem",
+            width: "36px",
+            height: "36px",
+            cursor: "pointer",
+            fontFamily: "inherit",
+            lineHeight: "1",
+            flexShrink: 0,
+            transition: "border-color 0.15s, color 0.15s",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#ef5350"; e.currentTarget.style.color = "#ef5350"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#aaa"; }}
+        >
+          ✕
+        </button>
+        </div>
+      </div>
 
       <StepIndicator
         currentStep={state.currentStep}
@@ -262,6 +385,15 @@ function WizardContent() {
           {isLast ? (state.editingModelId ? "Save Changes" : "Finalize Design") : "Next"}
         </button>
       </div>
+      {showCloseConfirm && (
+        <ConfirmCloseDialog
+          onConfirm={() => {
+            dispatch({ type: "RESET" });
+            navigateTo(state.editingModelId ? "modelManagement" : "dashboard");
+          }}
+          onCancel={() => setShowCloseConfirm(false)}
+        />
+      )}
     </div>
   );
 }

@@ -53,6 +53,7 @@ const statsRowStyle: CSSProperties = {
   gap: tokens.spacing.lg,
   alignItems: "center",
   fontSize: tokens.font.sizeLarge,
+  fontWeight: 700,
   color: tokens.colors.textMuted,
 };
 
@@ -86,8 +87,8 @@ export function DashboardScreen() {
           <h1 style={titleStyle}>{state.companyName}</h1>
         </div>
         <div style={statsRowStyle}>
-          <span>{state.year}</span>
-          <span>{formatCash(state.cash)}</span>
+          <span>📅 {state.yearSimulated ? "Dec" : "Jan"} {state.year}</span>
+          <span>💰 {formatCash(state.cash)}</span>
         </div>
       </div>
 

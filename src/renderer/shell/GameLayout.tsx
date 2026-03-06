@@ -1,10 +1,8 @@
 import { CSSProperties, ReactNode } from "react";
-import { HUD } from "./HUD";
 import { tokens } from "./tokens";
 
 interface GameLayoutProps {
   children: ReactNode;
-  showHUD?: boolean;
 }
 
 const layoutStyle: CSSProperties = {
@@ -18,10 +16,9 @@ const layoutStyle: CSSProperties = {
   position: "relative",
 };
 
-export function GameLayout({ children, showHUD = true }: GameLayoutProps) {
+export function GameLayout({ children }: GameLayoutProps) {
   return (
     <div style={layoutStyle}>
-      {showHUD && <HUD />}
       {children}
     </div>
   );

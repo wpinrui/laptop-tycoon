@@ -20,7 +20,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case "SET_CASH":
       return { ...state, cash: action.cash };
     case "ADVANCE_YEAR":
-      return { ...state, year: state.year + 1 };
+      return { ...state, year: state.year + 1, yearSimulated: false };
     case "ADD_MODEL":
       return { ...state, models: [...state.models, action.model] };
     case "UPDATE_MODEL_STATUS":

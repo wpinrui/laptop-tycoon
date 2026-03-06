@@ -60,7 +60,7 @@ function ScreenContent() {
 
 export function ScreenRouter() {
   return (
-    <GameLayout showHUD={false}>
+    <GameLayout>
       <ScreenContent />
     </GameLayout>
   );
