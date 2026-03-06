@@ -116,8 +116,9 @@ function SlotSection({
       </div>
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "flex-start",
           gap: "8px",
         }}
       >
@@ -158,6 +159,8 @@ function ComponentCard({
       <button
         onClick={onSelect}
         style={{
+          flex: "1 1 calc(33.333% - 6px)",
+          maxWidth: "calc(33.333% - 6px)",
           background: isSelected ? "#1a3a5c" : "#2a2a2a",
           border: isSelected ? "2px solid #90caf9" : "2px solid #444",
           borderRadius: "8px",
