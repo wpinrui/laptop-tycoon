@@ -44,7 +44,7 @@ const STAT_CONFIG: StatConfigEntry[] = [
 
 export { STAT_CONFIG };
 
-function computeStatTotals(state: ReturnType<typeof useWizard>["state"]): StatVector {
+export function computeStatTotals(state: ReturnType<typeof useWizard>["state"]): StatVector {
   const totals: StatVector = {};
   const screenSizeDef = getScreenSizeDef(state.screenSize);
   const displayMult = screenSizeDef.displayMultiplier;
@@ -109,7 +109,7 @@ export function StatBar() {
                 gap: "5px",
                 padding: "6px 10px",
                 borderRadius: "4px",
-                fontSize: "14px",
+                fontSize: "0.875rem",
                 color: value > 0 ? "#e0e0e0" : "#555",
                 cursor: "default",
               }}

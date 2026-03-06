@@ -43,17 +43,17 @@ export function BatteryStep() {
             marginBottom: "12px",
           }}
         >
-          <span style={{ color: "#888", fontSize: "14px" }}>{MIN_BATTERY_WH} Wh</span>
+          <span style={{ color: "#888", fontSize: "0.875rem" }}>{MIN_BATTERY_WH} Wh</span>
           <span
             style={{
-              fontSize: "48px",
+              fontSize: "3rem",
               fontWeight: "bold",
               color: "#90caf9",
             }}
           >
             {capacity} Wh
           </span>
-          <span style={{ color: "#888", fontSize: "14px" }}>{MAX_BATTERY_WH} Wh</span>
+          <span style={{ color: "#888", fontSize: "0.875rem" }}>{MAX_BATTERY_WH} Wh</span>
         </div>
 
         <input
@@ -65,7 +65,7 @@ export function BatteryStep() {
           onChange={(e) => handleChange(Number(e.target.value))}
           style={{ width: "100%", accentColor: "#90caf9" }}
         />
-        <div style={{ fontSize: "10px", color: "#666", marginTop: "4px" }}>
+        <div style={{ fontSize: "0.625rem", color: "#666", marginTop: "4px" }}>
           Affects: battery life, weight, cost, internal space
         </div>
       </div>
@@ -90,7 +90,7 @@ export function BatteryStep() {
       </div>
 
       {totalPower > 0 && (
-        <div style={{ fontSize: "12px", color: "#888", textAlign: "center" }}>
+        <div style={{ fontSize: "0.75rem", color: "#888", textAlign: "center" }}>
           {capacity} Wh ÷ {totalPower} W total power draw = ~{estimatedHours.toFixed(1)} hours
         </div>
       )}

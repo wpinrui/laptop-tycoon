@@ -89,21 +89,21 @@ export function BodyStep() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "24px" }}>
           {/* Thickness slider */}
           <div>
-            <div style={{ fontSize: "14px", fontWeight: "bold", color: "#ccc", marginBottom: "8px" }}>
+            <div style={{ fontSize: "0.875rem", fontWeight: "bold", color: "#ccc", marginBottom: "8px" }}>
               Chassis Thickness
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "4px" }}>
-              <span style={{ color: "#888", fontSize: "12px" }}>{THICKNESS_MIN_CM.toFixed(1)} cm</span>
+              <span style={{ color: "#888", fontSize: "0.75rem" }}>{THICKNESS_MIN_CM.toFixed(1)} cm</span>
               <span
                 style={{
-                  fontSize: "28px",
+                  fontSize: "1.75rem",
                   fontWeight: "bold",
                   color: thicknessTooThin ? "#ff9800" : "#90caf9",
                 }}
               >
                 {thickness.toFixed(1)} cm
               </span>
-              <span style={{ color: "#888", fontSize: "12px" }}>{THICKNESS_MAX_CM.toFixed(1)} cm</span>
+              <span style={{ color: "#888", fontSize: "0.75rem" }}>{THICKNESS_MAX_CM.toFixed(1)} cm</span>
             </div>
             <input
               type="range"
@@ -116,26 +116,26 @@ export function BodyStep() {
               }
               style={{ width: "100%", accentColor: thicknessTooThin ? "#ff9800" : "#90caf9" }}
             />
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#666", marginTop: "2px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.6875rem", color: "#666", marginTop: "2px" }}>
               <span>Thinner</span>
               <span>Thicker</span>
             </div>
-            <div style={{ fontSize: "10px", color: "#666", marginTop: "4px" }}>
+            <div style={{ fontSize: "0.625rem", color: "#666", marginTop: "4px" }}>
               Affects: internal space, cooling efficiency, weight
             </div>
           </div>
 
           {/* Bezel slider */}
           <div>
-            <div style={{ fontSize: "14px", fontWeight: "bold", color: "#ccc", marginBottom: "8px" }}>
+            <div style={{ fontSize: "0.875rem", fontWeight: "bold", color: "#ccc", marginBottom: "8px" }}>
               Bezel Width (uniform)
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "4px" }}>
-              <span style={{ color: "#888", fontSize: "12px" }}>{BEZEL_MIN_MM} mm</span>
-              <span style={{ fontSize: "28px", fontWeight: "bold", color: "#90caf9" }}>
+              <span style={{ color: "#888", fontSize: "0.75rem" }}>{BEZEL_MIN_MM} mm</span>
+              <span style={{ fontSize: "1.75rem", fontWeight: "bold", color: "#90caf9" }}>
                 {bezel} mm
               </span>
-              <span style={{ color: "#888", fontSize: "12px" }}>{BEZEL_MAX_MM} mm</span>
+              <span style={{ color: "#888", fontSize: "0.75rem" }}>{BEZEL_MAX_MM} mm</span>
             </div>
             <input
               type="range"
@@ -146,11 +146,11 @@ export function BodyStep() {
               onChange={(e) => dispatch({ type: "SET_BEZEL", bezelMm: Number(e.target.value) })}
               style={{ width: "100%", accentColor: "#90caf9" }}
             />
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#666", marginTop: "2px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.6875rem", color: "#666", marginTop: "2px" }}>
               <span>Sleek</span>
               <span>More internal space</span>
             </div>
-            <div style={{ fontSize: "10px", color: "#666", marginTop: "4px" }}>
+            <div style={{ fontSize: "0.625rem", color: "#666", marginTop: "4px" }}>
               Affects: internal space, overall footprint, cooling efficiency
             </div>
           </div>
@@ -159,10 +159,10 @@ export function BodyStep() {
         {/* Volume bar */}
         <div style={{ marginBottom: "24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-            <span style={{ fontSize: "12px", fontWeight: "bold", color: "#ccc" }}>
+            <span style={{ fontSize: "0.75rem", fontWeight: "bold", color: "#ccc" }}>
               Internal Space Usage
             </span>
-            <span style={{ fontSize: "12px", color: volumeOverflow ? "#f44336" : "#888" }}>
+            <span style={{ fontSize: "0.75rem", color: volumeOverflow ? "#f44336" : "#888" }}>
               {Math.round(totalVolume)} / {Math.round(totalAvailable)} cm³
             </span>
           </div>
@@ -185,7 +185,7 @@ export function BodyStep() {
           const selected = state.chassis[slot];
           return (
             <div key={slot} style={{ marginBottom: "24px" }}>
-              <div style={{ fontSize: "14px", fontWeight: "bold", color: "#ccc", marginBottom: "8px" }}>
+              <div style={{ fontSize: "0.875rem", fontWeight: "bold", color: "#ccc", marginBottom: "8px" }}>
                 {label}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
@@ -219,7 +219,7 @@ function ChassisTooltipContent({ option }: { option: ChassisOption }) {
             if (!config) return null;
             const { Icon } = config;
             return (
-              <span key={stat} style={{ color: "#90caf9", fontSize: "11px", display: "inline-flex", alignItems: "center", gap: "2px" }}>
+              <span key={stat} style={{ color: "#90caf9", fontSize: "0.6875rem", display: "inline-flex", alignItems: "center", gap: "2px" }}>
                 <Icon size={11} strokeWidth={1.5} /> +{value as number} {config.label}
               </span>
             );
@@ -259,7 +259,7 @@ function ChassisCard({
       >
         <div
           style={{
-            fontSize: "13px",
+            fontSize: "0.8125rem",
             fontWeight: "bold",
             marginBottom: "6px",
             color: isSelected ? "#90caf9" : "#e0e0e0",
@@ -267,10 +267,10 @@ function ChassisCard({
         >
           {option.name}
         </div>
-        <div style={{ fontSize: "11px", color: "#888", marginBottom: "8px", lineHeight: "1.4" }}>
+        <div style={{ fontSize: "0.6875rem", color: "#888", marginBottom: "8px", lineHeight: "1.4" }}>
           {specSummary(option.specs)}
         </div>
-        <div style={{ display: "flex", gap: "12px", fontSize: "11px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "12px", fontSize: "0.6875rem", flexWrap: "wrap" }}>
           <span style={{ color: "#4caf50" }}>${cost}</span>
           {option.weightG !== 0 && (
             <span style={{ color: option.weightG < 0 ? "#64b5f6" : "#888" }}>

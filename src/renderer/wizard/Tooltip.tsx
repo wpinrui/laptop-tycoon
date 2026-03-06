@@ -59,7 +59,7 @@ export function Tooltip({
               padding: "12px 14px",
               maxWidth: "320px",
               color: "#e0e0e0",
-              fontSize: "12px",
+              fontSize: "0.75rem",
               lineHeight: "1.5",
               boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5)",
               pointerEvents: "none",

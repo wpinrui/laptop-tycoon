@@ -9,8 +9,8 @@ export function StatCard({ label, value, warning }: { label: string; value: stri
         textAlign: "center",
       }}
     >
-      <div style={{ color: "#888", fontSize: "12px", marginBottom: "8px" }}>{label}</div>
-      <div style={{ color: warning ? "#ff9800" : "#e0e0e0", fontSize: "20px", fontWeight: "bold" }}>{value}</div>
+      <div style={{ color: "#888", fontSize: "0.75rem", marginBottom: "8px" }}>{label}</div>
+      <div style={{ color: warning ? "#ff9800" : "#e0e0e0", fontSize: "1.25rem", fontWeight: "bold" }}>{value}</div>
     </div>
   );
 }

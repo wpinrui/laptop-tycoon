@@ -17,7 +17,6 @@ import { BatteryStep } from "./steps/BatteryStep";
 import { BodyStep } from "./steps/BodyStep";
 import { ReviewStep } from "./steps/ReviewStep";
 import { WizardSidebar } from "./LaptopEstimateSidebar";
-import { StatBar } from "./StatBar";
 
 const COMPONENT_STEP_SLOTS: Partial<Record<WizardStep, ComponentSlot[]>> = {
   processing: ["cpu", "gpu", "ram", "storage"],
@@ -71,7 +70,6 @@ function WizardContent() {
 
   const canAdvance = isStepComplete(state.currentStep, state);
   const allStepsComplete = WIZARD_STEPS.every((s) => isStepComplete(s, state));
-  const showSidebar = state.currentStep !== "metadata";
 
   function canNavigateTo(step: WizardStep) {
     const targetIdx = WIZARD_STEPS.indexOf(step);
@@ -107,8 +105,6 @@ function WizardContent() {
   return (
     <div
       style={{
-        maxWidth: "1200px",
-        margin: "0 auto",
         padding: "24px",
         fontFamily: "system-ui, sans-serif",
         color: "#e0e0e0",
@@ -118,7 +114,7 @@ function WizardContent() {
         overflow: "hidden",
       }}
     >
-      <h1 style={{ fontSize: "24px", marginBottom: "8px", flexShrink: 0 }}>Laptop Builder</h1>
+      <h1 style={{ fontSize: "1.5rem", marginBottom: "8px", flexShrink: 0 }}>Laptop Builder</h1>
       <p style={{ color: "#888", marginBottom: "24px", flexShrink: 0 }}>
         Design your new laptop model for {GAME_YEAR}
       </p>
@@ -150,15 +146,11 @@ function WizardContent() {
         >
           {stepContent}
         </div>
-        {showSidebar && (
-          <WizardSidebar
-            showChassisTotals={state.currentStep === "body"}
-            showEstimate={allStepsComplete}
-          />
-        )}
+        <WizardSidebar
+          showChassisTotals={state.currentStep === "body"}
+          showEstimate={allStepsComplete}
+        />
       </div>
-
-      {showSidebar && <StatBar />}
 
       <div
         style={{
@@ -179,7 +171,7 @@ function WizardContent() {
             color: isFirst ? "#666" : "#e0e0e0",
             cursor: isFirst ? "default" : "pointer",
             fontFamily: "inherit",
-            fontSize: "14px",
+            fontSize: "0.875rem",
           }}
         >
           Back
@@ -201,7 +193,7 @@ function WizardContent() {
             color: !canAdvance ? "#666" : "#fff",
             cursor: !canAdvance ? "default" : "pointer",
             fontFamily: "inherit",
-            fontSize: "14px",
+            fontSize: "0.875rem",
             fontWeight: "bold",
           }}
         >

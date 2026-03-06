@@ -67,14 +67,14 @@ export function MediaConnectivityStep() {
       <div style={{ borderTop: "1px solid #333", paddingTop: "20px", marginTop: "20px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <div>
-            <div style={{ fontSize: "14px", fontWeight: "bold", color: "#ccc", marginBottom: "4px" }}>
+            <div style={{ fontSize: "0.875rem", fontWeight: "bold", color: "#ccc", marginBottom: "4px" }}>
               Ports / Connectivity
             </div>
-            <p style={{ color: "#888", fontSize: "12px", marginBottom: "16px" }}>
+            <p style={{ color: "#888", fontSize: "0.75rem", marginBottom: "16px" }}>
               Each port takes up internal space and adds weight. Bulky legacy ports force a thicker chassis.
             </p>
           </div>
-          <div style={{ fontSize: "12px", color: "#888", textAlign: "right", flexShrink: 0 }}>
+          <div style={{ fontSize: "0.75rem", color: "#888", textAlign: "right", flexShrink: 0 }}>
             <div>Port cost: <span style={{ color: "#4caf50" }}>${totalPortCost}</span></div>
             <div>Port weight: <span style={{ color: "#e0e0e0" }}>{totalPortWeight}g</span></div>
           </div>
@@ -93,7 +93,7 @@ export function MediaConnectivityStep() {
                   background: "none",
                   border: "none",
                   color: "#aaa",
-                  fontSize: "12px",
+                  fontSize: "0.75rem",
                   fontWeight: "bold",
                   cursor: "pointer",
                   padding: "4px 0",
@@ -103,7 +103,7 @@ export function MediaConnectivityStep() {
                 }}
               >
                 <span style={{
-                  fontSize: "10px",
+                  fontSize: "0.625rem",
                   display: "inline-block",
                   transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)",
                   transition: "transform 0.15s",
@@ -167,13 +167,13 @@ function PortSelector({
           borderRadius: "8px",
           padding: "10px 12px",
           color: "#e0e0e0",
-          fontSize: "12px",
+          fontSize: "0.75rem",
         }}
       >
         <div
           style={{
             fontWeight: "bold",
-            fontSize: "13px",
+            fontSize: "0.8125rem",
             marginBottom: "4px",
             color: active ? "#90caf9" : "#e0e0e0",
           }}
@@ -181,7 +181,7 @@ function PortSelector({
           {port.name}
         </div>
 
-        <div style={{ color: "#888", fontSize: "11px", marginBottom: "8px" }}>
+        <div style={{ color: "#888", fontSize: "0.6875rem", marginBottom: "8px" }}>
           ${port.costPerPort}/ea · {port.weightPerPortG}g · {port.volumePerPortCm3}cm³
           {port.minThicknessCm > 0 && ` · min ${port.minThicknessCm}cm`}
         </div>
@@ -198,13 +198,13 @@ function PortSelector({
               color: count <= 0 ? "#555" : "#e0e0e0",
               cursor: count <= 0 ? "default" : "pointer",
               fontFamily: "inherit",
-              fontSize: "16px",
+              fontSize: "1rem",
               lineHeight: "1",
             }}
           >
             &#8722;
           </button>
-          <span style={{ fontWeight: "bold", fontSize: "16px", minWidth: "16px", textAlign: "center" }}>
+          <span style={{ fontWeight: "bold", fontSize: "1rem", minWidth: "16px", textAlign: "center" }}>
             {count}
           </span>
           <button
@@ -219,13 +219,13 @@ function PortSelector({
               color: count >= port.maxCount ? "#555" : "#e0e0e0",
               cursor: count >= port.maxCount ? "default" : "pointer",
               fontFamily: "inherit",
-              fontSize: "16px",
+              fontSize: "1rem",
               lineHeight: "1",
             }}
           >
             +
           </button>
-          <span style={{ color: "#666", fontSize: "11px" }}>max {port.maxCount}</span>
+          <span style={{ color: "#666", fontSize: "0.6875rem" }}>max {port.maxCount}</span>
         </div>
       </div>
     </Tooltip>

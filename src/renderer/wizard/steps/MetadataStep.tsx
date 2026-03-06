@@ -18,12 +18,12 @@ export function MetadataStep() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       <div>
-        <h2>Metadata</h2>
+        <h2>Laptop Info</h2>
         <p style={{ color: "#aaa", marginTop: "4px" }}>Name your laptop and choose the model type.</p>
       </div>
 
       <div>
-        <label style={{ display: "block", color: "#aaa", marginBottom: "8px", fontSize: "14px" }}>
+        <label style={{ display: "block", color: "#aaa", marginBottom: "8px", fontSize: "0.875rem" }}>
           Laptop Name
         </label>
         <input
@@ -39,7 +39,7 @@ export function MetadataStep() {
             border: "1px solid #444",
             borderRadius: "6px",
             color: "#e0e0e0",
-            fontSize: "14px",
+            fontSize: "0.875rem",
             fontFamily: "inherit",
             outline: "none",
           }}
@@ -47,7 +47,7 @@ export function MetadataStep() {
       </div>
 
       <div>
-        <label style={{ display: "block", color: "#aaa", marginBottom: "8px", fontSize: "14px" }}>
+        <label style={{ display: "block", color: "#aaa", marginBottom: "8px", fontSize: "0.875rem" }}>
           Model Type
         </label>
         <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
@@ -72,8 +72,8 @@ export function MetadataStep() {
                   fontFamily: "inherit",
                 }}
               >
-                <div style={{ fontWeight: "bold", fontSize: "14px", marginBottom: "4px" }}>{opt.label}</div>
-                <div style={{ fontSize: "12px", color: isSelected ? "#90caf9" : "#888" }}>{opt.description}</div>
+                <div style={{ fontWeight: "bold", fontSize: "0.875rem", marginBottom: "4px" }}>{opt.label}</div>
+                <div style={{ fontSize: "0.75rem", color: isSelected ? "#90caf9" : "#888" }}>{opt.description}</div>
               </button>
             );
           })}
@@ -82,11 +82,11 @@ export function MetadataStep() {
 
       {showPredecessor && (
         <div>
-          <label style={{ display: "block", color: "#aaa", marginBottom: "8px", fontSize: "14px" }}>
+          <label style={{ display: "block", color: "#aaa", marginBottom: "8px", fontSize: "0.875rem" }}>
             Predecessor Model
           </label>
           {PREDECESSOR_MODELS.length === 0 ? (
-            <p style={{ color: "#666", fontStyle: "italic", fontSize: "14px" }}>
+            <p style={{ color: "#666", fontStyle: "italic", fontSize: "0.875rem" }}>
               No previous models available. Start with a Brand New model first.
             </p>
           ) : (
@@ -103,7 +103,7 @@ export function MetadataStep() {
                 border: "1px solid #444",
                 borderRadius: "6px",
                 color: "#e0e0e0",
-                fontSize: "14px",
+                fontSize: "0.875rem",
                 fontFamily: "inherit",
                 outline: "none",
               }}

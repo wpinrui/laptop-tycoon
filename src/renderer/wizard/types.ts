@@ -35,7 +35,7 @@ export const WIZARD_STEPS: WizardStep[] = [
 ];
 
 export const WIZARD_STEP_LABELS: Record<WizardStep, string> = {
-  metadata: "Metadata",
+  metadata: "Laptop Info",
   screenSize: "Screen Size",
   processing: "Processing",
   display: "Display",

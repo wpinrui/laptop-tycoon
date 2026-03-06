@@ -32,7 +32,7 @@ function StatContributions({ stats }: { stats: Record<string, number> }) {
         if (!config) return null;
         const { Icon } = config;
         return (
-          <span key={stat} style={{ color: "#90caf9", fontSize: "11px", display: "inline-flex", alignItems: "center", gap: "2px" }}>
+          <span key={stat} style={{ color: "#90caf9", fontSize: "0.6875rem", display: "inline-flex", alignItems: "center", gap: "2px" }}>
             <Icon size={11} strokeWidth={1.5} /> +{value} {config.label}
           </span>
         );
@@ -106,10 +106,10 @@ function SlotSection({
 
   return (
     <div style={{ marginBottom: "24px" }}>
-      <div style={{ fontSize: "14px", fontWeight: "bold", color: "#ccc", marginBottom: "8px" }}>
+      <div style={{ fontSize: "0.875rem", fontWeight: "bold", color: "#ccc", marginBottom: "8px" }}>
         {label}
         {isDisplaySlot(slot) && multiplier !== 1.0 && (
-          <span style={{ color: "#888", fontWeight: "normal", fontSize: "12px", marginLeft: "8px" }}>
+          <span style={{ color: "#888", fontWeight: "normal", fontSize: "0.75rem", marginLeft: "8px" }}>
             ({screenSizeDef.size}" size: {multiplier}x)
           </span>
         )}
@@ -171,7 +171,7 @@ function ComponentCard({
       >
         <div
           style={{
-            fontSize: "13px",
+            fontSize: "0.8125rem",
             fontWeight: "bold",
             marginBottom: "6px",
             color: isSelected ? "#90caf9" : "#e0e0e0",
@@ -179,10 +179,10 @@ function ComponentCard({
         >
           {component.name}
         </div>
-        <div style={{ fontSize: "11px", color: "#888", marginBottom: "8px", lineHeight: "1.4" }}>
+        <div style={{ fontSize: "0.6875rem", color: "#888", marginBottom: "8px", lineHeight: "1.4" }}>
           {specSummary(component.specs)}
         </div>
-        <div style={{ display: "flex", gap: "12px", fontSize: "11px" }}>
+        <div style={{ display: "flex", gap: "12px", fontSize: "0.6875rem" }}>
           <span style={{ color: "#4caf50" }}>${cost}</span>
           {power > 0 && <span style={{ color: "#ff9800" }}>{power}W</span>}
           {weight > 0 && <span style={{ color: "#888" }}>{weight}g</span>}
