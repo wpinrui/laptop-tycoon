@@ -195,7 +195,9 @@ export function BodyStep() {
   const estimatedTotalWeight =
     screenSizeDef.baseWeightG + componentWeight + batteryWeight + totalChassisWeight + portWeight;
   const estimatedHours = totalPower > 0 ? state.batteryCapacityWh / totalPower : 0;
-  const batteryWarning = totalPower > 0 && estimatedHours < 3;
+  // Era-appropriate battery warning: early 2000s ~1.5h was bad, modern ~4h is bad
+  const batteryWarningThresholdH = GAME_YEAR <= 2002 ? 1.5 : GAME_YEAR <= 2005 ? 2 : GAME_YEAR <= 2009 ? 2.5 : GAME_YEAR <= 2014 ? 3 : 4;
+  const batteryWarning = totalPower > 0 && estimatedHours < batteryWarningThresholdH;
 
   return (
     <div style={{ display: "flex", gap: "24px", height: "100%" }}>
@@ -293,34 +295,6 @@ export function BodyStep() {
           </div>
         </div>
 
-        {/* Warnings */}
-        {(thicknessTooThin || thermalWarning || batteryWarning) && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "24px" }}>
-            {thicknessTooThin && (
-              <div style={{ background: "#4a1c1c", border: "1px solid #f44336", borderRadius: "8px", padding: "12px 16px", fontSize: "13px", color: "#ef9a9a" }}>
-                <strong>Chassis too thin:</strong> Your components, battery, and ports need at
-                least {minThickness.toFixed(1)} cm.
-                {minFromHeight > minFromVolume
-                  ? " A component or port has a height constraint that requires more thickness."
-                  : " Increase thickness, widen bezels, or reduce battery/components to proceed."}
-              </div>
-            )}
-            {thermalWarning && (
-              <div style={{ background: "#3e2723", border: "1px solid #ff9800", borderRadius: "8px", padding: "12px 16px", fontSize: "13px", color: "#ffcc80" }}>
-                <strong>Thermal warning:</strong> Your components draw {totalPower}W but effective
-                cooling capacity is only {effectiveCooling}W. Consider a better cooling solution or
-                thicker chassis.
-              </div>
-            )}
-            {batteryWarning && (
-              <div style={{ background: "#33291a", border: "1px solid #ffa726", borderRadius: "8px", padding: "12px 16px", fontSize: "13px", color: "#ffe0b2" }}>
-                <strong>Battery warning:</strong> Estimated battery life is only ~
-                {estimatedHours.toFixed(1)} hours ({state.batteryCapacityWh}Wh / {totalPower}W).
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Chassis option slots */}
         {CHASSIS_SLOTS.map(({ slot, label, options }) => {
           const available = getAvailableOptions(options, GAME_YEAR);
@@ -368,13 +342,30 @@ export function BodyStep() {
           <div style={{ color: "#888", fontSize: "12px", marginBottom: "12px", fontWeight: "bold" }}>
             LAPTOP ESTIMATE
           </div>
+          <TotalRow
+            label="Space"
+            value={`${Math.round(volumePercent)}%`}
+            warning={volumeOverflow ? `${Math.round(totalVolume)} cm³ used but only ${Math.round(totalAvailable)} cm³ available` : undefined}
+          />
           <TotalRow label="Total Weight" value={formatWeight(estimatedTotalWeight)} />
-          <TotalRow label="Thickness" value={`${thickness.toFixed(1)} cm`} />
+          <TotalRow
+            label="Thickness"
+            value={`${thickness.toFixed(1)} cm`}
+            warning={thicknessTooThin ? `Components need at least ${minThickness.toFixed(1)} cm` : undefined}
+          />
           <TotalRow label="Bezel" value={`${bezel} mm`} />
           <TotalRow label="Power Draw" value={`${totalPower}W`} />
-          <TotalRow label="Cooling" value={`${effectiveCooling}W`} />
+          <TotalRow
+            label="Cooling"
+            value={`${effectiveCooling}W`}
+            warning={thermalWarning ? `Components draw ${totalPower}W but cooling only provides ${effectiveCooling}W` : undefined}
+          />
           {totalPower > 0 && (
-            <TotalRow label="Battery Life" value={`~${estimatedHours.toFixed(1)}h`} />
+            <TotalRow
+              label="Battery Life"
+              value={`~${estimatedHours.toFixed(1)}h`}
+              warning={batteryWarning ? `Very low for ${GAME_YEAR} (${state.batteryCapacityWh}Wh ÷ ${totalPower}W)` : undefined}
+            />
           )}
         </div>
       </div>
@@ -382,11 +373,16 @@ export function BodyStep() {
   );
 }
 
-function TotalRow({ label, value }: { label: string; value: string }) {
+function TotalRow({ label, value, warning }: { label: string; value: string; warning?: string }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
       <span style={{ color: "#888", fontSize: "13px" }}>{label}</span>
-      <span style={{ color: "#e0e0e0", fontSize: "13px", fontWeight: "bold" }}>{value}</span>
+      <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+        <span style={{ color: warning ? "#ff9800" : "#e0e0e0", fontSize: "13px", fontWeight: "bold" }}>{value}</span>
+        {warning && (
+          <span title={warning} style={{ color: "#ff9800", fontSize: "14px", cursor: "help" }}>⚠</span>
+        )}
+      </span>
     </div>
   );
 }
