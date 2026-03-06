@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { WizardProvider, useWizard } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
 import { WizardStep, WizardState, WIZARD_STEPS, getAllChassisOptions } from "./types";
@@ -69,6 +70,16 @@ function WizardContent() {
   const isLast = currentIdx === WIZARD_STEPS.length - 1;
 
   const canAdvance = isStepComplete(state.currentStep, state);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Enter" && canAdvance && !isLast) {
+        dispatch({ type: "NEXT_STEP" });
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [canAdvance, isLast, dispatch]);
   const allStepsComplete = WIZARD_STEPS.every((s) => isStepComplete(s, state));
 
   function canNavigateTo(step: WizardStep) {
