@@ -1,7 +1,7 @@
 export const GAME_YEAR = 2000; // TODO: inject from game state
 
 export const MIN_BATTERY_WH = 20;
-export const MAX_BATTERY_WH = 200;
+export const MAX_BATTERY_WH = 100;
 export const BATTERY_STEP_WH = 5;
 
 export function formatWeight(grams: number): string {
