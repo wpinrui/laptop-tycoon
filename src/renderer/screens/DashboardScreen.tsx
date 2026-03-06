@@ -149,14 +149,34 @@ function ModelsCard() {
 function FinancialsCard() {
   return (
     <BentoCard title="Financials" screen="financialHistory">
-      <p style={cardBodyStyle}>Revenue: —</p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>COGS: —</p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>Gross Profit: —</p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>Marketing: —</p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>Net Profit: —</p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.md, fontStyle: "italic" }}>
-        P&L data available after first year
-      </p>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <tbody>
+          {[
+            ["Revenue", "—"],
+            ["COGS", "—"],
+            ["Gross Profit", "—"],
+            ["Marketing", "—"],
+            ["R&D Overhead", "—"],
+            ["Net Profit", "—"],
+          ].map(([label, value]) => (
+            <tr key={label}>
+              <td style={{ ...cardBodyStyle, padding: `${tokens.spacing.xs}px 0` }}>{label}</td>
+              <td style={{ ...cardBodyStyle, padding: `${tokens.spacing.xs}px 0`, textAlign: "right" }}>{value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div style={{ borderTop: `1px solid ${tokens.colors.panelBorder}`, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.md }}>
+        <p style={{ ...cardBodyStyle, fontWeight: 600 }}>Cash Flow Trend</p>
+        <div style={{ display: "flex", gap: tokens.spacing.xs, marginTop: tokens.spacing.sm, height: 48, alignItems: "flex-end" }}>
+          {[0.3, 0.5, 0.4, 0.7, 0.6, 0.8, 0.65, 0.9].map((h, i) => (
+            <div key={i} style={{ flex: 1, height: `${h * 100}%`, background: tokens.colors.accent, borderRadius: 2, opacity: 0.5 }} />
+          ))}
+        </div>
+        <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.sm, fontStyle: "italic" }}>
+          Quarterly data available after Year 1
+        </p>
+      </div>
     </BentoCard>
   );
 }
@@ -164,22 +184,40 @@ function FinancialsCard() {
 function MarketCard() {
   return (
     <BentoCard title="Market" screen="marketOverview">
-      <p style={cardBodyStyle}>Total Market Size: ~12M units</p>
+      <p style={cardBodyStyle}>Total Market Size: ~12M units/year</p>
       <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.md, fontWeight: 600 }}>
         Top Competitors
       </p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
-        BudgetTech — 3 models, avg $599
-      </p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
-        LuxBook — 2 models, avg $1,899
-      </p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
-        OmniLap — 4 models, avg $999
-      </p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.md, fontStyle: "italic" }}>
-        Demographic breakdown available in detail view
-      </p>
+      {[
+        { name: "BudgetTech", models: 3, avg: "$599", strategy: "High volume, low margin" },
+        { name: "LuxBook", models: 2, avg: "$1,899", strategy: "Premium materials, brand cachet" },
+        { name: "OmniLap", models: 4, avg: "$999", strategy: "Broad range, generalist" },
+      ].map((c) => (
+        <div key={c.name} style={{ marginTop: tokens.spacing.sm, paddingLeft: tokens.spacing.sm, borderLeft: `2px solid ${tokens.colors.panelBorder}` }}>
+          <p style={{ ...cardBodyStyle, fontWeight: 600 }}>{c.name}</p>
+          <p style={cardBodyStyle}>{c.models} models — avg {c.avg}</p>
+          <p style={{ ...cardBodyStyle, fontStyle: "italic", fontSize: tokens.font.sizeSmall }}>{c.strategy}</p>
+        </div>
+      ))}
+      <div style={{ borderTop: `1px solid ${tokens.colors.panelBorder}`, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.md }}>
+        <p style={{ ...cardBodyStyle, fontWeight: 600 }}>Demographic Split</p>
+        {[
+          { name: "Corporate", pct: 22 },
+          { name: "Consumer", pct: 28 },
+          { name: "Student", pct: 18 },
+          { name: "Creative", pct: 12 },
+          { name: "Gamer", pct: 10 },
+          { name: "Other", pct: 10 },
+        ].map((d) => (
+          <div key={d.name} style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm, marginTop: tokens.spacing.xs }}>
+            <span style={{ ...cardBodyStyle, width: 70, fontSize: tokens.font.sizeSmall }}>{d.name}</span>
+            <div style={{ flex: 1, height: 4, background: tokens.colors.panelBorder, borderRadius: 2, overflow: "hidden" }}>
+              <div style={{ width: `${d.pct}%`, height: "100%", background: tokens.colors.accent, borderRadius: 2 }} />
+            </div>
+            <span style={{ ...cardBodyStyle, fontSize: tokens.font.sizeSmall, width: 30, textAlign: "right" }}>{d.pct}%</span>
+          </div>
+        ))}
+      </div>
     </BentoCard>
   );
 }
@@ -187,16 +225,21 @@ function MarketCard() {
 function BrandCard() {
   const { state } = useGame();
 
+  const reputationStats = [
+    "Performance", "Gaming", "Display", "Build Quality",
+    "Battery Life", "Value", "Design", "Portability",
+  ];
+
   return (
     <BentoCard title="Brand" screen="brandDetail">
+      <p style={{ ...cardBodyStyle, fontWeight: 600, marginBottom: tokens.spacing.sm }}>Recognition</p>
       <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm }}>
-        <span style={cardBodyStyle}>Recognition:</span>
         <div
           style={{
             flex: 1,
-            height: 6,
+            height: 8,
             background: tokens.colors.panelBorder,
-            borderRadius: 3,
+            borderRadius: 4,
             overflow: "hidden",
           }}
         >
@@ -205,28 +248,28 @@ function BrandCard() {
               width: `${state.brandRecognition}%`,
               height: "100%",
               background: tokens.colors.accent,
-              borderRadius: 3,
+              borderRadius: 4,
               transition: "width 0.3s",
             }}
           />
         </div>
-        <span style={cardBodyStyle}>{state.brandRecognition}</span>
+        <span style={cardBodyStyle}>{state.brandRecognition}/100</span>
       </div>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.md, fontWeight: 600 }}>
-        Niche Reputation
+      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs, fontStyle: "italic", fontSize: tokens.font.sizeSmall }}>
+        Grows with sales volume and positive reviews
       </p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
-        Performance: unknown
-      </p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
-        Build Quality: unknown
-      </p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
-        Value: unknown
-      </p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.md, fontStyle: "italic" }}>
-        Reputation builds with consistent product focus
-      </p>
+      <div style={{ borderTop: `1px solid ${tokens.colors.panelBorder}`, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.md }}>
+        <p style={{ ...cardBodyStyle, fontWeight: 600 }}>Niche Reputation</p>
+        {reputationStats.map((stat) => (
+          <div key={stat} style={{ display: "flex", justifyContent: "space-between", marginTop: tokens.spacing.xs }}>
+            <span style={{ ...cardBodyStyle, fontSize: tokens.font.sizeSmall }}>{stat}</span>
+            <span style={{ ...cardBodyStyle, fontSize: tokens.font.sizeSmall, fontStyle: "italic" }}>—</span>
+          </div>
+        ))}
+        <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.md, fontStyle: "italic", fontSize: tokens.font.sizeSmall }}>
+          Reputation builds with consistent product focus across multiple years
+        </p>
+      </div>
     </BentoCard>
   );
 }
@@ -238,12 +281,27 @@ function ReviewsCard() {
       <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs, fontStyle: "italic" }}>
         No reviews yet — launch your first model!
       </p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.md, fontWeight: 600 }}>
-        Awards This Year
-      </p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs, fontStyle: "italic" }}>
-        Year-end awards announced after simulation
-      </p>
+      <div style={{ borderTop: `1px solid ${tokens.colors.panelBorder}`, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.md }}>
+        <p style={{ ...cardBodyStyle, fontWeight: 600 }}>Year-End Awards</p>
+        {[
+          "Best Overall Laptop",
+          "Best Value",
+          "Best Gaming Laptop",
+          "Best Business Laptop",
+          "Best Display",
+          "Most Innovative Design",
+          "Best Build Quality",
+          "Best Battery Life",
+        ].map((award) => (
+          <div key={award} style={{ display: "flex", justifyContent: "space-between", marginTop: tokens.spacing.xs }}>
+            <span style={{ ...cardBodyStyle, fontSize: tokens.font.sizeSmall }}>{award}</span>
+            <span style={{ ...cardBodyStyle, fontSize: tokens.font.sizeSmall, fontStyle: "italic" }}>TBD</span>
+          </div>
+        ))}
+        <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.sm, fontStyle: "italic", fontSize: tokens.font.sizeSmall }}>
+          Awards announced after year-end simulation
+        </p>
+      </div>
     </BentoCard>
   );
 }
@@ -251,19 +309,20 @@ function ReviewsCard() {
 function NewsCard() {
   return (
     <BentoCard title="News" screen="news">
-      <p style={{ ...cardBodyStyle, fontWeight: 600 }}>Headlines</p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
-        The laptop market enters a new decade with growing consumer demand.
-      </p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
-        BudgetTech announces aggressive pricing strategy for 2000.
-      </p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
-        Industry analysts predict 15% growth in the consumer segment.
-      </p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>
-        LuxBook unveils premium aluminium chassis design.
-      </p>
+      {[
+        { date: "Jan 2000", text: "The laptop market enters a new decade with growing consumer demand across all segments." },
+        { date: "Jan 2000", text: "BudgetTech announces aggressive pricing strategy, aiming to capture the student and budget buyer markets." },
+        { date: "Jan 2000", text: "Industry analysts predict 15% year-on-year growth in the consumer laptop segment through 2002." },
+        { date: "Jan 2000", text: "LuxBook unveils premium aluminium unibody chassis — sets new standard for build quality." },
+        { date: "Jan 2000", text: "Corporate IT spending surges as Y2K upgrades drive bulk laptop purchases worldwide." },
+        { date: "Jan 2000", text: "OmniLap expands product line with 4 new models targeting every price bracket." },
+        { date: "Jan 2000", text: "Display technology advances push screen resolutions higher — 1024×768 becomes the new baseline." },
+      ].map((item, i) => (
+        <div key={i} style={{ marginTop: i === 0 ? 0 : tokens.spacing.sm, paddingBottom: tokens.spacing.sm, borderBottom: i < 6 ? `1px solid ${tokens.colors.panelBorder}` : "none" }}>
+          <p style={{ ...cardBodyStyle, fontSize: tokens.font.sizeSmall, color: tokens.colors.accent }}>{item.date}</p>
+          <p style={cardBodyStyle}>{item.text}</p>
+        </div>
+      ))}
     </BentoCard>
   );
 }
@@ -275,12 +334,28 @@ function HistoryCard() {
       <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs, fontStyle: "italic" }}>
         No models released yet
       </p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.md, fontWeight: 600 }}>
-        Lifetime Stats
-      </p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>Units sold: 0</p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>Total revenue: $0</p>
-      <p style={{ ...cardBodyStyle, marginTop: tokens.spacing.xs }}>Models designed: 0</p>
+      <div style={{ borderTop: `1px solid ${tokens.colors.panelBorder}`, marginTop: tokens.spacing.md, paddingTop: tokens.spacing.md }}>
+        <p style={{ ...cardBodyStyle, fontWeight: 600 }}>Lifetime Stats</p>
+        <table style={{ width: "100%", borderCollapse: "collapse", marginTop: tokens.spacing.sm }}>
+          <tbody>
+            {[
+              ["Models designed", "0"],
+              ["Models launched", "0"],
+              ["Total units sold", "0"],
+              ["Total revenue", "$0"],
+              ["Total profit", "$0"],
+              ["Best seller", "—"],
+              ["Highest rated", "—"],
+              ["Awards won", "0"],
+            ].map(([label, value]) => (
+              <tr key={label}>
+                <td style={{ ...cardBodyStyle, padding: `${tokens.spacing.xs}px 0`, fontSize: tokens.font.sizeSmall }}>{label}</td>
+                <td style={{ ...cardBodyStyle, padding: `${tokens.spacing.xs}px 0`, fontSize: tokens.font.sizeSmall, textAlign: "right" }}>{value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </BentoCard>
   );
 }
