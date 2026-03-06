@@ -98,7 +98,7 @@ export function WizardSidebar({
   }
 
   // Group stats with dividers
-  const statGroups: string[][] = [
+  const statGroups: LaptopStat[][] = [
     ["performance", "gamingPerformance"],
     ["display", "speakers", "webcam"],
     ["keyboard", "trackpad"],
@@ -193,12 +193,12 @@ export function WizardSidebar({
       {/* Statistics */}
       <SidebarDivider />
       <SidebarHeading>STATISTICS</SidebarHeading>
-      {statGroups.map((group, groupIdx) => {
-        const visibleStats = group.filter((statKey) => (statTotals[statKey as LaptopStat] ?? 0) !== 0);
-        if (visibleStats.length === 0) return null;
-        return (
+      {statGroups.reduce<{ elements: React.ReactNode[]; renderedCount: number }>((acc, group, groupIdx) => {
+        const visibleStats = group.filter((statKey) => (statTotals[statKey] ?? 0) !== 0);
+        if (visibleStats.length === 0) return acc;
+        acc.elements.push(
           <div key={groupIdx}>
-            {groupIdx > 0 && (
+            {acc.renderedCount > 0 && (
               <div style={{ borderTop: "1px solid #2a2a2a", margin: "6px 0" }} />
             )}
             {visibleStats.map((statKey) => {
@@ -243,7 +243,9 @@ export function WizardSidebar({
             })}
           </div>
         );
-      })}
+        acc.renderedCount++;
+        return acc;
+      }, { elements: [], renderedCount: 0 }).elements}
 
       {/* Laptop Estimate */}
       {estimateSection}
