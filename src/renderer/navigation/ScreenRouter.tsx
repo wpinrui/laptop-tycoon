@@ -4,6 +4,8 @@ import { GameLayout } from "../shell/GameLayout";
 import { ContentPanel } from "../shell/ContentPanel";
 import { tokens } from "../shell/tokens";
 import { DesignWizard } from "../wizard/DesignWizard";
+import { MainMenuScreen } from "../screens/MainMenuScreen";
+import { NewGameScreen } from "../screens/NewGameScreen";
 
 /** Screens that don't show the HUD (pre-game screens). */
 const NO_HUD_SCREENS: Screen[] = ["mainMenu", "newGame"];
@@ -22,9 +24,9 @@ function ScreenContent() {
 
   switch (screen) {
     case "mainMenu":
-      return <PlaceholderScreen title="Main Menu" />;
+      return <MainMenuScreen />;
     case "newGame":
-      return <PlaceholderScreen title="New Game" />;
+      return <NewGameScreen />;
     case "dashboard":
       return <PlaceholderScreen title="Dashboard" />;
     case "designWizard":
