@@ -1,11 +1,12 @@
 import { CSSProperties } from "react";
 import { useNavigation } from "../navigation/NavigationContext";
 import { ContentPanel } from "../shell/ContentPanel";
+import { MenuButton } from "../shell/MenuButton";
 import { tokens } from "../shell/tokens";
 
 const titleStyle: CSSProperties = {
   margin: 0,
-  fontSize: 36,
+  fontSize: tokens.font.sizeHero,
   fontWeight: 700,
   letterSpacing: 1,
   textAlign: "center",
@@ -27,19 +28,6 @@ const menuStyle: CSSProperties = {
   marginTop: tokens.spacing.xl,
 };
 
-const buttonBase: CSSProperties = {
-  padding: `${tokens.spacing.md}px ${tokens.spacing.lg}px`,
-  border: "none",
-  borderRadius: tokens.borderRadius.md,
-  fontSize: tokens.font.sizeLarge,
-  fontFamily: tokens.font.family,
-  fontWeight: 500,
-  cursor: "pointer",
-  transition: "background 0.15s, opacity 0.15s",
-  color: tokens.colors.text,
-  background: tokens.colors.surface,
-};
-
 export function MainMenuScreen() {
   const { navigateTo } = useNavigation();
 
@@ -49,40 +37,13 @@ export function MainMenuScreen() {
       <p style={subtitleStyle}>Design. Build. Dominate.</p>
 
       <div style={menuStyle}>
-        <button
-          style={{ ...buttonBase, background: tokens.colors.accent, color: "#000", fontWeight: 600 }}
-          onClick={() => navigateTo("newGame")}
-          onMouseEnter={(e) => (e.currentTarget.style.background = tokens.colors.accentHover)}
-          onMouseLeave={(e) => (e.currentTarget.style.background = tokens.colors.accent)}
-        >
+        <MenuButton variant="accent" onClick={() => navigateTo("newGame")}>
           New Game
-        </button>
-        <button
-          style={{ ...buttonBase, opacity: 0.4, cursor: "not-allowed" }}
-          disabled
-        >
-          Continue
-        </button>
-        <button
-          style={{ ...buttonBase, opacity: 0.4, cursor: "not-allowed" }}
-          disabled
-        >
-          Load Game
-        </button>
-        <button
-          style={{ ...buttonBase, opacity: 0.4, cursor: "not-allowed" }}
-          disabled
-        >
-          Settings
-        </button>
-        <button
-          style={buttonBase}
-          onClick={() => window.close()}
-          onMouseEnter={(e) => (e.currentTarget.style.background = tokens.colors.surfaceHover)}
-          onMouseLeave={(e) => (e.currentTarget.style.background = tokens.colors.surface)}
-        >
-          Quit
-        </button>
+        </MenuButton>
+        <MenuButton disabled>Continue</MenuButton>
+        <MenuButton disabled>Load Game</MenuButton>
+        <MenuButton disabled>Settings</MenuButton>
+        <MenuButton onClick={() => window.close()}>Quit</MenuButton>
       </div>
     </ContentPanel>
   );

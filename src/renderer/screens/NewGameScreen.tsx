@@ -2,6 +2,7 @@ import { CSSProperties, useRef, useState } from "react";
 import { useNavigation } from "../navigation/NavigationContext";
 import { useGame } from "../state/GameContext";
 import { ContentPanel } from "../shell/ContentPanel";
+import { MenuButton } from "../shell/MenuButton";
 import { tokens } from "../shell/tokens";
 import { STARTING_CASH, STARTING_YEAR } from "../state/gameTypes";
 
@@ -77,20 +78,6 @@ const buttonRowStyle: CSSProperties = {
   display: "flex",
   gap: tokens.spacing.sm,
   marginTop: tokens.spacing.sm,
-};
-
-const buttonBase: CSSProperties = {
-  flex: 1,
-  padding: `${tokens.spacing.md}px ${tokens.spacing.lg}px`,
-  border: "none",
-  borderRadius: tokens.borderRadius.md,
-  fontSize: tokens.font.sizeLarge,
-  fontFamily: tokens.font.family,
-  fontWeight: 500,
-  cursor: "pointer",
-  transition: "background 0.15s",
-  color: tokens.colors.text,
-  background: tokens.colors.surface,
 };
 
 function formatCash(amount: number): string {
@@ -201,33 +188,17 @@ export function NewGameScreen() {
         </div>
 
         <div style={buttonRowStyle}>
-          <button
-            style={buttonBase}
-            onClick={goBack}
-            onMouseEnter={(e) => (e.currentTarget.style.background = tokens.colors.surfaceHover)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = tokens.colors.surface)}
-          >
+          <MenuButton onClick={goBack} style={{ flex: 1 }}>
             Back
-          </button>
-          <button
-            style={{
-              ...buttonBase,
-              background: canStart ? tokens.colors.accent : tokens.colors.surface,
-              color: canStart ? "#000" : tokens.colors.textMuted,
-              fontWeight: 600,
-              cursor: canStart ? "pointer" : "not-allowed",
-            }}
+          </MenuButton>
+          <MenuButton
+            variant="accent"
             onClick={handleStart}
             disabled={!canStart}
-            onMouseEnter={(e) => {
-              if (canStart) e.currentTarget.style.background = tokens.colors.accentHover;
-            }}
-            onMouseLeave={(e) => {
-              if (canStart) e.currentTarget.style.background = tokens.colors.accent;
-            }}
+            style={{ flex: 1 }}
           >
             Start Game
-          </button>
+          </MenuButton>
         </div>
       </div>
     </ContentPanel>
