@@ -1,13 +1,10 @@
 import { useWizard } from "../WizardContext";
-import { GAME_YEAR, formatWeight, MIN_BATTERY_WH, BATTERY_STEP_WH, maxBatteryWh } from "../constants";
-import { getScreenSizeDef } from "../../../data/screenSizes";
+import { GAME_YEAR, formatWeight, MIN_BATTERY_WH, MAX_BATTERY_WH, BATTERY_STEP_WH } from "../constants";
 import { getBatteryEra } from "../../../data/batteryEras";
 import { StatCard } from "./StatCard";
 
 export function BatteryStep() {
   const { state, dispatch } = useWizard();
-  const screenSizeDef = getScreenSizeDef(state.screenSize);
-  const maxCapacity = maxBatteryWh(screenSizeDef.baseBatteryCapacityWh);
   const era = getBatteryEra(GAME_YEAR);
 
   const capacity = state.batteryCapacityWh;
@@ -23,8 +20,8 @@ export function BatteryStep() {
       <div>
         <h2>Battery</h2>
         <p style={{ color: "#aaa", marginTop: "4px" }}>
-          Choose battery capacity. Larger batteries add weight and cost but extend battery life.
-          Your {state.screenSize}" chassis supports up to {maxCapacity} Wh.
+          Choose battery capacity. Larger batteries add weight, cost, and take up internal space.
+          The chassis must have enough volume to fit the battery.
         </p>
       </div>
 
@@ -47,13 +44,13 @@ export function BatteryStep() {
           >
             {capacity} Wh
           </span>
-          <span style={{ color: "#888", fontSize: "14px" }}>{maxCapacity} Wh</span>
+          <span style={{ color: "#888", fontSize: "14px" }}>{MAX_BATTERY_WH} Wh</span>
         </div>
 
         <input
           type="range"
           min={MIN_BATTERY_WH}
-          max={maxCapacity}
+          max={MAX_BATTERY_WH}
           step={BATTERY_STEP_WH}
           value={capacity}
           onChange={(e) => handleChange(Number(e.target.value))}

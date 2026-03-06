@@ -7,8 +7,8 @@ import {
 import { SCREEN_SIZES } from "../../data/screenSizes";
 import {
   MIN_BATTERY_WH,
+  MAX_BATTERY_WH,
   BATTERY_STEP_WH,
-  maxBatteryWh,
   THICKNESS_DEFAULT_CM,
   BEZEL_DEFAULT_MM,
 } from "./constants";
@@ -78,10 +78,7 @@ export const INITIAL_WIZARD_STATE: WizardState = {
   screenSize: DEFAULT_SIZE_DEF.size,
   components: {},
   ports: {},
-  batteryCapacityWh: (() => {
-    const max = maxBatteryWh(DEFAULT_SIZE_DEF.baseBatteryCapacityWh);
-    return Math.round((MIN_BATTERY_WH + max) / 2 / BATTERY_STEP_WH) * BATTERY_STEP_WH;
-  })(),
+  batteryCapacityWh: Math.round((MIN_BATTERY_WH + MAX_BATTERY_WH) / 2 / BATTERY_STEP_WH) * BATTERY_STEP_WH,
   thicknessCm: THICKNESS_DEFAULT_CM,
   bezelMm: BEZEL_DEFAULT_MM,
   chassis: {
