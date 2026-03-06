@@ -14,6 +14,7 @@ import { getScreenSizeDef } from "../../data/screenSizes";
 import { getBatteryEra } from "../../data/batteryEras";
 import { PORT_TYPES } from "../../data/portTypes";
 import { ChassisOption, ComponentSlot } from "../../data/types";
+import { getAllChassisOptions } from "./types";
 
 function applyDisplayMultiplier(value: number, slot: string, multiplier: number): number {
   return DISPLAY_SLOTS.includes(slot as ComponentSlot) ? Math.round(value * multiplier) : value;
@@ -53,12 +54,7 @@ export function WizardSidebar({
     portWeight += count * pt.weightPerPortG;
   }
 
-  const allChassisOptions = [
-    state.chassis.material,
-    state.chassis.coolingSolution,
-    state.chassis.keyboardFeature,
-    state.chassis.trackpadFeature,
-  ];
+  const allChassisOptions = getAllChassisOptions(state.chassis);
   const selectedChassisOptions = allChassisOptions.filter(
     (o): o is ChassisOption => o !== null,
   );
@@ -70,7 +66,7 @@ export function WizardSidebar({
 
   const totalCost = componentCost + portCost + chassisOptionCost + batteryCost;
   const totalPower = componentPower;
-  const totalWeight = componentWeight + portWeight;
+  const totalWeight = componentWeight + portWeight + chassisOptionWeight + batteryWeight;
 
   // --- Estimate (conditionally rendered) ---
   let estimateSection = null;
@@ -94,9 +90,8 @@ export function WizardSidebar({
     const minThickness = Math.max(minFromVolume, minFromHeight);
     const thicknessTooThin = thickness < minThickness;
 
-    // Weight
-    const estimatedTotalWeight =
-      screenSizeDef.baseWeightG + componentWeight + batteryWeight + chassisOptionWeight + portWeight;
+    // Weight (base weight + all component/port/chassis/battery weight from running totals)
+    const estimatedTotalWeight = screenSizeDef.baseWeightG + totalWeight;
 
     // Battery life
     const estimatedHours = totalPower > 0 ? state.batteryCapacityWh / totalPower : 0;
@@ -105,7 +100,6 @@ export function WizardSidebar({
     const batteryWarning = totalPower > 0 && estimatedHours < batteryWarningThresholdH;
 
     estimateSection = (
-      <>
         <div style={{ borderTop: "1px solid #333", marginTop: "12px", paddingTop: "12px" }}>
           <div style={{ color: "#888", fontSize: "12px", marginBottom: "12px", fontWeight: "bold" }}>
             LAPTOP ESTIMATE
@@ -136,7 +130,6 @@ export function WizardSidebar({
             />
           )}
         </div>
-      </>
     );
   }
 
@@ -161,12 +154,10 @@ export function WizardSidebar({
       <SidebarRow label="Power Draw" value={`${totalPower} W`} />
       <SidebarRow label="Weight" value={formatWeight(totalWeight)} />
       {showChassisTotals && (
-        <>
           <div style={{ borderTop: "1px solid #333", marginTop: "12px", paddingTop: "12px" }}>
             <SidebarRow label="Chassis Cost" value={`$${chassisOptionCost}`} />
             <SidebarRow label="Chassis Weight" value={formatWeight(chassisOptionWeight)} />
           </div>
-        </>
       )}
       {estimateSection}
     </div>

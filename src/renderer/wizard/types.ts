@@ -70,6 +70,10 @@ export interface WizardState {
 
 const DEFAULT_SIZE_DEF = SCREEN_SIZES[Math.floor(SCREEN_SIZES.length / 2)];
 
+export function getAllChassisOptions(chassis: WizardState["chassis"]): (ChassisOption | null)[] {
+  return [chassis.material, chassis.coolingSolution, chassis.keyboardFeature, chassis.trackpadFeature];
+}
+
 export const INITIAL_WIZARD_STATE: WizardState = {
   currentStep: "metadata",
   name: "",

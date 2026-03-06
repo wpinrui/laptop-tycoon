@@ -20,6 +20,7 @@ import {
   TRACKPAD_FEATURES,
 } from "../../../data/chassisOptions";
 import { ChassisOption, ChassisOptionSlot } from "../../../data/types";
+import { getAllChassisOptions } from "../types";
 import { formatSpecKey } from "./ComponentStepLayout";
 
 interface SlotSectionDef {
@@ -58,12 +59,7 @@ export function BodyStep() {
   const bezel = state.bezelMm;
 
   // --- Volume ---
-  const allChassisOptions = [
-    state.chassis.material,
-    state.chassis.coolingSolution,
-    state.chassis.keyboardFeature,
-    state.chassis.trackpadFeature,
-  ];
+  const allChassisOptions = getAllChassisOptions(state.chassis);
   const totalVolume = totalConsumedVolumeCm3(
     state.components,
     state.batteryCapacityWh,

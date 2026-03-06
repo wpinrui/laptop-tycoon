@@ -1,6 +1,6 @@
 import { WizardProvider, useWizard } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
-import { WizardStep, WizardState, WIZARD_STEPS } from "./types";
+import { WizardStep, WizardState, WIZARD_STEPS, getAllChassisOptions } from "./types";
 import {
   GAME_YEAR,
   availableVolumeCm3,
@@ -46,12 +46,7 @@ function isStepComplete(step: WizardStep, state: WizardState): boolean {
       )
         return false;
 
-      const chassisOptions = [
-        state.chassis.material,
-        state.chassis.coolingSolution,
-        state.chassis.keyboardFeature,
-        state.chassis.trackpadFeature,
-      ];
+      const chassisOptions = getAllChassisOptions(state.chassis);
 
       // Volume check
       const totalVol = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, chassisOptions);
