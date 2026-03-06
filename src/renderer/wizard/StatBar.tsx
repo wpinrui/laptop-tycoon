@@ -57,7 +57,7 @@ const STAT_CONFIG: StatConfigEntry[] = [
 
 export { STAT_CONFIG };
 
-const STAT_COLORS: Record<string, string> = {
+const STAT_COLORS: Partial<Record<LaptopStat, string>> = {
   performance: "#ef5350",
   gamingPerformance: "#ef5350",
   display: "#42a5f5",
@@ -71,7 +71,7 @@ const STAT_COLORS: Record<string, string> = {
   buildQuality: "#ab47bc",
 };
 
-export function getStatColor(stat: string): string {
+export function getStatColor(stat: LaptopStat): string {
   return STAT_COLORS[stat] ?? "#90caf9";
 }
 
@@ -154,8 +154,8 @@ export function computeStatTotals(state: ReturnType<typeof useWizard>["state"]):
   return totals;
 }
 
-export function StatContributions({ stats }: { stats: Record<string, number> }) {
-  const entries = Object.entries(stats).filter(([, v]) => v !== 0);
+export function StatContributions({ stats }: { stats: StatVector }) {
+  const entries = (Object.entries(stats) as [LaptopStat, number][]).filter(([, v]) => v !== 0);
   if (entries.length === 0) return null;
 
   return (
