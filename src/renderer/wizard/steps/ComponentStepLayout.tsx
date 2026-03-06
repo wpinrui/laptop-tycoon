@@ -2,6 +2,7 @@ import { useWizard } from "../WizardContext";
 import { GAME_YEAR, formatWeight } from "../constants";
 import { ALL_COMPONENTS } from "../../../data/components";
 import { getScreenSizeDef } from "../../../data/screenSizes";
+import { PORT_TYPES } from "../../../data/portTypes";
 import { Component, ComponentSlot, ScreenSizeDefinition } from "../../../data/types";
 
 const DISPLAY_SLOTS: ComponentSlot[] = ["resolution", "displayTech", "displaySurface"];
@@ -58,16 +59,25 @@ export function ComponentStepLayout({
   const screenSizeDef = getScreenSizeDef(state.screenSize);
   const multiplier = screenSizeDef.displayMultiplier;
 
-  function sumProp(prop: "costAtLaunch" | "powerDrawW" | "weightG"): number {
-    return slots.reduce((sum, { slot }) => {
-      const c = state.components[slot];
-      return sum + (c ? applyMultiplier(c[prop], slot, multiplier) : 0);
-    }, 0);
+  // Cumulative totals across all selected components
+  function sumAllComponents(prop: "costAtLaunch" | "powerDrawW" | "weightG"): number {
+    let total = 0;
+    for (const [slot, comp] of Object.entries(state.components)) {
+      if (comp) total += applyMultiplier(comp[prop], slot as ComponentSlot, multiplier);
+    }
+    return total;
   }
 
-  const totalCost = sumProp("costAtLaunch");
-  const totalPower = sumProp("powerDrawW");
-  const totalWeight = sumProp("weightG");
+  let totalCost = sumAllComponents("costAtLaunch");
+  let totalPower = sumAllComponents("powerDrawW");
+  let totalWeight = sumAllComponents("weightG");
+
+  // Add port totals
+  for (const pt of PORT_TYPES) {
+    const count = state.ports[pt.id] ?? 0;
+    totalCost += count * pt.costPerPort;
+    totalWeight += count * pt.weightPerPortG;
+  }
 
   return (
     <div style={{ display: "flex", gap: "24px", height: "100%" }}>
