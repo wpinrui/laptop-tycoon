@@ -234,7 +234,7 @@ function ChassisCard({
   const cost = chassisCost(option, GAME_YEAR);
 
   return (
-    <Tooltip content={<OptionTooltipContent name={option.name} description={option.description} stats={option.stats as Record<string, number>} />}>
+    <Tooltip content={<OptionTooltipContent name={option.name} description={option.description} stats={option.stats} />}>
       <SelectionCard isSelected={isSelected} onClick={onSelect}>
         <div
           style={{

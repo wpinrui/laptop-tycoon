@@ -118,7 +118,7 @@ function ComponentCard({
   const weight = applyDisplayMultiplier(component.weightG, slot, multiplier);
 
   return (
-    <Tooltip content={<OptionTooltipContent name={component.name} description={component.description} stats={component.stats as Record<string, number>} />}>
+    <Tooltip content={<OptionTooltipContent name={component.name} description={component.description} stats={component.stats} />}>
       <SelectionCard isSelected={isSelected} onClick={onSelect}>
         <div
           style={{

@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { StatVector } from "../../data/types";
 import { StatContributions } from "./StatBar";
 
 export function OptionTooltipContent({
@@ -8,7 +9,7 @@ export function OptionTooltipContent({
 }: {
   name: string;
   description: string;
-  stats: Record<string, number>;
+  stats: StatVector;
 }) {
   return (
     <div>

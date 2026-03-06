@@ -94,7 +94,7 @@ type DialogTarget =
   | { kind: "colours" };
 
 export function ReviewStep() {
-  const { state, dispatch } = useWizard();
+  const { state } = useWizard();
   const [dialogTarget, setDialogTarget] = useState<DialogTarget | null>(null);
   const screenSizeDef = getScreenSizeDef(state.screenSize);
   const era = getBatteryEra(GAME_YEAR);
@@ -680,7 +680,7 @@ function SingleComponentEditor({ slot }: { slot: ComponentSlot }) {
           const weight = applyDisplayMultiplier(component.weightG, slot, multiplier);
           return (
             <Tooltip key={component.id} content={
-              <OptionTooltipContent name={component.name} description={component.description} stats={component.stats as Record<string, number>} />
+              <OptionTooltipContent name={component.name} description={component.description} stats={component.stats} />
             }>
               <SelectionCard
                 isSelected={isSelected}
@@ -868,7 +868,7 @@ function SingleChassisEditor({ slot, options }: { slot: ChassisOptionSlot; optio
         const cost = chassisCost(option, GAME_YEAR);
         return (
           <Tooltip key={option.id} content={
-            <OptionTooltipContent name={option.name} description={option.description} stats={option.stats as Record<string, number>} />
+            <OptionTooltipContent name={option.name} description={option.description} stats={option.stats} />
           }>
             <SelectionCard
               isSelected={isSelected}
