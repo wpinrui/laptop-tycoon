@@ -12,6 +12,9 @@ import {
 import { useGame } from "../state/GameContext";
 import { useNavigation } from "../navigation/NavigationContext";
 import { LaptopDesign } from "../state/gameTypes";
+import { ContentPanel } from "../shell/ContentPanel";
+import { MenuButton } from "../shell/MenuButton";
+import { tokens } from "../shell/tokens";
 import { MetadataStep } from "./steps/MetadataStep";
 import { ScreenSizeStep } from "./steps/ScreenSizeStep";
 import { ProcessingStep } from "./steps/ProcessingStep";
@@ -95,72 +98,32 @@ function ConfirmCloseDialog({ onConfirm, onCancel }: { onConfirm: () => void; on
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.6)",
+        background: "rgba(0, 0, 0, 0.7)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 500,
+        zIndex: tokens.zIndex.overlay,
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel();
       }}
     >
-      <div
-        style={{
-          background: "#1e1e1e",
-          border: "1px solid #444",
-          borderRadius: "12px",
-          padding: "24px",
-          maxWidth: "400px",
-          width: "90vw",
-        }}
-      >
-        <div style={{ fontSize: "1rem", fontWeight: "bold", color: "#90caf9", marginBottom: "12px" }}>
+      <ContentPanel maxWidth={400}>
+        <h2 style={{ margin: 0, fontSize: tokens.font.sizeTitle, fontWeight: 700, textAlign: "center" }}>
           Discard Design?
-        </div>
-        <p style={{ color: "#ccc", fontSize: "0.875rem", margin: "0 0 20px" }}>
+        </h2>
+        <p style={{ margin: 0, marginTop: tokens.spacing.xs, fontSize: tokens.font.sizeBase, color: tokens.colors.textMuted, textAlign: "center", marginBottom: tokens.spacing.md }}>
           All unsaved progress on this laptop design will be lost.
         </p>
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
-          <button
-            onClick={onCancel}
-            style={{
-              background: "none",
-              border: "1px solid #555",
-              borderRadius: "6px",
-              color: "#aaa",
-              fontSize: "0.8125rem",
-              padding: "6px 16px",
-              cursor: "pointer",
-              fontFamily: "inherit",
-              transition: "border-color 0.15s, color 0.15s",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#888"; e.currentTarget.style.color = "#ccc"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#aaa"; }}
-          >
+        <div style={{ display: "flex", gap: tokens.spacing.sm }}>
+          <MenuButton onClick={onCancel} style={{ flex: 1 }}>
             Keep Editing
-          </button>
-          <button
-            onClick={onConfirm}
-            style={{
-              background: "#5c1a1a",
-              border: "1px solid #ef5350",
-              borderRadius: "6px",
-              color: "#ef5350",
-              fontSize: "0.8125rem",
-              padding: "6px 16px",
-              cursor: "pointer",
-              fontFamily: "inherit",
-              fontWeight: "bold",
-              transition: "background 0.15s",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "#702020"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "#5c1a1a"; }}
-          >
+          </MenuButton>
+          <MenuButton variant="danger" onClick={onConfirm} style={{ flex: 1 }}>
             Discard
-          </button>
+          </MenuButton>
         </div>
-      </div>
+      </ContentPanel>
     </div>
   );
 }

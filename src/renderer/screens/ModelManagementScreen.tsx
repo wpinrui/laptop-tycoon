@@ -303,14 +303,40 @@ function ModelCard({
             </>
           )}
           {(status === "manufacturing" || status === "onSale") && (
-            <MenuButton
-              onClick={onScrapClick}
-              style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
-            >
-              <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-                <Trash2 size={14} /> Discontinue
-              </span>
-            </MenuButton>
+            confirmScrap ? (
+              <div style={{ display: "flex", gap: tokens.spacing.xs, alignItems: "center" }}>
+                <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.danger }}>Discontinue this model?</span>
+                <MenuButton
+                  onClick={onScrapConfirm}
+                  style={{
+                    fontSize: tokens.font.sizeSmall,
+                    padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+                    background: tokens.colors.danger,
+                    color: "#fff",
+                  }}
+                >
+                  Yes
+                </MenuButton>
+                <MenuButton
+                  onClick={onScrapCancel}
+                  style={{
+                    fontSize: tokens.font.sizeSmall,
+                    padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+                  }}
+                >
+                  No
+                </MenuButton>
+              </div>
+            ) : (
+              <MenuButton
+                onClick={onScrapClick}
+                style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+              >
+                <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
+                  <Trash2 size={14} /> Discontinue
+                </span>
+              </MenuButton>
+            )
           )}
         </div>
       )}
