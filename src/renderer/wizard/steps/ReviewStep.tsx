@@ -19,6 +19,19 @@ import { PORT_TYPES } from "../../../data/portTypes";
 import { COLOUR_OPTIONS } from "../../../data/colourOptions";
 import { ChassisOption, ComponentSlot } from "../../../data/types";
 import { StatCard } from "./StatCard";
+import {
+  Monitor,
+  Cpu,
+  MonitorSmartphone,
+  Camera,
+  Battery,
+  Laptop,
+  AlertTriangle,
+  DollarSign,
+  type LucideIcon,
+} from "lucide-react";
+
+const COMPANY_NAME = "Your Company"; // TODO: inject from game state
 
 const COMPONENT_SLOT_LABELS: Record<ComponentSlot, string> = {
   cpu: "CPU",
@@ -38,6 +51,15 @@ const CHASSIS_SLOT_LABELS: Record<string, string> = {
   coolingSolution: "Cooling Solution",
   keyboardFeature: "Keyboard",
   trackpadFeature: "Trackpad",
+};
+
+const STEP_ICONS: Partial<Record<WizardStep, LucideIcon>> = {
+  screenSize: Monitor,
+  processing: Cpu,
+  display: MonitorSmartphone,
+  mediaConnectivity: Camera,
+  battery: Battery,
+  body: Laptop,
 };
 
 const STEP_ORDER: WizardStep[] = [
@@ -135,11 +157,14 @@ export function ReviewStep() {
 
       {/* Laptop name header */}
       <div style={{ marginBottom: "24px" }}>
+        <div style={{ fontSize: "0.8125rem", color: "#888" }}>
+          {COMPANY_NAME}
+        </div>
         <div style={{ fontSize: "1.25rem", fontWeight: "bold", color: "#90caf9" }}>
           {state.name || "Unnamed Laptop"}
         </div>
         <div style={{ fontSize: "0.8125rem", color: "#888", marginTop: "4px" }}>
-          {state.screenSize}" &middot; {state.modelType === "brandNew" ? "Brand New" : state.modelType === "successor" ? "Successor" : "Spec Bump"}
+          {state.screenSize}" &middot; {state.modelType === "brandNew" ? "Brand New" : state.modelType === "successor" ? "Successor" : "Spec Bump"} &middot; {GAME_YEAR}
         </div>
       </div>
 
@@ -166,9 +191,24 @@ export function ReviewStep() {
         />
       </div>
 
+      {/* Spec breakdown by step — 2-column masonry */}
+      <div style={{ columnCount: 2, columnGap: "12px" }}>
       {/* Warnings */}
       {(thermalWarning || batteryWarning || thicknessTooThin || spaceUtilization > 1) && (
-        <div style={{ marginBottom: "24px" }}>
+        <div
+          style={{
+            background: "#2a2010",
+            border: "1px solid #5a4020",
+            borderRadius: "8px",
+            padding: "16px",
+            marginBottom: "12px",
+            breakInside: "avoid",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+            <AlertTriangle size={16} color="#ff9800" />
+            <span style={{ fontSize: "0.875rem", fontWeight: "bold", color: "#ff9800" }}>Warnings</span>
+          </div>
           {thermalWarning && (
             <WarningRow text={`Thermal issue: components draw ${totalPower}W but cooling only provides ${effectiveCooling}W`} />
           )}
@@ -183,15 +223,13 @@ export function ReviewStep() {
           )}
         </div>
       )}
-
-      {/* Spec breakdown by step — 2-column masonry */}
-      <div style={{ columnCount: 2, columnGap: "12px" }}>
       {STEP_ORDER.map((step) => {
         const slots = STEP_SLOTS[step];
         if (step === "screenSize") {
           return (
             <ReviewSection
               key={step}
+              icon={STEP_ICONS[step]}
               title={WIZARD_STEP_LABELS[step]}
               onEdit={() => dispatch({ type: "GO_TO_STEP", step })}
             >
@@ -206,6 +244,7 @@ export function ReviewStep() {
           return (
             <ReviewSection
               key={step}
+              icon={STEP_ICONS[step]}
               title={WIZARD_STEP_LABELS[step]}
               onEdit={() => dispatch({ type: "GO_TO_STEP", step })}
             >
@@ -221,6 +260,7 @@ export function ReviewStep() {
           return (
             <ReviewSection
               key={step}
+              icon={STEP_ICONS[step]}
               title={WIZARD_STEP_LABELS[step]}
               onEdit={() => dispatch({ type: "GO_TO_STEP", step })}
             >
@@ -274,6 +314,7 @@ export function ReviewStep() {
           return (
             <ReviewSection
               key={step}
+              icon={STEP_ICONS[step]}
               title={WIZARD_STEP_LABELS[step]}
               onEdit={() => dispatch({ type: "GO_TO_STEP", step })}
             >
@@ -329,8 +370,9 @@ export function ReviewStep() {
           marginTop: "8px",
         }}
       >
-        <div style={{ fontSize: "0.875rem", fontWeight: "bold", color: "#81c784", marginBottom: "12px" }}>
-          Cost Breakdown
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+          <DollarSign size={16} color="#81c784" />
+          <span style={{ fontSize: "0.875rem", fontWeight: "bold", color: "#81c784" }}>Cost Breakdown</span>
         </div>
         <CostRow label="Components" value={componentCost} />
         <CostRow label="Ports" value={portCost} />
@@ -359,10 +401,12 @@ export function ReviewStep() {
 }
 
 function ReviewSection({
+  icon: Icon,
   title,
   onEdit,
   children,
 }: {
+  icon?: LucideIcon;
   title: string;
   onEdit: () => void;
   children: React.ReactNode;
@@ -386,7 +430,10 @@ function ReviewSection({
           marginBottom: "12px",
         }}
       >
-        <div style={{ fontSize: "0.875rem", fontWeight: "bold", color: "#ccc" }}>{title}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          {Icon && <Icon size={16} color="#888" />}
+          <span style={{ fontSize: "0.875rem", fontWeight: "bold", color: "#ccc" }}>{title}</span>
+        </div>
         <button
           onClick={onEdit}
           style={{
@@ -459,18 +506,8 @@ function CostRow({ label, value }: { label: string; value: number }) {
 
 function WarningRow({ text }: { text: string }) {
   return (
-    <div
-      style={{
-        background: "#2a2010",
-        border: "1px solid #5a4020",
-        borderRadius: "6px",
-        padding: "8px 12px",
-        fontSize: "0.8125rem",
-        color: "#ff9800",
-        marginBottom: "6px",
-      }}
-    >
-      {text}
+    <div style={{ fontSize: "0.8125rem", color: "#ffcc80", padding: "2px 0" }}>
+      &bull; {text}
     </div>
   );
 }
