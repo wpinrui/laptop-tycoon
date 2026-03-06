@@ -32,6 +32,8 @@ export interface ScreenSizeDefinition {
   baseCoolingCapacityW: number;
   baseBatteryCapacityWh: number;
   baseWeightG: number;
+  /** Multiplier for display component cost/power/weight. 14" = 1.0 reference. */
+  displayMultiplier: number;
 }
 
 // --- Components ---
@@ -41,8 +43,9 @@ export type ComponentSlot =
   | "gpu"
   | "ram"
   | "storage"
-  | "display"
-  | "battery"
+  | "resolution"
+  | "displayTech"
+  | "displaySurface"
   | "wifi"
   | "webcam"
   | "speakers"
@@ -86,6 +89,16 @@ export interface ChassisOption {
   weightG: number;
   stats: StatVector;
   specs: Record<string, string>;
+}
+
+// --- Battery ---
+
+export interface BatteryEraConfig {
+  yearStart: number;
+  yearEnd: number;
+  costPerWh: number;
+  weightPerWh: number;
+  techLabel: string;
 }
 
 // --- Demographics ---

@@ -1,9 +1,18 @@
+import { ComponentStepLayout, SlotDef } from "./ComponentStepLayout";
+
+const SLOTS: SlotDef[] = [
+  { slot: "cpu", label: "CPU" },
+  { slot: "gpu", label: "GPU" },
+  { slot: "ram", label: "RAM" },
+  { slot: "storage", label: "Storage" },
+];
+
 export function ProcessingStep() {
   return (
-    <div>
-      <h2>Processing</h2>
-      <p style={{ color: "#aaa" }}>Select your CPU, GPU, RAM, and storage.</p>
-      <p style={{ color: "#666", fontStyle: "italic" }}>Processing selection coming soon.</p>
-    </div>
+    <ComponentStepLayout
+      title="Processing"
+      description="Select your CPU, GPU, RAM, and storage."
+      slots={SLOTS}
+    />
   );
 }

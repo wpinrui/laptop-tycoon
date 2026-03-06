@@ -1,18 +1,14 @@
 import { useWizard } from "../WizardContext";
-import { SCREEN_SIZES } from "../../../data/screenSizes";
+import { formatWeight } from "../constants";
+import { SCREEN_SIZES, getScreenSizeDef } from "../../../data/screenSizes";
+import { StatCard } from "./StatCard";
 
 const MIN_SIZE = SCREEN_SIZES[0].size;
 const MAX_SIZE = SCREEN_SIZES[SCREEN_SIZES.length - 1].size;
-const MID_INDEX = Math.floor(SCREEN_SIZES.length / 2);
-
-function formatWeight(grams: number): string {
-  return grams >= 1000 ? `${(grams / 1000).toFixed(1)} kg` : `${grams} g`;
-}
 
 export function ScreenSizeStep() {
   const { state, dispatch } = useWizard();
-  const sliderValue = state.screenSize ?? SCREEN_SIZES[MID_INDEX].size;
-  const sizeDef = SCREEN_SIZES.find((s) => s.size === sliderValue)!;
+  const sizeDef = getScreenSizeDef(state.screenSize);
 
   function handleChange(value: number) {
     const closest = SCREEN_SIZES.reduce((prev, curr) =>
@@ -44,10 +40,10 @@ export function ScreenSizeStep() {
             style={{
               fontSize: "48px",
               fontWeight: "bold",
-              color: state.screenSize ? "#90caf9" : "#666",
+              color: "#90caf9",
             }}
           >
-            {sliderValue}"
+            {state.screenSize}"
           </span>
           <span style={{ color: "#888", fontSize: "14px" }}>{MAX_SIZE}"</span>
         </div>
@@ -57,7 +53,7 @@ export function ScreenSizeStep() {
           min={MIN_SIZE}
           max={MAX_SIZE}
           step={1}
-          value={sliderValue}
+          value={state.screenSize}
           onChange={(e) => handleChange(Number(e.target.value))}
           style={{ width: "100%", accentColor: "#90caf9" }}
         />
@@ -98,23 +94,6 @@ export function ScreenSizeStep() {
         <StatCard label="Max Battery Capacity" value={`${sizeDef.baseBatteryCapacityWh} Wh`} />
         <StatCard label="Minimum Weight" value={formatWeight(sizeDef.baseWeightG)} />
       </div>
-    </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div
-      style={{
-        background: "#2a2a2a",
-        border: "1px solid #444",
-        borderRadius: "8px",
-        padding: "16px",
-        textAlign: "center",
-      }}
-    >
-      <div style={{ color: "#888", fontSize: "12px", marginBottom: "8px" }}>{label}</div>
-      <div style={{ color: "#e0e0e0", fontSize: "20px", fontWeight: "bold" }}>{value}</div>
     </div>
   );
 }

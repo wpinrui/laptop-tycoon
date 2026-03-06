@@ -1,13 +1,22 @@
 import { WizardProvider, useWizard } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
 import { WizardStep, WIZARD_STEPS } from "./types";
+import { GAME_YEAR } from "./constants";
+import { ComponentSlot } from "../../data/types";
 import { MetadataStep } from "./steps/MetadataStep";
 import { ScreenSizeStep } from "./steps/ScreenSizeStep";
 import { ProcessingStep } from "./steps/ProcessingStep";
-import { DisplayMediaStep } from "./steps/DisplayMediaStep";
-import { ConnectivityPowerStep } from "./steps/ConnectivityPowerStep";
+import { DisplayStep } from "./steps/DisplayStep";
+import { MediaConnectivityStep } from "./steps/MediaConnectivityStep";
+import { BatteryStep } from "./steps/BatteryStep";
 import { BodyStep } from "./steps/BodyStep";
 import { ReviewStep } from "./steps/ReviewStep";
+
+const COMPONENT_STEP_SLOTS: Partial<Record<WizardStep, ComponentSlot[]>> = {
+  processing: ["cpu", "gpu", "ram", "storage"],
+  display: ["resolution", "displayTech", "displaySurface"],
+  mediaConnectivity: ["webcam", "speakers", "wifi", "ports"],
+};
 
 function WizardContent() {
   const { state, dispatch } = useWizard();
@@ -18,8 +27,9 @@ function WizardContent() {
   const needsMetadata =
     state.currentStep === "metadata" &&
     (!state.name.trim() || (state.modelType !== "brandNew" && !state.predecessorId));
-  const needsScreenSize = state.currentStep === "screenSize" && !state.screenSize;
-  const canAdvance = !needsMetadata && !needsScreenSize;
+  const requiredSlots = COMPONENT_STEP_SLOTS[state.currentStep];
+  const needsComponents = requiredSlots && !requiredSlots.every((slot) => state.components[slot]);
+  const canAdvance = !needsMetadata && !needsComponents;
 
   function canNavigateTo(step: WizardStep) {
     const targetIdx = WIZARD_STEPS.indexOf(step);
@@ -34,10 +44,12 @@ function WizardContent() {
         return <ScreenSizeStep />;
       case "processing":
         return <ProcessingStep />;
-      case "displayMedia":
-        return <DisplayMediaStep />;
-      case "connectivityPower":
-        return <ConnectivityPowerStep />;
+      case "display":
+        return <DisplayStep />;
+      case "mediaConnectivity":
+        return <MediaConnectivityStep />;
+      case "battery":
+        return <BatteryStep />;
       case "body":
         return <BodyStep />;
       case "review":
@@ -61,7 +73,7 @@ function WizardContent() {
     >
       <h1 style={{ fontSize: "24px", marginBottom: "8px", flexShrink: 0 }}>Laptop Builder</h1>
       <p style={{ color: "#888", marginBottom: "24px", flexShrink: 0 }}>
-        Design your new laptop model for {/* TODO: inject current game year */}2000
+        Design your new laptop model for {GAME_YEAR}
       </p>
 
       <StepIndicator
