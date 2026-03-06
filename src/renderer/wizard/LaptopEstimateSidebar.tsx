@@ -69,18 +69,13 @@ export function WizardSidebar({
   // --- Statistics ---
   const statTotals = computeStatTotals(state);
 
-  // Group stats with dividers at intuitive places
-  const statGroups = [
-    // Performance
-    ["performance", "gamingPerformance"],
-    // Display & Media
-    ["display", "speakers", "webcam"],
-    // Input
-    ["keyboard", "trackpad"],
-    // Hardware
-    ["batteryLife", "thermals", "connectivity"],
-    // Build
-    ["design", "buildQuality"],
+  // Group stats with dividers and category colors
+  const statGroups: { stats: string[]; color: string }[] = [
+    { stats: ["performance", "gamingPerformance"], color: "#ef5350" },       // red — power/speed
+    { stats: ["display", "speakers", "webcam"], color: "#42a5f5" },          // blue — media
+    { stats: ["keyboard", "trackpad"], color: "#66bb6a" },                   // green — input
+    { stats: ["batteryLife", "thermals", "connectivity"], color: "#ffa726" }, // amber — hardware
+    { stats: ["design", "buildQuality"], color: "#ab47bc" },                 // purple — build
   ];
 
   // --- Estimate (conditionally rendered) ---
@@ -174,7 +169,7 @@ export function WizardSidebar({
           {groupIdx > 0 && (
             <div style={{ borderTop: "1px solid #2a2a2a", margin: "6px 0" }} />
           )}
-          {group.map((statKey) => {
+          {group.stats.map((statKey) => {
             const config = STAT_CONFIG.find((s) => s.stat === statKey);
             if (!config) return null;
             const { Icon, label } = config;
@@ -194,7 +189,7 @@ export function WizardSidebar({
                     display: "flex",
                     alignItems: "center",
                     gap: "6px",
-                    color: value > 0 ? "#aaa" : "#555",
+                    color: group.color,
                     fontSize: "0.75rem",
                   }}
                 >
@@ -203,7 +198,7 @@ export function WizardSidebar({
                 </span>
                 <span
                   style={{
-                    color: value > 0 ? "#e0e0e0" : "#555",
+                    color: "#e0e0e0",
                     fontSize: "0.75rem",
                     fontWeight: "bold",
                   }}
