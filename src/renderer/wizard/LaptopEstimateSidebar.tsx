@@ -143,7 +143,7 @@ export function WizardSidebar({
   return (
     <div
       style={{
-        width: "220px",
+        width: "280px",
         flexShrink: 0,
         background: "#1a1a1a",
         border: "1px solid #333",
