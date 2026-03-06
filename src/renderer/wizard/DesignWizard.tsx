@@ -188,9 +188,9 @@ function WizardContent() {
   return (
     <div
       style={{
-        padding: "24px",
-        fontFamily: "system-ui, sans-serif",
-        color: "#e0e0e0",
+        padding: tokens.spacing.lg,
+        fontFamily: tokens.font.family,
+        color: tokens.colors.text,
         width: "100%",
         height: "100%",
         display: "flex",
@@ -200,12 +200,12 @@ function WizardContent() {
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexShrink: 0 }}>
         <div>
-          <h1 style={{ fontSize: "1.5rem", marginBottom: "8px" }}>Laptop Builder</h1>
-          <p style={{ color: "#888", marginBottom: "24px" }}>
+          <h1 style={{ fontSize: tokens.font.sizeTitle, marginBottom: tokens.spacing.sm }}>Laptop Builder</h1>
+          <p style={{ color: tokens.colors.textMuted, marginBottom: tokens.spacing.lg }}>
             {state.editingModelId ? `Editing ${state.name}` : `Design your new laptop model for ${GAME_YEAR}`}
           </p>
         </div>
-        <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+        <div style={{ display: "flex", gap: tokens.spacing.sm, flexShrink: 0 }}>
         <button
           onClick={() => dispatch({ type: "DEBUG_AUTOFILL" })}
           style={{
@@ -232,7 +232,7 @@ function WizardContent() {
             border: `1px solid ${tokens.colors.panelBorder}`,
             borderRadius: tokens.borderRadius.sm,
             color: tokens.colors.textMuted,
-            fontSize: "1.25rem",
+            fontSize: tokens.font.sizeLarge,
             width: "36px",
             height: "36px",
             cursor: "pointer",
@@ -258,17 +258,17 @@ function WizardContent() {
       <div
         style={{
           display: "flex",
-          gap: "24px",
+          gap: tokens.spacing.lg,
           flex: 1,
           minHeight: 0,
         }}
       >
         <div
           style={{
-            background: "#1e1e1e",
-            border: "1px solid #333",
-            borderRadius: "8px",
-            padding: "24px",
+            background: tokens.colors.background,
+            border: `1px solid ${tokens.colors.panelBorder}`,
+            borderRadius: tokens.borderRadius.md,
+            padding: tokens.spacing.lg,
             flex: 1,
             overflowY: "auto",
             minHeight: 0,
@@ -288,27 +288,19 @@ function WizardContent() {
         style={{
           display: "flex",
           justifyContent: "space-between",
-          marginTop: "16px",
+          marginTop: tokens.spacing.md,
           flexShrink: 0,
         }}
       >
-        <button
+        <MenuButton
           onClick={() => dispatch({ type: "PREV_STEP" })}
           disabled={isFirst}
-          style={{
-            padding: "10px 24px",
-            border: "1px solid #555",
-            borderRadius: "6px",
-            background: isFirst ? "#2a2a2a" : "#333",
-            color: isFirst ? "#666" : "#e0e0e0",
-            cursor: isFirst ? "default" : "pointer",
-            fontFamily: "inherit",
-            fontSize: "0.875rem",
-          }}
+          style={{ fontSize: tokens.font.sizeBase }}
         >
           Back
-        </button>
-        <button
+        </MenuButton>
+        <MenuButton
+          variant={isLast ? "accent" : "surface"}
           onClick={() => {
             if (isLast) {
               const design = wizardStateToDesign(state);
@@ -333,20 +325,10 @@ function WizardContent() {
             }
           }}
           disabled={!canAdvance}
-          style={{
-            padding: "10px 24px",
-            border: "none",
-            borderRadius: "6px",
-            background: !canAdvance ? "#2a2a2a" : isLast ? "#4caf50" : "#1976d2",
-            color: !canAdvance ? "#666" : "#fff",
-            cursor: !canAdvance ? "default" : "pointer",
-            fontFamily: "inherit",
-            fontSize: "0.875rem",
-            fontWeight: "bold",
-          }}
+          style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}
         >
           {isLast ? (state.editingModelId ? "Save Changes" : "Finalize Design") : "Next"}
-        </button>
+        </MenuButton>
       </div>
       {showCloseConfirm && (
         <ConfirmCloseDialog

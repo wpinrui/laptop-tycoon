@@ -1,5 +1,5 @@
 import { CSSProperties, useState } from "react";
-import { SaveSlotMeta, MAX_SLOTS, getAllSlotMeta, deleteSlot } from "./saveSystem";
+import { SaveSlotMeta, getAllSlotMeta, deleteSlot } from "./saveSystem";
 import { ContentPanel } from "./ContentPanel";
 import { MenuButton } from "./MenuButton";
 import { tokens } from "./tokens";
