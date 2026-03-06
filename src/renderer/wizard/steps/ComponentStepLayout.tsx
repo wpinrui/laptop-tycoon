@@ -159,7 +159,7 @@ function ComponentCard({
         onClick={onSelect}
         style={{
           background: isSelected ? "#1a3a5c" : "#2a2a2a",
-          border: isSelected ? "2px solid #90caf9" : "1px solid #444",
+          border: isSelected ? "2px solid #90caf9" : "2px solid #444",
           borderRadius: "8px",
           padding: "12px",
           textAlign: "left",
