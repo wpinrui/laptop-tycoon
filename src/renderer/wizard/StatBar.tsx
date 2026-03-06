@@ -127,11 +127,11 @@ export function computeStatTotals(state: ReturnType<typeof useWizard>["state"]):
     const coolMult = coolingMultiplier(state.thicknessCm, state.bezelMm, spaceUtil);
     const effectiveCooling = coolingFromSolution * coolMult;
     if (totalPower > effectiveCooling) {
-      const ratio = effectiveCooling / totalPower; // 0–1
-      const deficit = 1 - ratio;
-      const penalty = deficit * deficit * (1 + deficit); // cubic-ish: ramps hard at severe deficits
-      const perfLoss = Math.round((totals.performance ?? 0) * penalty);
-      const gamingLoss = Math.round((totals.gamingPerformance ?? 0) * penalty);
+      const deficit = 1 - effectiveCooling / totalPower; // 0–1
+      // Immediate 10% base penalty + cubic ramp for severe deficits
+      const penalty = 0.1 + 0.9 * deficit * deficit * (1 + deficit);
+      const perfLoss = Math.round((totals.performance ?? 0) * Math.min(1, penalty));
+      const gamingLoss = Math.round((totals.gamingPerformance ?? 0) * Math.min(1, penalty));
       totals.performance = Math.max(0, (totals.performance ?? 0) - perfLoss);
       totals.gamingPerformance = Math.max(0, (totals.gamingPerformance ?? 0) - gamingLoss);
     }
