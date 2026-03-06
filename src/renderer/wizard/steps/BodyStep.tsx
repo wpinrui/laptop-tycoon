@@ -24,6 +24,7 @@ import { ChassisOption, ChassisOptionSlot } from "../../../data/types";
 import { getAllChassisOptions } from "../types";
 import { Tooltip } from "../Tooltip";
 import { STAT_CONFIG, getStatColor } from "../StatBar";
+import { COLOUR_OPTIONS } from "../../../data/colourOptions";
 
 const VOLUME_WARNING_PERCENT = 85;
 
@@ -201,6 +202,61 @@ export function BodyStep() {
             </div>
           );
         })}
+
+        {/* Colour range */}
+        <div style={{ marginBottom: "24px" }}>
+          <div style={{ fontSize: "0.875rem", fontWeight: "bold", color: "#ccc", marginBottom: "8px" }}>
+            Colour Range
+            <span style={{ fontWeight: "normal", color: "#888", fontSize: "0.75rem", marginLeft: "8px" }}>
+              ({state.selectedColours.length} selected — more colours boost design appeal)
+            </span>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+            {COLOUR_OPTIONS.map((colour) => {
+              const isSelected = state.selectedColours.includes(colour.id);
+              const isLast = isSelected && state.selectedColours.length === 1;
+              return (
+                <button
+                  key={colour.id}
+                  onClick={() => dispatch({ type: "TOGGLE_COLOUR", colourId: colour.id })}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "8px 12px",
+                    background: isSelected ? "#1a3a5c" : "#2a2a2a",
+                    border: isSelected ? "2px solid #90caf9" : "2px solid #444",
+                    borderRadius: "8px",
+                    cursor: isLast ? "default" : "pointer",
+                    opacity: isLast ? 0.6 : 1,
+                    color: "#e0e0e0",
+                    fontFamily: "inherit",
+                    transition: "border-color 0.15s, background 0.15s",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                      borderRadius: "50%",
+                      background: colour.hex,
+                      border: "1px solid #555",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <div style={{ textAlign: "left" }}>
+                    <div style={{ fontSize: "0.75rem", fontWeight: "bold", color: isSelected ? "#90caf9" : "#e0e0e0" }}>
+                      {colour.name}
+                    </div>
+                    <div style={{ fontSize: "0.625rem", color: "#888" }}>
+                      +${colour.costPerUnit}/unit
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
     </div>
   );
 }

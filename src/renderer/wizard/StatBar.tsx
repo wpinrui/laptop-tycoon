@@ -104,14 +104,16 @@ export function computeStatTotals(state: ReturnType<typeof useWizard>["state"]):
     }
   }
 
-  // Design bonus from thinness and bezel
-  // Thickness: cubic curve (huge impact at extremes), up to 15 points
+  // Design bonus from thinness, bezel, and colour range
+  // Thickness: cubic curve (huge impact at extremes), up to 40 points
   const tRaw = 1 - (state.thicknessCm - THICKNESS_MIN_CM) / (THICKNESS_MAX_CM - THICKNESS_MIN_CM);
-  const thicknessBonus = Math.round(tRaw * tRaw * tRaw * 15);
-  // Bezel: slightly less impact, more linear (power of 1.3), up to 12 points
+  const thicknessBonus = Math.round(tRaw * tRaw * tRaw * 40);
+  // Bezel: slightly less impact, more linear (power of 1.3), up to 30 points
   const bRaw = 1 - (state.bezelMm - BEZEL_MIN_MM) / (BEZEL_MAX_MM - BEZEL_MIN_MM);
-  const bezelBonus = Math.round(Math.pow(bRaw, 1.3) * 12);
-  totals.design = (totals.design ?? 0) + thicknessBonus + bezelBonus;
+  const bezelBonus = Math.round(Math.pow(bRaw, 1.3) * 30);
+  // Colour range: diminishing returns per additional colour
+  const colourBonus = Math.round(Math.sqrt(state.selectedColours.length) * 8);
+  totals.design = (totals.design ?? 0) + thicknessBonus + bezelBonus + colourBonus;
 
   // Performance penalty when cooling is insufficient (quadratic curve)
   let totalPower = 0;

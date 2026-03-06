@@ -26,6 +26,7 @@ type WizardAction =
   | { type: "SET_THICKNESS"; thicknessCm: number }
   | { type: "SET_BEZEL"; bezelMm: number }
   | { type: "SET_CHASSIS_OPTION"; slot: ChassisOptionSlot; option: ChassisOption }
+  | { type: "TOGGLE_COLOUR"; colourId: string }
   | { type: "GO_TO_STEP"; step: WizardStep }
   | { type: "NEXT_STEP" }
   | { type: "PREV_STEP" }
@@ -74,6 +75,14 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         ...state,
         chassis: { ...state.chassis, [action.slot]: action.option },
       };
+    case "TOGGLE_COLOUR": {
+      const has = state.selectedColours.includes(action.colourId);
+      if (has && state.selectedColours.length <= 1) return state; // must have at least 1
+      const selectedColours = has
+        ? state.selectedColours.filter((c) => c !== action.colourId)
+        : [...state.selectedColours, action.colourId];
+      return { ...state, selectedColours };
+    }
     case "GO_TO_STEP": {
       const visited = new Set(state.visitedSteps);
       visited.add(action.step);

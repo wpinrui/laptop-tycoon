@@ -14,6 +14,7 @@ import {
   batteryWarningThresholdH,
   avgUsageMultiplier,
 } from "./constants";
+import { COLOUR_OPTIONS } from "../../data/colourOptions";
 import { getScreenSizeDef } from "../../data/screenSizes";
 import { getBatteryEra } from "../../data/batteryEras";
 import { PORT_TYPES } from "../../data/portTypes";
@@ -65,7 +66,12 @@ export function WizardSidebar({
   const batteryCost = Math.round(state.batteryCapacityWh * era.costPerWh);
   const batteryWeight = Math.round(state.batteryCapacityWh * era.weightPerWh);
 
-  const totalCost = componentCost + portCost + chassisOptionCost + batteryCost;
+  const colourCost = state.selectedColours.reduce((sum, id) => {
+    const opt = COLOUR_OPTIONS.find((c) => c.id === id);
+    return sum + (opt?.costPerUnit ?? 0);
+  }, 0);
+
+  const totalCost = componentCost + portCost + chassisOptionCost + batteryCost + colourCost;
   const totalPower = componentPower;
   const totalWeight = componentWeight + portWeight + chassisOptionWeight + batteryWeight;
 

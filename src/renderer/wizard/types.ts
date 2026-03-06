@@ -65,6 +65,7 @@ export interface WizardState {
     keyboardFeature: ChassisOption | null;
     trackpadFeature: ChassisOption | null;
   };
+  selectedColours: string[];
   visitedSteps: Set<WizardStep>;
 }
 
@@ -91,5 +92,6 @@ export const INITIAL_WIZARD_STATE: WizardState = {
     keyboardFeature: null,
     trackpadFeature: null,
   },
+  selectedColours: ["silver"],
   visitedSteps: new Set<WizardStep>(["metadata"]),
 };
