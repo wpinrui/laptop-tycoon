@@ -12,9 +12,9 @@ import {
 import { useGame } from "../state/GameContext";
 import { useNavigation } from "../navigation/NavigationContext";
 import { LaptopDesign } from "../state/gameTypes";
-import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
-import { tokens, overlayStyle } from "../shell/tokens";
+import { tokens } from "../shell/tokens";
+import { ConfirmDiscardDialog } from "../shell/ConfirmDiscardDialog";
 import { MetadataStep } from "./steps/MetadataStep";
 import { ScreenSizeStep } from "./steps/ScreenSizeStep";
 import { ProcessingStep } from "./steps/ProcessingStep";
@@ -94,33 +94,6 @@ function wizardStateToDesign(state: WizardState): LaptopDesign {
   };
 }
 
-function ConfirmCloseDialog({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
-  return (
-    <div
-      style={overlayStyle}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onCancel();
-      }}
-    >
-      <ContentPanel maxWidth={400}>
-        <h2 style={{ margin: 0, fontSize: tokens.font.sizeTitle, fontWeight: 700, textAlign: "center" }}>
-          Discard Design?
-        </h2>
-        <p style={{ margin: 0, marginTop: tokens.spacing.xs, fontSize: tokens.font.sizeBase, color: tokens.colors.textMuted, textAlign: "center", marginBottom: tokens.spacing.md }}>
-          All unsaved progress on this laptop design will be lost.
-        </p>
-        <div style={{ display: "flex", gap: tokens.spacing.sm }}>
-          <MenuButton onClick={onCancel} style={{ flex: 1 }}>
-            Keep Editing
-          </MenuButton>
-          <MenuButton variant="danger" onClick={onConfirm} style={{ flex: 1 }}>
-            Discard
-          </MenuButton>
-        </div>
-      </ContentPanel>
-    </div>
-  );
-}
 
 function WizardContent() {
   const { state, dispatch } = useWizard();
@@ -327,7 +300,9 @@ function WizardContent() {
         </MenuButton>
       </div>
       {showCloseConfirm && (
-        <ConfirmCloseDialog
+        <ConfirmDiscardDialog
+          title="Discard Design?"
+          message="All unsaved progress on this laptop design will be lost."
           onConfirm={() => {
             dispatch({ type: "RESET" });
             navigateTo(state.editingModelId ? "modelManagement" : "dashboard");

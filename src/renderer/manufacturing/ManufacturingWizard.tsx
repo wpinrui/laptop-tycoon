@@ -8,9 +8,9 @@ import { MarketingStep } from "./steps/MarketingStep";
 import { ManufacturingStep } from "./steps/ManufacturingStep";
 import { PressReleaseStep } from "./steps/PressReleaseStep";
 import { ConfirmationStep } from "./steps/ConfirmationStep";
-import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
-import { tokens, overlayStyle } from "../shell/tokens";
+import { tokens } from "../shell/tokens";
+import { ConfirmDiscardDialog } from "../shell/ConfirmDiscardDialog";
 import { buildCostBreakdown } from "./utils/economiesOfScale";
 import { StatusBar } from "../shell/StatusBar";
 
@@ -29,33 +29,6 @@ function isStepComplete(step: ManufacturingWizardStep, state: ManufacturingWizar
   }
 }
 
-function ConfirmCloseDialog({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
-  return (
-    <div
-      style={overlayStyle}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onCancel();
-      }}
-    >
-      <ContentPanel maxWidth={400}>
-        <h2 style={{ margin: 0, fontSize: tokens.font.sizeTitle, fontWeight: 700, textAlign: "center" }}>
-          Discard Plan?
-        </h2>
-        <p style={{ margin: 0, marginTop: tokens.spacing.xs, fontSize: tokens.font.sizeBase, color: tokens.colors.textMuted, textAlign: "center", marginBottom: tokens.spacing.md }}>
-          All unsaved progress on this manufacturing plan will be lost.
-        </p>
-        <div style={{ display: "flex", gap: tokens.spacing.sm }}>
-          <MenuButton onClick={onCancel} style={{ flex: 1 }}>
-            Keep Editing
-          </MenuButton>
-          <MenuButton variant="danger" onClick={onConfirm} style={{ flex: 1 }}>
-            Discard
-          </MenuButton>
-        </div>
-      </ContentPanel>
-    </div>
-  );
-}
 
 function WizardContent() {
   const { state, dispatch } = useMfgWizard();
@@ -224,7 +197,9 @@ function WizardContent() {
       </div>
 
       {showCloseConfirm && (
-        <ConfirmCloseDialog
+        <ConfirmDiscardDialog
+          title="Discard Plan?"
+          message="All unsaved progress on this manufacturing plan will be lost."
           onConfirm={() => navigateTo("modelManagement")}
           onCancel={() => setShowCloseConfirm(false)}
         />
