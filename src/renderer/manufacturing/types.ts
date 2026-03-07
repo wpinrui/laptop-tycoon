@@ -47,6 +47,7 @@ export interface ManufacturingPlan {
 export interface PressReleasePrompt {
   id: number;
   text: string;
+  example: string;
   requiresModelType?: "successor" | "specBump";
 }
 
@@ -76,6 +77,7 @@ export interface ManufacturingWizardState {
   campaignId: string | null;
   unitPrice: number;
   unitsOrdered: number;
+  supportBudget: number;
   pressReleasePromptIds: number[];
   pressReleaseResponses: Record<number, string>;
   noiseMargin: number;

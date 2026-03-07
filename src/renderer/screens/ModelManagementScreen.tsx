@@ -8,6 +8,7 @@ import { LaptopModel, ModelStatus } from "../state/gameTypes";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { tokens } from "../shell/tokens";
+import { StatusBar } from "../shell/StatusBar";
 import { getActiveModels, MAX_MODELS } from "./dashboard/utils";
 import {
   Laptop,
@@ -92,8 +93,12 @@ export function ModelManagementScreen() {
   }
 
   function handleManufacturing(model: LaptopModel) {
-    const promptIds = selectPrompts(model.design.modelType, null);
-    mfgDispatch({ type: "INIT", modelId: model.design.id, promptIds });
+    if (model.manufacturingPlan) {
+      mfgDispatch({ type: "LOAD_PLAN", modelId: model.design.id, plan: model.manufacturingPlan });
+    } else {
+      const promptIds = selectPrompts(model.design.modelType, null);
+      mfgDispatch({ type: "INIT", modelId: model.design.id, promptIds, baseBomCost: model.design.unitCost });
+    }
     navigateTo("manufacturingWizard");
   }
 
@@ -193,6 +198,7 @@ export function ModelManagementScreen() {
         </div>
       )}
       </div>
+      <StatusBar />
     </ContentPanel>
   );
 }
@@ -281,14 +287,14 @@ function ModelCard({
                   </span>
                 </MenuButton>
               )}
-              {onAddManufacturing && !hasPlan && (
+              {onAddManufacturing && (
                 <MenuButton
                   variant="accent"
                   onClick={onAddManufacturing}
                   style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
                 >
                   <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-                    <Factory size={14} /> Add Manufacturing Plan
+                    <Factory size={14} /> {hasPlan ? "Edit Manufacturing Plan" : "Add Manufacturing Plan"}
                   </span>
                 </MenuButton>
               )}

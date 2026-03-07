@@ -5,6 +5,7 @@ import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { tokens } from "../shell/tokens";
 import { PauseMenu } from "../shell/PauseMenu";
+import { StatusBar } from "../shell/StatusBar";
 import { DesignWizard } from "../wizard/DesignWizard";
 import { ManufacturingWizard } from "../manufacturing/ManufacturingWizard";
 import { MainMenuScreen } from "../screens/MainMenuScreen";
@@ -22,6 +23,7 @@ function PlaceholderScreen({ title }: { title: string }) {
       <MenuButton onClick={() => navigateTo("dashboard")}>
         Back to Dashboard
       </MenuButton>
+      <StatusBar />
     </ContentPanel>
   );
 }

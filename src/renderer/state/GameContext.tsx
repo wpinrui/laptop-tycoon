@@ -58,7 +58,6 @@ function gameReducer(state: GameState, action: GameAction): GameState {
                 manufacturingPlan: action.plan,
                 retailPrice: action.plan.manufacturing.unitPrice,
                 manufacturingQuantity: action.plan.manufacturing.unitsOrdered,
-                status: "manufacturing" as const,
               }
             : m,
         ),

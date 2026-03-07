@@ -3,8 +3,11 @@ import { useMfgWizard } from "../ManufacturingWizardContext";
 import { useGame } from "../../state/GameContext";
 import { tokens } from "../../shell/tokens";
 import { AD_CAMPAIGNS, getCampaignCost } from "../data/campaigns";
-import { calculateUnitCost, calculateTotalCost } from "../utils/economiesOfScale";
-import { MULTI_MODEL_OVERHEAD } from "../utils/constants";
+import { calculateCostBreakdown } from "../utils/economiesOfScale";
+import {
+  MULTI_MODEL_OVERHEAD, ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST,
+  CHANNEL_MARGIN_RATE, TOOLING_COST, CERTIFICATION_COST,
+} from "../utils/constants";
 import { PRESS_RELEASE_PROMPTS } from "../data/pressReleasePrompts";
 import { getActiveModels } from "../../screens/dashboard/utils";
 
@@ -32,18 +35,30 @@ export function ConfirmationStep() {
   const campaign = AD_CAMPAIGNS.find((c) => c.id === state.campaignId) ?? AD_CAMPAIGNS[0];
   const campaignCost = getCampaignCost(campaign, gameState.year);
   const activeModelCount = getActiveModels(gameState).length;
-  const unitCost = calculateUnitCost(model.design.unitCost, state.unitsOrdered);
-  const totalMfgCost = calculateTotalCost(model.design.unitCost, state.unitsOrdered, activeModelCount, MULTI_MODEL_OVERHEAD);
-  const totalCost = totalMfgCost + campaignCost;
-  const cashAfter = gameState.cash - totalCost;
+  const modelType = model.design.modelType ?? "brandNew";
+  const overhead = activeModelCount > 1 ? MULTI_MODEL_OVERHEAD : 0;
+  const cost = calculateCostBreakdown({
+    baseBomCost: model.design.unitCost,
+    unitsOrdered: state.unitsOrdered,
+    retailPrice: state.unitPrice,
+    supportBudget: state.supportBudget,
+    assemblyQa: ASSEMBLY_QA_COST,
+    packagingLogistics: PACKAGING_LOGISTICS_COST,
+    channelMarginRate: CHANNEL_MARGIN_RATE,
+    toolingCost: TOOLING_COST[modelType] ?? 0,
+    certificationCost: CERTIFICATION_COST[modelType] ?? 0,
+    multiModelOverhead: overhead,
+    adCost: campaignCost,
+  });
+  const cashAfter = gameState.cash - cost.totalManufacturingSpend;
 
   return (
-    <div>
+    <div style={{ maxWidth: 720 }}>
       <h2 style={{ margin: 0, fontSize: tokens.font.sizeTitle, marginBottom: tokens.spacing.xs }}>
         Confirm Manufacturing Plan
       </h2>
       <p style={{ color: tokens.colors.textMuted, margin: 0, marginBottom: tokens.spacing.lg }}>
-        Review your plan for {model.design.name}. Once confirmed, this plan is locked for the year.
+        Review your plan for {model.design.name}. You can edit this plan until you advance the year.
       </p>
 
       {/* Marketing */}
@@ -86,11 +101,11 @@ export function ConfirmationStep() {
         </div>
         <div style={rowStyle}>
           <span style={{ color: tokens.colors.textMuted }}>Unit manufacturing cost</span>
-          <span style={{ fontWeight: 600 }}>${Math.round(unitCost).toLocaleString()}</span>
+          <span style={{ fontWeight: 600 }}>${Math.round(cost.manufacturingCostPerUnit).toLocaleString()}</span>
         </div>
         <div style={rowStyle}>
-          <span style={{ color: tokens.colors.textMuted }}>Total manufacturing cost</span>
-          <span style={{ fontWeight: 600 }}>${Math.round(totalMfgCost).toLocaleString()}</span>
+          <span style={{ color: tokens.colors.textMuted }}>Total spend</span>
+          <span style={{ fontWeight: 600 }}>${Math.round(cost.totalManufacturingSpend).toLocaleString()}</span>
         </div>
       </div>
 
@@ -123,9 +138,9 @@ export function ConfirmationStep() {
         borderColor: cashAfter < 0 ? tokens.colors.danger : tokens.colors.panelBorder,
       }}>
         <div style={rowStyle}>
-          <span style={{ fontWeight: 600 }}>Total cost (manufacturing + campaign)</span>
+          <span style={{ fontWeight: 600 }}>Total cost (manufacturing + fixed)</span>
           <span style={{ fontWeight: 700, fontSize: tokens.font.sizeLarge }}>
-            ${Math.round(totalCost).toLocaleString()}
+            ${Math.round(cost.totalManufacturingSpend).toLocaleString()}
           </span>
         </div>
         <div style={rowStyle}>

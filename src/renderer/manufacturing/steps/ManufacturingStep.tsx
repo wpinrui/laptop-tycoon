@@ -2,17 +2,22 @@ import { CSSProperties, useMemo, useState, useRef, useEffect } from "react";
 import { useMfgWizard } from "../ManufacturingWizardContext";
 import { useGame } from "../../state/GameContext";
 import { tokens } from "../../shell/tokens";
-import { calculateUnitCost, calculateTotalCost } from "../utils/economiesOfScale";
-import { AD_CAMPAIGNS } from "../data/campaigns";
+import { calculateBomUnitCost, calculateCostBreakdown } from "../utils/economiesOfScale";
+import { AD_CAMPAIGNS, getCampaignCost } from "../data/campaigns";
 import { approxPercentile } from "../utils/skewNormal";
-import { MIN_BATCH_SIZE, MULTI_MODEL_OVERHEAD, MAX_PRICE_MULTIPLIER } from "../utils/constants";
+import {
+  MIN_BATCH_SIZE, MULTI_MODEL_OVERHEAD,
+  ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST, CHANNEL_MARGIN_RATE,
+  TOOLING_COST, CERTIFICATION_COST,
+  SUPPORT_BUDGET_MIN, SUPPORT_BUDGET_MAX,
+} from "../utils/constants";
 import { getActiveModels } from "../../screens/dashboard/utils";
 
 const twoColumnStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "1fr 1fr",
   gap: tokens.spacing.lg,
-  maxWidth: 900,
+  maxWidth: 1080,
 };
 
 const panelStyle: CSSProperties = {
@@ -37,11 +42,12 @@ const bigValueStyle: CSSProperties = {
   margin: `${tokens.spacing.sm}px 0`,
 };
 
-const projRowStyle: CSSProperties = {
+const detailRowStyle: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
-  padding: `${tokens.spacing.sm}px 0`,
-  borderBottom: `1px solid ${tokens.colors.panelBorder}`,
+  padding: `2px 0`,
+  fontSize: tokens.font.sizeSmall,
+  color: tokens.colors.textMuted,
 };
 
 const editableInputStyle: CSSProperties = {
@@ -72,6 +78,7 @@ function EditableValue({
   suffix?: string;
 }) {
   const [editing, setEditing] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -106,7 +113,15 @@ function EditableValue({
 
   return (
     <div
-      style={{ ...bigValueStyle, cursor: "text" }}
+      style={{
+        ...bigValueStyle,
+        cursor: "pointer",
+        textDecoration: hovered ? "underline" : "none",
+        filter: hovered ? "brightness(1.3)" : "none",
+        transition: "filter 0.15s, text-decoration 0.15s",
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       onClick={() => {
         setDraft(String(value));
         setEditing(true);
@@ -118,31 +133,120 @@ function EditableValue({
   );
 }
 
+function MetricCard({ label, value, subtitle, color, bgColor }: {
+  label: string;
+  value: string;
+  subtitle?: string;
+  color: string;
+  bgColor: string;
+}) {
+  return (
+    <div style={{
+      background: bgColor,
+      borderRadius: tokens.borderRadius.md,
+      padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
+      textAlign: "center",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      minHeight: 72,
+    }}>
+      <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, marginBottom: 2 }}>
+        {label}
+      </div>
+      <div style={{ fontSize: tokens.font.sizeLarge, fontWeight: 700, color }}>
+        {value}
+      </div>
+      {subtitle && (
+        <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, marginTop: 2 }}>
+          {subtitle}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DetailRow({ label, value, color }: { label: string; value: string; color?: string }) {
+  return (
+    <div style={detailRowStyle}>
+      <span>{label}</span>
+      <span style={{ color: color ?? tokens.colors.textMuted, fontWeight: 500 }}>{value}</span>
+    </div>
+  );
+}
+
 // Placeholder base demand — will be replaced by actual sales simulation later
 const PLACEHOLDER_BASE_DEMAND = 10_000;
+
+/** Snap price to nearest $50 ending in 9, e.g. $449, $499, $549 */
+function snapPrice(raw: number): number {
+  return Math.round(raw / 50) * 50 - 1;
+}
 
 export function ManufacturingStep() {
   const { state, dispatch } = useMfgWizard();
   const { state: gameState } = useGame();
+  const [showDetails, setShowDetails] = useState(true);
 
   const model = gameState.models.find((m) => m.design.id === state.modelId);
 
-  const baseCost = model?.design.unitCost ?? 0;
+  const baseBom = model?.design.unitCost ?? 0;
+  const modelType = model?.design.modelType ?? "brandNew";
   const activeModelCount = getActiveModels(gameState).length;
 
-  const minPrice = Math.ceil(baseCost * 1.1);
-  const maxPrice = Math.ceil(baseCost * MAX_PRICE_MULTIPLIER);
-  const maxQuantity = Math.max(MIN_BATCH_SIZE, Math.floor(gameState.cash / Math.max(1, calculateUnitCost(baseCost, MIN_BATCH_SIZE))));
+  const campaign = AD_CAMPAIGNS.find((c) => c.id === state.campaignId) ?? AD_CAMPAIGNS[0];
+  const adCost = getCampaignCost(campaign, gameState.year);
 
-  // Ensure unitPrice has a sensible default
-  const effectivePrice = state.unitPrice || Math.ceil(baseCost * 1.5);
+  const toolingCost = TOOLING_COST[modelType] ?? 0;
+  const certCost = CERTIFICATION_COST[modelType] ?? 0;
+  const overhead = activeModelCount > 1 ? MULTI_MODEL_OVERHEAD : 0;
+
+  // Fixed costs that must be paid regardless
+  const totalFixedCosts = toolingCost + certCost + overhead + adCost;
+
+  // Price slider: based on total cost per unit (BOM + assembly + packaging + support)
+  const baseTotalPerUnit = baseBom + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST + state.supportBudget;
+  const minPrice = Math.max(snapPrice(baseTotalPerUnit * 0.5), 49);
+  const maxPrice = snapPrice(baseTotalPerUnit * 4);
+
+  // Quantity slider: binary search for max affordable
+  const cashForManufacturing = Math.max(0, gameState.cash - totalFixedCosts);
+  const minPerUnit = calculateBomUnitCost(baseBom, 10_000_000) + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST + state.supportBudget;
+  const maxQuantity = (() => {
+    let lo = MIN_BATCH_SIZE;
+    let hi = Math.max(MIN_BATCH_SIZE, Math.floor(cashForManufacturing / Math.max(1, minPerUnit)));
+    while (lo < hi) {
+      const mid = Math.ceil((lo + hi) / 2);
+      const mfgPerUnit = calculateBomUnitCost(baseBom, mid) + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST + state.supportBudget;
+      if (mfgPerUnit * mid <= cashForManufacturing) {
+        lo = mid;
+      } else {
+        hi = mid - 1;
+      }
+    }
+    return Math.max(MIN_BATCH_SIZE, lo);
+  })();
+
+  // Effective values
+  const effectivePrice = state.unitPrice || snapPrice(baseTotalPerUnit * 1.5);
   const effectiveQty = state.unitsOrdered || MIN_BATCH_SIZE;
 
-  const unitCost = calculateUnitCost(baseCost, effectiveQty);
-  const totalCost = calculateTotalCost(baseCost, effectiveQty, activeModelCount, MULTI_MODEL_OVERHEAD);
+  // Full cost breakdown
+  const cost = calculateCostBreakdown({
+    baseBomCost: baseBom,
+    unitsOrdered: effectiveQty,
+    retailPrice: effectivePrice,
+    supportBudget: state.supportBudget,
+    assemblyQa: ASSEMBLY_QA_COST,
+    packagingLogistics: PACKAGING_LOGISTICS_COST,
+    channelMarginRate: CHANNEL_MARGIN_RATE,
+    toolingCost,
+    certificationCost: certCost,
+    multiModelOverhead: overhead,
+    adCost,
+  });
 
   // Demand projection
-  const campaign = AD_CAMPAIGNS.find((c) => c.id === state.campaignId) ?? AD_CAMPAIGNS[0];
   const { distribution: dist } = campaign;
 
   const projections = useMemo(() => {
@@ -161,10 +265,22 @@ export function ManufacturingStep() {
 
   if (!model) return <p>Model not found.</p>;
 
-  const pessimisticProfit = projections.displayLower * effectivePrice - totalCost;
+  // Profit uses revenue per unit (after channel margin), not retail price
+  const pessimisticProfit = projections.displayLower * cost.revenuePerUnit - cost.totalManufacturingSpend;
   const optimisticSold = Math.min(projections.displayUpper, effectiveQty);
-  const optimisticProfit = optimisticSold * effectivePrice - totalCost;
-  const cashAfter = gameState.cash - totalCost;
+  const optimisticProfit = optimisticSold * cost.revenuePerUnit - cost.totalManufacturingSpend;
+  const cashAfter = gameState.cash - cost.totalManufacturingSpend;
+
+  const marginPerUnit = cost.revenuePerUnit - cost.fullyLoadedCostPerUnit;
+  const marginPct = effectivePrice > 0 ? (marginPerUnit / effectivePrice) * 100 : 0;
+
+  const profitable = marginPerUnit > 0;
+  const profitColor = profitable ? "#66bb6a" : tokens.colors.danger;
+  const profitBg = profitable ? "rgba(102, 187, 106, 0.1)" : "rgba(239, 83, 80, 0.1)";
+  const cashColor = cashAfter < 0 ? tokens.colors.danger : "#66bb6a";
+  const cashBg = cashAfter < 0 ? "rgba(239, 83, 80, 0.1)" : "rgba(102, 187, 106, 0.1)";
+
+  const fmt = (n: number) => `$${Math.round(n).toLocaleString()}`;
 
   return (
     <div>
@@ -182,7 +298,7 @@ export function ManufacturingStep() {
             <div style={sliderLabelStyle}>
               <span style={{ fontWeight: 600 }}>Retail Price</span>
               <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
-                Unit cost: ${Math.round(baseCost).toLocaleString()}
+                BOM: {fmt(baseBom)}
               </span>
             </div>
             <EditableValue
@@ -196,14 +312,17 @@ export function ManufacturingStep() {
               type="range"
               min={minPrice}
               max={maxPrice}
-              step={Math.max(1, Math.round((maxPrice - minPrice) / 100))}
+              step={50}
               value={effectivePrice}
-              onChange={(e) => dispatch({ type: "SET_UNIT_PRICE", unitPrice: Number(e.target.value) })}
+              onChange={(e) => {
+                const raw = Number(e.target.value);
+                dispatch({ type: "SET_UNIT_PRICE", unitPrice: snapPrice(raw) });
+              }}
               style={{ width: "100%", accentColor: "#90caf9" }}
             />
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
-              <span>${minPrice.toLocaleString()}</span>
-              <span>${maxPrice.toLocaleString()}</span>
+              <span>{fmt(minPrice)}</span>
+              <span>{fmt(maxPrice)}</span>
             </div>
           </div>
 
@@ -235,74 +354,165 @@ export function ManufacturingStep() {
               <span>{maxQuantity.toLocaleString()}</span>
             </div>
           </div>
+
+          <div style={panelStyle}>
+            <div style={sliderLabelStyle}>
+              <span style={{ fontWeight: 600 }}>Support Budget</span>
+              <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
+                per unit
+              </span>
+            </div>
+            <div style={bigValueStyle}>
+              {fmt(state.supportBudget)} / unit
+            </div>
+            <input
+              type="range"
+              min={SUPPORT_BUDGET_MIN}
+              max={SUPPORT_BUDGET_MAX}
+              step={1}
+              value={state.supportBudget}
+              onChange={(e) => dispatch({ type: "SET_SUPPORT_BUDGET", supportBudget: Number(e.target.value) })}
+              style={{ width: "100%", accentColor: "#90caf9" }}
+            />
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
+              <span>{fmt(SUPPORT_BUDGET_MIN)}</span>
+              <span>{fmt(SUPPORT_BUDGET_MAX)}</span>
+            </div>
+          </div>
         </div>
 
         {/* Right: Projections */}
-        <div style={panelStyle}>
-          <h3 style={{ margin: 0, marginBottom: tokens.spacing.md, fontSize: tokens.font.sizeLarge }}>
-            Projections
-          </h3>
-
-          <div style={projRowStyle}>
-            <span style={{ color: tokens.colors.textMuted }}>Manufacturing cost / unit</span>
-            <span style={{ fontWeight: 600 }}>${Math.round(unitCost).toLocaleString()}</span>
-          </div>
-          <div style={projRowStyle}>
-            <span style={{ color: tokens.colors.textMuted }}>Total manufacturing cost</span>
-            <span style={{ fontWeight: 600 }}>${Math.round(totalCost).toLocaleString()}</span>
-          </div>
-          {activeModelCount > 1 && (
-            <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, padding: `${tokens.spacing.xs}px 0` }}>
-              Includes ${MULTI_MODEL_OVERHEAD.toLocaleString()} multi-model overhead
-            </div>
-          )}
-          <div style={projRowStyle}>
-            <span style={{ color: tokens.colors.textMuted }}>Margin per unit</span>
-            <span style={{ fontWeight: 600, color: effectivePrice - unitCost > 0 ? "#66bb6a" : tokens.colors.danger }}>
-              ${Math.round(effectivePrice - unitCost).toLocaleString()} ({Math.round(((effectivePrice - unitCost) / effectivePrice) * 100)}%)
-            </span>
-          </div>
-
-          <div style={{ height: 1, background: tokens.colors.panelBorder, margin: `${tokens.spacing.md}px 0` }} />
-
-          <div style={projRowStyle}>
-            <span style={{ color: tokens.colors.textMuted }}>Projected demand</span>
-            <span style={{ fontWeight: 600 }}>
-              {projections.displayLower.toLocaleString()} – {projections.displayUpper.toLocaleString()}
-            </span>
-          </div>
-          <div style={projRowStyle}>
-            <span style={{ color: tokens.colors.textMuted }}>Projected profit</span>
-            <span style={{
-              fontWeight: 600,
-              color: pessimisticProfit < 0 ? tokens.colors.danger : "#66bb6a",
-            }}>
-              ${Math.round(pessimisticProfit).toLocaleString()} – ${Math.round(optimisticProfit).toLocaleString()}
-            </span>
-          </div>
-          <div style={projRowStyle}>
-            <span style={{ color: tokens.colors.textMuted }}>Break-even units</span>
-            <span style={{ fontWeight: 600 }}>
-              {effectivePrice > 0 ? Math.ceil(totalCost / effectivePrice).toLocaleString() : "—"}
-            </span>
+        <div style={{ display: "flex", flexDirection: "column", gap: tokens.spacing.md }}>
+          {/* Hero metrics */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: tokens.spacing.sm,
+          }}>
+            <MetricCard
+              label="Margin / unit"
+              value={`${fmt(marginPerUnit)} (${Math.round(marginPct)}%)`}
+              color={profitColor}
+              bgColor={profitBg}
+            />
+            <MetricCard
+              label="Manufacturing cost"
+              value={fmt(cost.manufacturingCostPerUnit)}
+              subtitle="per unit"
+              color={tokens.colors.text}
+              bgColor={tokens.colors.surface}
+            />
+            <MetricCard
+              label="Projected profit"
+              value={`${fmt(pessimisticProfit)} to ${fmt(optimisticProfit)}`}
+              color={pessimisticProfit < 0 ? tokens.colors.danger : "#66bb6a"}
+              bgColor={pessimisticProfit < 0 ? "rgba(239, 83, 80, 0.1)" : "rgba(102, 187, 106, 0.1)"}
+            />
+            <MetricCard
+              label="Projected demand"
+              value={`${projections.displayLower.toLocaleString()} - ${projections.displayUpper.toLocaleString()}`}
+              color={tokens.colors.text}
+              bgColor={tokens.colors.surface}
+            />
           </div>
 
-          <div style={{ height: 1, background: tokens.colors.panelBorder, margin: `${tokens.spacing.md}px 0` }} />
-
-          <div style={{ display: "flex", justifyContent: "space-between", padding: `${tokens.spacing.sm}px 0` }}>
+          {/* Cash after - full width, prominent */}
+          <div style={{
+            background: cashBg,
+            border: `1px solid ${cashAfter < 0 ? tokens.colors.danger : "rgba(102, 187, 106, 0.3)"}`,
+            borderRadius: tokens.borderRadius.md,
+            padding: `${tokens.spacing.md}px ${tokens.spacing.lg}px`,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}>
             <span style={{ fontWeight: 600 }}>Cash after manufacturing</span>
-            <span style={{
-              fontWeight: 700,
-              fontSize: tokens.font.sizeLarge,
-              color: cashAfter < 0 ? tokens.colors.danger : tokens.colors.text,
-            }}>
-              ${Math.round(cashAfter).toLocaleString()}
+            <span style={{ fontWeight: 700, fontSize: tokens.font.sizeTitle, color: cashColor }}>
+              {fmt(cashAfter)}
             </span>
           </div>
           {cashAfter < 0 && (
-            <p style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.danger, margin: 0 }}>
+            <p style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.danger, margin: 0, marginTop: -tokens.spacing.xs }}>
               Warning: You will be in debt. Ending the year with negative cash means game over.
             </p>
+          )}
+
+          {/* Key summary rows */}
+          <div style={panelStyle}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: tokens.spacing.xs }}>
+              <span style={{ color: tokens.colors.textMuted }}>Channel margin ({Math.round(CHANNEL_MARGIN_RATE * 100)}%)</span>
+              <span style={{ fontWeight: 600 }}>{fmt(cost.channelMargin)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: tokens.spacing.xs }}>
+              <span style={{ fontWeight: 600 }}>Revenue per unit</span>
+              <span style={{ fontWeight: 600 }}>{fmt(cost.revenuePerUnit)}</span>
+            </div>
+            <div style={{ height: 1, background: tokens.colors.panelBorder, margin: `${tokens.spacing.xs}px 0` }} />
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: tokens.spacing.xs }}>
+              <span style={{ fontWeight: 600 }}>Total fixed costs</span>
+              <span style={{ fontWeight: 600 }}>{fmt(cost.totalFixedCosts)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: tokens.spacing.xs }}>
+              <span style={{ color: tokens.colors.textMuted }}>Fixed cost / unit (amortised)</span>
+              <span style={{ fontWeight: 600 }}>{fmt(cost.fixedCostPerUnit)}</span>
+            </div>
+            <div style={{ height: 1, background: tokens.colors.panelBorder, margin: `${tokens.spacing.xs}px 0` }} />
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: tokens.spacing.xs }}>
+              <span style={{ fontWeight: 600 }}>Break-even units</span>
+              <span style={{ fontWeight: 600 }}>
+                {cost.revenuePerUnit > 0
+                  ? Math.ceil(cost.totalManufacturingSpend / cost.revenuePerUnit).toLocaleString()
+                  : "\u2014"}
+              </span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span style={{ fontWeight: 600 }}>Total spend</span>
+              <span style={{ fontWeight: 600 }}>{fmt(cost.totalManufacturingSpend)}</span>
+            </div>
+          </div>
+
+          {/* Collapsible cost details */}
+          <div
+            style={{
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: tokens.spacing.xs,
+              color: tokens.colors.textMuted,
+              fontSize: tokens.font.sizeSmall,
+              userSelect: "none",
+            }}
+            onClick={() => setShowDetails(!showDetails)}
+          >
+            <span style={{ transform: showDetails ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s", display: "inline-block" }}>
+              {"\u25B6"}
+            </span>
+            Cost details
+          </div>
+
+          {showDetails && (
+            <div style={{
+              ...panelStyle,
+              padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+            }}>
+              <DetailRow label="Component cost (BOM)" value={fmt(cost.bomCost)} />
+              <DetailRow label="Assembly & QA" value={fmt(cost.assemblyQa)} />
+              <DetailRow label="Packaging & logistics" value={fmt(cost.packagingLogistics)} />
+              <DetailRow label="Support reserve" value={fmt(cost.supportBudget)} />
+              {cost.eosDiscount < 0 && (
+                <DetailRow label="Economies of scale" value={`-${fmt(Math.abs(cost.eosDiscount))}`} color="#66bb6a" />
+              )}
+              <div style={{ height: 1, background: tokens.colors.panelBorder, margin: `${tokens.spacing.xs}px 0` }} />
+              <DetailRow label={`Channel margin (${Math.round(CHANNEL_MARGIN_RATE * 100)}%)`} value={fmt(cost.channelMargin)} />
+              {cost.toolingCost > 0 && <DetailRow label="Body R&D / tooling" value={fmt(cost.toolingCost)} />}
+              {cost.certificationCost > 0 && <DetailRow label="Certification" value={fmt(cost.certificationCost)} />}
+              {cost.multiModelOverhead > 0 && <DetailRow label="Multi-model overhead" value={fmt(cost.multiModelOverhead)} />}
+              <DetailRow label="Advertising" value={fmt(cost.adCost)} />
+              <DetailRow label="Fixed cost / unit (amortised)" value={fmt(cost.fixedCostPerUnit)} />
+            </div>
           )}
         </div>
       </div>

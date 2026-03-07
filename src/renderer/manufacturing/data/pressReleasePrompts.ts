@@ -1,18 +1,18 @@
 import { PressReleasePrompt } from "../types";
 
 export const PRESS_RELEASE_PROMPTS: PressReleasePrompt[] = [
-  { id: 1, text: "Describe this laptop in one sentence." },
-  { id: 2, text: "What's the single standout feature?" },
-  { id: 3, text: "Who is this laptop built for?" },
-  { id: 4, text: "What problem does this laptop solve?" },
-  { id: 5, text: "How does this compare to your previous model?", requiresModelType: "successor" },
-  { id: 6, text: "What should customers expect from the build quality?" },
-  { id: 7, text: "Describe the experience of using this laptop in one word, then explain." },
-  { id: 8, text: "What would you say to someone choosing between this and a competitor?" },
-  { id: 9, text: "What's something about this laptop that doesn't show up in the spec sheet?" },
-  { id: 10, text: "If you could only keep one feature, which would it be and why?" },
-  { id: 11, text: "What compromises did you make, and why are they worth it?" },
-  { id: 12, text: "What's your ambition for this product line going forward?" },
+  { id: 1, text: "Describe this laptop in one phrase.", example: "A powerhouse for creators on the go" },
+  { id: 2, text: "What's the single standout feature?", example: "All-day battery that outlasts the competition" },
+  { id: 3, text: "Who is this laptop built for?", example: "Students who need power without breaking the bank" },
+  { id: 4, text: "What problem does this laptop solve?", example: "No more choosing between portability and performance" },
+  { id: 5, text: "How does this compare to your previous model?", example: "Faster, lighter, and better in every way", requiresModelType: "successor" },
+  { id: 6, text: "What should customers expect from the build quality?", example: "Premium aluminium that survives the daily commute" },
+  { id: 7, text: "Sum up this laptop in one word, then explain.", example: "Relentless — it keeps up no matter what you throw at it" },
+  { id: 8, text: "Why pick this over a competitor?", example: "More screen, more power, less money" },
+  { id: 9, text: "What doesn't show up in the spec sheet?", example: "The satisfying click of our custom keyboard" },
+  { id: 10, text: "If you could only keep one feature, which one?", example: "The display — once you see it, there's no going back" },
+  { id: 11, text: "What compromises did you make, and why?", example: "Heavier for better cooling — throttling ruins everything" },
+  { id: 12, text: "What's your ambition for this product line?", example: "The laptop people recommend to their friends" },
 ];
 
 export const PROMPTS_PER_RELEASE = 3;
