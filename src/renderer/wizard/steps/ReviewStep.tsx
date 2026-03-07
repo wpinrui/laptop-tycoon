@@ -23,6 +23,7 @@ import { COLOUR_OPTIONS } from "../../../data/colourOptions";
 import { ComponentSlot } from "../../../data/types";
 import { StatCard } from "./StatCard";
 import { EditDialog, DialogTarget } from "./ReviewEditDialog";
+import { tokens } from "../../shell/tokens";
 import {
   Monitor,
   Cpu,
@@ -117,7 +118,7 @@ export function ReviewStep() {
 
       {/* Laptop name header */}
       <div style={{ marginBottom: "24px" }}>
-        <div style={{ fontSize: "1.25rem", fontWeight: "bold", color: "#90caf9" }}>
+        <div style={{ fontSize: "1.25rem", fontWeight: "bold", color: tokens.colors.interactiveAccent }}>
           {gameState.companyName} {state.name || "Unnamed Laptop"}
         </div>
         <div style={{ fontSize: "0.8125rem", color: "#888", marginTop: "4px" }}>

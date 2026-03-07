@@ -1,6 +1,7 @@
 import { Fragment, useRef, useEffect } from "react";
 import { Laptop2, Monitor, Cpu, MonitorSmartphone, Camera, Battery, Laptop, ClipboardCheck, Check, Lock, LucideIcon } from "lucide-react";
 import { WizardStep, WIZARD_STEPS, WIZARD_STEP_LABELS } from "./types";
+import { tokens } from "../shell/tokens";
 
 const STEP_ICONS: Record<WizardStep, LucideIcon> = {
   metadata: Laptop2,
@@ -64,7 +65,7 @@ export function StepIndicator({
                   alignItems: "center",
                   gap: "8px",
                   padding: "8px 16px",
-                  border: isActive ? "2px solid #90caf9" : "2px solid transparent",
+                  border: isActive ? `2px solid ${tokens.colors.interactiveAccent}` : "2px solid transparent",
                   borderRadius: "6px",
                   background: locked
                     ? "#2a2a2a"
@@ -76,7 +77,7 @@ export function StepIndicator({
                   color: locked
                     ? "#666"
                     : isActive
-                      ? "#90caf9"
+                      ? tokens.colors.interactiveAccent
                       : isCompleted
                         ? "#4caf50"
                         : "#888",

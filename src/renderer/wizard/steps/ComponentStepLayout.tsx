@@ -3,6 +3,7 @@ import { DISPLAY_SLOTS, applyDisplayMultiplier, specSummary, getAvailableCompone
 import { getScreenSizeDef } from "../../../data/screenSizes";
 import { Component, ComponentSlot, ScreenSizeDefinition } from "../../../data/types";
 import { Tooltip } from "../Tooltip";
+import { tokens } from "../../shell/tokens";
 import { SelectionCard, OptionTooltipContent } from "../SelectionCard";
 
 export interface SlotDef {
@@ -131,7 +132,7 @@ function ComponentCard({
             fontSize: "0.8125rem",
             fontWeight: "bold",
             marginBottom: "6px",
-            color: isSelected ? "#90caf9" : "#e0e0e0",
+            color: isSelected ? tokens.colors.interactiveAccent : "#e0e0e0",
           }}
         >
           {component.name}

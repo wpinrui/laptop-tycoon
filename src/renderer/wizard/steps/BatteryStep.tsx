@@ -3,6 +3,7 @@ import { formatWeight, MIN_BATTERY_WH, MAX_BATTERY_WH, BATTERY_STEP_WH, avgUsage
 import { getBatteryEra } from "../../../data/batteryEras";
 import { getScreenSizeDef } from "../../../data/screenSizes";
 import { StatCard } from "./StatCard";
+import { tokens } from "../../shell/tokens";
 
 export function BatteryStep() {
   const { state, dispatch, gameYear } = useWizard();
@@ -54,7 +55,7 @@ export function BatteryStep() {
             style={{
               fontSize: "3rem",
               fontWeight: "bold",
-              color: "#90caf9",
+              color: tokens.colors.interactiveAccent,
             }}
           >
             {capacity} Wh
@@ -69,7 +70,7 @@ export function BatteryStep() {
           step={BATTERY_STEP_WH}
           value={capacity}
           onChange={(e) => handleChange(Number(e.target.value))}
-          style={{ width: "100%", accentColor: "#90caf9" }}
+          style={{ width: "100%", accentColor: tokens.colors.interactiveAccent }}
         />
         <div style={{ fontSize: "0.625rem", color: "#666", marginTop: "4px" }}>
           Affects: battery life, weight, cost, internal space

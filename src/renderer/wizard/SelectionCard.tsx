@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { StatVector } from "../../data/types";
 import { StatContributions } from "./StatBar";
+import { tokens } from "../shell/tokens";
 
 export function OptionTooltipContent({
   name,
@@ -13,7 +14,7 @@ export function OptionTooltipContent({
 }) {
   return (
     <div>
-      <div style={{ fontWeight: "bold", marginBottom: "4px", color: "#90caf9" }}>{name}</div>
+      <div style={{ fontWeight: "bold", marginBottom: "4px", color: tokens.colors.interactiveAccent }}>{name}</div>
       <div style={{ color: "#ccc", marginBottom: "6px" }}>{description}</div>
       <StatContributions stats={stats} />
     </div>
@@ -34,7 +35,7 @@ export function SelectionCard({ isSelected, onClick, children, fullWidth }: Sele
       style={{
         width: fullWidth ? "100%" : undefined,
         background: isSelected ? "#1a3a5c" : "#2a2a2a",
-        border: isSelected ? "2px solid #90caf9" : "2px solid #444",
+        border: isSelected ? `2px solid ${tokens.colors.interactiveAccent}` : "2px solid #444",
         borderRadius: "8px",
         padding: "12px",
         textAlign: "left",
@@ -50,7 +51,7 @@ export function SelectionCard({ isSelected, onClick, children, fullWidth }: Sele
         }
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = isSelected ? "#90caf9" : "#444";
+        e.currentTarget.style.borderColor = isSelected ? tokens.colors.interactiveAccent : "#444";
         e.currentTarget.style.background = isSelected ? "#1a3a5c" : "#2a2a2a";
       }}
     >

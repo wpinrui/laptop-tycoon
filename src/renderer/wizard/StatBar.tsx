@@ -2,6 +2,7 @@ import { ComponentType } from "react";
 import { useWizard } from "./WizardContext";
 import { LaptopStat, StatVector } from "../../data/types";
 import { getAllChassisOptions } from "./types";
+import { tokens } from "../shell/tokens";
 import {
   DISPLAY_SLOTS,
   THICKNESS_MIN_CM,
@@ -74,7 +75,7 @@ const STAT_COLORS: Partial<Record<LaptopStat, string>> = {
 };
 
 export function getStatColor(stat: LaptopStat): string {
-  return STAT_COLORS[stat] ?? "#90caf9";
+  return STAT_COLORS[stat] ?? tokens.colors.interactiveAccent;
 }
 
 export function computeStatTotals(state: ReturnType<typeof useWizard>["state"], gameYear: number): StatVector {

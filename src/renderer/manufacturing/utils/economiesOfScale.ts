@@ -10,7 +10,7 @@ import { getActiveModels } from "../../screens/dashboard/utils";
 /** EoS discount applies only to the BOM portion */
 export function calculateBomUnitCost(baseBomCost: number, unitsOrdered: number): number {
   if (unitsOrdered <= 0) return baseBomCost;
-  const scaleFactor = 1 / (1 + 0.4 * Math.log10(unitsOrdered / REFERENCE_QUANTITY));
+  const scaleFactor = 1 / (1 + Math.log(unitsOrdered / REFERENCE_QUANTITY));
   return baseBomCost * Math.max(scaleFactor, 0.7);
 }
 

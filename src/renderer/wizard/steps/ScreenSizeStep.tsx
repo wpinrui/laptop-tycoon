@@ -1,5 +1,6 @@
 import { useWizard } from "../WizardContext";
 import { formatWeight } from "../constants";
+import { tokens } from "../../shell/tokens";
 import { SCREEN_SIZES, getScreenSizeDef } from "../../../data/screenSizes";
 import { StatCard } from "./StatCard";
 
@@ -41,7 +42,7 @@ export function ScreenSizeStep() {
             style={{
               fontSize: "3rem",
               fontWeight: "bold",
-              color: "#90caf9",
+              color: tokens.colors.interactiveAccent,
             }}
           >
             {state.screenSize}"
@@ -56,7 +57,7 @@ export function ScreenSizeStep() {
           step={1}
           value={state.screenSize}
           onChange={(e) => handleChange(Number(e.target.value))}
-          style={{ width: "100%", accentColor: "#90caf9" }}
+          style={{ width: "100%", accentColor: tokens.colors.interactiveAccent }}
         />
 
         <div style={{ fontSize: "0.625rem", color: "#666", marginTop: "4px" }}>
@@ -75,7 +76,7 @@ export function ScreenSizeStep() {
               key={s.size}
               style={{
                 fontSize: "0.6875rem",
-                color: state.screenSize === s.size ? "#90caf9" : "#666",
+                color: state.screenSize === s.size ? tokens.colors.interactiveAccent : "#666",
                 fontWeight: state.screenSize === s.size ? "bold" : "normal",
                 width: 0,
                 textAlign: "center",

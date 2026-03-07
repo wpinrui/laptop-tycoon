@@ -20,6 +20,7 @@ import { getAllChassisOptions } from "../types";
 import { Tooltip } from "../Tooltip";
 import { SelectionCard, OptionTooltipContent } from "../SelectionCard";
 import { COLOUR_OPTIONS } from "../../../data/colourOptions";
+import { tokens } from "../../shell/tokens";
 
 const VOLUME_WARNING_PERCENT = 85;
 
@@ -71,7 +72,7 @@ export function BodyStep() {
                 style={{
                   fontSize: "1.75rem",
                   fontWeight: "bold",
-                  color: thicknessTooThin ? "#ff9800" : "#90caf9",
+                  color: thicknessTooThin ? "#ff9800" : tokens.colors.interactiveAccent,
                 }}
               >
                 {thickness.toFixed(1)} cm
@@ -87,7 +88,7 @@ export function BodyStep() {
               onChange={(e) =>
                 dispatch({ type: "SET_THICKNESS", thicknessCm: Math.round(Number(e.target.value) * 10) / 10 })
               }
-              style={{ width: "100%", accentColor: thicknessTooThin ? "#ff9800" : "#90caf9" }}
+              style={{ width: "100%", accentColor: thicknessTooThin ? "#ff9800" : tokens.colors.interactiveAccent }}
             />
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.6875rem", color: "#666", marginTop: "2px" }}>
               <span>Thinner</span>
@@ -105,7 +106,7 @@ export function BodyStep() {
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "4px" }}>
               <span style={{ color: "#888", fontSize: "0.75rem" }}>{BEZEL_MIN_MM} mm</span>
-              <span style={{ fontSize: "1.75rem", fontWeight: "bold", color: "#90caf9" }}>
+              <span style={{ fontSize: "1.75rem", fontWeight: "bold", color: tokens.colors.interactiveAccent }}>
                 {bezel} mm
               </span>
               <span style={{ color: "#888", fontSize: "0.75rem" }}>{BEZEL_MAX_MM} mm</span>
@@ -117,7 +118,7 @@ export function BodyStep() {
               step={BEZEL_STEP_MM}
               value={bezel}
               onChange={(e) => dispatch({ type: "SET_BEZEL", bezelMm: Number(e.target.value) })}
-              style={{ width: "100%", accentColor: "#90caf9" }}
+              style={{ width: "100%", accentColor: tokens.colors.interactiveAccent }}
             />
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.6875rem", color: "#666", marginTop: "2px" }}>
               <span>Sleek</span>
@@ -205,7 +206,7 @@ export function BodyStep() {
                       }}
                     />
                     <div style={{ textAlign: "left" }}>
-                      <div style={{ fontSize: "0.75rem", fontWeight: "bold", color: isSelected ? "#90caf9" : "#e0e0e0" }}>
+                      <div style={{ fontSize: "0.75rem", fontWeight: "bold", color: isSelected ? tokens.colors.interactiveAccent : "#e0e0e0" }}>
                         {colour.name}
                       </div>
                       <div style={{ fontSize: "0.625rem", color: "#888" }}>
@@ -243,7 +244,7 @@ function ChassisCard({
             fontSize: "0.8125rem",
             fontWeight: "bold",
             marginBottom: "6px",
-            color: isSelected ? "#90caf9" : "#e0e0e0",
+            color: isSelected ? tokens.colors.interactiveAccent : "#e0e0e0",
           }}
         >
           {option.name}

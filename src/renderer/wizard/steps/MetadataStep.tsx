@@ -1,6 +1,7 @@
 import { useWizard } from "../WizardContext";
 import { useGame } from "../../state/GameContext";
 import { ModelType } from "../types";
+import { tokens } from "../../shell/tokens";
 
 const MODEL_TYPE_OPTIONS: { value: ModelType; label: string; description: string }[] = [
   { value: "brandNew", label: "Brand New", description: "Fresh design from scratch. No loyalty base." },
@@ -68,16 +69,16 @@ export function MetadataStep() {
                   justifyContent: "flex-start",
                   padding: "12px 16px",
                   background: isSelected ? "#1e3a5f" : "#2a2a2a",
-                  border: isSelected ? "2px solid #90caf9" : "2px solid #444",
+                  border: isSelected ? `2px solid ${tokens.colors.interactiveAccent}` : "2px solid #444",
                   borderRadius: "8px",
-                  color: isSelected ? "#90caf9" : "#ccc",
+                  color: isSelected ? tokens.colors.interactiveAccent : "#ccc",
                   cursor: "pointer",
                   textAlign: "left",
                   fontFamily: "inherit",
                 }}
               >
                 <div style={{ fontWeight: "bold", fontSize: "0.875rem", marginBottom: "4px" }}>{opt.label}</div>
-                <div style={{ fontSize: "0.75rem", color: isSelected ? "#90caf9" : "#888" }}>{opt.description}</div>
+                <div style={{ fontSize: "0.75rem", color: isSelected ? tokens.colors.interactiveAccent : "#888" }}>{opt.description}</div>
               </button>
             );
           })}
