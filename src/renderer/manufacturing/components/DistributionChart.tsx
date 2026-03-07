@@ -17,10 +17,14 @@ export function DistributionChart({ distribution, width, height }: DistributionC
   const { mean, stdDev, skew, min, max } = distribution;
   if (stdDev === 0) return null;
 
-  // Generate density curve points using approximate skew normal PDF
-  const points: string[] = [];
   const steps = 40;
   const range = max - min;
+  const labelHeight = 16;
+  const chartTop = 4;
+  const chartBottom = height - labelHeight;
+  const chartHeight = chartBottom - chartTop;
+  const padX = 4;
+  const chartWidth = width - padX * 2;
 
   let maxDensity = 0;
   const densities: number[] = [];
@@ -28,7 +32,6 @@ export function DistributionChart({ distribution, width, height }: DistributionC
   for (let i = 0; i <= steps; i++) {
     const x = min + (range * i) / steps;
     const z = (x - mean) / stdDev;
-    // Approximate skew normal: phi(z) * Phi(skew * z)
     const phi = Math.exp(-0.5 * z * z) / Math.sqrt(2 * Math.PI);
     const bigPhi = 0.5 * (1 + erf((skew * z) / Math.sqrt(2)));
     const density = 2 * phi * bigPhi;
@@ -36,22 +39,23 @@ export function DistributionChart({ distribution, width, height }: DistributionC
     if (density > maxDensity) maxDensity = density;
   }
 
-  const padding = 4;
-  const chartWidth = width - padding * 2;
-  const chartHeight = height - padding * 2;
-
+  const curvePoints: string[] = [];
   for (let i = 0; i <= steps; i++) {
-    const px = padding + (chartWidth * i) / steps;
-    const py = height - padding - (chartHeight * densities[i]) / (maxDensity || 1);
-    points.push(`${px},${py}`);
+    const px = padX + (chartWidth * i) / steps;
+    const py = chartBottom - (chartHeight * densities[i]) / (maxDensity || 1);
+    curvePoints.push(`${px},${py}`);
   }
 
-  // Close the polygon
   const polygonPoints = [
-    `${padding},${height - padding}`,
-    ...points,
-    `${width - padding},${height - padding}`,
+    `${padX},${chartBottom}`,
+    ...curvePoints,
+    `${width - padX},${chartBottom}`,
   ].join(" ");
+
+  const xForValue = (val: number) => padX + (chartWidth * (val - min)) / range;
+  const meanX = xForValue(mean);
+  const hasNegative = min < 0 && max > 0;
+  const zeroX = hasNegative ? xForValue(0) : 0;
 
   const containerStyle: CSSProperties = {
     width,
@@ -61,49 +65,98 @@ export function DistributionChart({ distribution, width, height }: DistributionC
   return (
     <div style={containerStyle}>
       <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+        {/* Fill area */}
         <polygon
           points={polygonPoints}
           fill={tokens.colors.accent}
-          fillOpacity={0.2}
+          fillOpacity={0.15}
           stroke={tokens.colors.accent}
           strokeWidth={1.5}
         />
-        {/* Mean line */}
-        {(() => {
-          const meanX = padding + (chartWidth * (mean - min)) / range;
-          return (
+
+        {/* Negative zone shading */}
+        {hasNegative && (
+          <rect
+            x={padX}
+            y={chartTop}
+            width={zeroX - padX}
+            height={chartHeight}
+            fill={tokens.colors.danger}
+            fillOpacity={0.08}
+          />
+        )}
+
+        {/* Zero line */}
+        {hasNegative && (
+          <>
             <line
-              x1={meanX}
-              y1={padding}
-              x2={meanX}
-              y2={height - padding}
-              stroke={tokens.colors.accent}
-              strokeWidth={1}
-              strokeDasharray="3,2"
-            />
-          );
-        })()}
-        {/* Zero line if range spans negative */}
-        {min < 0 && max > 0 && (() => {
-          const zeroX = padding + (chartWidth * (0 - min)) / range;
-          return (
-            <line
-              x1={zeroX}
-              y1={padding}
-              x2={zeroX}
-              y2={height - padding}
+              x1={zeroX} y1={chartTop}
+              x2={zeroX} y2={chartBottom}
               stroke={tokens.colors.danger}
               strokeWidth={1}
-              strokeOpacity={0.5}
+              strokeOpacity={0.6}
             />
-          );
-        })()}
+            <text
+              x={zeroX}
+              y={height - 2}
+              textAnchor="middle"
+              fill={tokens.colors.danger}
+              fontSize={10}
+              fontFamily={tokens.font.family}
+              opacity={0.8}
+            >
+              0%
+            </text>
+          </>
+        )}
+
+        {/* Mean line */}
+        <line
+          x1={meanX} y1={chartTop}
+          x2={meanX} y2={chartBottom}
+          stroke={tokens.colors.accent}
+          strokeWidth={1.5}
+          strokeDasharray="4,3"
+        />
+        <text
+          x={meanX}
+          y={height - 2}
+          textAnchor="middle"
+          fill={tokens.colors.accent}
+          fontSize={10}
+          fontFamily={tokens.font.family}
+        >
+          +{mean}%
+        </text>
+
+        {/* Min label */}
+        <text
+          x={padX}
+          y={height - 2}
+          textAnchor="start"
+          fill={tokens.colors.textMuted}
+          fontSize={10}
+          fontFamily={tokens.font.family}
+        >
+          {min > 0 ? "+" : ""}{min}%
+        </text>
+
+        {/* Max label */}
+        <text
+          x={width - padX}
+          y={height - 2}
+          textAnchor="end"
+          fill={tokens.colors.textMuted}
+          fontSize={10}
+          fontFamily={tokens.font.family}
+        >
+          +{max}%
+        </text>
       </svg>
     </div>
   );
 }
 
-// Approximation of the error function
 function erf(x: number): number {
   const a1 = 0.254829592;
   const a2 = -0.284496736;
