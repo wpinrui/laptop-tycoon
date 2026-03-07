@@ -182,7 +182,7 @@ function pickPorts(year: number, archetype: "budget" | "premium" | "generalist")
 function pickColours(archetype: "budget" | "premium" | "generalist"): string[] {
   if (archetype === "budget") {
     // 1 cheap colour
-    return [COLOUR_OPTIONS[0].id];
+    return ["black"];
   }
   if (archetype === "premium") {
     // 3-4 colours including premium ones
@@ -191,7 +191,7 @@ function pickColours(archetype: "budget" | "premium" | "generalist"): string[] {
     return sorted.slice(0, count).map((c) => c.id);
   }
   // Generalist: 2 colours
-  return [COLOUR_OPTIONS[0].id, COLOUR_OPTIONS[3].id]; // black + silver
+  return ["black", "silver"];
 }
 
 function pickBattery(archetype: "budget" | "premium" | "generalist"): number {
