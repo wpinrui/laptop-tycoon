@@ -1,4 +1,4 @@
-import { DemographicId, LaptopStat, ALL_STATS } from "../data/types";
+import { DemographicId } from "../data/types";
 import { PriceCeiling, DemandGrowthAnchor } from "./salesTypes";
 
 // --- Price Ceilings (year-2000 baseline, inflates ~3% per year) ---
@@ -49,7 +49,7 @@ export const DEMAND_GROWTH_ANCHORS: DemandGrowthAnchor[] = [
 export function getDemandPoolSize(demographicId: DemographicId, year: number, basePool: number): number {
   // Find bounding anchors
   const sorted = DEMAND_GROWTH_ANCHORS;
-  if (year <= sorted[0].year) return basePool * sorted[0].multipliers[demographicId];
+  if (year <= sorted[0].year) return Math.round(basePool * sorted[0].multipliers[demographicId]);
   if (year >= sorted[sorted.length - 1].year) {
     return Math.round(basePool * sorted[sorted.length - 1].multipliers[demographicId]);
   }
@@ -85,37 +85,4 @@ export function getScreenSizeFit(
   // Continuous penalty: each inch outside range reduces by penaltyPerInch
   const penalty = 1.0 - distance * penaltyPerInch;
   return Math.max(0.05, penalty); // floor at 5% to never fully zero out
-}
-
-// --- Weight Vector Momentum ---
-
-/**
- * Advance demographic weights using momentum:
- * new_weight = old_weight * 0.85 + era_target * 0.15 + small_random_noise
- * Then re-normalise to sum to 1.0
- */
-export function advanceWeightVector(
-  currentWeights: Record<LaptopStat, number>,
-  eraTargetWeights: Record<LaptopStat, number>,
-): Record<LaptopStat, number> {
-  const result = {} as Record<LaptopStat, number>;
-  let sum = 0;
-
-  for (const stat of ALL_STATS) {
-    const current = currentWeights[stat] ?? 0;
-    const target = eraTargetWeights[stat] ?? 0;
-    const noise = (Math.random() * 2 - 1) * 0.005; // +-0.5% noise
-    const raw = current * 0.85 + target * 0.15 + noise;
-    result[stat] = Math.max(0, raw);
-    sum += result[stat];
-  }
-
-  // Re-normalise
-  if (sum > 0) {
-    for (const stat of ALL_STATS) {
-      result[stat] = result[stat] / sum;
-    }
-  }
-
-  return result;
 }

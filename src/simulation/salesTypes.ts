@@ -1,12 +1,4 @@
-import { DemographicId, LaptopStat } from "../data/types";
-
-// --- Era Target System ---
-
-/** Anchor points for demographic weight drift over time */
-export interface EraTarget {
-  year: number;
-  weights: Record<LaptopStat, number>;
-}
+import { DemographicId } from "../data/types";
 
 /** Price ceiling for a demographic (year-2000 dollars, inflates over time) */
 export interface PriceCeiling {

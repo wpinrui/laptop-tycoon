@@ -203,19 +203,6 @@ function calculateLoyaltyModifier(laptop: MarketLaptop): number {
   return 1.0;
 }
 
-/** Screen size fit using the soft filter */
-function calculateScreenSizeFit(
-  laptopScreenSize: number,
-  demographic: Demographic,
-): number {
-  return getScreenSizeFit(
-    laptopScreenSize,
-    demographic.screenSizePreference.preferredMin,
-    demographic.screenSizePreference.preferredMax,
-    demographic.screenSizePreference.penaltyPerInch,
-  );
-}
-
 /** Sample campaign bonus from skew-normal distribution */
 function sampleCampaignBonus(campaignId: string | null): number {
   if (!campaignId || campaignId === "no_campaign") return 1.0;
@@ -224,7 +211,7 @@ function sampleCampaignBonus(campaignId: string | null): number {
 
   const { mean, stdDev, min, max } = campaign.distribution;
   // Box-Muller for normal sample
-  const u1 = Math.random();
+  const u1 = Math.random() || 1e-10; // guard against log(0)
   const u2 = Math.random();
   const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
   let sample = mean + stdDev * z;
@@ -261,7 +248,8 @@ function calculateAppeal(
   const statScore = calculateWeightedStatScore(normalisedStats, demographic);
   const rawPriceScore = calculatePriceCompetitiveness(laptop.retailPrice, demographic, year);
   const priceScore = applyPriceSensitivity(rawPriceScore, demographic.priceSensitivity);
-  const screenFit = calculateScreenSizeFit(laptop.model.design.screenSize, demographic);
+  const pref = demographic.screenSizePreference;
+  const screenFit = getScreenSizeFit(laptop.model.design.screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);
 
   let brandFit: number;
   if (laptop.owner === "player") {

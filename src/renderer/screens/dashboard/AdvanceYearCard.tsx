@@ -65,8 +65,6 @@ export function AdvanceYearCard() {
             }
           }
           const cashAfterManufacturing = state.cash - totalMfgSpend;
-          dispatch({ type: "SET_CASH", cash: cashAfterManufacturing });
-
           // 3. Run sales simulation (uses state with competitors added)
           // We need to build the state as it will be after dispatch
           const stateForSim = {
