@@ -42,8 +42,7 @@ export function AdvanceYearCard() {
         disabled={!allHavePlans}
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
-          const nextYear = state.year + 1;
-          const generated = generateCompetitorModels(nextYear, COMPETITORS);
+          const generated = generateCompetitorModels(state.year, COMPETITORS);
           const models = COMPETITORS.map((c, i) => ({
             competitorId: c.id,
             model: generated[i],
