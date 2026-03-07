@@ -1,6 +1,8 @@
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
 import { GameState, LaptopDesign, LaptopModel, ModelStatus, createInitialGameState } from "./gameTypes";
 import { FullManufacturingPlan } from "../manufacturing/types";
+import { COMPETITORS } from "../../data/competitors";
+import { generateCompetitorModels } from "../../simulation/competitorAI";
 
 type GameAction =
   | { type: "NEW_GAME"; companyName: string; companyLogo: string | null }
@@ -11,14 +13,24 @@ type GameAction =
   | { type: "UPDATE_MODEL_STATUS"; modelId: string; status: ModelStatus }
   | { type: "SET_MODEL_PRICING"; modelId: string; retailPrice: number; manufacturingQuantity: number }
   | { type: "UPDATE_MODEL_DESIGN"; modelId: string; design: LaptopDesign }
-  | { type: "SET_MANUFACTURING_PLAN"; modelId: string; plan: FullManufacturingPlan };
+  | { type: "SET_MANUFACTURING_PLAN"; modelId: string; plan: FullManufacturingPlan }
+  | { type: "GENERATE_COMPETITOR_MODELS"; year: number };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case "NEW_GAME":
       return createInitialGameState(action.companyName, action.companyLogo);
     case "LOAD_GAME":
-      return action.state;
+      return {
+        ...action.state,
+        competitors: action.state.competitors ?? COMPETITORS.map((c) => ({
+          id: c.id,
+          name: c.name,
+          archetype: c.archetype,
+          brandRecognition: c.brandRecognition,
+          models: [],
+        })),
+      };
     case "SET_CASH":
       return { ...state, cash: action.cash };
     case "ADVANCE_YEAR":
@@ -62,6 +74,16 @@ function gameReducer(state: GameState, action: GameAction): GameState {
             : m,
         ),
       };
+    case "GENERATE_COMPETITOR_MODELS": {
+      const newModels = generateCompetitorModels(action.year, COMPETITORS);
+      return {
+        ...state,
+        competitors: state.competitors.map((comp, i) => ({
+          ...comp,
+          models: [...comp.models, newModels[i]],
+        })),
+      };
+    }
     default:
       return state;
   }

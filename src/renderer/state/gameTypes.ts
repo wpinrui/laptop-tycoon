@@ -5,6 +5,7 @@ import {
   ScreenSizeInches,
 } from "../../data/types";
 import { FullManufacturingPlan } from "../manufacturing/types";
+import { COMPETITORS } from "../../data/competitors";
 
 export type ModelType = "brandNew" | "successor" | "specBump";
 
@@ -40,6 +41,14 @@ export interface LaptopModel {
   manufacturingPlan: FullManufacturingPlan | null;
 }
 
+export interface CompetitorState {
+  id: string;
+  name: string;
+  archetype: "budget" | "premium" | "generalist";
+  brandRecognition: number;
+  models: LaptopModel[];
+}
+
 export interface GameState {
   companyName: string;
   companyLogo: string | null;
@@ -49,6 +58,7 @@ export interface GameState {
   brandRecognition: number;
   nicheReputation: Record<string, number>;
   models: LaptopModel[];
+  competitors: CompetitorState[];
 }
 
 export const STARTING_CASH = 50_000_000;
@@ -67,5 +77,12 @@ export function createInitialGameState(
     brandRecognition: 0,
     nicheReputation: {},
     models: [],
+    competitors: COMPETITORS.map((c) => ({
+      id: c.id,
+      name: c.name,
+      archetype: c.archetype,
+      brandRecognition: c.brandRecognition,
+      models: [],
+    })),
   };
 }
