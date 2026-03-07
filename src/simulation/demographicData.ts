@@ -1,4 +1,4 @@
-import { DemographicId, LaptopStat } from "../data/types";
+import { DemographicId, LaptopStat, ALL_STATS } from "../data/types";
 import { PriceCeiling, DemandGrowthAnchor } from "./salesTypes";
 
 // --- Price Ceilings (year-2000 baseline, inflates ~3% per year) ---
@@ -88,12 +88,6 @@ export function getScreenSizeFit(
 }
 
 // --- Weight Vector Momentum ---
-
-const ALL_STATS: LaptopStat[] = [
-  "performance", "gamingPerformance", "batteryLife", "display", "connectivity",
-  "speakers", "webcam", "design", "buildQuality", "keyboard", "trackpad",
-  "repairability", "weight", "thinness", "thermals", "supportAndService",
-];
 
 /**
  * Advance demographic weights using momentum:

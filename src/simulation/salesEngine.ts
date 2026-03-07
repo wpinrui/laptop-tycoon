@@ -1,13 +1,13 @@
 import {
-  DemographicId,
   LaptopStat,
   Demographic,
   StatVector,
+  ALL_STATS,
 } from "../data/types";
 import { DEMOGRAPHICS } from "../data/demographics";
 import { STARTING_DEMAND_POOL } from "../data/startingDemand";
 import { GameState, LaptopModel } from "../renderer/state/gameTypes";
-import { computeRawStatTotals } from "./statCalculation";
+import { computeStatsForDesign } from "./statCalculation";
 import {
   getPriceCeiling,
   getDemandPoolSize,
@@ -46,17 +46,7 @@ function buildMarketLaptops(state: GameState): MarketLaptop[] {
     if (model.status !== "manufacturing" && model.status !== "onSale") continue;
     if (!model.retailPrice || !model.manufacturingQuantity) continue;
 
-    const stats = computeRawStatTotals({
-      screenSize: model.design.screenSize,
-      components: model.design.components,
-      ports: model.design.ports,
-      chassis: model.design.chassis,
-      batteryCapacityWh: model.design.batteryCapacityWh,
-      thicknessCm: model.design.thicknessCm,
-      bezelMm: model.design.bezelMm,
-      selectedColours: model.design.selectedColours,
-      gameYear: state.year,
-    });
+    const stats = computeStatsForDesign(model.design, state.year);
 
     // Calculate total manufacturing cost from plan
     const plan = model.manufacturingPlan;
@@ -81,17 +71,7 @@ function buildMarketLaptops(state: GameState): MarketLaptop[] {
       if (model.yearDesigned !== state.year) continue;
       if (!model.retailPrice || !model.manufacturingQuantity) continue;
 
-      const stats = computeRawStatTotals({
-        screenSize: model.design.screenSize,
-        components: model.design.components,
-        ports: model.design.ports,
-        chassis: model.design.chassis,
-        batteryCapacityWh: model.design.batteryCapacityWh,
-        thicknessCm: model.design.thicknessCm,
-        bezelMm: model.design.bezelMm,
-        selectedColours: model.design.selectedColours,
-        gameYear: state.year,
-      });
+      const stats = computeStatsForDesign(model.design, state.year);
 
       laptops.push({
         id: model.design.id,
@@ -116,12 +96,6 @@ function getCampaignCostForModel(campaignId: string | null, year: number): numbe
 }
 
 // --- Appeal Calculation ---
-
-const ALL_STATS: LaptopStat[] = [
-  "performance", "gamingPerformance", "batteryLife", "display", "connectivity",
-  "speakers", "webcam", "design", "buildQuality", "keyboard", "trackpad",
-  "repairability", "weight", "thinness", "thermals", "supportAndService",
-];
 
 /**
  * Compute market-relative stat scores by normalising each stat against all laptops in the market.
@@ -218,10 +192,7 @@ function calculateBrandFit(
 }
 
 /** Loyalty modifier for returning products */
-function calculateLoyaltyModifier(
-  laptop: MarketLaptop,
-  _state: GameState,
-): number {
+function calculateLoyaltyModifier(laptop: MarketLaptop): number {
   if (laptop.owner !== "player") return 1.0;
 
   const model = laptop.model;
@@ -300,7 +271,7 @@ function calculateAppeal(
     brandFit = comp ? 0.3 + 0.7 * (comp.brandRecognition / 100) : 0.5;
   }
 
-  const loyalty = calculateLoyaltyModifier(laptop, state);
+  const loyalty = calculateLoyaltyModifier(laptop);
 
   const appeal = statScore * priceScore * brandFit * loyalty * screenFit * marketingModifier;
   return Math.max(0, appeal);
@@ -352,7 +323,7 @@ export function simulateYear(state: GameState): YearSimulationResult {
   }
 
   for (const demographic of DEMOGRAPHICS) {
-    const demId = demographic.id as DemographicId;
+    const demId = demographic.id;
     const basePool = STARTING_DEMAND_POOL[demId];
     const pool = getDemandPoolSize(demId, year, basePool);
 
@@ -453,17 +424,7 @@ export function projectDemandRange(
   const model = state.models.find((m) => m.design.id === modelId);
   if (!model) return { low: 0, high: 0, expected: 0 };
 
-  const stats = computeRawStatTotals({
-    screenSize: model.design.screenSize,
-    components: model.design.components,
-    ports: model.design.ports,
-    chassis: model.design.chassis,
-    batteryCapacityWh: model.design.batteryCapacityWh,
-    thicknessCm: model.design.thicknessCm,
-    bezelMm: model.design.bezelMm,
-    selectedColours: model.design.selectedColours,
-    gameYear: year,
-  });
+  const stats = computeStatsForDesign(model.design, year);
 
   const tempLaptop: MarketLaptop = {
     id: modelId,
@@ -482,22 +443,11 @@ export function projectDemandRange(
     const latestModels = comp.models.filter((m) => m.yearDesigned === year - 1 || m.yearDesigned === year);
     for (const cm of latestModels) {
       if (!cm.retailPrice) continue;
-      const cStats = computeRawStatTotals({
-        screenSize: cm.design.screenSize,
-        components: cm.design.components,
-        ports: cm.design.ports,
-        chassis: cm.design.chassis,
-        batteryCapacityWh: cm.design.batteryCapacityWh,
-        thicknessCm: cm.design.thicknessCm,
-        bezelMm: cm.design.bezelMm,
-        selectedColours: cm.design.selectedColours,
-        gameYear: year,
-      });
       competitorLaptops.push({
         id: cm.design.id,
         owner: comp.id,
         model: cm,
-        stats: cStats,
+        stats: computeStatsForDesign(cm.design, year),
         retailPrice: cm.retailPrice,
         manufacturingQuantity: cm.manufacturingQuantity ?? 0,
         totalManufacturingCost: 0,
@@ -511,22 +461,11 @@ export function projectDemandRange(
     if (pm.design.id === modelId) continue;
     if (pm.status !== "manufacturing" && pm.status !== "onSale") continue;
     if (!pm.retailPrice) continue;
-    const pStats = computeRawStatTotals({
-      screenSize: pm.design.screenSize,
-      components: pm.design.components,
-      ports: pm.design.ports,
-      chassis: pm.design.chassis,
-      batteryCapacityWh: pm.design.batteryCapacityWh,
-      thicknessCm: pm.design.thicknessCm,
-      bezelMm: pm.design.bezelMm,
-      selectedColours: pm.design.selectedColours,
-      gameYear: year,
-    });
     otherPlayerModels.push({
       id: pm.design.id,
       owner: "player",
       model: pm,
-      stats: pStats,
+      stats: computeStatsForDesign(pm.design, year),
       retailPrice: pm.retailPrice,
       manufacturingQuantity: pm.manufacturingQuantity ?? 0,
       totalManufacturingCost: 0,
@@ -544,7 +483,7 @@ export function projectDemandRange(
   // Sum demand across demographics for our model
   let totalExpected = 0;
   for (const demographic of DEMOGRAPHICS) {
-    const demId = demographic.id as DemographicId;
+    const demId = demographic.id;
     const basePool = STARTING_DEMAND_POOL[demId];
     const pool = getDemandPoolSize(demId, year, basePool);
 

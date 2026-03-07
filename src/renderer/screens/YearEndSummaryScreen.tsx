@@ -34,7 +34,7 @@ const thStyle: CSSProperties = {
 
 const tdStyle: CSSProperties = {
   padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
-  borderBottom: `1px solid rgba(255, 255, 255, 0.06)`,
+  borderBottom: `1px solid ${tokens.colors.surface}`,
 };
 
 const tdRight: CSSProperties = { ...tdStyle, textAlign: "right" };
