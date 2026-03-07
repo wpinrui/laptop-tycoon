@@ -50,6 +50,7 @@ function mfgWizardReducer(state: ManufacturingWizardState, action: MfgWizardActi
         campaignId: action.plan.marketing.campaignId,
         unitPrice: action.plan.manufacturing.unitPrice,
         unitsOrdered: action.plan.manufacturing.unitsOrdered,
+        supportBudget: action.plan.manufacturing.supportBudget,
         pressReleasePromptIds: action.plan.pressRelease.promptIds,
         pressReleaseResponses: { ...action.plan.pressRelease.responses },
         noiseMargin: generateNoiseMargin(),

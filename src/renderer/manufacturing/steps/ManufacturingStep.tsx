@@ -6,7 +6,7 @@ import { calculateBomUnitCost, buildCostBreakdown } from "../utils/economiesOfSc
 import { AD_CAMPAIGNS, getCampaignCost } from "../data/campaigns";
 import { approxPercentile } from "../utils/skewNormal";
 import {
-  MIN_BATCH_SIZE,
+  MIN_BATCH_SIZE, MAX_PRICE_MULTIPLIER,
   ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST, CHANNEL_MARGIN_RATE,
   SUPPORT_BUDGET_MIN, SUPPORT_BUDGET_MAX,
   TOOLING_COST, CERTIFICATION_COST, MULTI_MODEL_OVERHEAD,
@@ -197,8 +197,8 @@ export function ManufacturingStep() {
   const campaign = AD_CAMPAIGNS.find((c) => c.id === state.campaignId) ?? AD_CAMPAIGNS[0];
   const adCost = getCampaignCost(campaign, gameState.year);
 
-  const toolingCost = TOOLING_COST[modelType] ?? 0;
-  const certCost = CERTIFICATION_COST[modelType] ?? 0;
+  const toolingCost = TOOLING_COST[modelType];
+  const certCost = CERTIFICATION_COST[modelType];
   const overhead = activeModelCount > 1 ? MULTI_MODEL_OVERHEAD : 0;
 
   // Fixed costs that must be paid regardless
@@ -207,7 +207,7 @@ export function ManufacturingStep() {
   // Price slider: based on total cost per unit (BOM + assembly + packaging + support)
   const baseTotalPerUnit = baseBom + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST + state.supportBudget;
   const minPrice = Math.max(snapPrice(baseTotalPerUnit * 0.5), 49);
-  const maxPrice = snapPrice(baseTotalPerUnit * 4);
+  const maxPrice = snapPrice(baseTotalPerUnit * MAX_PRICE_MULTIPLIER);
 
   // Quantity slider: binary search for max affordable
   const cashForManufacturing = Math.max(0, gameState.cash - totalFixedCosts);

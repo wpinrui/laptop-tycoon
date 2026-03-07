@@ -42,6 +42,7 @@ export interface ManufacturingPlan {
   unitsOrdered: number;
   unitCost: number;
   totalCost: number;
+  supportBudget: number;
 }
 
 export interface PressReleasePrompt {

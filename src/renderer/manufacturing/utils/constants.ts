@@ -1,3 +1,5 @@
+import { ModelType } from "../../state/gameTypes";
+
 export const REFERENCE_QUANTITY = 5_000;
 export const MULTI_MODEL_OVERHEAD = 500_000;
 export const DEMAND_NOISE_MIN = 5;
@@ -17,13 +19,13 @@ export const SUPPORT_BUDGET_MIN = 0;
 export const SUPPORT_BUDGET_MAX = 50;
 
 // Fixed costs by model type
-export const TOOLING_COST: Record<string, number> = {
+export const TOOLING_COST: Record<ModelType, number> = {
   brandNew: 800_000,
   successor: 300_000,
   specBump: 0,
 };
 
-export const CERTIFICATION_COST: Record<string, number> = {
+export const CERTIFICATION_COST: Record<ModelType, number> = {
   brandNew: 50_000,
   successor: 50_000,
   specBump: 0,

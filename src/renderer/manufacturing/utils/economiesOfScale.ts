@@ -115,8 +115,8 @@ export function buildCostBreakdown(gameState: GameState, wizardState: Manufactur
     assemblyQa: ASSEMBLY_QA_COST,
     packagingLogistics: PACKAGING_LOGISTICS_COST,
     channelMarginRate: CHANNEL_MARGIN_RATE,
-    toolingCost: TOOLING_COST[modelType] ?? 0,
-    certificationCost: CERTIFICATION_COST[modelType] ?? 0,
+    toolingCost: TOOLING_COST[modelType],
+    certificationCost: CERTIFICATION_COST[modelType],
     multiModelOverhead: overhead,
     adCost: campaignCost,
   });

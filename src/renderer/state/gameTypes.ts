@@ -6,10 +6,12 @@ import {
 } from "../../data/types";
 import { FullManufacturingPlan } from "../manufacturing/types";
 
+export type ModelType = "brandNew" | "successor" | "specBump";
+
 export interface LaptopDesign {
   id: string;
   name: string;
-  modelType: "brandNew" | "successor" | "specBump";
+  modelType: ModelType;
   predecessorId: string | null;
   screenSize: ScreenSizeInches;
   components: Partial<Record<ComponentSlot, Component>>;
