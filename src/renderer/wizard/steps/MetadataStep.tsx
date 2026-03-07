@@ -1,4 +1,5 @@
 import { useWizard } from "../WizardContext";
+import { useGame } from "../../state/GameContext";
 import { ModelType } from "../types";
 
 const MODEL_TYPE_OPTIONS: { value: ModelType; label: string; description: string }[] = [
@@ -7,13 +8,16 @@ const MODEL_TYPE_OPTIONS: { value: ModelType; label: string; description: string
   { value: "specBump", label: "Spec Bump", description: "Reuses predecessor's body and screen size. Components only." },
 ];
 
-// TODO: replace with real predecessor models from game state
-const PREDECESSOR_MODELS: { id: string; name: string; year: number }[] = [];
-
 export function MetadataStep() {
   const { state, dispatch } = useWizard();
+  const { state: gameState } = useGame();
 
   const showPredecessor = state.modelType !== "brandNew";
+
+  // Populate predecessor models from game state (exclude the model currently being edited)
+  const predecessorModels = gameState.models
+    .filter((m) => m.design.id !== state.editingModelId)
+    .map((m) => ({ id: m.design.id, name: m.design.name, year: m.yearDesigned }));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
@@ -85,16 +89,18 @@ export function MetadataStep() {
           <label style={{ display: "block", color: "#aaa", marginBottom: "8px", fontSize: "0.875rem" }}>
             Predecessor Model
           </label>
-          {PREDECESSOR_MODELS.length === 0 ? (
+          {predecessorModels.length === 0 ? (
             <p style={{ color: "#666", fontStyle: "italic", fontSize: "0.875rem" }}>
               No previous models available. Start with a Brand New model first.
             </p>
           ) : (
             <select
               value={state.predecessorId ?? ""}
-              onChange={(e) =>
-                dispatch({ type: "SET_PREDECESSOR", predecessorId: e.target.value || null })
-              }
+              onChange={(e) => {
+                const id = e.target.value || null;
+                const model = gameState.models.find((m) => m.design.id === id);
+                dispatch({ type: "SET_PREDECESSOR", predecessorId: id, predecessorDesign: model?.design });
+              }}
               style={{
                 width: "100%",
                 maxWidth: "400px",
@@ -109,7 +115,7 @@ export function MetadataStep() {
               }}
             >
               <option value="">Select a predecessor...</option>
-              {PREDECESSOR_MODELS.map((model) => (
+              {predecessorModels.map((model) => (
                 <option key={model.id} value={model.id}>
                   {model.name} ({model.year})
                 </option>

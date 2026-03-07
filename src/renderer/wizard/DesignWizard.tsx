@@ -26,7 +26,14 @@ import { WizardSidebar } from "./LaptopEstimateSidebar";
 import { StatusBar } from "../shell/StatusBar";
 
 
+/** Steps locked by spec bump (inherited from predecessor, not editable). */
+function isStepLockedBySpecBump(step: WizardStep, state: WizardState): boolean {
+  return state.modelType === "specBump" && state.predecessorId !== null
+    && (step === "screenSize" || step === "body");
+}
+
 function isStepComplete(step: WizardStep, state: WizardState, year: number): boolean {
+  if (isStepLockedBySpecBump(step, state)) return true;
   switch (step) {
     case "metadata":
       return !!(state.name.trim() && (state.modelType === "brandNew" || state.predecessorId));
@@ -220,6 +227,7 @@ function WizardContent() {
         currentStep={state.currentStep}
         onStepClick={(step) => dispatch({ type: "GO_TO_STEP", step })}
         canNavigateTo={canNavigateTo}
+        isStepLocked={(step) => isStepLockedBySpecBump(step, state)}
       />
 
       <div
