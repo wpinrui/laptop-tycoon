@@ -4,7 +4,7 @@ import {
   ChassisOption,
   LaptopStat,
 } from "../data/types";
-import { CompetitorDefinition } from "../data/competitors";
+import { CompetitorArchetype, CompetitorDefinition } from "../data/competitors";
 import { LaptopDesign, LaptopModel } from "../renderer/state/gameTypes";
 import {
   getAvailableComponents,
@@ -113,7 +113,7 @@ function pickChassisOption(
 function pickCooling(
   year: number,
   totalPowerW: number,
-  archetype: "budget" | "premium" | "generalist",
+  archetype: CompetitorArchetype,
 ): ChassisOption | null {
   const available = getAvailableChassisOptions(COOLING_SOLUTIONS, year);
   if (available.length === 0) return null;
@@ -132,7 +132,7 @@ function pickCooling(
   return sorted[sorted.length - 1];
 }
 
-function pickPorts(year: number, archetype: "budget" | "premium" | "generalist"): Record<string, number> {
+function pickPorts(year: number, archetype: CompetitorArchetype): Record<string, number> {
   const ports: Record<string, number> = {};
   const available = PORT_TYPES.filter(
     (pt) => pt.yearIntroduced <= year && (pt.yearDiscontinued === null || pt.yearDiscontinued >= year),
@@ -179,7 +179,7 @@ function pickPorts(year: number, archetype: "budget" | "premium" | "generalist")
   return ports;
 }
 
-function pickColours(archetype: "budget" | "premium" | "generalist"): string[] {
+function pickColours(archetype: CompetitorArchetype): string[] {
   if (archetype === "budget") {
     // 1 cheap colour
     return ["black"];
@@ -194,13 +194,13 @@ function pickColours(archetype: "budget" | "premium" | "generalist"): string[] {
   return ["black", "silver"];
 }
 
-function pickBattery(archetype: "budget" | "premium" | "generalist"): number {
+function pickBattery(archetype: CompetitorArchetype): number {
   if (archetype === "budget") return 30 + Math.floor(Math.random() * 3) * 5; // 30-40 Wh
   if (archetype === "premium") return 60 + Math.floor(Math.random() * 5) * 5; // 60-80 Wh
   return 45 + Math.floor(Math.random() * 4) * 5; // 45-60 Wh
 }
 
-function pickThickness(archetype: "budget" | "premium" | "generalist"): number {
+function pickThickness(archetype: CompetitorArchetype): number {
   if (archetype === "budget") {
     // Thick: 4.0 - 6.0 cm
     return Math.round((4.0 + Math.random() * 2.0) / THICKNESS_STEP_CM) * THICKNESS_STEP_CM;
@@ -213,7 +213,7 @@ function pickThickness(archetype: "budget" | "premium" | "generalist"): number {
   return Math.round((2.5 + Math.random() * 1.5) / THICKNESS_STEP_CM) * THICKNESS_STEP_CM;
 }
 
-function pickBezel(archetype: "budget" | "premium" | "generalist"): number {
+function pickBezel(archetype: CompetitorArchetype): number {
   if (archetype === "budget") return BEZEL_MAX_MM - Math.floor(Math.random() * 5); // 35-40mm
   if (archetype === "premium") return BEZEL_MIN_MM + Math.floor(Math.random() * 5); // 3-7mm
   return 15 + Math.floor(Math.random() * 10); // 15-24mm

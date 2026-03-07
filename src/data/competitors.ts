@@ -1,9 +1,11 @@
 import { LaptopStat, ScreenSizeInches } from "./types";
 
+export type CompetitorArchetype = "budget" | "premium" | "generalist";
+
 export interface CompetitorDefinition {
   id: string;
   name: string;
-  archetype: "budget" | "premium" | "generalist";
+  archetype: CompetitorArchetype;
   brandRecognition: number;
   statPriorities: {
     high: LaptopStat[];

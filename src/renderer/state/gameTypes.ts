@@ -5,7 +5,7 @@ import {
   ScreenSizeInches,
 } from "../../data/types";
 import { FullManufacturingPlan } from "../manufacturing/types";
-import { COMPETITORS } from "../../data/competitors";
+import { COMPETITORS, CompetitorArchetype } from "../../data/competitors";
 
 export type ModelType = "brandNew" | "successor" | "specBump";
 
@@ -44,7 +44,7 @@ export interface LaptopModel {
 export interface CompetitorState {
   id: string;
   name: string;
-  archetype: "budget" | "premium" | "generalist";
+  archetype: CompetitorArchetype;
   brandRecognition: number;
   models: LaptopModel[];
 }
