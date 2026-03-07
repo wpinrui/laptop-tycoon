@@ -242,14 +242,74 @@ Where the market believes your brand is strong. For example, a brand known for g
 
 ---
 
-## Marketing (Deferred — Post-MVP)
+## Marketing
 
-*Not included in the 2000–2005 prototype. Documented here for future implementation.*
+Part of the manufacturing wizard. The player selects one ad campaign per model before committing to manufacturing.
 
-Per model, allocate a marketing budget and choose:
+### Ad Campaigns
 
-- **Ad type** (increasing risk/reward): Product showcase → Lifestyle/aspirational → Comparative/provocative → Stunt marketing. Higher tiers have greater reach ceiling but a chance of backfire (negative press, temporary brand damage).
-- **Target niche:** Which stat/aspect to highlight. Must align with the laptop's actual strength or risk credibility damage, especially from Tech Enthusiasts.
+Five campaign tiers with increasing risk/reward:
+
+| Campaign | Base Cost | Risk | Sales Impact Range |
+|----------|-----------|------|-------------------|
+| No Campaign | Free | None | 0% (guaranteed) |
+| Product Showcase | $2,000,000 | Low | +1% to +10% |
+| Lifestyle Campaign | $1,200,000 | Medium | -3% to +20% |
+| Comparative Ad | $600,000 | High | -10% to +30% |
+| Stunt / Viral | $200,000 | Very High | -20% to +40% |
+
+Each campaign has a **skew-normal distribution** defining the probability of different sales impact outcomes. Higher-risk campaigns are cheaper but have wider variance and negative skew (downside tail is fatter).
+
+### Campaign Cost Inflation
+
+Campaign costs inflate at **3% per year** from the base year (2000):
+
+```
+actual_cost = base_cost × 1.03^(current_year - 2000)
+```
+
+### Sales Impact
+
+The campaign's outcome is sampled from its distribution at year-end. The result is a percentage modifier applied to demand:
+
+```
+adjusted_demand = base_demand × (1 + campaign_bonus / 100)
+```
+
+The player sees the distribution shape (via a chart) and the min/mean/max range before choosing, but the actual outcome is only revealed after the year simulates.
+
+---
+
+## Press Release
+
+Part of the manufacturing wizard. The player answers short-form prompts that shape how the laptop is perceived at launch.
+
+### Prompt System
+
+Each manufacturing plan includes **3 press release prompts** randomly selected from a pool of 12. Prompts are short questions about the laptop's positioning:
+
+- "Describe this laptop in one phrase."
+- "What's the single standout feature?"
+- "Who is this laptop built for?"
+- "What problem does this laptop solve?"
+- "How does this compare to your previous model?" *(only for successors)*
+- "What should customers expect from the build quality?"
+- "Sum up this laptop in one word, then explain."
+- "Why pick this over a competitor?"
+- "What doesn't show up in the spec sheet?"
+- "If you could only keep one feature, which one?"
+- "What compromises did you make, and why?"
+- "What's your ambition for this product line?"
+
+### Constraints
+
+- **Character limit:** 150 characters per response.
+- **No repeat sets:** The system avoids presenting the exact same 3 prompts as the player's previous manufacturing plan.
+- **Model-type gating:** Some prompts (e.g., "How does this compare to your previous model?") only appear for successor or spec bump models.
+
+### Effect on Game
+
+Press release responses feed into the **review generation system**. Reviewer templates can quote the player's responses, creating a feedback loop between marketing claims and critical reception. Overpromising relative to actual specs risks negative review commentary.
 
 ---
 
@@ -360,13 +420,14 @@ Post-year, the player can pay for a detailed demographic breakdown: which buyer 
 - [ ] Laptop reviews (2 per model, template-driven)
 - [ ] Year-end awards
 - [ ] ~550 sentence templates for reviews and awards
+- [ ] Marketing campaigns (5 tiers, skew-normal distributions, cost inflation)
+- [ ] Press release prompts (3 per model from pool of 12, feeds into reviews)
 - [ ] Unsold inventory written off
 - [ ] Game over on negative cash after year-end
 - [ ] Thermals as single collapsed stat (noise + temperature)
 
 ### Deferred to Post-Prototype
 
-- [ ] Marketing subsystem (ad types, backfire, target niche)
 - [ ] Paid demographic breakdowns
 - [ ] Timeline beyond 2005
 - [ ] More AI competitors / multiple models per competitor
