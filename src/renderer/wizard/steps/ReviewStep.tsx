@@ -13,6 +13,7 @@ import {
   specSummary,
   CHASSIS_SLOTS,
   computeLaptopTotals,
+  componentCostDecayed,
 } from "../constants";
 import { getAllChassisOptions, WIZARD_STEP_LABELS, WIZARD_STEPS, COMPONENT_STEP_SLOTS, WizardStep } from "../types";
 import { getScreenSizeDef } from "../../../data/screenSizes";
@@ -294,7 +295,7 @@ export function ReviewStep() {
                     label={COMPONENT_SLOT_LABELS[slot]}
                     value={comp?.name ?? "Not selected"}
                     detail={comp ? specSummary(comp.specs) : undefined}
-                    cost={comp ? applyDisplayMultiplier(comp.costAtLaunch, slot, displayMult) : undefined}
+                    cost={comp ? applyDisplayMultiplier(componentCostDecayed(comp, gameYear), slot, displayMult) : undefined}
                     onClick={() => setDialogTarget({ kind: "component", slot, label: COMPONENT_SLOT_LABELS[slot] })}
                   />
                 );

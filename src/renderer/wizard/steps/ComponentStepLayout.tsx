@@ -1,5 +1,5 @@
 import { useWizard } from "../WizardContext";
-import { DISPLAY_SLOTS, applyDisplayMultiplier, specSummary, getAvailableComponents } from "../constants";
+import { DISPLAY_SLOTS, applyDisplayMultiplier, specSummary, getAvailableComponents, componentCostDecayed } from "../constants";
 import { getScreenSizeDef } from "../../../data/screenSizes";
 import { Component, ComponentSlot, ScreenSizeDefinition } from "../../../data/types";
 import { Tooltip } from "../Tooltip";
@@ -96,6 +96,7 @@ function SlotSection({
             onSelect={() => onSelect(component)}
             slot={slot}
             multiplier={multiplier}
+            gameYear={gameYear}
           />
         ))}
       </div>
@@ -109,14 +110,16 @@ function ComponentCard({
   onSelect,
   slot,
   multiplier,
+  gameYear,
 }: {
   component: Component;
   isSelected: boolean;
   onSelect: () => void;
   slot: ComponentSlot;
   multiplier: number;
+  gameYear: number;
 }) {
-  const cost = applyDisplayMultiplier(component.costAtLaunch, slot, multiplier);
+  const cost = applyDisplayMultiplier(componentCostDecayed(component, gameYear), slot, multiplier);
   const power = applyDisplayMultiplier(component.powerDrawW, slot, multiplier);
   const weight = applyDisplayMultiplier(component.weightG, slot, multiplier);
 

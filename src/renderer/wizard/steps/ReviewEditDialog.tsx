@@ -6,6 +6,7 @@ import {
   totalConsumedVolumeCm3,
   maxHeightConstraintCm,
   applyDisplayMultiplier,
+  componentCostDecayed,
   chassisCost,
   specSummary,
   MIN_BATTERY_WH,
@@ -277,7 +278,7 @@ function SingleComponentEditor({ slot }: { slot: ComponentSlot }) {
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
         {available.map((component) => {
           const isSelected = selected?.id === component.id;
-          const cost = applyDisplayMultiplier(component.costAtLaunch, slot, multiplier);
+          const cost = applyDisplayMultiplier(componentCostDecayed(component, gameYear), slot, multiplier);
           const power = applyDisplayMultiplier(component.powerDrawW, slot, multiplier);
           const weight = applyDisplayMultiplier(component.weightG, slot, multiplier);
           return (

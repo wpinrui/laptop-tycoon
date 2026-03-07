@@ -4,6 +4,7 @@ import { ALL_COMPONENTS } from "../../data/components";
 import { COLOUR_OPTIONS } from "../../data/colourOptions";
 import { getScreenSizeDef } from "../../data/screenSizes";
 import { getBatteryEra } from "../../data/batteryEras";
+import { SLOT_CONFIGS } from "../../data/slotConfigs";
 import {
   MATERIALS,
   COOLING_SOLUTIONS,
@@ -218,6 +219,13 @@ export function chassisCost(option: ChassisOption, year: number): number {
   return Math.round(option.costAtLaunch * Math.pow(1 - option.costDecayRate, age));
 }
 
+export function componentCostDecayed(component: Component, year: number): number {
+  const slotConfig = SLOT_CONFIGS.find((s) => s.slot === component.slot);
+  if (!slotConfig) return component.costAtLaunch;
+  const age = Math.max(0, year - component.yearIntroduced);
+  return Math.round(component.costAtLaunch * Math.pow(1 - slotConfig.costDecayRate, age));
+}
+
 /** Sum all internal volume consumed: components + battery + ports + chassis options. */
 export function totalConsumedVolumeCm3(
   components: Partial<Record<ComponentSlot, { volumeCm3: number }>>,
@@ -325,7 +333,7 @@ export function computeLaptopTotals(
   let componentWeight = 0;
   for (const [slot, comp] of Object.entries(components)) {
     if (!comp) continue;
-    componentCost += applyDisplayMultiplier(comp.costAtLaunch, slot, displayMult);
+    componentCost += applyDisplayMultiplier(componentCostDecayed(comp, year), slot, displayMult);
     componentPower += applyDisplayMultiplier(comp.powerDrawW, slot, displayMult);
     componentWeight += applyDisplayMultiplier(comp.weightG, slot, displayMult);
   }
