@@ -1,4 +1,4 @@
-import { CSSProperties, useMemo, useState, useRef, useEffect } from "react";
+import { CSSProperties, useState, useRef, useEffect } from "react";
 import { useMfgWizard } from "../ManufacturingWizardContext";
 import { useGame } from "../../state/GameContext";
 import { tokens } from "../../shell/tokens";
@@ -12,6 +12,7 @@ import {
   TOOLING_COST, CERTIFICATION_COST, MULTI_MODEL_OVERHEAD,
 } from "../utils/constants";
 import { getActiveModels } from "../../screens/dashboard/utils";
+import { projectDemandRange } from "../../../simulation/salesEngine";
 
 const twoColumnStyle: CSSProperties = {
   display: "grid",
@@ -175,8 +176,7 @@ function DetailRow({ label, value, color }: { label: string; value: string; colo
   );
 }
 
-// Placeholder base demand — will be replaced by actual sales simulation later
-const PLACEHOLDER_BASE_DEMAND = 10_000;
+// projectDemandRange provides real simulation-backed demand estimates
 
 /** Snap price to nearest $50 ending in 9, e.g. $449, $499, $549 */
 function snapPrice(raw: number): number {
@@ -238,22 +238,16 @@ export function ManufacturingStep() {
     unitsOrdered: effectiveQty,
   });
 
-  // Demand projection
+  // Demand projection from sales simulation engine
   const { distribution: dist } = campaign;
 
-  const projections = useMemo(() => {
-    const baseDemand = PLACEHOLDER_BASE_DEMAND;
-    const lowerAdBonus = approxPercentile(dist.mean, dist.stdDev, dist.skew, dist.min, dist.max, 0.25);
-    const upperAdBonus = approxPercentile(dist.mean, dist.stdDev, dist.skew, dist.min, dist.max, 0.75);
-
-    const lowerDemand = baseDemand * (1 + lowerAdBonus / 100);
-    const upperDemand = baseDemand * (1 + upperAdBonus / 100);
-
-    const displayLower = Math.max(0, Math.round(lowerDemand * (1 - state.noiseMargin / 100)));
-    const displayUpper = Math.round(upperDemand * (1 + state.noiseMargin / 100));
-
-    return { displayLower, displayUpper };
-  }, [dist, state.noiseMargin]);
+  const projection = projectDemandRange(gameState, state.modelId, effectivePrice);
+  const lowerAdBonus = approxPercentile(dist.mean, dist.stdDev, dist.skew, dist.min, dist.max, 0.25);
+  const upperAdBonus = approxPercentile(dist.mean, dist.stdDev, dist.skew, dist.min, dist.max, 0.75);
+  const projections = {
+    displayLower: Math.max(0, Math.round(projection.low * (1 + lowerAdBonus / 100))),
+    displayUpper: Math.round(projection.high * (1 + upperAdBonus / 100)),
+  };
 
   if (!model) return <p>Model not found.</p>;
 

@@ -1,6 +1,7 @@
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
 import { GameState, LaptopDesign, LaptopModel, ModelStatus, createInitialGameState } from "./gameTypes";
 import { FullManufacturingPlan } from "../manufacturing/types";
+import { YearSimulationResult } from "../../simulation/salesTypes";
 
 export interface CompetitorModelEntry {
   competitorId: string;
@@ -17,7 +18,8 @@ type GameAction =
   | { type: "SET_MODEL_PRICING"; modelId: string; retailPrice: number; manufacturingQuantity: number }
   | { type: "UPDATE_MODEL_DESIGN"; modelId: string; design: LaptopDesign }
   | { type: "SET_MANUFACTURING_PLAN"; modelId: string; plan: FullManufacturingPlan }
-  | { type: "ADD_COMPETITOR_MODELS"; models: CompetitorModelEntry[] };
+  | { type: "ADD_COMPETITOR_MODELS"; models: CompetitorModelEntry[] }
+  | { type: "APPLY_SIMULATION_RESULT"; result: YearSimulationResult };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
@@ -76,6 +78,16 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           const newModel = byId.get(comp.id);
           return newModel ? { ...comp, models: [...comp.models, newModel] } : comp;
         }),
+      };
+    }
+    case "APPLY_SIMULATION_RESULT": {
+      const result = action.result;
+      return {
+        ...state,
+        cash: result.cashAfterResolution,
+        yearSimulated: true,
+        yearHistory: [...state.yearHistory, result],
+        lastSimulationResult: result,
       };
     }
     default:

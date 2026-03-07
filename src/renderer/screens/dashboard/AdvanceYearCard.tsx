@@ -1,5 +1,6 @@
 import { FastForward } from "lucide-react";
 import { useGame } from "../../state/GameContext";
+import { useNavigation } from "../../navigation/NavigationContext";
 import { MenuButton } from "../../shell/MenuButton";
 import { tokens } from "../../shell/tokens";
 import { BentoCard } from "./BentoCard";
@@ -7,9 +8,11 @@ import { cardBodyStyle } from "./styles";
 import { getActiveModels } from "./utils";
 import { COMPETITORS } from "../../../data/competitors";
 import { generateCompetitorModels } from "../../../simulation/competitorAI";
+import { simulateYear } from "../../../simulation/salesEngine";
 
 export function AdvanceYearCard() {
   const { state, dispatch } = useGame();
+  const { navigateTo } = useNavigation();
   const activeModels = getActiveModels(state);
   const allHavePlans = activeModels.length > 0 && activeModels.every(
     (m) => m.manufacturingPlan !== null
@@ -42,13 +45,49 @@ export function AdvanceYearCard() {
         disabled={!allHavePlans}
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
+
+          // 1. Generate competitor models for this year
           const generated = generateCompetitorModels(state.year, COMPETITORS);
-          const models = COMPETITORS.map((c, i) => ({
+          const competitorModels = COMPETITORS.map((c, i) => ({
             competitorId: c.id,
             model: generated[i],
           }));
-          dispatch({ type: "ADVANCE_YEAR" });
-          dispatch({ type: "ADD_COMPETITOR_MODELS", models });
+          dispatch({ type: "ADD_COMPETITOR_MODELS", models: competitorModels });
+
+          // 2. Deduct manufacturing costs upfront (cash goes down now)
+          let totalMfgSpend = 0;
+          for (const model of activeModels) {
+            if (model.manufacturingPlan) {
+              totalMfgSpend += model.manufacturingPlan.manufacturing.totalCost;
+              if (model.manufacturingPlan.marketing.cost) {
+                totalMfgSpend += model.manufacturingPlan.marketing.cost;
+              }
+            }
+          }
+          const cashAfterManufacturing = state.cash - totalMfgSpend;
+          dispatch({ type: "SET_CASH", cash: cashAfterManufacturing });
+
+          // 3. Run sales simulation (uses state with competitors added)
+          // We need to build the state as it will be after dispatch
+          const stateForSim = {
+            ...state,
+            cash: cashAfterManufacturing,
+            competitors: state.competitors.map((comp) => {
+              const newModel = competitorModels.find((cm) => cm.competitorId === comp.id);
+              return newModel ? { ...comp, models: [...comp.models, newModel.model] } : comp;
+            }),
+          };
+          const result = simulateYear(stateForSim);
+
+          // 4. Apply simulation results (sets cash to revenue + post-manufacturing balance)
+          dispatch({ type: "APPLY_SIMULATION_RESULT", result });
+
+          // 5. Navigate to appropriate screen
+          if (result.gameOver) {
+            navigateTo("gameOver");
+          } else {
+            navigateTo("yearEndSummary");
+          }
         }}
         style={{ marginTop: tokens.spacing.md, width: "100%" }}
       >

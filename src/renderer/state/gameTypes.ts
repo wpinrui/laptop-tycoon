@@ -6,6 +6,7 @@ import {
 } from "../../data/types";
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { COMPETITORS, CompetitorArchetype } from "../../data/competitors";
+import { YearSimulationResult } from "../../simulation/salesTypes";
 
 export type ModelType = "brandNew" | "successor" | "specBump";
 
@@ -59,6 +60,8 @@ export interface GameState {
   nicheReputation: Record<string, number>;
   models: LaptopModel[];
   competitors: CompetitorState[];
+  yearHistory: YearSimulationResult[];
+  lastSimulationResult: YearSimulationResult | null;
 }
 
 export const STARTING_CASH = 50_000_000;
@@ -84,5 +87,7 @@ export function createInitialGameState(
       brandRecognition: c.brandRecognition,
       models: [],
     })),
+    yearHistory: [],
+    lastSimulationResult: null,
   };
 }
