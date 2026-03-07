@@ -65,6 +65,15 @@ export const tokens = {
   },
 } as const;
 
+/** Glassmorphic shell style for wizard panels. */
+export const wizardShellStyle: CSSProperties = {
+  width: "100%",
+  height: "100%",
+  background: tokens.colors.panelBg,
+  backdropFilter: tokens.backdrop.blur,
+  WebkitBackdropFilter: tokens.backdrop.blur,
+};
+
 /** Reusable modal overlay style (dark scrim + centered flex). */
 export const overlayStyle: CSSProperties = {
   position: "fixed",

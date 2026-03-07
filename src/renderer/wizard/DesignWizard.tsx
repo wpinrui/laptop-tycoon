@@ -13,7 +13,7 @@ import { useGame } from "../state/GameContext";
 import { useNavigation } from "../navigation/NavigationContext";
 import { LaptopDesign } from "../state/gameTypes";
 import { MenuButton } from "../shell/MenuButton";
-import { tokens } from "../shell/tokens";
+import { tokens, wizardShellStyle } from "../shell/tokens";
 import { ConfirmDiscardDialog } from "../shell/ConfirmDiscardDialog";
 import { MetadataStep } from "./steps/MetadataStep";
 import { ScreenSizeStep } from "./steps/ScreenSizeStep";
@@ -314,14 +314,6 @@ function WizardContent() {
     </div>
   );
 }
-
-const wizardShellStyle: React.CSSProperties = {
-  width: "100%",
-  height: "100%",
-  background: tokens.colors.panelBg,
-  backdropFilter: tokens.backdrop.blur,
-  WebkitBackdropFilter: tokens.backdrop.blur,
-};
 
 export function DesignWizard() {
   return (
