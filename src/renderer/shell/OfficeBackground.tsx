@@ -45,6 +45,8 @@ function CameraAnimation() {
   return null;
 }
 
+useGLTF.preload(MODEL_URL);
+
 export function OfficeBackground() {
   return (
     <div
