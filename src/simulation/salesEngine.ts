@@ -1,6 +1,7 @@
 import {
   LaptopStat,
   Demographic,
+  PriceSensitivity,
   StatVector,
   ALL_STATS,
 } from "../data/types";
@@ -24,7 +25,7 @@ import {
   DEMAND_NOISE_MIN,
   DEMAND_NOISE_MAX,
 } from "../renderer/manufacturing/utils/constants";
-import { AD_CAMPAIGNS, getCampaignCost } from "../renderer/manufacturing/data/campaigns";
+import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
 
 // --- Market Entry: all laptops competing this year ---
 
@@ -51,7 +52,7 @@ function buildMarketLaptops(state: GameState): MarketLaptop[] {
     // Calculate total manufacturing cost from plan
     const plan = model.manufacturingPlan;
     const totalMfgCost = plan
-      ? plan.manufacturing.totalCost + getCampaignCostForModel(plan.marketing.campaignId, state.year)
+      ? plan.manufacturing.totalCost + plan.marketing.cost
       : model.manufacturingQuantity * model.design.unitCost;
 
     laptops.push({
@@ -86,13 +87,6 @@ function buildMarketLaptops(state: GameState): MarketLaptop[] {
   }
 
   return laptops;
-}
-
-function getCampaignCostForModel(campaignId: string | null, year: number): number {
-  if (!campaignId) return 0;
-  const campaign = AD_CAMPAIGNS.find((c) => c.id === campaignId);
-  if (!campaign) return 0;
-  return getCampaignCost(campaign, year);
 }
 
 // --- Appeal Calculation ---
@@ -154,14 +148,14 @@ function applyPriceSensitivity(
   sensitivity: Demographic["priceSensitivity"],
 ): number {
   // Higher sensitivity = price matters more (score deviations amplified)
-  const exponents: Record<string, number> = {
+  const exponents: Record<PriceSensitivity, number> = {
     low: 0.5,
     moderate: 1.0,
     high: 1.5,
     veryHigh: 2.0,
     extreme: 3.0,
   };
-  const exp = exponents[sensitivity] ?? 1.0;
+  const exp = exponents[sensitivity];
   // Amplify deviation from neutral (0.5)
   if (priceScore >= 0.5) {
     return 0.5 + 0.5 * Math.pow((priceScore - 0.5) / 0.5, 1 / exp);
@@ -170,14 +164,18 @@ function applyPriceSensitivity(
   }
 }
 
+/** Map brand recognition (0-100) to a 0.3-1.0 awareness factor */
+function brandAwareness(brandRecognition: number): number {
+  return 0.3 + 0.7 * (brandRecognition / 100);
+}
+
 /** Brand fit: how well the player's niche reputation aligns with what this demographic cares about */
 function calculateBrandFit(
   brandRecognition: number,
   nicheReputation: Record<string, number>,
   demographic: Demographic,
 ): number {
-  // Base brand awareness factor (0-100 -> 0.3-1.0)
-  const awarenessBase = 0.3 + 0.7 * (brandRecognition / 100);
+  const awarenessBase = brandAwareness(brandRecognition);
 
   // Niche alignment bonus: dot product of niche scores with demographic weights
   let nicheScore = 0;
@@ -256,7 +254,7 @@ function calculateAppeal(
     brandFit = calculateBrandFit(state.brandRecognition, state.nicheReputation, demographic);
   } else {
     const comp = state.competitors.find((c) => c.id === laptop.owner);
-    brandFit = comp ? 0.3 + 0.7 * (comp.brandRecognition / 100) : 0.5;
+    brandFit = comp ? brandAwareness(comp.brandRecognition) : 0.5;
   }
 
   const loyalty = calculateLoyaltyModifier(laptop);
