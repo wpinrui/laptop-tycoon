@@ -2,6 +2,7 @@ import { CSSProperties } from "react";
 import { useMfgWizard } from "../ManufacturingWizardContext";
 import { tokens } from "../../shell/tokens";
 import { PRESS_RELEASE_PROMPTS, PRESS_RELEASE_CHAR_LIMIT } from "../data/pressReleasePrompts";
+import { PressReleasePrompt } from "../types";
 
 const promptStyle: CSSProperties = {
   background: tokens.colors.background,
@@ -29,7 +30,7 @@ export function PressReleaseStep() {
 
   const prompts = state.pressReleasePromptIds
     .map((id) => PRESS_RELEASE_PROMPTS.find((p) => p.id === id))
-    .filter(Boolean) as typeof PRESS_RELEASE_PROMPTS;
+    .filter((p): p is PressReleasePrompt => Boolean(p));
 
   return (
     <div style={{ maxWidth: 720 }}>

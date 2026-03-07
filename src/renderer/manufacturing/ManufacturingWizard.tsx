@@ -29,7 +29,6 @@ function isStepComplete(step: ManufacturingWizardStep, state: ManufacturingWizar
   }
 }
 
-
 function WizardContent() {
   const { state, dispatch } = useMfgWizard();
   const { state: gameState, dispatch: gameDispatch } = useGame();
