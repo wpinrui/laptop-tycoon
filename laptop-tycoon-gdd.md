@@ -139,7 +139,7 @@ Player commits to a manufacturing quantity before the year begins. Units are pai
 **Economies of scale:** Cost per unit decreases with volume ordered. Diminishing returns curve:
 
 ```
-unit_cost = base_cost × (1 / (1 + log(units_ordered / reference_quantity)))
+unit_cost = base_cost × (1 / (1 + 0.4 × log10(units_ordered / reference_quantity)))
 ```
 
 **Multiple model overhead:** Running 2 distinct models incurs additional tooling/overhead costs beyond the per-unit manufacturing.
