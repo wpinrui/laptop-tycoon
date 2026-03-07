@@ -1,6 +1,5 @@
 import { useWizard } from "../WizardContext";
 import {
-  GAME_YEAR,
   THICKNESS_MIN_CM,
   THICKNESS_MAX_CM,
   THICKNESS_STEP_CM,
@@ -25,7 +24,7 @@ import { COLOUR_OPTIONS } from "../../../data/colourOptions";
 const VOLUME_WARNING_PERCENT = 85;
 
 export function BodyStep() {
-  const { state, dispatch } = useWizard();
+  const { state, dispatch, gameYear } = useWizard();
 
   const thickness = state.thicknessCm;
   const bezel = state.bezelMm;
@@ -38,12 +37,12 @@ export function BodyStep() {
     state.ports,
     allChassisOptions,
   );
-  const totalAvailable = availableVolumeCm3(state.screenSize, bezel, thickness, GAME_YEAR);
+  const totalAvailable = availableVolumeCm3(state.screenSize, bezel, thickness, gameYear);
   const volumeOverflow = totalVolume > totalAvailable;
   const volumePercent = totalAvailable > 0 ? Math.min(100, (totalVolume / totalAvailable) * 100) : 100;
 
   // --- Min thickness (from both volume and height constraints) ---
-  const minFromVolume = minThicknessForVolumeCm(totalVolume, state.screenSize, bezel, GAME_YEAR);
+  const minFromVolume = minThicknessForVolumeCm(totalVolume, state.screenSize, bezel, gameYear);
   const minFromHeight = maxHeightConstraintCm(
     state.components,
     state.ports,
@@ -155,7 +154,7 @@ export function BodyStep() {
 
         {/* Chassis option slots */}
         {CHASSIS_SLOTS.map(({ slot, label, options }) => {
-          const available = getAvailableChassisOptions(options, GAME_YEAR);
+          const available = getAvailableChassisOptions(options, gameYear);
           const selected = state.chassis[slot];
           return (
             <div key={slot} style={{ marginBottom: "24px" }}>
@@ -169,6 +168,7 @@ export function BodyStep() {
                     option={option}
                     isSelected={selected?.id === option.id}
                     onSelect={() => dispatch({ type: "SET_CHASSIS_OPTION", slot, option })}
+                    gameYear={gameYear}
                   />
                 ))}
               </div>
@@ -226,12 +226,14 @@ function ChassisCard({
   option,
   isSelected,
   onSelect,
+  gameYear,
 }: {
   option: ChassisOption;
   isSelected: boolean;
   onSelect: () => void;
+  gameYear: number;
 }) {
-  const cost = chassisCost(option, GAME_YEAR);
+  const cost = chassisCost(option, gameYear);
 
   return (
     <Tooltip content={<OptionTooltipContent name={option.name} description={option.description} stats={option.stats} />}>

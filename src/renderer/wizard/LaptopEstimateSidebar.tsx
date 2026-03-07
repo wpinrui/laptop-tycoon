@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { useWizard } from "./WizardContext";
 import { LaptopStat, StatVector } from "../../data/types";
 import {
-  GAME_YEAR,
   formatWeight,
   availableVolumeCm3,
   coolingMultiplier,
@@ -24,7 +23,7 @@ export function WizardSidebar({
   showChassisTotals?: boolean;
   showEstimate?: boolean;
 }) {
-  const { state } = useWizard();
+  const { state, gameYear } = useWizard();
   const screenSizeDef = getScreenSizeDef(state.screenSize);
 
   const thickness = state.thicknessCm;
@@ -35,12 +34,12 @@ export function WizardSidebar({
   const totals = computeLaptopTotals(
     state.components, state.ports, state.chassis,
     state.batteryCapacityWh, state.selectedColours,
-    state.screenSize, bezel, thickness, GAME_YEAR,
+    state.screenSize, bezel, thickness, gameYear,
   );
   const { chassisOptionCost, chassisOptionWeight, totalCost, totalPower, subtotalWeight: totalWeight } = totals;
 
   // --- Statistics ---
-  const statTotals = useMemo(() => computeStatTotals(state), [state]);
+  const statTotals = useMemo(() => computeStatTotals(state, gameYear), [state, gameYear]);
 
   // Track previous totals: store last-known totals and update *after* render
   // so the current render can compare current vs previous.
@@ -74,7 +73,7 @@ export function WizardSidebar({
   let estimateSection = null;
   if (showEstimate) {
     const totalVolume = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, allChassisOptions);
-    const totalAvailable = availableVolumeCm3(state.screenSize, bezel, thickness, GAME_YEAR);
+    const totalAvailable = availableVolumeCm3(state.screenSize, bezel, thickness, gameYear);
     const volumeOverflow = totalVolume > totalAvailable;
     const volumePercent = totalAvailable > 0 ? Math.min(100, (totalVolume / totalAvailable) * 100) : 100;
 
@@ -84,16 +83,16 @@ export function WizardSidebar({
     const effectiveCooling = Math.round(coolingFromSolution * coolMult);
     const thermalWarning = totalPower > effectiveCooling;
 
-    const minFromVolume = minThicknessForVolumeCm(totalVolume, state.screenSize, bezel, GAME_YEAR);
+    const minFromVolume = minThicknessForVolumeCm(totalVolume, state.screenSize, bezel, gameYear);
     const minFromHeight = maxHeightConstraintCm(state.components, state.ports, allChassisOptions);
     const minThickness = Math.max(minFromVolume, minFromHeight);
     const thicknessTooThin = thickness < minThickness;
 
     const estimatedTotalWeight = screenSizeDef.baseWeightG + totals.subtotalWeight;
 
-    const avgPower = totalPower * avgUsageMultiplier(GAME_YEAR);
+    const avgPower = totalPower * avgUsageMultiplier(gameYear);
     const estimatedHours = avgPower > 0 ? state.batteryCapacityWh / avgPower : 0;
-    const batteryWarning = totalPower > 0 && estimatedHours < batteryWarningThresholdH(GAME_YEAR);
+    const batteryWarning = totalPower > 0 && estimatedHours < batteryWarningThresholdH(gameYear);
 
     estimateSection = (
       <>
@@ -121,7 +120,7 @@ export function WizardSidebar({
           <SidebarRow
             label="Battery Life"
             value={`~${estimatedHours.toFixed(1)}h`}
-            warning={batteryWarning ? `Very low for ${GAME_YEAR} (${state.batteryCapacityWh}Wh ÷ ${totalPower}W)` : undefined}
+            warning={batteryWarning ? `Very low for ${gameYear} (${state.batteryCapacityWh}Wh ÷ ${totalPower}W)` : undefined}
           />
         )}
       </>

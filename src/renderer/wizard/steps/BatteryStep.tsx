@@ -1,12 +1,12 @@
 import { useWizard } from "../WizardContext";
-import { GAME_YEAR, formatWeight, MIN_BATTERY_WH, MAX_BATTERY_WH, BATTERY_STEP_WH, avgUsageMultiplier, batteryWarningThresholdH, applyDisplayMultiplier } from "../constants";
+import { formatWeight, MIN_BATTERY_WH, MAX_BATTERY_WH, BATTERY_STEP_WH, avgUsageMultiplier, batteryWarningThresholdH, applyDisplayMultiplier } from "../constants";
 import { getBatteryEra } from "../../../data/batteryEras";
 import { getScreenSizeDef } from "../../../data/screenSizes";
 import { StatCard } from "./StatCard";
 
 export function BatteryStep() {
-  const { state, dispatch } = useWizard();
-  const era = getBatteryEra(GAME_YEAR);
+  const { state, dispatch, gameYear } = useWizard();
+  const era = getBatteryEra(gameYear);
   const displayMult = getScreenSizeDef(state.screenSize).displayMultiplier;
 
   const capacity = state.batteryCapacityWh;
@@ -19,9 +19,9 @@ export function BatteryStep() {
     if (comp) totalPower += applyDisplayMultiplier(comp.powerDrawW, slot, displayMult);
   }
 
-  const avgPower = totalPower * avgUsageMultiplier(GAME_YEAR);
+  const avgPower = totalPower * avgUsageMultiplier(gameYear);
   const estimatedHours = avgPower > 0 ? capacity / avgPower : 0;
-  const batteryWarning = totalPower > 0 && estimatedHours < batteryWarningThresholdH(GAME_YEAR);
+  const batteryWarning = totalPower > 0 && estimatedHours < batteryWarningThresholdH(gameYear);
   const batteryH = Math.floor(estimatedHours);
   const batteryM = Math.round((estimatedHours - batteryH) * 60);
   const batteryLifeStr = batteryM > 0 ? `${batteryH} hour${batteryH !== 1 ? "s" : ""} ${batteryM} minute${batteryM !== 1 ? "s" : ""}` : `${batteryH} hour${batteryH !== 1 ? "s" : ""}`;
@@ -97,7 +97,7 @@ export function BatteryStep() {
 
       {totalPower > 0 && (
         <div style={{ fontSize: "0.75rem", color: "#888", textAlign: "center" }}>
-          {capacity} Wh ÷ ({totalPower} W × {avgUsageMultiplier(GAME_YEAR)} avg usage) = {batteryLifeStr}
+          {capacity} Wh ÷ ({totalPower} W × {avgUsageMultiplier(gameYear)} avg usage) = {batteryLifeStr}
         </div>
       )}
     </div>

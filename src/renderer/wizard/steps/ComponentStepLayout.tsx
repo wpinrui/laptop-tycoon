@@ -1,5 +1,5 @@
 import { useWizard } from "../WizardContext";
-import { GAME_YEAR, DISPLAY_SLOTS, applyDisplayMultiplier, specSummary, getAvailableComponents } from "../constants";
+import { DISPLAY_SLOTS, applyDisplayMultiplier, specSummary, getAvailableComponents } from "../constants";
 import { getScreenSizeDef } from "../../../data/screenSizes";
 import { Component, ComponentSlot, ScreenSizeDefinition } from "../../../data/types";
 import { Tooltip } from "../Tooltip";
@@ -25,7 +25,7 @@ export function ComponentStepLayout({
   slots: SlotDef[];
   children?: React.ReactNode;
 }) {
-  const { state, dispatch } = useWizard();
+  const { state, dispatch, gameYear } = useWizard();
   const screenSizeDef = getScreenSizeDef(state.screenSize);
 
   return (
@@ -43,6 +43,7 @@ export function ComponentStepLayout({
           selected={state.components[slot] ?? null}
           onSelect={(c) => dispatch({ type: "SET_COMPONENT", slot, component: c })}
           screenSizeDef={screenSizeDef}
+          gameYear={gameYear}
         />
       ))}
 
@@ -57,14 +58,16 @@ function SlotSection({
   selected,
   onSelect,
   screenSizeDef,
+  gameYear,
 }: {
   slot: ComponentSlot;
   label: string;
   selected: Component | null;
   onSelect: (component: Component) => void;
   screenSizeDef: ScreenSizeDefinition;
+  gameYear: number;
 }) {
-  const available = getAvailableComponents(slot, GAME_YEAR);
+  const available = getAvailableComponents(slot, gameYear);
   const multiplier = screenSizeDef.displayMultiplier;
 
   return (

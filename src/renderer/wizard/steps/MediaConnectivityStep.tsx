@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { ComponentStepLayout, SlotDef } from "./ComponentStepLayout";
 import { useWizard } from "../WizardContext";
-import { GAME_YEAR } from "../constants";
 import { PORT_TYPES } from "../../../data/portTypes";
 import { PortType } from "../../../data/types";
 import { Tooltip } from "../Tooltip";
@@ -30,8 +29,8 @@ function getAvailablePorts(year: number): PortType[] {
 }
 
 export function MediaConnectivityStep() {
-  const { state, dispatch } = useWizard();
-  const availablePorts = getAvailablePorts(GAME_YEAR);
+  const { state, dispatch, gameYear } = useWizard();
+  const availablePorts = getAvailablePorts(gameYear);
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set(["legacy"]));
 
   const totalPortCost = availablePorts.reduce(

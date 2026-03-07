@@ -3,7 +3,6 @@ import { useWizard } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
 import { WizardStep, WizardState, WIZARD_STEPS, COMPONENT_STEP_SLOTS, getAllChassisOptions } from "./types";
 import {
-  GAME_YEAR,
   availableVolumeCm3,
   totalConsumedVolumeCm3,
   maxHeightConstraintCm,
@@ -27,7 +26,7 @@ import { WizardSidebar } from "./LaptopEstimateSidebar";
 import { StatusBar } from "../shell/StatusBar";
 
 
-function isStepComplete(step: WizardStep, state: WizardState): boolean {
+function isStepComplete(step: WizardStep, state: WizardState, year: number): boolean {
   switch (step) {
     case "metadata":
       return !!(state.name.trim() && (state.modelType === "brandNew" || state.predecessorId));
@@ -53,7 +52,7 @@ function isStepComplete(step: WizardStep, state: WizardState): boolean {
 
       // Volume check
       const totalVol = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, chassisOptions);
-      const available = availableVolumeCm3(state.screenSize, state.bezelMm, state.thicknessCm, GAME_YEAR);
+      const available = availableVolumeCm3(state.screenSize, state.bezelMm, state.thicknessCm, year);
       if (totalVol > available) return false;
 
       // Height constraint check
@@ -65,7 +64,7 @@ function isStepComplete(step: WizardStep, state: WizardState): boolean {
   }
 }
 
-function wizardStateToDesign(state: WizardState): LaptopDesign {
+function wizardStateToDesign(state: WizardState, year: number): LaptopDesign {
   const totals = computeLaptopTotals(
     state.components,
     state.ports,
@@ -75,7 +74,7 @@ function wizardStateToDesign(state: WizardState): LaptopDesign {
     state.screenSize,
     state.bezelMm,
     state.thicknessCm,
-    GAME_YEAR,
+    year,
   );
   return {
     id: state.editingModelId ?? crypto.randomUUID(),
@@ -104,9 +103,9 @@ function WizardContent() {
   const isFirst = currentIdx === 0;
   const isLast = currentIdx === WIZARD_STEPS.length - 1;
 
-  const allStepsComplete = WIZARD_STEPS.every((s) => isStepComplete(s, state));
+  const allStepsComplete = WIZARD_STEPS.every((s) => isStepComplete(s, state, gameState.year));
 
-  const canAdvance = isStepComplete(state.currentStep, state)
+  const canAdvance = isStepComplete(state.currentStep, state, gameState.year)
     && (state.currentStep !== "body" || state.selectedColours.length > 0)
     && (!isLast || allStepsComplete);
 
@@ -126,7 +125,7 @@ function WizardContent() {
     if (targetIdx <= currentIdx) return true;
     // Can jump forward if all prior steps are complete
     for (let i = 0; i < targetIdx; i++) {
-      if (!isStepComplete(WIZARD_STEPS[i], state)) return false;
+      if (!isStepComplete(WIZARD_STEPS[i], state, gameState.year)) return false;
     }
     return true;
   }
@@ -170,12 +169,12 @@ function WizardContent() {
         <div>
           <h1 style={{ fontSize: tokens.font.sizeTitle, marginBottom: tokens.spacing.sm }}>Laptop Builder</h1>
           <p style={{ color: tokens.colors.textMuted, marginBottom: tokens.spacing.lg }}>
-            {state.editingModelId ? `Editing ${state.name}` : `Design your new laptop model for ${GAME_YEAR}`}
+            {state.editingModelId ? `Editing ${state.name}` : `Design your new laptop model for ${gameState.year}`}
           </p>
         </div>
         <div style={{ display: "flex", gap: tokens.spacing.sm, flexShrink: 0 }}>
         <button
-          onClick={() => dispatch({ type: "DEBUG_AUTOFILL" })}
+          onClick={() => dispatch({ type: "DEBUG_AUTOFILL", year: gameState.year })}
           style={{
             background: "none",
             border: `1px solid ${tokens.colors.panelBorder}`,
@@ -271,7 +270,7 @@ function WizardContent() {
           variant={isLast ? "accent" : "surface"}
           onClick={() => {
             if (isLast) {
-              const design = wizardStateToDesign(state);
+              const design = wizardStateToDesign(state, gameState.year);
               if (state.editingModelId) {
                 gameDispatch({ type: "UPDATE_MODEL_DESIGN", modelId: state.editingModelId, design });
               } else {

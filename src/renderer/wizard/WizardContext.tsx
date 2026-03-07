@@ -15,7 +15,8 @@ import {
   ChassisOptionSlot,
 } from "../../data/types";
 import { LaptopDesign } from "../state/gameTypes";
-import { GAME_YEAR, getAvailableComponents, getAvailableChassisOptions, CHASSIS_SLOTS } from "./constants";
+import { useGame } from "../state/GameContext";
+import { getAvailableComponents, getAvailableChassisOptions, CHASSIS_SLOTS } from "./constants";
 import { COLOUR_OPTIONS } from "../../data/colourOptions";
 
 type WizardAction =
@@ -36,7 +37,7 @@ type WizardAction =
   | { type: "PREV_STEP" }
   | { type: "RESET" }
   | { type: "LOAD_DESIGN"; design: LaptopDesign }
-  | { type: "DEBUG_AUTOFILL" };
+  | { type: "DEBUG_AUTOFILL"; year: number };
 
 function wizardReducer(state: WizardState, action: WizardAction): WizardState {
   switch (action.type) {
@@ -116,12 +117,12 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       const allSlots: ComponentSlot[] = Object.values(COMPONENT_STEP_SLOTS).flat() as ComponentSlot[];
       const components: Partial<Record<ComponentSlot, Component>> = {};
       for (const slot of allSlots) {
-        const available = getAvailableComponents(slot, GAME_YEAR);
+        const available = getAvailableComponents(slot, action.year);
         if (available.length > 0) components[slot] = available[0];
       }
       const chassis: WizardState["chassis"] = { material: null, coolingSolution: null, keyboardFeature: null, trackpadFeature: null };
       for (const def of CHASSIS_SLOTS) {
-        const available = getAvailableChassisOptions(def.options, GAME_YEAR);
+        const available = getAvailableChassisOptions(def.options, action.year);
         if (available.length > 0) chassis[def.slot] = available[0];
       }
       return {
@@ -162,14 +163,17 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 interface WizardContextValue {
   state: WizardState;
   dispatch: Dispatch<WizardAction>;
+  gameYear: number;
 }
 
 const WizardContext = createContext<WizardContextValue | null>(null);
 
 export function WizardProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(wizardReducer, INITIAL_WIZARD_STATE);
+  const { state: gameState } = useGame();
+  const gameYear = gameState.year;
   return (
-    <WizardContext.Provider value={{ state, dispatch }}>
+    <WizardContext.Provider value={{ state, dispatch, gameYear }}>
       {children}
     </WizardContext.Provider>
   );

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useWizard } from "../WizardContext";
 import { useGame } from "../../state/GameContext";
 import {
-  GAME_YEAR,
   formatWeight,
   availableVolumeCm3,
   coolingMultiplier,
@@ -61,11 +60,11 @@ const STEP_ICONS: Partial<Record<WizardStep, LucideIcon>> = {
 const STEP_ORDER = WIZARD_STEPS.filter((s) => s !== "metadata" && s !== "review");
 
 export function ReviewStep() {
-  const { state } = useWizard();
+  const { state, gameYear } = useWizard();
   const { state: gameState } = useGame();
   const [dialogTarget, setDialogTarget] = useState<DialogTarget | null>(null);
   const screenSizeDef = getScreenSizeDef(state.screenSize);
-  const era = getBatteryEra(GAME_YEAR);
+  const era = getBatteryEra(gameYear);
   const displayMult = screenSizeDef.displayMultiplier;
 
   const allChassisOptions = getAllChassisOptions(state.chassis);
@@ -74,7 +73,7 @@ export function ReviewStep() {
   const totals = computeLaptopTotals(
     state.components, state.ports, state.chassis,
     state.batteryCapacityWh, state.selectedColours,
-    state.screenSize, state.bezelMm, state.thicknessCm, GAME_YEAR,
+    state.screenSize, state.bezelMm, state.thicknessCm, gameYear,
   );
   const {
     componentCost, portCost, chassisOptionCost, batteryCost, batteryWeight, colourCost,
@@ -84,7 +83,7 @@ export function ReviewStep() {
 
   // --- Volume & cooling ---
   const totalVolume = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, allChassisOptions);
-  const totalAvailable = availableVolumeCm3(state.screenSize, state.bezelMm, state.thicknessCm, GAME_YEAR);
+  const totalAvailable = availableVolumeCm3(state.screenSize, state.bezelMm, state.thicknessCm, gameYear);
   const spaceUtilization = totalAvailable > 0 ? totalVolume / totalAvailable : 1;
   const spacePercent = Math.round(Math.min(100, spaceUtilization * 100));
 
@@ -96,9 +95,9 @@ export function ReviewStep() {
   const minFromHeight = maxHeightConstraintCm(state.components, state.ports, allChassisOptions);
   const thicknessTooThin = state.thicknessCm < minFromHeight;
 
-  const avgPower = totalPower * avgUsageMultiplier(GAME_YEAR);
+  const avgPower = totalPower * avgUsageMultiplier(gameYear);
   const estimatedHours = avgPower > 0 ? state.batteryCapacityWh / avgPower : 0;
-  const batteryWarning = totalPower > 0 && estimatedHours < batteryWarningThresholdH(GAME_YEAR);
+  const batteryWarning = totalPower > 0 && estimatedHours < batteryWarningThresholdH(gameYear);
 
   // --- Active ports ---
   const activePorts = PORT_TYPES.filter((pt) => (state.ports[pt.id] ?? 0) > 0);
@@ -121,7 +120,7 @@ export function ReviewStep() {
           {gameState.companyName} {state.name || "Unnamed Laptop"}
         </div>
         <div style={{ fontSize: "0.8125rem", color: "#888", marginTop: "4px" }}>
-          {state.screenSize}" &middot; {state.modelType === "brandNew" ? "Brand New" : state.modelType === "successor" ? "Successor" : "Spec Bump"} &middot; {GAME_YEAR}
+          {state.screenSize}" &middot; {state.modelType === "brandNew" ? "Brand New" : state.modelType === "successor" ? "Successor" : "Spec Bump"} &middot; {gameYear}
         </div>
       </div>
 

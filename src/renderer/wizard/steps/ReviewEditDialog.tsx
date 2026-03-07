@@ -1,7 +1,6 @@
 import { useRef } from "react";
 import { useWizard } from "../WizardContext";
 import {
-  GAME_YEAR,
   DISPLAY_SLOTS,
   formatWeight,
   totalConsumedVolumeCm3,
@@ -261,10 +260,10 @@ function ScreenSizeEditor() {
 }
 
 function SingleComponentEditor({ slot }: { slot: ComponentSlot }) {
-  const { state, dispatch } = useWizard();
+  const { state, dispatch, gameYear } = useWizard();
   const screenSizeDef = getScreenSizeDef(state.screenSize);
   const multiplier = screenSizeDef.displayMultiplier;
-  const available = getAvailableComponents(slot, GAME_YEAR);
+  const available = getAvailableComponents(slot, gameYear);
   const selected = state.components[slot] ?? null;
   const isDisplay = DISPLAY_SLOTS.includes(slot);
 
@@ -358,8 +357,8 @@ function SinglePortEditor({ port }: { port: PortType }) {
 }
 
 function BatteryEditor() {
-  const { state, dispatch } = useWizard();
-  const era = getBatteryEra(GAME_YEAR);
+  const { state, dispatch, gameYear } = useWizard();
+  const era = getBatteryEra(gameYear);
   const capacity = state.batteryCapacityWh;
   const cost = Math.round(capacity * era.costPerWh);
   const weight = Math.round(capacity * era.weightPerWh);
@@ -390,12 +389,12 @@ function BatteryEditor() {
 }
 
 function ThicknessEditor() {
-  const { state, dispatch } = useWizard();
+  const { state, dispatch, gameYear } = useWizard();
   const thickness = state.thicknessCm;
 
   const allChassisOpts = getAllChassisOptions(state.chassis);
   const totalVolume = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, allChassisOpts);
-  const minFromVolume = minThicknessForVolumeCm(totalVolume, state.screenSize, state.bezelMm, GAME_YEAR);
+  const minFromVolume = minThicknessForVolumeCm(totalVolume, state.screenSize, state.bezelMm, gameYear);
   const minFromHeight = maxHeightConstraintCm(state.components, state.ports, allChassisOpts);
   const minThickness = Math.max(minFromVolume, minFromHeight);
   const tooThin = thickness < minThickness;
@@ -460,15 +459,15 @@ function BezelEditor() {
 }
 
 function SingleChassisEditor({ slot, options }: { slot: ChassisOptionSlot; options: ChassisOption[] }) {
-  const { state, dispatch } = useWizard();
-  const available = getAvailableChassisOptions(options, GAME_YEAR);
+  const { state, dispatch, gameYear } = useWizard();
+  const available = getAvailableChassisOptions(options, gameYear);
   const selected = state.chassis[slot];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
       {available.map((option) => {
         const isSelected = selected?.id === option.id;
-        const cost = chassisCost(option, GAME_YEAR);
+        const cost = chassisCost(option, gameYear);
         return (
           <Tooltip key={option.id} content={
             <OptionTooltipContent name={option.name} description={option.description} stats={option.stats} />
