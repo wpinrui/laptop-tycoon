@@ -15,13 +15,14 @@ import {
   ChassisOptionSlot,
 } from "../../data/types";
 import { LaptopDesign } from "../state/gameTypes";
-import { GAME_YEAR, getAvailableComponents, getAvailableChassisOptions, CHASSIS_SLOTS } from "./constants";
+import { useGame } from "../state/GameContext";
+import { getAvailableComponents, getAvailableChassisOptions, CHASSIS_SLOTS } from "./constants";
 import { COLOUR_OPTIONS } from "../../data/colourOptions";
 
 type WizardAction =
   | { type: "SET_NAME"; name: string }
   | { type: "SET_MODEL_TYPE"; modelType: ModelType }
-  | { type: "SET_PREDECESSOR"; predecessorId: string | null }
+  | { type: "SET_PREDECESSOR"; predecessorId: string | null; predecessorDesign?: LaptopDesign }
   | { type: "SET_SCREEN_SIZE"; size: ScreenSizeInches }
   | { type: "SET_COMPONENT"; slot: ComponentSlot; component: Component }
   | { type: "REMOVE_COMPONENT"; slot: ComponentSlot }
@@ -36,7 +37,13 @@ type WizardAction =
   | { type: "PREV_STEP" }
   | { type: "RESET" }
   | { type: "LOAD_DESIGN"; design: LaptopDesign }
-  | { type: "DEBUG_AUTOFILL" };
+  | { type: "DEBUG_AUTOFILL"; year: number };
+
+/** Steps locked by spec bump — screen size and body are inherited from predecessor. */
+export function isStepLockedBySpecBump(step: WizardStep, state: WizardState): boolean {
+  return state.modelType === "specBump" && state.predecessorId !== null
+    && (step === "screenSize" || step === "body");
+}
 
 function wizardReducer(state: WizardState, action: WizardAction): WizardState {
   switch (action.type) {
@@ -48,8 +55,23 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         modelType: action.modelType,
         predecessorId: action.modelType === "brandNew" ? null : state.predecessorId,
       };
-    case "SET_PREDECESSOR":
-      return { ...state, predecessorId: action.predecessorId };
+    case "SET_PREDECESSOR": {
+      const base = { ...state, predecessorId: action.predecessorId };
+      // For spec bumps, lock screen size and body to predecessor values
+      if (state.modelType === "specBump" && action.predecessorDesign) {
+        const d = action.predecessorDesign;
+        return {
+          ...base,
+          screenSize: d.screenSize,
+          thicknessCm: d.thicknessCm,
+          bezelMm: d.bezelMm,
+          chassis: { ...d.chassis },
+          selectedColours: [...d.selectedColours],
+          ports: { ...d.ports },
+        };
+      }
+      return base;
+    }
     case "SET_SCREEN_SIZE":
       return { ...state, screenSize: action.size };
     case "SET_COMPONENT":
@@ -89,24 +111,31 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       return { ...state, selectedColours };
     }
     case "GO_TO_STEP": {
+      if (isStepLockedBySpecBump(action.step, state)) return state;
       const visited = new Set(state.visitedSteps);
       visited.add(action.step);
       return { ...state, currentStep: action.step, visitedSteps: visited };
     }
     case "NEXT_STEP": {
-      const idx = WIZARD_STEPS.indexOf(state.currentStep);
-      if (idx < WIZARD_STEPS.length - 1) {
-        const nextStep = WIZARD_STEPS[idx + 1];
-        const visited = new Set(state.visitedSteps);
-        visited.add(nextStep);
-        return { ...state, currentStep: nextStep, visitedSteps: visited };
+      let idx = WIZARD_STEPS.indexOf(state.currentStep);
+      while (idx < WIZARD_STEPS.length - 1) {
+        idx++;
+        const nextStep = WIZARD_STEPS[idx];
+        if (!isStepLockedBySpecBump(nextStep, state)) {
+          const visited = new Set(state.visitedSteps);
+          visited.add(nextStep);
+          return { ...state, currentStep: nextStep, visitedSteps: visited };
+        }
       }
       return state;
     }
     case "PREV_STEP": {
-      const idx = WIZARD_STEPS.indexOf(state.currentStep);
-      if (idx > 0) {
-        return { ...state, currentStep: WIZARD_STEPS[idx - 1] };
+      let idx = WIZARD_STEPS.indexOf(state.currentStep);
+      while (idx > 0) {
+        idx--;
+        if (!isStepLockedBySpecBump(WIZARD_STEPS[idx], state)) {
+          return { ...state, currentStep: WIZARD_STEPS[idx] };
+        }
       }
       return state;
     }
@@ -116,12 +145,12 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       const allSlots: ComponentSlot[] = Object.values(COMPONENT_STEP_SLOTS).flat() as ComponentSlot[];
       const components: Partial<Record<ComponentSlot, Component>> = {};
       for (const slot of allSlots) {
-        const available = getAvailableComponents(slot, GAME_YEAR);
+        const available = getAvailableComponents(slot, action.year);
         if (available.length > 0) components[slot] = available[0];
       }
       const chassis: WizardState["chassis"] = { material: null, coolingSolution: null, keyboardFeature: null, trackpadFeature: null };
       for (const def of CHASSIS_SLOTS) {
-        const available = getAvailableChassisOptions(def.options, GAME_YEAR);
+        const available = getAvailableChassisOptions(def.options, action.year);
         if (available.length > 0) chassis[def.slot] = available[0];
       }
       return {
@@ -162,14 +191,17 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 interface WizardContextValue {
   state: WizardState;
   dispatch: Dispatch<WizardAction>;
+  gameYear: number;
 }
 
 const WizardContext = createContext<WizardContextValue | null>(null);
 
 export function WizardProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(wizardReducer, INITIAL_WIZARD_STATE);
+  const { state: gameState } = useGame();
+  const gameYear = gameState.year;
   return (
-    <WizardContext.Provider value={{ state, dispatch }}>
+    <WizardContext.Provider value={{ state, dispatch, gameYear }}>
       {children}
     </WizardContext.Provider>
   );

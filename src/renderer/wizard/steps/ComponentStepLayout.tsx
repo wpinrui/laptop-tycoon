@@ -1,8 +1,9 @@
 import { useWizard } from "../WizardContext";
-import { GAME_YEAR, DISPLAY_SLOTS, applyDisplayMultiplier, specSummary, getAvailableComponents } from "../constants";
+import { DISPLAY_SLOTS, applyDisplayMultiplier, specSummary, getAvailableComponents, componentCostDecayed } from "../constants";
 import { getScreenSizeDef } from "../../../data/screenSizes";
 import { Component, ComponentSlot, ScreenSizeDefinition } from "../../../data/types";
 import { Tooltip } from "../Tooltip";
+import { tokens } from "../../shell/tokens";
 import { SelectionCard, OptionTooltipContent } from "../SelectionCard";
 
 export interface SlotDef {
@@ -25,7 +26,7 @@ export function ComponentStepLayout({
   slots: SlotDef[];
   children?: React.ReactNode;
 }) {
-  const { state, dispatch } = useWizard();
+  const { state, dispatch, gameYear } = useWizard();
   const screenSizeDef = getScreenSizeDef(state.screenSize);
 
   return (
@@ -43,6 +44,7 @@ export function ComponentStepLayout({
           selected={state.components[slot] ?? null}
           onSelect={(c) => dispatch({ type: "SET_COMPONENT", slot, component: c })}
           screenSizeDef={screenSizeDef}
+          gameYear={gameYear}
         />
       ))}
 
@@ -57,14 +59,16 @@ function SlotSection({
   selected,
   onSelect,
   screenSizeDef,
+  gameYear,
 }: {
   slot: ComponentSlot;
   label: string;
   selected: Component | null;
   onSelect: (component: Component) => void;
   screenSizeDef: ScreenSizeDefinition;
+  gameYear: number;
 }) {
-  const available = getAvailableComponents(slot, GAME_YEAR);
+  const available = getAvailableComponents(slot, gameYear);
   const multiplier = screenSizeDef.displayMultiplier;
 
   return (
@@ -93,6 +97,7 @@ function SlotSection({
             onSelect={() => onSelect(component)}
             slot={slot}
             multiplier={multiplier}
+            gameYear={gameYear}
           />
         ))}
       </div>
@@ -106,14 +111,16 @@ function ComponentCard({
   onSelect,
   slot,
   multiplier,
+  gameYear,
 }: {
   component: Component;
   isSelected: boolean;
   onSelect: () => void;
   slot: ComponentSlot;
   multiplier: number;
+  gameYear: number;
 }) {
-  const cost = applyDisplayMultiplier(component.costAtLaunch, slot, multiplier);
+  const cost = applyDisplayMultiplier(componentCostDecayed(component, gameYear), slot, multiplier);
   const power = applyDisplayMultiplier(component.powerDrawW, slot, multiplier);
   const weight = applyDisplayMultiplier(component.weightG, slot, multiplier);
 
@@ -125,7 +132,7 @@ function ComponentCard({
             fontSize: "0.8125rem",
             fontWeight: "bold",
             marginBottom: "6px",
-            color: isSelected ? "#90caf9" : "#e0e0e0",
+            color: isSelected ? tokens.colors.interactiveAccent : "#e0e0e0",
           }}
         >
           {component.name}

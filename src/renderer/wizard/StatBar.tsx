@@ -2,9 +2,9 @@ import { ComponentType } from "react";
 import { useWizard } from "./WizardContext";
 import { LaptopStat, StatVector } from "../../data/types";
 import { getAllChassisOptions } from "./types";
+import { tokens } from "../shell/tokens";
 import {
   DISPLAY_SLOTS,
-  GAME_YEAR,
   THICKNESS_MIN_CM,
   THICKNESS_MAX_CM,
   BEZEL_MIN_MM,
@@ -75,10 +75,10 @@ const STAT_COLORS: Partial<Record<LaptopStat, string>> = {
 };
 
 export function getStatColor(stat: LaptopStat): string {
-  return STAT_COLORS[stat] ?? "#90caf9";
+  return STAT_COLORS[stat] ?? tokens.colors.interactiveAccent;
 }
 
-export function computeStatTotals(state: ReturnType<typeof useWizard>["state"]): StatVector {
+export function computeStatTotals(state: ReturnType<typeof useWizard>["state"], gameYear: number): StatVector {
   const totals: StatVector = {};
   const screenSizeDef = getScreenSizeDef(state.screenSize);
   const displayMult = screenSizeDef.displayMultiplier;
@@ -134,7 +134,7 @@ export function computeStatTotals(state: ReturnType<typeof useWizard>["state"]):
   if (totalPower > 0) {
     const coolingFromSolution = state.chassis.coolingSolution?.coolingCapacityW ?? 0;
     const totalVolume = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, allChassisOptions);
-    const totalAvailable = availableVolumeCm3(state.screenSize, state.bezelMm, state.thicknessCm, GAME_YEAR);
+    const totalAvailable = availableVolumeCm3(state.screenSize, state.bezelMm, state.thicknessCm, gameYear);
     const spaceUtil = totalAvailable > 0 ? totalVolume / totalAvailable : 1;
     const coolMult = coolingMultiplier(state.thicknessCm, state.bezelMm, spaceUtil);
     const effectiveCooling = coolingFromSolution * coolMult;

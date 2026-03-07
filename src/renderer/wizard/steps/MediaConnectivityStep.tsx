@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { ComponentStepLayout, SlotDef } from "./ComponentStepLayout";
 import { useWizard } from "../WizardContext";
-import { GAME_YEAR } from "../constants";
 import { PORT_TYPES } from "../../../data/portTypes";
 import { PortType } from "../../../data/types";
 import { Tooltip } from "../Tooltip";
+import { tokens } from "../../shell/tokens";
 
 const COMPONENT_SLOTS: SlotDef[] = [
   { slot: "webcam", label: "Webcam" },
@@ -30,8 +30,8 @@ function getAvailablePorts(year: number): PortType[] {
 }
 
 export function MediaConnectivityStep() {
-  const { state, dispatch } = useWizard();
-  const availablePorts = getAvailablePorts(GAME_YEAR);
+  const { state, dispatch, gameYear } = useWizard();
+  const availablePorts = getAvailablePorts(gameYear);
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set(["legacy"]));
 
   const totalPortCost = availablePorts.reduce(
@@ -156,7 +156,7 @@ function PortSelector({
     <Tooltip
       content={
         <div>
-          <div style={{ fontWeight: "bold", marginBottom: "4px", color: "#90caf9" }}>{port.name}</div>
+          <div style={{ fontWeight: "bold", marginBottom: "4px", color: tokens.colors.interactiveAccent }}>{port.name}</div>
           <div style={{ color: "#ccc" }}>{port.description}</div>
         </div>
       }
@@ -164,7 +164,7 @@ function PortSelector({
       <div
         style={{
           background: active ? "#1a3a5c" : "#2a2a2a",
-          border: active ? "2px solid #90caf9" : "1px solid #444",
+          border: active ? `2px solid ${tokens.colors.interactiveAccent}` : "1px solid #444",
           borderRadius: "8px",
           padding: "10px 12px",
           color: "#e0e0e0",
@@ -176,7 +176,7 @@ function PortSelector({
             fontWeight: "bold",
             fontSize: "0.8125rem",
             marginBottom: "4px",
-            color: active ? "#90caf9" : "#e0e0e0",
+            color: active ? tokens.colors.interactiveAccent : "#e0e0e0",
           }}
         >
           {port.name}

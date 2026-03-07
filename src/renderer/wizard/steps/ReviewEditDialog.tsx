@@ -1,12 +1,12 @@
 import { useRef } from "react";
 import { useWizard } from "../WizardContext";
 import {
-  GAME_YEAR,
   DISPLAY_SLOTS,
   formatWeight,
   totalConsumedVolumeCm3,
   maxHeightConstraintCm,
   applyDisplayMultiplier,
+  componentCostDecayed,
   chassisCost,
   specSummary,
   MIN_BATTERY_WH,
@@ -30,6 +30,7 @@ import { ChassisOption, ComponentSlot, ChassisOptionSlot, PortType } from "../..
 import { StatCard } from "./StatCard";
 import { Tooltip } from "../Tooltip";
 import { SelectionCard, OptionTooltipContent } from "../SelectionCard";
+import { tokens } from "../../shell/tokens";
 
 // ---------- Dialog types ----------
 export type DialogTarget =
@@ -136,7 +137,7 @@ export function EditDialog({
         }}
       >
         <div style={{ marginBottom: "20px" }}>
-          <span style={{ fontSize: "1rem", fontWeight: "bold", color: "#90caf9" }}>{title}</span>
+          <span style={{ fontSize: "1rem", fontWeight: "bold", color: tokens.colors.interactiveAccent }}>{title}</span>
         </div>
         <EditDialogContent target={target} />
         <div style={{ marginTop: "16px", display: "flex", justifyContent: "flex-end", gap: "8px" }}>
@@ -162,9 +163,9 @@ export function EditDialog({
             onClick={onClose}
             style={{
               background: "#1a3a5c",
-              border: "1px solid #90caf9",
+              border: `1px solid ${tokens.colors.interactiveAccent}`,
               borderRadius: "6px",
-              color: "#90caf9",
+              color: tokens.colors.interactiveAccent,
               fontSize: "0.8125rem",
               padding: "6px 16px",
               cursor: "pointer",
@@ -227,7 +228,7 @@ function ScreenSizeEditor() {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "12px" }}>
         <span style={{ color: "#888", fontSize: "0.875rem" }}>{MIN_SIZE}"</span>
-        <span style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#90caf9" }}>{state.screenSize}"</span>
+        <span style={{ fontSize: "2.5rem", fontWeight: "bold", color: tokens.colors.interactiveAccent }}>{state.screenSize}"</span>
         <span style={{ color: "#888", fontSize: "0.875rem" }}>{MAX_SIZE}"</span>
       </div>
       <input
@@ -237,7 +238,7 @@ function ScreenSizeEditor() {
         step={1}
         value={state.screenSize}
         onChange={(e) => handleChange(Number(e.target.value))}
-        style={{ width: "100%", accentColor: "#90caf9" }}
+        style={{ width: "100%", accentColor: tokens.colors.interactiveAccent }}
       />
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px" }}>
         {SCREEN_SIZES.map((s) => (
@@ -245,7 +246,7 @@ function ScreenSizeEditor() {
             key={s.size}
             style={{
               fontSize: "0.6875rem",
-              color: state.screenSize === s.size ? "#90caf9" : "#666",
+              color: state.screenSize === s.size ? tokens.colors.interactiveAccent : "#666",
               fontWeight: state.screenSize === s.size ? "bold" : "normal",
               width: 0,
               textAlign: "center",
@@ -261,10 +262,10 @@ function ScreenSizeEditor() {
 }
 
 function SingleComponentEditor({ slot }: { slot: ComponentSlot }) {
-  const { state, dispatch } = useWizard();
+  const { state, dispatch, gameYear } = useWizard();
   const screenSizeDef = getScreenSizeDef(state.screenSize);
   const multiplier = screenSizeDef.displayMultiplier;
-  const available = getAvailableComponents(slot, GAME_YEAR);
+  const available = getAvailableComponents(slot, gameYear);
   const selected = state.components[slot] ?? null;
   const isDisplay = DISPLAY_SLOTS.includes(slot);
 
@@ -278,7 +279,7 @@ function SingleComponentEditor({ slot }: { slot: ComponentSlot }) {
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
         {available.map((component) => {
           const isSelected = selected?.id === component.id;
-          const cost = applyDisplayMultiplier(component.costAtLaunch, slot, multiplier);
+          const cost = applyDisplayMultiplier(componentCostDecayed(component, gameYear), slot, multiplier);
           const power = applyDisplayMultiplier(component.powerDrawW, slot, multiplier);
           const weight = applyDisplayMultiplier(component.weightG, slot, multiplier);
           return (
@@ -290,7 +291,7 @@ function SingleComponentEditor({ slot }: { slot: ComponentSlot }) {
                 onClick={() => dispatch({ type: "SET_COMPONENT", slot, component })}
                 fullWidth
               >
-                <div style={{ fontSize: "0.8125rem", fontWeight: "bold", marginBottom: "6px", color: isSelected ? "#90caf9" : "#e0e0e0" }}>
+                <div style={{ fontSize: "0.8125rem", fontWeight: "bold", marginBottom: "6px", color: isSelected ? tokens.colors.interactiveAccent : "#e0e0e0" }}>
                   {component.name}
                 </div>
                 <div style={{ fontSize: "0.6875rem", color: "#888", marginBottom: "8px", lineHeight: "1.4" }}>
@@ -358,8 +359,8 @@ function SinglePortEditor({ port }: { port: PortType }) {
 }
 
 function BatteryEditor() {
-  const { state, dispatch } = useWizard();
-  const era = getBatteryEra(GAME_YEAR);
+  const { state, dispatch, gameYear } = useWizard();
+  const era = getBatteryEra(gameYear);
   const capacity = state.batteryCapacityWh;
   const cost = Math.round(capacity * era.costPerWh);
   const weight = Math.round(capacity * era.weightPerWh);
@@ -368,7 +369,7 @@ function BatteryEditor() {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "12px" }}>
         <span style={{ color: "#888", fontSize: "0.875rem" }}>{MIN_BATTERY_WH} Wh</span>
-        <span style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#90caf9" }}>{capacity} Wh</span>
+        <span style={{ fontSize: "2.5rem", fontWeight: "bold", color: tokens.colors.interactiveAccent }}>{capacity} Wh</span>
         <span style={{ color: "#888", fontSize: "0.875rem" }}>{MAX_BATTERY_WH} Wh</span>
       </div>
       <input
@@ -378,7 +379,7 @@ function BatteryEditor() {
         step={BATTERY_STEP_WH}
         value={capacity}
         onChange={(e) => dispatch({ type: "SET_BATTERY_CAPACITY", capacityWh: Number(e.target.value) })}
-        style={{ width: "100%", accentColor: "#90caf9" }}
+        style={{ width: "100%", accentColor: tokens.colors.interactiveAccent }}
       />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginTop: "16px" }}>
         <StatCard label="Cost" value={`$${cost}`} />
@@ -390,12 +391,12 @@ function BatteryEditor() {
 }
 
 function ThicknessEditor() {
-  const { state, dispatch } = useWizard();
+  const { state, dispatch, gameYear } = useWizard();
   const thickness = state.thicknessCm;
 
   const allChassisOpts = getAllChassisOptions(state.chassis);
   const totalVolume = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, allChassisOpts);
-  const minFromVolume = minThicknessForVolumeCm(totalVolume, state.screenSize, state.bezelMm, GAME_YEAR);
+  const minFromVolume = minThicknessForVolumeCm(totalVolume, state.screenSize, state.bezelMm, gameYear);
   const minFromHeight = maxHeightConstraintCm(state.components, state.ports, allChassisOpts);
   const minThickness = Math.max(minFromVolume, minFromHeight);
   const tooThin = thickness < minThickness;
@@ -404,7 +405,7 @@ function ThicknessEditor() {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "12px" }}>
         <span style={{ color: "#888", fontSize: "0.875rem" }}>{THICKNESS_MIN_CM.toFixed(1)} cm</span>
-        <span style={{ fontSize: "2.5rem", fontWeight: "bold", color: tooThin ? "#ff9800" : "#90caf9" }}>
+        <span style={{ fontSize: "2.5rem", fontWeight: "bold", color: tooThin ? "#ff9800" : tokens.colors.interactiveAccent }}>
           {thickness.toFixed(1)} cm
         </span>
         <span style={{ color: "#888", fontSize: "0.875rem" }}>{THICKNESS_MAX_CM.toFixed(1)} cm</span>
@@ -416,7 +417,7 @@ function ThicknessEditor() {
         step={THICKNESS_STEP_CM}
         value={thickness}
         onChange={(e) => dispatch({ type: "SET_THICKNESS", thicknessCm: Math.round(Number(e.target.value) * 10) / 10 })}
-        style={{ width: "100%", accentColor: tooThin ? "#ff9800" : "#90caf9" }}
+        style={{ width: "100%", accentColor: tooThin ? "#ff9800" : tokens.colors.interactiveAccent }}
       />
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.6875rem", color: "#666", marginTop: "4px" }}>
         <span>Thinner</span>
@@ -439,7 +440,7 @@ function BezelEditor() {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "12px" }}>
         <span style={{ color: "#888", fontSize: "0.875rem" }}>{BEZEL_MIN_MM} mm</span>
-        <span style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#90caf9" }}>{bezel} mm</span>
+        <span style={{ fontSize: "2.5rem", fontWeight: "bold", color: tokens.colors.interactiveAccent }}>{bezel} mm</span>
         <span style={{ color: "#888", fontSize: "0.875rem" }}>{BEZEL_MAX_MM} mm</span>
       </div>
       <input
@@ -449,7 +450,7 @@ function BezelEditor() {
         step={BEZEL_STEP_MM}
         value={bezel}
         onChange={(e) => dispatch({ type: "SET_BEZEL", bezelMm: Number(e.target.value) })}
-        style={{ width: "100%", accentColor: "#90caf9" }}
+        style={{ width: "100%", accentColor: tokens.colors.interactiveAccent }}
       />
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.6875rem", color: "#666", marginTop: "4px" }}>
         <span>Sleek</span>
@@ -460,15 +461,15 @@ function BezelEditor() {
 }
 
 function SingleChassisEditor({ slot, options }: { slot: ChassisOptionSlot; options: ChassisOption[] }) {
-  const { state, dispatch } = useWizard();
-  const available = getAvailableChassisOptions(options, GAME_YEAR);
+  const { state, dispatch, gameYear } = useWizard();
+  const available = getAvailableChassisOptions(options, gameYear);
   const selected = state.chassis[slot];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
       {available.map((option) => {
         const isSelected = selected?.id === option.id;
-        const cost = chassisCost(option, GAME_YEAR);
+        const cost = chassisCost(option, gameYear);
         return (
           <Tooltip key={option.id} content={
             <OptionTooltipContent name={option.name} description={option.description} stats={option.stats} />
@@ -478,7 +479,7 @@ function SingleChassisEditor({ slot, options }: { slot: ChassisOptionSlot; optio
               onClick={() => dispatch({ type: "SET_CHASSIS_OPTION", slot, option })}
               fullWidth
             >
-              <div style={{ fontSize: "0.8125rem", fontWeight: "bold", marginBottom: "6px", color: isSelected ? "#90caf9" : "#e0e0e0" }}>
+              <div style={{ fontSize: "0.8125rem", fontWeight: "bold", marginBottom: "6px", color: isSelected ? tokens.colors.interactiveAccent : "#e0e0e0" }}>
                 {option.name}
               </div>
               <div style={{ fontSize: "0.6875rem", color: "#888", marginBottom: "8px", lineHeight: "1.4" }}>
@@ -530,7 +531,7 @@ function ColourEditor() {
                   background: colour.hex, border: "1px solid #555", flexShrink: 0,
                 }} />
                 <div style={{ textAlign: "left" }}>
-                  <div style={{ fontSize: "0.75rem", fontWeight: "bold", color: isSelected ? "#90caf9" : "#e0e0e0" }}>
+                  <div style={{ fontSize: "0.75rem", fontWeight: "bold", color: isSelected ? tokens.colors.interactiveAccent : "#e0e0e0" }}>
                     {colour.name}
                   </div>
                   <div style={{ fontSize: "0.625rem", color: "#888" }}>+${colour.costPerUnit}/unit</div>
