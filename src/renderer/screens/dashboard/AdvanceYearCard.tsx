@@ -54,7 +54,7 @@ export function AdvanceYearCard() {
           }));
           dispatch({ type: "ADD_COMPETITOR_MODELS", models: competitorModels });
 
-          // 2. Deduct manufacturing costs upfront (cash goes down now)
+          // 2. Calculate post-manufacturing cash for simulation input
           let totalMfgSpend = 0;
           for (const model of activeModels) {
             if (model.manufacturingPlan) {
@@ -63,8 +63,7 @@ export function AdvanceYearCard() {
             }
           }
           const cashAfterManufacturing = state.cash - totalMfgSpend;
-          // 3. Run sales simulation (uses state with competitors added)
-          // We need to build the state as it will be after dispatch
+          // 3. Run sales simulation with projected state (competitors + adjusted cash)
           const stateForSim = {
             ...state,
             cash: cashAfterManufacturing,

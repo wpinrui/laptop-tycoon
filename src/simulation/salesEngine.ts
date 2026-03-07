@@ -27,6 +27,27 @@ import {
 } from "../renderer/manufacturing/utils/constants";
 import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
 
+// --- Tuning Constants ---
+
+/** Brand awareness floor (0-1) when brand recognition is 0 */
+const BRAND_AWARENESS_MIN = 0.3;
+/** Brand awareness ceiling added as recognition approaches 100 */
+const BRAND_AWARENESS_RANGE = 0.7;
+/** Max extra appeal from niche reputation alignment */
+const NICHE_BONUS_CAP = 0.3;
+/** Loyalty multiplier for successor models */
+const SUCCESSOR_LOYALTY = 1.2;
+/** Loyalty multiplier for spec-bump models */
+const SPEC_BUMP_LOYALTY = 1.15;
+/** Exponential decay rate for price overshoot above ceiling */
+const PRICE_OVERSHOOT_DECAY = 3;
+/** Base demand variance (±%) before brand recognition adjustment */
+const BASE_DEMAND_VARIANCE = 0.15;
+/** Additional variance scaled by brand recognition factor */
+const RECOGNITION_VARIANCE_SCALE = 0.20;
+/** Divisor for brand recognition when computing projection confidence */
+const RECOGNITION_CONFIDENCE_DIVISOR = 150;
+
 // --- Market Entry: all laptops competing this year ---
 
 interface MarketLaptop {
@@ -138,7 +159,7 @@ function calculatePriceCompetitiveness(
   } else {
     // Above ceiling: sharp exponential dropoff
     const overshoot = (retailPrice - ceiling) / ceiling;
-    return 0.5 * Math.exp(-3 * overshoot);
+    return 0.5 * Math.exp(-PRICE_OVERSHOOT_DECAY * overshoot);
   }
 }
 
@@ -164,9 +185,9 @@ function applyPriceSensitivity(
   }
 }
 
-/** Map brand recognition (0-100) to a 0.3-1.0 awareness factor */
+/** Map brand recognition (0-100) to an awareness factor */
 function brandAwareness(brandRecognition: number): number {
-  return 0.3 + 0.7 * (brandRecognition / 100);
+  return BRAND_AWARENESS_MIN + BRAND_AWARENESS_RANGE * (brandRecognition / 100);
 }
 
 /** Brand fit: how well the player's niche reputation aligns with what this demographic cares about */
@@ -185,8 +206,7 @@ function calculateBrandFit(
     nicheScore += (nicheValue / 100) * weight;
   }
 
-  // Niche bonus can add up to 30% extra appeal
-  return awarenessBase * (1 + nicheScore * 0.3);
+  return awarenessBase * (1 + nicheScore * NICHE_BONUS_CAP);
 }
 
 /** Loyalty modifier for returning products */
@@ -194,8 +214,8 @@ function calculateLoyaltyModifier(laptop: MarketLaptop): number {
   if (laptop.owner !== "player") return 1.0;
 
   const model = laptop.model;
-  if (model.design.modelType === "successor") return 1.2;
-  if (model.design.modelType === "specBump") return 1.15;
+  if (model.design.modelType === "successor") return SUCCESSOR_LOYALTY;
+  if (model.design.modelType === "specBump") return SPEC_BUMP_LOYALTY;
 
   // Brand new — check if there's a gap from previous models
   return 1.0;
@@ -490,8 +510,8 @@ export function projectDemandRange(
   const expected = Math.round(totalExpected);
 
   // Confidence interval based on brand recognition (higher = tighter)
-  const recognitionFactor = Math.max(0.1, 1 - state.brandRecognition / 150);
-  const variance = 0.15 + recognitionFactor * 0.20; // 15-35% variance
+  const recognitionFactor = Math.max(0.1, 1 - state.brandRecognition / RECOGNITION_CONFIDENCE_DIVISOR);
+  const variance = BASE_DEMAND_VARIANCE + recognitionFactor * RECOGNITION_VARIANCE_SCALE;
 
   const low = Math.max(0, Math.round(expected * (1 - variance)));
   const high = Math.round(expected * (1 + variance));
