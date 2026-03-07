@@ -45,11 +45,11 @@ export function StatusBar({ variant = "embedded" }: { variant?: "embedded" | "fi
 
   return (
     <div style={variant === "fixed" ? fixedStyle : embeddedStyle}>
-      <span style={{ ...itemStyle, color: "#f87171", fontWeight: 700 }}>
+      <span style={{ ...itemStyle, color: tokens.colors.statusDate, fontWeight: 700 }}>
         <Calendar size={14} strokeWidth={2.5} />
         {state.yearSimulated ? "Dec" : "Jan"} {state.year}
       </span>
-      <span style={{ ...itemStyle, color: "#facc15", fontWeight: 700 }}>
+      <span style={{ ...itemStyle, color: tokens.colors.statusCash, fontWeight: 700 }}>
         <Coins size={14} strokeWidth={2.5} />
         {formatCash(state.cash)}
       </span>

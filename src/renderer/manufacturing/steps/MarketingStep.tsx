@@ -12,8 +12,8 @@ const gridStyle: CSSProperties = {
 };
 
 const cardStyle = (isSelected: boolean): CSSProperties => ({
-  background: isSelected ? "#1a3a5c" : "#2a2a2a",
-  border: isSelected ? "2px solid #90caf9" : "2px solid #444",
+  background: isSelected ? tokens.colors.interactiveAccentBg : tokens.colors.cardBg,
+  border: isSelected ? `2px solid ${tokens.colors.interactiveAccent}` : `2px solid ${tokens.colors.cardBorder}`,
   borderRadius: tokens.borderRadius.md,
   padding: tokens.spacing.xl,
   cursor: "pointer",
@@ -29,9 +29,9 @@ const cardStyle = (isSelected: boolean): CSSProperties => ({
 const riskColors: Record<string, string> = {
   "No Risk": tokens.colors.textMuted,
   "Low Risk": tokens.colors.success,
-  "Medium Risk": "#ffa726",
-  "High Risk": "#ef5350",
-  "Very High Risk": "#d32f2f",
+  "Medium Risk": tokens.colors.warning,
+  "High Risk": tokens.colors.danger,
+  "Very High Risk": tokens.colors.warningDark,
 };
 
 const statRowStyle: CSSProperties = {
@@ -70,13 +70,13 @@ export function MarketingStep() {
               onClick={() => dispatch({ type: "SET_CAMPAIGN", campaignId: campaign.id })}
               onMouseEnter={(e) => {
                 if (!isSelected) {
-                  e.currentTarget.style.borderColor = "#888";
-                  e.currentTarget.style.background = "#333";
+                  e.currentTarget.style.borderColor = tokens.colors.textMuted;
+                  e.currentTarget.style.background = tokens.colors.cardBgHover;
                 }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = isSelected ? "#90caf9" : "#444";
-                e.currentTarget.style.background = isSelected ? "#1a3a5c" : "#2a2a2a";
+                e.currentTarget.style.borderColor = isSelected ? tokens.colors.interactiveAccent : tokens.colors.cardBorder;
+                e.currentTarget.style.background = isSelected ? tokens.colors.interactiveAccentBg : tokens.colors.cardBg;
               }}
             >
               {/* Name */}

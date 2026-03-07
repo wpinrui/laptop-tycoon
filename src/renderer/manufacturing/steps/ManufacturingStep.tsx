@@ -310,7 +310,7 @@ export function ManufacturingStep() {
                 const raw = Number(e.target.value);
                 dispatch({ type: "SET_UNIT_PRICE", unitPrice: snapPrice(raw) });
               }}
-              style={{ width: "100%", accentColor: "#90caf9" }}
+              style={{ width: "100%", accentColor: tokens.colors.interactiveAccent }}
             />
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
               <span>{fmt(minPrice)}</span>
@@ -339,7 +339,7 @@ export function ManufacturingStep() {
               step={Math.max(1, Math.round(maxQuantity / 100))}
               value={effectiveQty}
               onChange={(e) => dispatch({ type: "SET_UNITS_ORDERED", unitsOrdered: Number(e.target.value) })}
-              style={{ width: "100%", accentColor: "#90caf9" }}
+              style={{ width: "100%", accentColor: tokens.colors.interactiveAccent }}
             />
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
               <span>{MIN_BATCH_SIZE.toLocaleString()}</span>
@@ -364,7 +364,7 @@ export function ManufacturingStep() {
               step={1}
               value={state.supportBudget}
               onChange={(e) => dispatch({ type: "SET_SUPPORT_BUDGET", supportBudget: Number(e.target.value) })}
-              style={{ width: "100%", accentColor: "#90caf9" }}
+              style={{ width: "100%", accentColor: tokens.colors.interactiveAccent }}
             />
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
               <span>{fmt(SUPPORT_BUDGET_MIN)}</span>

@@ -3,7 +3,7 @@ import { useMfgWizard } from "./ManufacturingWizardContext";
 import { useGame } from "../state/GameContext";
 import { useNavigation } from "../navigation/NavigationContext";
 import { MfgStepIndicator } from "./MfgStepIndicator";
-import { ManufacturingWizardStep, MFG_WIZARD_STEPS, FullManufacturingPlan } from "./types";
+import { ManufacturingWizardStep, ManufacturingWizardState, MFG_WIZARD_STEPS, FullManufacturingPlan } from "./types";
 import { MarketingStep } from "./steps/MarketingStep";
 import { ManufacturingStep } from "./steps/ManufacturingStep";
 import { PressReleaseStep } from "./steps/PressReleaseStep";
@@ -14,7 +14,7 @@ import { tokens, overlayStyle } from "../shell/tokens";
 import { buildCostBreakdown } from "./utils/economiesOfScale";
 import { StatusBar } from "../shell/StatusBar";
 
-function isStepComplete(step: ManufacturingWizardStep, state: ReturnType<typeof useMfgWizard>["state"]): boolean {
+function isStepComplete(step: ManufacturingWizardStep, state: ManufacturingWizardState): boolean {
   switch (step) {
     case "marketing":
       return state.campaignId !== null;

@@ -1,6 +1,7 @@
 import { Fragment, useRef, useEffect } from "react";
 import { Megaphone, Factory, Newspaper, ClipboardCheck, Check, LucideIcon } from "lucide-react";
 import { ManufacturingWizardStep, MFG_WIZARD_STEPS, MFG_STEP_LABELS } from "./types";
+import { tokens } from "../shell/tokens";
 
 const STEP_ICONS: Record<ManufacturingWizardStep, LucideIcon> = {
   marketing: Megaphone,
@@ -28,8 +29,8 @@ export function MfgStepIndicator({
   }, [currentStep]);
 
   return (
-    <div style={{ overflow: "hidden", marginBottom: "24px" }}>
-      <div style={{ display: "flex", gap: "4px", whiteSpace: "nowrap" }}>
+    <div style={{ overflow: "hidden", marginBottom: `${tokens.spacing.lg}px` }}>
+      <div style={{ display: "flex", gap: `${tokens.spacing.xs}px`, whiteSpace: "nowrap" }}>
         {MFG_WIZARD_STEPS.map((step, idx) => {
           const isActive = step === currentStep;
           const isCompleted = idx < currentIdx;
@@ -43,7 +44,7 @@ export function MfgStepIndicator({
                     flex: "0 0 16px",
                     height: "2px",
                     alignSelf: "center",
-                    background: isCompleted ? "#4caf50" : "#444",
+                    background: isCompleted ? tokens.colors.success : tokens.colors.cardBorder,
                   }}
                 />
               )}
@@ -55,23 +56,23 @@ export function MfgStepIndicator({
                   flexShrink: 0,
                   display: "flex",
                   alignItems: "center",
-                  gap: "8px",
-                  padding: "8px 16px",
-                  border: isActive ? "2px solid #90caf9" : "2px solid transparent",
-                  borderRadius: "6px",
+                  gap: `${tokens.spacing.sm}px`,
+                  padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
+                  border: isActive ? `2px solid ${tokens.colors.interactiveAccent}` : "2px solid transparent",
+                  borderRadius: `${tokens.borderRadius.sm}px`,
                   background: isActive
-                    ? "#1e3a5f"
+                    ? tokens.colors.interactiveAccentBg
                     : isCompleted
-                      ? "#1b3d1b"
-                      : "#2a2a2a",
+                      ? tokens.colors.interactiveCompletedBg
+                      : tokens.colors.cardBg,
                   color: isActive
-                    ? "#90caf9"
+                    ? tokens.colors.interactiveAccent
                     : isCompleted
-                      ? "#4caf50"
-                      : "#888",
+                      ? tokens.colors.success
+                      : tokens.colors.textMuted,
                   cursor: canClick ? "pointer" : "default",
                   fontFamily: "inherit",
-                  fontSize: "0.875rem",
+                  fontSize: tokens.font.sizeBase,
                   opacity: canClick ? 1 : 0.5,
                 }}
               >

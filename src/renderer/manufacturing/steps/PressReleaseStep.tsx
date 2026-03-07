@@ -13,8 +13,8 @@ const promptStyle: CSSProperties = {
 
 const inputStyle: CSSProperties = {
   width: "100%",
-  background: "#2a2a2a",
-  border: "1px solid #444",
+  background: tokens.colors.cardBg,
+  border: `1px solid ${tokens.colors.cardBorder}`,
   borderRadius: tokens.borderRadius.sm,
   padding: tokens.spacing.md,
   color: tokens.colors.text,
