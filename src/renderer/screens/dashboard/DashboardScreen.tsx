@@ -2,7 +2,7 @@ import { CSSProperties } from "react";
 import { useGame } from "../../state/GameContext";
 import { ContentPanel } from "../../shell/ContentPanel";
 import { tokens } from "../../shell/tokens";
-import { formatCash } from "../../utils/formatCash";
+import { StatusBar } from "../../shell/StatusBar";
 import { ModelsCard } from "./ModelsCard";
 import { FinancialsCard } from "./FinancialsCard";
 import { MarketCard } from "./MarketCard";
@@ -26,7 +26,6 @@ const headerStyle: CSSProperties = {
   justifyContent: "space-between",
   alignItems: "center",
   paddingBottom: tokens.spacing.lg,
-  borderBottom: `1px solid ${tokens.colors.panelBorder}`,
   flexShrink: 0,
 };
 
@@ -47,15 +46,6 @@ const titleStyle: CSSProperties = {
   margin: 0,
   fontSize: tokens.font.sizeTitle,
   fontWeight: 700,
-};
-
-const statsRowStyle: CSSProperties = {
-  display: "flex",
-  gap: tokens.spacing.lg,
-  alignItems: "center",
-  fontSize: tokens.font.sizeLarge,
-  fontWeight: 700,
-  color: tokens.colors.textMuted,
 };
 
 const gridStyle: CSSProperties = {
@@ -87,10 +77,6 @@ export function DashboardScreen() {
           )}
           <h1 style={titleStyle}>{state.companyName}</h1>
         </div>
-        <div style={statsRowStyle}>
-          <span>📅 {state.yearSimulated ? "Dec" : "Jan"} {state.year}</span>
-          <span>💰 {formatCash(state.cash)}</span>
-        </div>
       </div>
 
       <div className="content-panel hide-scrollbar" style={gridStyle}>
@@ -98,17 +84,21 @@ export function DashboardScreen() {
           <ModelsCard />
           <NewsCard />
           <HistoryCard />
+          <div style={{ flexShrink: 0, height: tokens.spacing.lg }} />
         </div>
         <div style={columnStyle}>
           <BrandCard />
           <MarketCard />
+          <div style={{ flexShrink: 0, height: tokens.spacing.lg }} />
         </div>
         <div style={columnStyle}>
           <AdvanceYearCard />
           <FinancialsCard />
           <ReviewsCard />
+          <div style={{ flexShrink: 0, height: tokens.spacing.lg }} />
         </div>
       </div>
+      <StatusBar />
     </ContentPanel>
   );
 }

@@ -10,7 +10,7 @@ export function AdvanceYearCard() {
   const { state } = useGame();
   const activeModels = getActiveModels(state);
   const allHavePlans = activeModels.length > 0 && activeModels.every(
-    (m) => m.retailPrice !== null && m.manufacturingQuantity !== null
+    (m) => m.manufacturingPlan !== null
   );
   const warnings: string[] = [];
 
@@ -18,7 +18,10 @@ export function AdvanceYearCard() {
     warnings.push("Design at least one laptop model");
   }
   if (activeModels.length > 0 && !allHavePlans) {
-    warnings.push("Set pricing & manufacturing for all models");
+    const modelsWithoutPlans = activeModels.filter((m) => m.manufacturingPlan === null);
+    warnings.push(
+      `Add manufacturing plans for: ${modelsWithoutPlans.map((m) => m.design.name).join(", ")}`,
+    );
   }
 
   return (

@@ -5,7 +5,9 @@ import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { tokens } from "../shell/tokens";
 import { PauseMenu } from "../shell/PauseMenu";
+import { StatusBar } from "../shell/StatusBar";
 import { DesignWizard } from "../wizard/DesignWizard";
+import { ManufacturingWizard } from "../manufacturing/ManufacturingWizard";
 import { MainMenuScreen } from "../screens/MainMenuScreen";
 import { NewGameScreen } from "../screens/NewGameScreen";
 import { DashboardScreen } from "../screens/dashboard/DashboardScreen";
@@ -21,6 +23,7 @@ function PlaceholderScreen({ title }: { title: string }) {
       <MenuButton onClick={() => navigateTo("dashboard")}>
         Back to Dashboard
       </MenuButton>
+      <StatusBar />
     </ContentPanel>
   );
 }
@@ -39,8 +42,8 @@ function ScreenContent() {
       return <DesignWizard />;
     case "modelManagement":
       return <ModelManagementScreen />;
-    case "pricingManufacturing":
-      return <PlaceholderScreen title="Pricing & Manufacturing" />;
+    case "manufacturingWizard":
+      return <ManufacturingWizard />;
     case "financialHistory":
       return <PlaceholderScreen title="Financial History" />;
     case "marketOverview":
@@ -61,7 +64,7 @@ function ScreenContent() {
 }
 
 /** Screens where Escape should NOT open the pause menu. */
-const NO_PAUSE_SCREENS = new Set(["mainMenu", "newGame", "designWizard"]);
+const NO_PAUSE_SCREENS = new Set(["mainMenu", "newGame", "designWizard", "manufacturingWizard"]);
 
 export function ScreenRouter() {
   const { screen, overlay, setOverlay } = useNavigation();

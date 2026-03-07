@@ -1,6 +1,7 @@
 import { GameProvider } from "./state/GameContext";
 import { NavigationProvider } from "./navigation/NavigationContext";
 import { WizardProvider } from "./wizard/WizardContext";
+import { ManufacturingWizardProvider } from "./manufacturing/ManufacturingWizardContext";
 import { ScreenRouter } from "./navigation/ScreenRouter";
 
 export default function App() {
@@ -8,7 +9,9 @@ export default function App() {
     <GameProvider>
       <NavigationProvider>
         <WizardProvider>
-          <ScreenRouter />
+          <ManufacturingWizardProvider>
+            <ScreenRouter />
+          </ManufacturingWizardProvider>
         </WizardProvider>
       </NavigationProvider>
     </GameProvider>

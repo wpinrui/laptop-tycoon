@@ -2,25 +2,29 @@ import { CSSProperties, useState } from "react";
 import { useGame } from "../state/GameContext";
 import { useNavigation } from "../navigation/NavigationContext";
 import { useWizard } from "../wizard/WizardContext";
+import { useMfgWizard } from "../manufacturing/ManufacturingWizardContext";
+import { selectPrompts } from "../manufacturing/data/pressReleasePrompts";
 import { LaptopModel, ModelStatus } from "../state/gameTypes";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { tokens } from "../shell/tokens";
+import { StatusBar } from "../shell/StatusBar";
 import { getActiveModels, MAX_MODELS } from "./dashboard/utils";
 import {
   Laptop,
   Plus,
   Pencil,
-  DollarSign,
+  Factory,
   Trash2,
   ChevronDown,
   ChevronUp,
+  CheckCircle,
 } from "lucide-react";
 
 const STATUS_COLOURS: Record<ModelStatus, string> = {
   draft: "#ffa726",
   manufacturing: "#42a5f5",
-  onSale: "#66bb6a",
+  onSale: tokens.colors.success,
   discontinued: "#888",
 };
 
@@ -75,6 +79,7 @@ export function ModelManagementScreen() {
   const { state, dispatch } = useGame();
   const { navigateTo } = useNavigation();
   const { dispatch: wizardDispatch } = useWizard();
+  const { dispatch: mfgDispatch } = useMfgWizard();
   const [confirmScrapId, setConfirmScrapId] = useState<string | null>(null);
   const [showDiscontinued, setShowDiscontinued] = useState(false);
 
@@ -85,6 +90,16 @@ export function ModelManagementScreen() {
   function handleEdit(model: LaptopModel) {
     wizardDispatch({ type: "LOAD_DESIGN", design: model.design });
     navigateTo("designWizard");
+  }
+
+  function handleManufacturing(model: LaptopModel) {
+    if (model.manufacturingPlan) {
+      mfgDispatch({ type: "LOAD_PLAN", modelId: model.design.id, plan: model.manufacturingPlan });
+    } else {
+      const promptIds = selectPrompts(model.design.modelType, null);
+      mfgDispatch({ type: "INIT", modelId: model.design.id, promptIds, baseBomCost: model.design.unitCost });
+    }
+    navigateTo("manufacturingWizard");
   }
 
   function handleScrap(modelId: string) {
@@ -137,7 +152,7 @@ export function ModelManagementScreen() {
             model={model}
             confirmScrap={confirmScrapId === model.design.id}
             onEdit={() => handleEdit(model)}
-            onSetPricing={() => navigateTo("pricingManufacturing")}
+            onAddManufacturing={() => handleManufacturing(model)}
             onScrapClick={() => setConfirmScrapId(model.design.id)}
             onScrapConfirm={() => handleScrap(model.design.id)}
             onScrapCancel={() => setConfirmScrapId(null)}
@@ -172,7 +187,6 @@ export function ModelManagementScreen() {
                   key={model.design.id}
                   model={model}
                   confirmScrap={false}
-                  onSetPricing={() => {}}
                   onScrapClick={() => {}}
                   onScrapConfirm={() => {}}
                   onScrapCancel={() => {}}
@@ -184,6 +198,7 @@ export function ModelManagementScreen() {
         </div>
       )}
       </div>
+      <StatusBar />
     </ContentPanel>
   );
 }
@@ -192,7 +207,7 @@ function ModelCard({
   model,
   confirmScrap,
   onEdit,
-  onSetPricing,
+  onAddManufacturing,
   onScrapClick,
   onScrapConfirm,
   onScrapCancel,
@@ -201,13 +216,14 @@ function ModelCard({
   model: LaptopModel;
   confirmScrap: boolean;
   onEdit?: () => void;
-  onSetPricing: () => void;
+  onAddManufacturing?: () => void;
   onScrapClick: () => void;
   onScrapConfirm: () => void;
   onScrapCancel: () => void;
   disabled?: boolean;
 }) {
-  const { design, status, retailPrice, manufacturingQuantity, yearDesigned } = model;
+  const { design, status, retailPrice, manufacturingQuantity, yearDesigned, manufacturingPlan } = model;
+  const hasPlan = manufacturingPlan !== null;
 
   return (
     <div style={{ ...modelCardStyle, opacity: disabled ? 0.5 : 1 }}>
@@ -243,6 +259,20 @@ function ModelCard({
         )}
       </div>
 
+      {hasPlan && (
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: tokens.spacing.xs,
+          marginTop: tokens.spacing.sm,
+          color: tokens.colors.success,
+          fontSize: tokens.font.sizeSmall,
+          fontWeight: 600,
+        }}>
+          <CheckCircle size={14} /> Manufacturing plan confirmed
+        </div>
+      )}
+
       {!disabled && (
         <div style={actionBarStyle}>
           {status === "draft" && (
@@ -253,19 +283,21 @@ function ModelCard({
                   style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
                 >
                   <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-                    <Pencil size={14} /> Edit
+                    <Pencil size={14} /> Edit Design
                   </span>
                 </MenuButton>
               )}
-              <MenuButton
-                variant="accent"
-                onClick={onSetPricing}
-                style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
-              >
-                <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-                  <DollarSign size={14} /> Set Pricing
-                </span>
-              </MenuButton>
+              {onAddManufacturing && (
+                <MenuButton
+                  variant="accent"
+                  onClick={onAddManufacturing}
+                  style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
+                    <Factory size={14} /> {hasPlan ? "Edit Manufacturing Plan" : "Add Manufacturing Plan"}
+                  </span>
+                </MenuButton>
+              )}
             </>
           )}
           <InlineConfirm
