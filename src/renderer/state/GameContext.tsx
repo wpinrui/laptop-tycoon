@@ -2,6 +2,11 @@ import { createContext, useContext, useReducer, ReactNode, Dispatch } from "reac
 import { GameState, LaptopDesign, LaptopModel, ModelStatus, createInitialGameState } from "./gameTypes";
 import { FullManufacturingPlan } from "../manufacturing/types";
 
+export interface CompetitorModelEntry {
+  competitorId: string;
+  model: LaptopModel;
+}
+
 type GameAction =
   | { type: "NEW_GAME"; companyName: string; companyLogo: string | null }
   | { type: "LOAD_GAME"; state: GameState }
@@ -11,7 +16,8 @@ type GameAction =
   | { type: "UPDATE_MODEL_STATUS"; modelId: string; status: ModelStatus }
   | { type: "SET_MODEL_PRICING"; modelId: string; retailPrice: number; manufacturingQuantity: number }
   | { type: "UPDATE_MODEL_DESIGN"; modelId: string; design: LaptopDesign }
-  | { type: "SET_MANUFACTURING_PLAN"; modelId: string; plan: FullManufacturingPlan };
+  | { type: "SET_MANUFACTURING_PLAN"; modelId: string; plan: FullManufacturingPlan }
+  | { type: "ADD_COMPETITOR_MODELS"; models: CompetitorModelEntry[] };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
@@ -62,6 +68,16 @@ function gameReducer(state: GameState, action: GameAction): GameState {
             : m,
         ),
       };
+    case "ADD_COMPETITOR_MODELS": {
+      const byId = new Map(action.models.map((m) => [m.competitorId, m.model]));
+      return {
+        ...state,
+        competitors: state.competitors.map((comp) => {
+          const newModel = byId.get(comp.id);
+          return newModel ? { ...comp, models: [...comp.models, newModel] } : comp;
+        }),
+      };
+    }
     default:
       return state;
   }

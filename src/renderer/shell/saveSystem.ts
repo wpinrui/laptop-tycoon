@@ -70,18 +70,3 @@ export function hasAnySave(): boolean {
 export function deleteSlot(index: number): void {
   localStorage.removeItem(slotKey(index));
 }
-
-// Migration: move old single-key save to slot 0
-const OLD_SAVE_KEY = "laptop-tycoon-save";
-
-export function migrateOldSave(): void {
-  try {
-    const raw = localStorage.getItem(OLD_SAVE_KEY);
-    if (!raw) return;
-    const state = JSON.parse(raw) as GameState;
-    saveToSlot(0, state);
-    localStorage.removeItem(OLD_SAVE_KEY);
-  } catch {
-    // ignore migration errors
-  }
-}
