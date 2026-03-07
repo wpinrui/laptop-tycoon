@@ -1,4 +1,4 @@
-import { CSSProperties, useMemo } from "react";
+import { CSSProperties, useMemo, useState, useRef, useEffect } from "react";
 import { useMfgWizard } from "../ManufacturingWizardContext";
 import { useGame } from "../../state/GameContext";
 import { tokens } from "../../shell/tokens";
@@ -43,6 +43,80 @@ const projRowStyle: CSSProperties = {
   padding: `${tokens.spacing.sm}px 0`,
   borderBottom: `1px solid ${tokens.colors.panelBorder}`,
 };
+
+const editableInputStyle: CSSProperties = {
+  ...bigValueStyle,
+  background: "none",
+  border: `1px solid ${tokens.colors.accent}`,
+  borderRadius: tokens.borderRadius.sm,
+  outline: "none",
+  fontFamily: tokens.font.family,
+  width: "100%",
+  boxSizing: "border-box",
+  padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+};
+
+function EditableValue({
+  value,
+  onChange,
+  min,
+  max,
+  prefix,
+  suffix,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  min: number;
+  max: number;
+  prefix?: string;
+  suffix?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.select();
+  }, [editing]);
+
+  function commit() {
+    const parsed = parseInt(draft.replace(/[^0-9]/g, ""), 10);
+    if (!isNaN(parsed)) {
+      onChange(Math.max(min, Math.min(max, parsed)));
+    }
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        type="text"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") setEditing(false);
+        }}
+        style={editableInputStyle}
+      />
+    );
+  }
+
+  return (
+    <div
+      style={{ ...bigValueStyle, cursor: "text" }}
+      onClick={() => {
+        setDraft(String(value));
+        setEditing(true);
+      }}
+      title="Click to type a value"
+    >
+      {prefix}{value.toLocaleString()}{suffix}
+    </div>
+  );
+}
 
 // Placeholder base demand — will be replaced by actual sales simulation later
 const PLACEHOLDER_BASE_DEMAND = 10_000;
@@ -111,7 +185,13 @@ export function ManufacturingStep() {
                 Unit cost: ${Math.round(baseCost).toLocaleString()}
               </span>
             </div>
-            <div style={bigValueStyle}>${effectivePrice.toLocaleString()}</div>
+            <EditableValue
+              value={effectivePrice}
+              onChange={(v) => dispatch({ type: "SET_UNIT_PRICE", unitPrice: v })}
+              min={minPrice}
+              max={maxPrice}
+              prefix="$"
+            />
             <input
               type="range"
               min={minPrice}
@@ -134,7 +214,13 @@ export function ManufacturingStep() {
                 Min: {MIN_BATCH_SIZE.toLocaleString()}
               </span>
             </div>
-            <div style={bigValueStyle}>{effectiveQty.toLocaleString()} units</div>
+            <EditableValue
+              value={effectiveQty}
+              onChange={(v) => dispatch({ type: "SET_UNITS_ORDERED", unitsOrdered: v })}
+              min={MIN_BATCH_SIZE}
+              max={maxQuantity}
+              suffix=" units"
+            />
             <input
               type="range"
               min={MIN_BATCH_SIZE}
