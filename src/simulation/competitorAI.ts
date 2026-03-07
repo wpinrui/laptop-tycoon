@@ -222,6 +222,7 @@ function pickBezel(archetype: "budget" | "premium" | "generalist"): number {
 function generateSingleModel(
   year: number,
   competitor: CompetitorDefinition,
+  totalPlayerCount: number,
 ): LaptopModel {
   const { archetype } = competitor;
   const screenSize = pickRandom(competitor.screenSizePreference);
@@ -240,10 +241,9 @@ function generateSingleModel(
   // Chassis
   const material = pickChassisOption(MATERIALS, year, competitor.chassisPreferences.materialTier);
   const cooling = pickCooling(year, totalPowerW, archetype);
-  const keyboardTier = archetype === "budget" ? "low" : archetype === "premium" ? "high" : "mid";
-  const trackpadTier = keyboardTier;
-  const keyboardFeature = pickChassisOption(KEYBOARD_FEATURES, year, keyboardTier);
-  const trackpadFeature = pickChassisOption(TRACKPAD_FEATURES, year, trackpadTier);
+  const peripheralTier = archetype === "budget" ? "low" : archetype === "premium" ? "high" : "mid";
+  const keyboardFeature = pickChassisOption(KEYBOARD_FEATURES, year, peripheralTier);
+  const trackpadFeature = pickChassisOption(TRACKPAD_FEATURES, year, peripheralTier);
 
   const chassis = {
     material,
@@ -287,7 +287,7 @@ function generateSingleModel(
   // Manufacturing quantity heuristic: base pool size scaled by brand recognition
   const totalDemand = Object.values(STARTING_DEMAND_POOL).reduce((sum, v) => sum + v, 0);
   const brandFactor = competitor.brandRecognition / 100;
-  const competitorShare = 1 / 4; // 3 competitors + player
+  const competitorShare = 1 / totalPlayerCount;
   const manufacturingQuantity = Math.round(totalDemand * competitorShare * brandFactor * (0.8 + Math.random() * 0.4));
 
   return {
@@ -304,5 +304,6 @@ export function generateCompetitorModels(
   year: number,
   competitors: CompetitorDefinition[],
 ): LaptopModel[] {
-  return competitors.map((competitor) => generateSingleModel(year, competitor));
+  const totalPlayerCount = competitors.length + 1; // +1 for human player
+  return competitors.map((competitor) => generateSingleModel(year, competitor, totalPlayerCount));
 }
