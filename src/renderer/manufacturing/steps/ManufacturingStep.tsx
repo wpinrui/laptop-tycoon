@@ -258,7 +258,9 @@ export function ManufacturingStep() {
   if (!model) return <p>Model not found.</p>;
 
   // Profit uses revenue per unit (after channel margin), not retail price
-  const pessimisticProfit = projections.displayLower * cost.revenuePerUnit - cost.totalManufacturingSpend;
+  // Cap sold units to order quantity — can't sell more than manufactured
+  const pessimisticSold = Math.min(projections.displayLower, effectiveQty);
+  const pessimisticProfit = pessimisticSold * cost.revenuePerUnit - cost.totalManufacturingSpend;
   const optimisticSold = Math.min(projections.displayUpper, effectiveQty);
   const optimisticProfit = optimisticSold * cost.revenuePerUnit - cost.totalManufacturingSpend;
   const cashAfter = gameState.cash - cost.totalManufacturingSpend;
