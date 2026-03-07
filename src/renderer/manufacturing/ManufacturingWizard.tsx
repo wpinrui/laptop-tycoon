@@ -9,7 +9,7 @@ import { ManufacturingStep } from "./steps/ManufacturingStep";
 import { PressReleaseStep } from "./steps/PressReleaseStep";
 import { ConfirmationStep } from "./steps/ConfirmationStep";
 import { MenuButton } from "../shell/MenuButton";
-import { tokens } from "../shell/tokens";
+import { tokens, wizardShellStyle } from "../shell/tokens";
 import { ConfirmDiscardDialog } from "../shell/ConfirmDiscardDialog";
 import { buildCostBreakdown } from "./utils/economiesOfScale";
 import { StatusBar } from "../shell/StatusBar";
@@ -210,5 +210,9 @@ function WizardContent() {
 }
 
 export function ManufacturingWizard() {
-  return <WizardContent />;
+  return (
+    <div style={wizardShellStyle}>
+      <WizardContent />
+    </div>
+  );
 }

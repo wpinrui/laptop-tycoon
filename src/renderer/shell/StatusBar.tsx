@@ -6,7 +6,9 @@ import { Calendar, Coins } from "lucide-react";
 
 const baseStyle: CSSProperties = {
   height: 36,
-  background: tokens.colors.surfaceHover,
+  background: tokens.colors.panelBg,
+  backdropFilter: tokens.backdrop.blur,
+  WebkitBackdropFilter: tokens.backdrop.blur,
   borderTop: `1px solid ${tokens.colors.panelBorder}`,
   display: "flex",
   alignItems: "center",

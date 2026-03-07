@@ -13,7 +13,7 @@ import { useGame } from "../state/GameContext";
 import { useNavigation } from "../navigation/NavigationContext";
 import { LaptopDesign } from "../state/gameTypes";
 import { MenuButton } from "../shell/MenuButton";
-import { tokens } from "../shell/tokens";
+import { tokens, wizardShellStyle } from "../shell/tokens";
 import { ConfirmDiscardDialog } from "../shell/ConfirmDiscardDialog";
 import { MetadataStep } from "./steps/MetadataStep";
 import { ScreenSizeStep } from "./steps/ScreenSizeStep";
@@ -316,5 +316,9 @@ function WizardContent() {
 }
 
 export function DesignWizard() {
-  return <WizardContent />;
+  return (
+    <div style={wizardShellStyle}>
+      <WizardContent />
+    </div>
+  );
 }

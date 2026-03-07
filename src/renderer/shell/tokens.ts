@@ -26,8 +26,8 @@ export const tokens = {
     interactiveAccent: "#90caf9",
     interactiveAccentBg: "#1a3a5c",
     interactiveCompletedBg: "#1b3d1b",
-    cardBg: "#2a2a2a",
-    cardBgHover: "#333",
+    cardBg: "#1a1a1a",
+    cardBgHover: "#222",
     cardBorder: "#444",
     statusDate: "#f87171",
     statusCash: "#facc15",
@@ -64,6 +64,15 @@ export const tokens = {
     statusBarHeight: 37,
   },
 } as const;
+
+/** Glassmorphic shell style for wizard panels. */
+export const wizardShellStyle: CSSProperties = {
+  width: "100%",
+  height: "100%",
+  background: tokens.colors.panelBg,
+  backdropFilter: tokens.backdrop.blur,
+  WebkitBackdropFilter: tokens.backdrop.blur,
+};
 
 /** Reusable modal overlay style (dark scrim + centered flex). */
 export const overlayStyle: CSSProperties = {
