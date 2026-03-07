@@ -12,6 +12,7 @@ const twoColumnStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "1fr 1fr",
   gap: tokens.spacing.lg,
+  maxWidth: 900,
 };
 
 const panelStyle: CSSProperties = {
