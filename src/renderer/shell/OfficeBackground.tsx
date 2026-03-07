@@ -1,25 +1,48 @@
-import { Suspense, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Suspense, useMemo, useRef } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
-import type { Group } from "three";
+import * as THREE from "three";
+import { tokens } from "./tokens";
 
 const MODEL_URL = "./minimalistic_modern_office.glb";
 
+// Keyframes from debug session
+const POS_A = new THREE.Vector3(10.25, 1.01, 3.06);
+const POS_B = new THREE.Vector3(8.26, -0.17, -3.08);
+const TARGET_A = new THREE.Vector3(5.59, -0.05, 1.29);
+const TARGET_B = new THREE.Vector3(4.39, -0.50, -1.09);
+
+const CYCLE_DURATION = 60; // seconds for one A->B leg
+
 function OfficeModel() {
   const { scene } = useGLTF(MODEL_URL);
-  const groupRef = useRef<Group>(null);
+  return <primitive object={scene} />;
+}
+
+/** Smoothstep: ease-in then ease-out, 0 derivative at both ends. */
+function smoothstep(t: number): number {
+  return t * t * (3 - 2 * t);
+}
+
+function CameraAnimation() {
+  const { camera } = useThree();
+  const elapsed = useRef(0);
+  const target = useMemo(() => new THREE.Vector3(), []);
 
   useFrame((_state, delta) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y += delta * 0.03;
-    }
+    elapsed.current += delta;
+
+    // Triangle wave: 0→1 over CYCLE_DURATION, then 1→0, repeat
+    const phase = (elapsed.current % (CYCLE_DURATION * 2)) / CYCLE_DURATION;
+    const linear = phase <= 1 ? phase : 2 - phase;
+    const t = smoothstep(linear);
+
+    camera.position.lerpVectors(POS_A, POS_B, t);
+    target.lerpVectors(TARGET_A, TARGET_B, t);
+    camera.lookAt(target);
   });
 
-  return (
-    <group ref={groupRef}>
-      <primitive object={scene} />
-    </group>
-  );
+  return null;
 }
 
 export function OfficeBackground() {
@@ -33,9 +56,9 @@ export function OfficeBackground() {
       }}
     >
       <Canvas
-        camera={{ position: [5, 3, 5], fov: 50 }}
+        camera={{ position: [POS_A.x, POS_A.y, POS_A.z], fov: 50 }}
         gl={{ antialias: true, alpha: true }}
-        style={{ background: "#121212" }}
+        style={{ background: tokens.colors.background }}
       >
         <ambientLight intensity={0.6} />
         <directionalLight position={[5, 8, 5]} intensity={1} />
@@ -43,6 +66,7 @@ export function OfficeBackground() {
         <Suspense fallback={null}>
           <OfficeModel />
         </Suspense>
+        <CameraAnimation />
       </Canvas>
     </div>
   );
