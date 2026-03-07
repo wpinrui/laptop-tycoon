@@ -1,8 +1,11 @@
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
 import { GameState, LaptopDesign, LaptopModel, ModelStatus, createInitialGameState } from "./gameTypes";
 import { FullManufacturingPlan } from "../manufacturing/types";
-import { COMPETITORS } from "../../data/competitors";
-import { generateCompetitorModels } from "../../simulation/competitorAI";
+
+export interface CompetitorModelEntry {
+  competitorId: string;
+  model: LaptopModel;
+}
 
 type GameAction =
   | { type: "NEW_GAME"; companyName: string; companyLogo: string | null }
@@ -14,7 +17,7 @@ type GameAction =
   | { type: "SET_MODEL_PRICING"; modelId: string; retailPrice: number; manufacturingQuantity: number }
   | { type: "UPDATE_MODEL_DESIGN"; modelId: string; design: LaptopDesign }
   | { type: "SET_MANUFACTURING_PLAN"; modelId: string; plan: FullManufacturingPlan }
-  | { type: "GENERATE_COMPETITOR_MODELS"; year: number };
+  | { type: "ADD_COMPETITOR_MODELS"; models: CompetitorModelEntry[] };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
@@ -65,14 +68,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
             : m,
         ),
       };
-    case "GENERATE_COMPETITOR_MODELS": {
-      const newModels = generateCompetitorModels(action.year, COMPETITORS);
+    case "ADD_COMPETITOR_MODELS": {
+      const byId = new Map(action.models.map((m) => [m.competitorId, m.model]));
       return {
         ...state,
-        competitors: state.competitors.map((comp, i) => ({
-          ...comp,
-          models: [...comp.models, newModels[i]],
-        })),
+        competitors: state.competitors.map((comp) => {
+          const newModel = byId.get(comp.id);
+          return newModel ? { ...comp, models: [...comp.models, newModel] } : comp;
+        }),
       };
     }
     default:

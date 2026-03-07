@@ -5,6 +5,8 @@ import { tokens } from "../../shell/tokens";
 import { BentoCard } from "./BentoCard";
 import { cardBodyStyle } from "./styles";
 import { getActiveModels } from "./utils";
+import { COMPETITORS } from "../../../data/competitors";
+import { generateCompetitorModels } from "../../../simulation/competitorAI";
 
 export function AdvanceYearCard() {
   const { state, dispatch } = useGame();
@@ -40,8 +42,14 @@ export function AdvanceYearCard() {
         disabled={!allHavePlans}
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
+          const nextYear = state.year + 1;
+          const generated = generateCompetitorModels(nextYear, COMPETITORS);
+          const models = COMPETITORS.map((c, i) => ({
+            competitorId: c.id,
+            model: generated[i],
+          }));
           dispatch({ type: "ADVANCE_YEAR" });
-          dispatch({ type: "GENERATE_COMPETITOR_MODELS", year: state.year + 1 });
+          dispatch({ type: "ADD_COMPETITOR_MODELS", models });
         }}
         style={{ marginTop: tokens.spacing.md, width: "100%" }}
       >
