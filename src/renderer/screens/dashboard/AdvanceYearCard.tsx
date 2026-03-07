@@ -7,7 +7,7 @@ import { cardBodyStyle } from "./styles";
 import { getActiveModels } from "./utils";
 
 export function AdvanceYearCard() {
-  const { state } = useGame();
+  const { state, dispatch } = useGame();
   const activeModels = getActiveModels(state);
   const allHavePlans = activeModels.length > 0 && activeModels.every(
     (m) => m.manufacturingPlan !== null
@@ -38,7 +38,11 @@ export function AdvanceYearCard() {
       <MenuButton
         variant="accent"
         disabled={!allHavePlans}
-        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+        onClick={(e: React.MouseEvent) => {
+          e.stopPropagation();
+          dispatch({ type: "ADVANCE_YEAR" });
+          dispatch({ type: "GENERATE_COMPETITOR_MODELS", year: state.year + 1 });
+        }}
         style={{ marginTop: tokens.spacing.md, width: "100%" }}
       >
         Simulate Year {state.year}

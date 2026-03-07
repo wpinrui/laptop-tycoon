@@ -21,16 +21,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case "NEW_GAME":
       return createInitialGameState(action.companyName, action.companyLogo);
     case "LOAD_GAME":
-      return {
-        ...action.state,
-        competitors: action.state.competitors ?? COMPETITORS.map((c) => ({
-          id: c.id,
-          name: c.name,
-          archetype: c.archetype,
-          brandRecognition: c.brandRecognition,
-          models: [],
-        })),
-      };
+      return action.state;
     case "SET_CASH":
       return { ...state, cash: action.cash };
     case "ADVANCE_YEAR":

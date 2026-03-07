@@ -1,14 +1,11 @@
 import { CSSProperties, useState } from "react";
 import { useNavigation } from "../navigation/NavigationContext";
 import { useGame } from "../state/GameContext";
-import { hasAnySave, loadFromSlot, migrateOldSave } from "../shell/saveSystem";
+import { hasAnySave, loadFromSlot } from "../shell/saveSystem";
 import { SaveSlotPicker } from "../shell/SaveSlotPicker";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { tokens } from "../shell/tokens";
-
-// Migrate old single-key save to slot 0 on first load
-migrateOldSave();
 
 const titleStyle: CSSProperties = {
   margin: 0,
