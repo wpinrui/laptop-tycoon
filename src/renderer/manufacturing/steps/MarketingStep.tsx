@@ -28,7 +28,7 @@ const cardStyle = (isSelected: boolean): CSSProperties => ({
 
 const riskColors: Record<string, string> = {
   "No Risk": tokens.colors.textMuted,
-  "Low Risk": "#66bb6a",
+  "Low Risk": tokens.colors.success,
   "Medium Risk": "#ffa726",
   "High Risk": "#ef5350",
   "Very High Risk": "#d32f2f",
@@ -111,7 +111,7 @@ export function MarketingStep() {
                   <div style={{ borderTop: `1px solid ${tokens.colors.panelBorder}`, paddingTop: tokens.spacing.sm }}>
                     <div style={statRowStyle}>
                       <span style={{ color: tokens.colors.textMuted }}>Best case</span>
-                      <span style={{ fontWeight: 600, color: "#66bb6a" }}>+{dist.max}% sales</span>
+                      <span style={{ fontWeight: 600, color: tokens.colors.success }}>+{dist.max}% sales</span>
                     </div>
                     <div style={statRowStyle}>
                       <span style={{ color: tokens.colors.textMuted }}>Expected</span>

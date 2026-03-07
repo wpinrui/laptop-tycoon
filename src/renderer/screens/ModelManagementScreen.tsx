@@ -24,7 +24,7 @@ import {
 const STATUS_COLOURS: Record<ModelStatus, string> = {
   draft: "#ffa726",
   manufacturing: "#42a5f5",
-  onSale: "#66bb6a",
+  onSale: tokens.colors.success,
   discontinued: "#888",
 };
 
@@ -265,7 +265,7 @@ function ModelCard({
           alignItems: "center",
           gap: tokens.spacing.xs,
           marginTop: tokens.spacing.sm,
-          color: "#66bb6a",
+          color: tokens.colors.success,
           fontSize: tokens.font.sizeSmall,
           fontWeight: 600,
         }}>

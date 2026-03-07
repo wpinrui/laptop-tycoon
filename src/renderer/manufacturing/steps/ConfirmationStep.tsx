@@ -2,14 +2,9 @@ import { CSSProperties } from "react";
 import { useMfgWizard } from "../ManufacturingWizardContext";
 import { useGame } from "../../state/GameContext";
 import { tokens } from "../../shell/tokens";
-import { AD_CAMPAIGNS, getCampaignCost } from "../data/campaigns";
-import { calculateCostBreakdown } from "../utils/economiesOfScale";
-import {
-  MULTI_MODEL_OVERHEAD, ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST,
-  CHANNEL_MARGIN_RATE, TOOLING_COST, CERTIFICATION_COST,
-} from "../utils/constants";
+import { AD_CAMPAIGNS } from "../data/campaigns";
+import { buildCostBreakdown } from "../utils/economiesOfScale";
 import { PRESS_RELEASE_PROMPTS } from "../data/pressReleasePrompts";
-import { getActiveModels } from "../../screens/dashboard/utils";
 
 const sectionStyle: CSSProperties = {
   background: tokens.colors.surface,
@@ -33,23 +28,7 @@ export function ConfirmationStep() {
   if (!model) return <p>Model not found.</p>;
 
   const campaign = AD_CAMPAIGNS.find((c) => c.id === state.campaignId) ?? AD_CAMPAIGNS[0];
-  const campaignCost = getCampaignCost(campaign, gameState.year);
-  const activeModelCount = getActiveModels(gameState).length;
-  const modelType = model.design.modelType ?? "brandNew";
-  const overhead = activeModelCount > 1 ? MULTI_MODEL_OVERHEAD : 0;
-  const cost = calculateCostBreakdown({
-    baseBomCost: model.design.unitCost,
-    unitsOrdered: state.unitsOrdered,
-    retailPrice: state.unitPrice,
-    supportBudget: state.supportBudget,
-    assemblyQa: ASSEMBLY_QA_COST,
-    packagingLogistics: PACKAGING_LOGISTICS_COST,
-    channelMarginRate: CHANNEL_MARGIN_RATE,
-    toolingCost: TOOLING_COST[modelType] ?? 0,
-    certificationCost: CERTIFICATION_COST[modelType] ?? 0,
-    multiModelOverhead: overhead,
-    adCost: campaignCost,
-  });
+  const { cost, campaignCost } = buildCostBreakdown(gameState, state);
   const cashAfter = gameState.cash - cost.totalManufacturingSpend;
 
   return (
@@ -134,7 +113,7 @@ export function ConfirmationStep() {
       {/* Financials summary */}
       <div style={{
         ...sectionStyle,
-        background: cashAfter < 0 ? "rgba(239, 83, 80, 0.1)" : tokens.colors.surface,
+        background: cashAfter < 0 ? tokens.colors.dangerBg : tokens.colors.surface,
         borderColor: cashAfter < 0 ? tokens.colors.danger : tokens.colors.panelBorder,
       }}>
         <div style={rowStyle}>
@@ -148,7 +127,7 @@ export function ConfirmationStep() {
           <span style={{
             fontWeight: 700,
             fontSize: tokens.font.sizeLarge,
-            color: cashAfter < 0 ? tokens.colors.danger : "#66bb6a",
+            color: cashAfter < 0 ? tokens.colors.danger : tokens.colors.success,
           }}>
             ${Math.round(cashAfter).toLocaleString()}
           </span>

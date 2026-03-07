@@ -2,14 +2,14 @@ import { CSSProperties, useMemo, useState, useRef, useEffect } from "react";
 import { useMfgWizard } from "../ManufacturingWizardContext";
 import { useGame } from "../../state/GameContext";
 import { tokens } from "../../shell/tokens";
-import { calculateBomUnitCost, calculateCostBreakdown } from "../utils/economiesOfScale";
+import { calculateBomUnitCost, buildCostBreakdown } from "../utils/economiesOfScale";
 import { AD_CAMPAIGNS, getCampaignCost } from "../data/campaigns";
 import { approxPercentile } from "../utils/skewNormal";
 import {
-  MIN_BATCH_SIZE, MULTI_MODEL_OVERHEAD,
+  MIN_BATCH_SIZE,
   ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST, CHANNEL_MARGIN_RATE,
-  TOOLING_COST, CERTIFICATION_COST,
   SUPPORT_BUDGET_MIN, SUPPORT_BUDGET_MAX,
+  TOOLING_COST, CERTIFICATION_COST, MULTI_MODEL_OVERHEAD,
 } from "../utils/constants";
 import { getActiveModels } from "../../screens/dashboard/utils";
 
@@ -231,19 +231,11 @@ export function ManufacturingStep() {
   const effectivePrice = state.unitPrice || snapPrice(baseTotalPerUnit * 1.5);
   const effectiveQty = state.unitsOrdered || MIN_BATCH_SIZE;
 
-  // Full cost breakdown
-  const cost = calculateCostBreakdown({
-    baseBomCost: baseBom,
+  // Full cost breakdown — uses effective values for price/qty
+  const { cost } = buildCostBreakdown(gameState, {
+    ...state,
+    unitPrice: effectivePrice,
     unitsOrdered: effectiveQty,
-    retailPrice: effectivePrice,
-    supportBudget: state.supportBudget,
-    assemblyQa: ASSEMBLY_QA_COST,
-    packagingLogistics: PACKAGING_LOGISTICS_COST,
-    channelMarginRate: CHANNEL_MARGIN_RATE,
-    toolingCost,
-    certificationCost: certCost,
-    multiModelOverhead: overhead,
-    adCost,
   });
 
   // Demand projection
@@ -275,10 +267,10 @@ export function ManufacturingStep() {
   const marginPct = effectivePrice > 0 ? (marginPerUnit / effectivePrice) * 100 : 0;
 
   const profitable = marginPerUnit > 0;
-  const profitColor = profitable ? "#66bb6a" : tokens.colors.danger;
-  const profitBg = profitable ? "rgba(102, 187, 106, 0.1)" : "rgba(239, 83, 80, 0.1)";
-  const cashColor = cashAfter < 0 ? tokens.colors.danger : "#66bb6a";
-  const cashBg = cashAfter < 0 ? "rgba(239, 83, 80, 0.1)" : "rgba(102, 187, 106, 0.1)";
+  const profitColor = profitable ? tokens.colors.success : tokens.colors.danger;
+  const profitBg = profitable ? tokens.colors.successBg : tokens.colors.dangerBg;
+  const cashColor = cashAfter < 0 ? tokens.colors.danger : tokens.colors.success;
+  const cashBg = cashAfter < 0 ? tokens.colors.dangerBg : tokens.colors.successBg;
 
   const fmt = (n: number) => `$${Math.round(n).toLocaleString()}`;
 
@@ -405,8 +397,8 @@ export function ManufacturingStep() {
             <MetricCard
               label="Projected profit"
               value={`${fmt(pessimisticProfit)} to ${fmt(optimisticProfit)}`}
-              color={pessimisticProfit < 0 ? tokens.colors.danger : "#66bb6a"}
-              bgColor={pessimisticProfit < 0 ? "rgba(239, 83, 80, 0.1)" : "rgba(102, 187, 106, 0.1)"}
+              color={pessimisticProfit < 0 ? tokens.colors.danger : tokens.colors.success}
+              bgColor={pessimisticProfit < 0 ? tokens.colors.dangerBg : tokens.colors.successBg}
             />
             <MetricCard
               label="Projected demand"
@@ -419,7 +411,7 @@ export function ManufacturingStep() {
           {/* Cash after - full width, prominent */}
           <div style={{
             background: cashBg,
-            border: `1px solid ${cashAfter < 0 ? tokens.colors.danger : "rgba(102, 187, 106, 0.3)"}`,
+            border: `1px solid ${cashAfter < 0 ? tokens.colors.danger : tokens.colors.successBorder}`,
             borderRadius: tokens.borderRadius.md,
             padding: `${tokens.spacing.md}px ${tokens.spacing.lg}px`,
             display: "flex",
@@ -503,7 +495,7 @@ export function ManufacturingStep() {
               <DetailRow label="Packaging & logistics" value={fmt(cost.packagingLogistics)} />
               <DetailRow label="Support reserve" value={fmt(cost.supportBudget)} />
               {cost.eosDiscount < 0 && (
-                <DetailRow label="Economies of scale" value={`-${fmt(Math.abs(cost.eosDiscount))}`} color="#66bb6a" />
+                <DetailRow label="Economies of scale" value={`-${fmt(Math.abs(cost.eosDiscount))}`} color={tokens.colors.success} />
               )}
               <div style={{ height: 1, background: tokens.colors.panelBorder, margin: `${tokens.spacing.xs}px 0` }} />
               <DetailRow label={`Channel margin (${Math.round(CHANNEL_MARGIN_RATE * 100)}%)`} value={fmt(cost.channelMargin)} />

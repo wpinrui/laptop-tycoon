@@ -11,16 +11,8 @@ import { ConfirmationStep } from "./steps/ConfirmationStep";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { tokens, overlayStyle } from "../shell/tokens";
-import { AD_CAMPAIGNS, getCampaignCost } from "./data/campaigns";
-import { calculateBomUnitCost, calculateCostBreakdown } from "./utils/economiesOfScale";
-import {
-  MULTI_MODEL_OVERHEAD, ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST,
-  CHANNEL_MARGIN_RATE, TOOLING_COST, CERTIFICATION_COST,
-} from "./utils/constants";
-import { getActiveModels } from "../screens/dashboard/utils";
+import { buildCostBreakdown } from "./utils/economiesOfScale";
 import { StatusBar } from "../shell/StatusBar";
-
-const STATUS_BAR_HEIGHT = 37;
 
 function isStepComplete(step: ManufacturingWizardStep, state: ReturnType<typeof useMfgWizard>["state"]): boolean {
   switch (step) {
@@ -88,26 +80,8 @@ function WizardContent() {
   }
 
   function handleConfirm() {
-    const campaign = AD_CAMPAIGNS.find((c) => c.id === state.campaignId) ?? AD_CAMPAIGNS[0];
-    const campaignCost = getCampaignCost(campaign, gameState.year);
-    const activeModelCount = getActiveModels(gameState).length;
-    const designModel = gameState.models.find((m) => m.design.id === state.modelId)!;
-    const modelType = designModel.design.modelType ?? "brandNew";
-    const overhead = activeModelCount > 1 ? MULTI_MODEL_OVERHEAD : 0;
-
-    const cost = calculateCostBreakdown({
-      baseBomCost: designModel.design.unitCost,
-      unitsOrdered: state.unitsOrdered,
-      retailPrice: state.unitPrice,
-      supportBudget: state.supportBudget,
-      assemblyQa: ASSEMBLY_QA_COST,
-      packagingLogistics: PACKAGING_LOGISTICS_COST,
-      channelMarginRate: CHANNEL_MARGIN_RATE,
-      toolingCost: TOOLING_COST[modelType] ?? 0,
-      certificationCost: CERTIFICATION_COST[modelType] ?? 0,
-      multiModelOverhead: overhead,
-      adCost: campaignCost,
-    });
+    if (!model) return;
+    const { cost, campaignCost } = buildCostBreakdown(gameState, state);
 
     const plan: FullManufacturingPlan = {
       laptopModelId: state.modelId,
@@ -156,7 +130,7 @@ function WizardContent() {
     <div
       style={{
         padding: tokens.spacing.lg,
-        paddingBottom: STATUS_BAR_HEIGHT + tokens.spacing.lg,
+        paddingBottom: tokens.layout.statusBarHeight + tokens.spacing.lg,
         fontFamily: tokens.font.family,
         color: tokens.colors.text,
         width: "100%",

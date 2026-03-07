@@ -1,4 +1,11 @@
-import { REFERENCE_QUANTITY } from "./constants";
+import {
+  REFERENCE_QUANTITY, ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST,
+  CHANNEL_MARGIN_RATE, TOOLING_COST, CERTIFICATION_COST, MULTI_MODEL_OVERHEAD,
+} from "./constants";
+import { AD_CAMPAIGNS, getCampaignCost } from "../data/campaigns";
+import { ManufacturingWizardState } from "../types";
+import { GameState } from "../../state/gameTypes";
+import { getActiveModels } from "../../screens/dashboard/utils";
 
 /** EoS discount applies only to the BOM portion */
 export function calculateBomUnitCost(baseBomCost: number, unitsOrdered: number): number {
@@ -88,4 +95,31 @@ export function calculateCostBreakdown(params: {
     fullyLoadedCostPerUnit,
     totalManufacturingSpend,
   };
+}
+
+/** Build cost breakdown from game + wizard state. Avoids repeating the same param construction. */
+export function buildCostBreakdown(gameState: GameState, wizardState: ManufacturingWizardState): { cost: CostBreakdown; campaignCost: number } {
+  const model = gameState.models.find((m) => m.design.id === wizardState.modelId);
+  const baseBomCost = model?.design.unitCost ?? 0;
+  const modelType = model?.design.modelType ?? "brandNew";
+  const activeModelCount = getActiveModels(gameState).length;
+  const overhead = activeModelCount > 1 ? MULTI_MODEL_OVERHEAD : 0;
+  const campaign = AD_CAMPAIGNS.find((c) => c.id === wizardState.campaignId) ?? AD_CAMPAIGNS[0];
+  const campaignCost = getCampaignCost(campaign, gameState.year);
+
+  const cost = calculateCostBreakdown({
+    baseBomCost,
+    unitsOrdered: wizardState.unitsOrdered,
+    retailPrice: wizardState.unitPrice,
+    supportBudget: wizardState.supportBudget,
+    assemblyQa: ASSEMBLY_QA_COST,
+    packagingLogistics: PACKAGING_LOGISTICS_COST,
+    channelMarginRate: CHANNEL_MARGIN_RATE,
+    toolingCost: TOOLING_COST[modelType] ?? 0,
+    certificationCost: CERTIFICATION_COST[modelType] ?? 0,
+    multiModelOverhead: overhead,
+    adCost: campaignCost,
+  });
+
+  return { cost, campaignCost };
 }

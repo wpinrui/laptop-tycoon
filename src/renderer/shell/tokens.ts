@@ -17,6 +17,10 @@ export const tokens = {
     accentHover: "#81d4fa",
     danger: "#ef5350",
     dangerHover: "#f44336",
+    success: "#66bb6a",
+    successBg: "rgba(102, 187, 106, 0.1)",
+    successBorder: "rgba(102, 187, 106, 0.3)",
+    dangerBg: "rgba(239, 83, 80, 0.1)",
     background: "#121212",
     surface: "rgba(255, 255, 255, 0.05)",
     surfaceHover: "rgba(255, 255, 255, 0.1)",
@@ -47,6 +51,7 @@ export const tokens = {
     panelHeight: "75vh",
     panelWidth: "92vw",
     panelMaxWidth: 1800,
+    statusBarHeight: 37,
   },
 } as const;
 

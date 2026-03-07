@@ -26,7 +26,6 @@ import { ReviewStep } from "./steps/ReviewStep";
 import { WizardSidebar } from "./LaptopEstimateSidebar";
 import { StatusBar } from "../shell/StatusBar";
 
-const STATUS_BAR_HEIGHT = 37;
 
 function isStepComplete(step: WizardStep, state: WizardState): boolean {
   switch (step) {
@@ -184,7 +183,7 @@ function WizardContent() {
     <div
       style={{
         padding: tokens.spacing.lg,
-        paddingBottom: STATUS_BAR_HEIGHT + tokens.spacing.lg,
+        paddingBottom: tokens.layout.statusBarHeight + tokens.spacing.lg,
         fontFamily: tokens.font.family,
         color: tokens.colors.text,
         width: "100%",
