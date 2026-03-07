@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useWizard } from "./WizardContext";
+import { useWizard, isStepLockedBySpecBump } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
 import { WizardStep, WizardState, WIZARD_STEPS, COMPONENT_STEP_SLOTS, getAllChassisOptions } from "./types";
 import {
@@ -25,12 +25,6 @@ import { ReviewStep } from "./steps/ReviewStep";
 import { WizardSidebar } from "./LaptopEstimateSidebar";
 import { StatusBar } from "../shell/StatusBar";
 
-
-/** Steps locked by spec bump (inherited from predecessor, not editable). */
-function isStepLockedBySpecBump(step: WizardStep, state: WizardState): boolean {
-  return state.modelType === "specBump" && state.predecessorId !== null
-    && (step === "screenSize" || step === "body");
-}
 
 function isStepComplete(step: WizardStep, state: WizardState, year: number): boolean {
   if (isStepLockedBySpecBump(step, state)) return true;

@@ -40,7 +40,7 @@ type WizardAction =
   | { type: "DEBUG_AUTOFILL"; year: number };
 
 /** Steps locked by spec bump — screen size and body are inherited from predecessor. */
-function isLockedStep(step: WizardStep, state: WizardState): boolean {
+export function isStepLockedBySpecBump(step: WizardStep, state: WizardState): boolean {
   return state.modelType === "specBump" && state.predecessorId !== null
     && (step === "screenSize" || step === "body");
 }
@@ -111,7 +111,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       return { ...state, selectedColours };
     }
     case "GO_TO_STEP": {
-      if (isLockedStep(action.step, state)) return state;
+      if (isStepLockedBySpecBump(action.step, state)) return state;
       const visited = new Set(state.visitedSteps);
       visited.add(action.step);
       return { ...state, currentStep: action.step, visitedSteps: visited };
@@ -121,7 +121,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       while (idx < WIZARD_STEPS.length - 1) {
         idx++;
         const nextStep = WIZARD_STEPS[idx];
-        if (!isLockedStep(nextStep, state)) {
+        if (!isStepLockedBySpecBump(nextStep, state)) {
           const visited = new Set(state.visitedSteps);
           visited.add(nextStep);
           return { ...state, currentStep: nextStep, visitedSteps: visited };
@@ -133,7 +133,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       let idx = WIZARD_STEPS.indexOf(state.currentStep);
       while (idx > 0) {
         idx--;
-        if (!isLockedStep(WIZARD_STEPS[idx], state)) {
+        if (!isStepLockedBySpecBump(WIZARD_STEPS[idx], state)) {
           return { ...state, currentStep: WIZARD_STEPS[idx] };
         }
       }
