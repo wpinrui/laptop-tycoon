@@ -22,10 +22,10 @@ export function BentoCard({ title, icon: Icon, screen, children }: BentoCardProp
       }}
       onClick={screen ? () => navigateTo(screen) : undefined}
       onMouseEnter={screen ? (e) => {
-        e.currentTarget.style.background = tokens.colors.surfaceHover;
+        e.currentTarget.style.background = tokens.colors.cardBgHover;
       } : undefined}
       onMouseLeave={screen ? (e) => {
-        e.currentTarget.style.background = tokens.colors.surface;
+        e.currentTarget.style.background = tokens.colors.cardBg;
       } : undefined}
     >
       <h3 style={cardTitleStyle}>

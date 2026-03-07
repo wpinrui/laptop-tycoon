@@ -53,7 +53,7 @@ const headerStyle: CSSProperties = {
 };
 
 const modelCardStyle: CSSProperties = {
-  background: tokens.colors.surface,
+  background: tokens.colors.cardBg,
   border: `1px solid ${tokens.colors.panelBorder}`,
   borderRadius: tokens.borderRadius.md,
   padding: tokens.spacing.lg,

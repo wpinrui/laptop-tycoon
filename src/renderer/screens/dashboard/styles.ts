@@ -2,7 +2,7 @@ import { CSSProperties } from "react";
 import { tokens } from "../../shell/tokens";
 
 export const cardStyle: CSSProperties = {
-  background: tokens.colors.surface,
+  background: tokens.colors.cardBg,
   borderRadius: tokens.borderRadius.md,
   padding: tokens.spacing.xl,
   transition: "background 0.15s",

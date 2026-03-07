@@ -209,6 +209,18 @@ function WizardContent() {
   );
 }
 
+const wizardShellStyle: React.CSSProperties = {
+  width: "100%",
+  height: "100%",
+  background: tokens.colors.panelBg,
+  backdropFilter: tokens.backdrop.blur,
+  WebkitBackdropFilter: tokens.backdrop.blur,
+};
+
 export function ManufacturingWizard() {
-  return <WizardContent />;
+  return (
+    <div style={wizardShellStyle}>
+      <WizardContent />
+    </div>
+  );
 }
