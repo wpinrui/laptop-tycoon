@@ -5,6 +5,7 @@ import { FullManufacturingPlan } from "../manufacturing/types";
 import { QuarterSimulationResult } from "../../simulation/salesTypes";
 import { clearProjectionCache } from "../../simulation/salesEngine";
 import { updateBrandReach, updateCompetitorBrandReach, applySingleQuarterPerception } from "../../simulation/brandProgression";
+import { applyDeathSpiralPrevention } from "../../simulation/deathSpiralPrevention";
 
 export interface CompetitorModelEntry {
   competitorId: string;
@@ -74,13 +75,20 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       // Q4 → next year Q1: advance year, transition models, reset quarter history
       const nextYear = state.year + 1;
       const lastSim = state.lastSimulationResult;
+
+      // Death spiral prevention: check AI competitor sales and nudge if struggling
+      const currentYearResult = state.yearHistory[state.yearHistory.length - 1];
+      const companiesAfterSpiral = currentYearResult
+        ? applyDeathSpiralPrevention(state.companies, currentYearResult)
+        : state.companies;
+
       return {
         ...state,
         year: nextYear,
         quarter: 1 as Quarter,
         quarterSimulated: false,
         quarterHistory: [],
-        companies: updatePlayerModels(state.companies, (models) =>
+        companies: updatePlayerModels(companiesAfterSpiral, (models) =>
           models.map((m) => {
             if (m.status === "discontinued") return m;
 

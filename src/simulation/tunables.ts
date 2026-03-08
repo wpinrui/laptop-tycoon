@@ -123,6 +123,19 @@ export const QUARTER_SHARES_SUM = QUARTER_SHARES.reduce<number>((s, v) => s + v,
 
 // ==================== Awards ====================
 
+// ==================== AI Death Spiral Prevention ====================
+
+/** Minimum annual unit sales before an AI competitor is considered "struggling" */
+export const DEATH_SPIRAL_SALES_THRESHOLD = 10_000;
+/** Consecutive low-sales years required before nudging engineeringBonus */
+export const DEATH_SPIRAL_CONSECUTIVE_YEARS = 2;
+/** How much to increase engineeringBonus per trigger (shifts component percentile) */
+export const DEATH_SPIRAL_BONUS_NUDGE = 0.05;
+/** Maximum engineeringBonus cap (prevent runaway escalation) */
+export const DEATH_SPIRAL_MAX_BONUS = 0.4;
+
+// ==================== Awards ====================
+
 /** Global perception boost from winning an award */
 export const AWARD_PERCEPTION_BONUS = 2;
 /** Global reach % boost from winning an award */

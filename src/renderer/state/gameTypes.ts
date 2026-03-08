@@ -62,6 +62,8 @@ export interface CompanyState {
   models: LaptopModel[];
   archetype?: CompetitorArchetype;
   engineeringBonus?: number;
+  /** AI-only: consecutive years with total sales below death-spiral threshold */
+  consecutiveLowSalesYears?: number;
 }
 
 export type Quarter = 1 | 2 | 3 | 4;
