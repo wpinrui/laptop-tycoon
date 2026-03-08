@@ -242,7 +242,7 @@ export function ManufacturingStep() {
   // Demand projection from sales simulation engine
   const { distribution: dist } = campaign;
 
-  const projection = projectDemandRange(gameState, state.modelId, effectivePrice);
+  const projection = projectDemandRange(gameState, state.modelId, effectivePrice, adCost);
   const lowerAdBonus = approxPercentile(dist.mean, dist.stdDev, dist.skew, dist.min, dist.max, 0.25);
   const upperAdBonus = approxPercentile(dist.mean, dist.stdDev, dist.skew, dist.min, dist.max, 0.75);
   const projections = {

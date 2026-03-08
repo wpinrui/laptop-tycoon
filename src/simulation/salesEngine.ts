@@ -453,6 +453,7 @@ export function projectDemandRange(
   state: GameState,
   modelId: string,
   retailPrice: number,
+  uncommittedCampaignSpend: number = 0,
 ): DemandProjection {
   const year = state.year;
 
@@ -520,8 +521,8 @@ export function projectDemandRange(
     normalisedStatsMap.set(laptop.id, normaliseStats(laptop, allLaptops));
   }
 
-  // Immediate reach boost from marketing campaign spend
-  const campaignReachBoost = getCampaignReachBoost(state);
+  // Immediate reach boost from marketing campaign spend (committed + uncommitted from wizard)
+  const campaignReachBoost = getCampaignReachBoost(state, uncommittedCampaignSpend);
 
   // Sum demand across demographics for our model
   let totalExpected = 0;
