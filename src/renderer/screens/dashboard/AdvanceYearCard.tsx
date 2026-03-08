@@ -69,7 +69,8 @@ export function AdvanceYearCard() {
           e.stopPropagation();
 
           // Q1 only: generate competitor models once (reused for dispatch + simulation)
-          const generated = isQ1 ? generateCompetitorModels(state.year, COMPETITORS) : [];
+          // Pass companies so AI reads live engineeringBonus (death spiral prevention)
+          const generated = isQ1 ? generateCompetitorModels(state.year, COMPETITORS, state.companies) : [];
 
           if (isQ1) {
             const competitorModels = COMPETITORS.map((c, i) => ({

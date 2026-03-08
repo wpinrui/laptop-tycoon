@@ -5,7 +5,7 @@ import {
   LaptopStat,
 } from "../data/types";
 import { CompetitorArchetype, CompetitorDefinition } from "../data/competitors";
-import { LaptopDesign, LaptopModel } from "../renderer/state/gameTypes";
+import { LaptopDesign, LaptopModel, CompanyState } from "../renderer/state/gameTypes";
 import {
   getAvailableComponents,
   getAvailableChassisOptions,
@@ -70,6 +70,7 @@ function pickComponent(
   slot: ComponentSlot,
   year: number,
   competitor: CompetitorDefinition,
+  engineeringBonus: number,
 ): Component | null {
   const available = getAvailableComponents(slot, year);
   if (available.length === 0) return null;
@@ -77,7 +78,7 @@ function pickComponent(
   const { archetype, statPriorities } = competitor;
 
   if (archetype === "budget") {
-    return pickComponentByPercentile(available, 0.15, (c) => totalStatValue(c));
+    return pickComponentByPercentile(available, clamp(0.15 + engineeringBonus, 0, 1), (c) => totalStatValue(c));
   }
 
   if (archetype === "premium") {
@@ -85,14 +86,14 @@ function pickComponent(
       const relevance = (c: Component) => statRelevance(c, statPriorities.high);
       const maxRelevance = Math.max(...available.map(relevance));
       if (maxRelevance > 0) {
-        return pickComponentByPercentile(available, 0.8, relevance);
+        return pickComponentByPercentile(available, clamp(0.8 + engineeringBonus, 0, 1), relevance);
       }
     }
-    return pickComponentByPercentile(available, 0.6, (c) => totalStatValue(c));
+    return pickComponentByPercentile(available, clamp(0.6 + engineeringBonus, 0, 1), (c) => totalStatValue(c));
   }
 
   // generalist — middle 50%
-  return pickComponentByPercentile(available, 0.5, (c) => totalStatValue(c));
+  return pickComponentByPercentile(available, clamp(0.5 + engineeringBonus, 0, 1), (c) => totalStatValue(c));
 }
 
 function pickChassisOption(
@@ -224,6 +225,7 @@ function generateSingleModel(
   year: number,
   competitor: CompetitorDefinition,
   totalPlayerCount: number,
+  engineeringBonus: number,
 ): LaptopModel {
   const { archetype } = competitor;
   const screenSize = pickRandom(competitor.screenSizePreference);
@@ -232,7 +234,7 @@ function generateSingleModel(
   const components: Partial<Record<ComponentSlot, Component>> = {};
   let totalPowerW = 0;
   for (const slot of COMPONENT_SLOTS) {
-    const comp = pickComponent(slot, year, competitor);
+    const comp = pickComponent(slot, year, competitor, engineeringBonus);
     if (comp) {
       components[slot] = comp;
       totalPowerW += comp.powerDrawW;
@@ -305,7 +307,13 @@ function generateSingleModel(
 export function generateCompetitorModels(
   year: number,
   competitors: CompetitorDefinition[],
+  companies?: CompanyState[],
 ): LaptopModel[] {
   const totalPlayerCount = competitors.length + 1; // +1 for human player
-  return competitors.map((competitor) => generateSingleModel(year, competitor, totalPlayerCount));
+  return competitors.map((competitor) => {
+    // Read live engineeringBonus from CompanyState (updated by death spiral prevention)
+    const companyState = companies?.find((c) => c.id === competitor.id);
+    const bonus = companyState?.engineeringBonus ?? competitor.engineeringBonus;
+    return generateSingleModel(year, competitor, totalPlayerCount, bonus);
+  });
 }
