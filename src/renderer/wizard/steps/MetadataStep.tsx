@@ -4,8 +4,8 @@ import { ModelType } from "../types";
 import { tokens } from "../../shell/tokens";
 
 const MODEL_TYPE_OPTIONS: { value: ModelType; label: string; description: string }[] = [
-  { value: "brandNew", label: "Brand New", description: "Fresh design from scratch. No loyalty base." },
-  { value: "successor", label: "Successor", description: "New body + components. Inherits loyalty and niche reputation." },
+  { value: "brandNew", label: "Brand New", description: "Fresh design from scratch. Highest R&D cost." },
+  { value: "successor", label: "Successor", description: "New body + components. Reduced R&D cost." },
   { value: "specBump", label: "Spec Bump", description: "Reuses predecessor's body and screen size. Components only." },
 ];
 
