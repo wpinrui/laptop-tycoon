@@ -15,7 +15,7 @@ import {
 import {
   DemographicSalesBreakdown,
   LaptopSalesResult,
-  YearSimulationResult,
+  QuarterSimulationResult,
   DemandProjection,
   PerceptionChange,
 } from "./salesTypes";
@@ -26,12 +26,13 @@ import {
   BASE_DEMAND_VARIANCE,
   REACH_VARIANCE_SCALE,
   REPLACEMENT_CYCLE,
+  QUARTER_SHARES,
 } from "./tunables";
 import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
 import { sampleCampaignOutcome } from "../renderer/manufacturing/utils/skewNormal";
 import { generateCompetitorModels } from "./competitorAI";
 import { COMPETITORS } from "../data/competitors";
-import { averageReach, getCampaignReachBoost, updateBrandPerception } from "./brandProgression";
+import { averageReach, getCampaignReachBoost, applySingleQuarterPerception } from "./brandProgression";
 
 // Cache synthetic competitor models per year for stable demand projections
 let cachedProjectionYear: number | null = null;
@@ -68,17 +69,17 @@ function buildMarketLaptops(state: GameState): MarketLaptop[] {
 
     // Calculate total manufacturing cost from plan
     const plan = model.manufacturingPlan;
-    const isCurrentYearPlan = plan && plan.year === state.year;
+    const isCurrentQuarterPlan = plan && plan.year === state.year && plan.quarter === state.quarter;
 
     // Manufacturing quantity = new batch (if any) + existing inventory
-    const newBatch = isCurrentYearPlan ? (model.manufacturingQuantity ?? 0) : 0;
+    const newBatch = isCurrentQuarterPlan ? (model.manufacturingQuantity ?? 0) : 0;
     const totalAvailable = newBatch + model.unitsInStock;
 
     if (totalAvailable <= 0) continue;
 
-    const totalMfgCost = isCurrentYearPlan
+    const totalMfgCost = isCurrentQuarterPlan
       ? plan.manufacturing.totalCost + plan.marketing.cost
-      : 0; // Inventory-only: no new manufacturing cost
+      : 0; // Inventory-only or previous quarter: no new manufacturing cost
 
     laptops.push({
       id: model.design.id,
@@ -211,23 +212,28 @@ function applySalesNoise(baseDemand: number): number {
   return Math.round(baseDemand * (1 + direction * noisePercent / 100));
 }
 
+/** Sum of all quarter shares for normalisation. */
+const QUARTER_SHARES_SUM = QUARTER_SHARES.reduce((s, v) => s + v, 0);
+
 /**
- * Run the full sales simulation for the current year.
+ * Run the sales simulation for a single quarter.
+ * Demand is scaled by the quarter's share of annual buyers.
  */
-export function simulateYear(state: GameState): YearSimulationResult {
-  const year = state.year;
+export function simulateQuarter(state: GameState): QuarterSimulationResult {
+  const { year, quarter } = state;
+  const quarterShare = QUARTER_SHARES[quarter - 1] / QUARTER_SHARES_SUM;
   const allLaptops = buildMarketLaptops(state);
   const player = getPlayerCompany(state);
 
   if (allLaptops.length === 0) {
     return {
       year,
+      quarter,
       laptopResults: [],
       playerResults: [],
       totalRevenue: 0,
       totalProfit: 0,
       cashAfterResolution: state.cash,
-      gameOver: state.cash < 0,
       perceptionChanges: [],
     };
   }
@@ -262,6 +268,9 @@ export function simulateYear(state: GameState): YearSimulationResult {
     const replacementCycle = REPLACEMENT_CYCLE[demId];
     const annualActiveBuyers = demographicPopulation / replacementCycle;
 
+    // Quarterly active buyers = annual × quarter share
+    const quarterlyActiveBuyers = annualActiveBuyers * quarterShare;
+
     // Calculate biased VP for each laptop in this demographic
     const vpEntries: { laptopId: string; biasedVP: number; rawVP: number; reachGatedPool: number }[] = [];
     let totalBiasedVP = 0;
@@ -278,7 +287,7 @@ export function simulateYear(state: GameState): YearSimulationResult {
         reach += campaignReachBoost;
       }
       reach = Math.min(reach, 100);
-      const reachGatedPool = annualActiveBuyers * (reach / 100);
+      const reachGatedPool = quarterlyActiveBuyers * (reach / 100);
 
       vpEntries.push({ laptopId: laptop.id, biasedVP, rawVP, reachGatedPool });
       totalBiasedVP += biasedVP;
@@ -337,23 +346,20 @@ export function simulateYear(state: GameState): YearSimulationResult {
 
   const playerResults = laptopResults.filter((r) => r.owner === player.id);
 
-  // Cash flow resolution
-  // Manufacturing cost was already deducted when manufacturing plan was set
-  // Revenue is collected at year-end
+  // Cash flow: revenue collected quarterly
   const cashAfterResolution = state.cash + playerRevenue;
-  const gameOver = cashAfterResolution < 0;
 
-  // Compute player perception changes for tracking in results
-  const perceptionChanges = computePerceptionChanges(state, laptopResults);
+  // Compute player perception changes for this quarter
+  const perceptionChanges = computeQuarterlyPerceptionChanges(state, laptopResults);
 
   return {
     year,
+    quarter,
     laptopResults,
     playerResults,
     totalRevenue: playerRevenue,
     totalProfit: playerProfit,
     cashAfterResolution,
-    gameOver,
     perceptionChanges,
   };
 }
@@ -361,15 +367,15 @@ export function simulateYear(state: GameState): YearSimulationResult {
 // --- Perception Change Computation ---
 
 /**
- * Compute per-demographic perception changes for the player.
- * Delegates to updateBrandPerception (single source of truth) and diffs the result.
+ * Compute per-demographic perception changes for one quarter.
+ * Uses single-quarter perception update (not 4x loop).
  */
-function computePerceptionChanges(
+function computeQuarterlyPerceptionChanges(
   state: GameState,
   laptopResults: LaptopSalesResult[],
 ): PerceptionChange[] {
   const player = getPlayerCompany(state);
-  const newPerception = updateBrandPerception(player, laptopResults);
+  const newPerception = applySingleQuarterPerception(player, laptopResults);
 
   return DEMOGRAPHICS.map((dem) => {
     const oldP = player.brandPerception[dem.id] ?? 0;
@@ -467,6 +473,9 @@ export function projectDemandRange(
     const basePool = STARTING_DEMAND_POOL[demId];
     const demographicPopulation = getDemandPoolSize(demId, year, basePool);
     const annualActiveBuyers = demographicPopulation / REPLACEMENT_CYCLE[demId];
+    // Scale by current quarter's share
+    const quarterShare = QUARTER_SHARES[state.quarter - 1] / QUARTER_SHARES_SUM;
+    const quarterlyActiveBuyers = annualActiveBuyers * quarterShare;
 
     let totalBiasedVP = 0;
     let ourBiasedVP = 0;
@@ -481,7 +490,7 @@ export function projectDemandRange(
     const share = totalBiasedVP > 0 ? ourBiasedVP / totalBiasedVP : 0;
     // Gate by player's reach in this demographic (including immediate campaign boost)
     const reach = Math.min((player.brandReach[demId] ?? 0) + campaignReachBoost, 100);
-    totalExpected += annualActiveBuyers * (reach / 100) * share;
+    totalExpected += quarterlyActiveBuyers * (reach / 100) * share;
   }
 
   const expected = Math.round(totalExpected);

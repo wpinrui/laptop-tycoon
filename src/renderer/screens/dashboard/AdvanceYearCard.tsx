@@ -9,7 +9,9 @@ import { getActiveModels } from "./utils";
 import { hasDiscontinuedComponents, LaptopModel } from "../../state/gameTypes";
 import { COMPETITORS } from "../../../data/competitors";
 import { generateCompetitorModels } from "../../../simulation/competitorAI";
-import { simulateYear } from "../../../simulation/salesEngine";
+import { simulateQuarter } from "../../../simulation/salesEngine";
+
+const QUARTER_LABELS = ["Q1", "Q2", "Q3", "Q4"] as const;
 
 /** Models that need a current-year manufacturing plan before simulation. */
 function modelsNeedingPlans(state: { year: number; models: ReturnType<typeof getActiveModels> }) {
@@ -26,23 +28,27 @@ export function AdvanceYearCard() {
   const { state, dispatch } = useGame();
   const { navigateTo } = useNavigation();
   const activeModels = getActiveModels(state);
+  const isQ1 = state.quarter === 1;
+  const quarterLabel = QUARTER_LABELS[state.quarter - 1];
 
-  // Models that need plans = non-inventory-only models without a current-year plan
-  const needPlans = modelsNeedingPlans({ year: state.year, models: activeModels });
-  const allReady = activeModels.length > 0 && needPlans.length === 0;
+  // Only require manufacturing plans in Q1 — subsequent quarters can proceed freely
+  const needPlans = isQ1 ? modelsNeedingPlans({ year: state.year, models: activeModels }) : [];
+  const allReady = isQ1
+    ? activeModels.length > 0 && needPlans.length === 0
+    : activeModels.length > 0;
   const warnings: string[] = [];
 
-  if (activeModels.length === 0) {
+  if (isQ1 && activeModels.length === 0) {
     warnings.push("Design at least one laptop model");
   }
-  if (activeModels.length > 0 && needPlans.length > 0) {
+  if (isQ1 && activeModels.length > 0 && needPlans.length > 0) {
     warnings.push(
       `Add manufacturing plans for: ${needPlans.map((m) => m.design.name).join(", ")}`,
     );
   }
 
   return (
-    <BentoCard title="Advance Year" icon={FastForward}>
+    <BentoCard title={`Simulate ${quarterLabel}`} icon={FastForward}>
       {warnings.length > 0 ? (
         warnings.map((w) => (
           <p key={w} style={{ ...cardBodyStyle, color: tokens.colors.danger }}>
@@ -50,7 +56,12 @@ export function AdvanceYearCard() {
           </p>
         ))
       ) : (
-        <p style={cardBodyStyle}>All models ready. Advance to simulate the year.</p>
+        <p style={cardBodyStyle}>
+          {isQ1
+            ? `All models ready. Simulate ${quarterLabel} ${state.year}.`
+            : `Simulate ${quarterLabel} ${state.year}. Adjust prices, order more units, or run new campaigns from Model Management.`
+          }
+        </p>
       )}
       <MenuButton
         variant="accent"
@@ -58,67 +69,84 @@ export function AdvanceYearCard() {
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
 
-          // 1. Generate competitor models for this year
-          const generated = generateCompetitorModels(state.year, COMPETITORS);
-          const competitorModels = COMPETITORS.map((c, i) => ({
-            competitorId: c.id,
-            model: generated[i],
-          }));
-          dispatch({ type: "ADD_COMPETITOR_MODELS", models: competitorModels });
+          // Q1 only: generate competitor models for this year
+          if (isQ1) {
+            const generated = generateCompetitorModels(state.year, COMPETITORS);
+            const competitorModels = COMPETITORS.map((c, i) => ({
+              competitorId: c.id,
+              model: generated[i],
+            }));
+            dispatch({ type: "ADD_COMPETITOR_MODELS", models: competitorModels });
+          }
 
-          // 2. Transition active models with current-year plans to "manufacturing"
-          const hasCurrentPlan = (m: LaptopModel) => m.manufacturingPlan?.year === state.year;
-          for (const model of activeModels) {
-            if (hasCurrentPlan(model)) {
-              dispatch({ type: "UPDATE_MODEL_STATUS", modelId: model.design.id, status: "manufacturing" });
+          // Q1: transition active models with current-year plans to "manufacturing"
+          if (isQ1) {
+            const hasCurrentPlan = (m: LaptopModel) => m.manufacturingPlan?.year === state.year;
+            for (const model of activeModels) {
+              if (hasCurrentPlan(model)) {
+                dispatch({ type: "UPDATE_MODEL_STATUS", modelId: model.design.id, status: "manufacturing" });
+              }
             }
           }
 
-          // 3. Calculate post-manufacturing cash for simulation input
+          // Calculate post-manufacturing cash for simulation input
+          // Only count manufacturing costs for plans created this quarter (not already deducted)
+          const hasCurrentQuarterPlan = (m: LaptopModel) =>
+            m.manufacturingPlan?.year === state.year && m.manufacturingPlan?.quarter === state.quarter;
           let totalMfgSpend = 0;
           for (const model of activeModels) {
-            if (hasCurrentPlan(model)) {
+            if (hasCurrentQuarterPlan(model)) {
               totalMfgSpend += model.manufacturingPlan!.manufacturing.totalCost
                 + model.manufacturingPlan!.marketing.cost;
             }
           }
           const cashAfterManufacturing = state.cash - totalMfgSpend;
 
-          // 4. Run sales simulation with projected state
-          const byCompetitorId = new Map(competitorModels.map((cm) => [cm.competitorId, cm.model]));
-          const stateForSim = {
-            ...state,
-            cash: cashAfterManufacturing,
-            companies: state.companies.map((comp) => {
-              if (comp.isPlayer) {
-                return {
-                  ...comp,
-                  models: comp.models.map((m) =>
-                    activeModels.some((am) => am.design.id === m.design.id && hasCurrentPlan(am))
-                      ? { ...m, status: "manufacturing" as const }
-                      : m,
-                  ),
-                };
-              }
-              const newModel = byCompetitorId.get(comp.id);
-              return newModel ? { ...comp, models: [...comp.models, newModel] } : comp;
-            }),
-          };
-          const result = simulateYear(stateForSim);
+          // Build state for simulation
+          const stateForSim = (() => {
+            if (isQ1) {
+              const generated = generateCompetitorModels(state.year, COMPETITORS);
+              const byCompetitorId = new Map(COMPETITORS.map((c, i) => [c.id, generated[i]]));
+              const hasCurrentPlan = (m: LaptopModel) => m.manufacturingPlan?.year === state.year;
+              return {
+                ...state,
+                cash: cashAfterManufacturing,
+                companies: state.companies.map((comp) => {
+                  if (comp.isPlayer) {
+                    return {
+                      ...comp,
+                      models: comp.models.map((m) =>
+                        activeModels.some((am) => am.design.id === m.design.id && hasCurrentPlan(am))
+                          ? { ...m, status: "manufacturing" as const }
+                          : m,
+                      ),
+                    };
+                  }
+                  const newModel = byCompetitorId.get(comp.id);
+                  return newModel ? { ...comp, models: [...comp.models, newModel] } : comp;
+                }),
+              };
+            }
+            return { ...state, cash: cashAfterManufacturing };
+          })();
 
-          // 5. Apply simulation results (sets cash to revenue + post-manufacturing balance)
-          dispatch({ type: "APPLY_SIMULATION_RESULT", result });
+          const result = simulateQuarter(stateForSim);
 
-          // 6. Navigate to appropriate screen
-          if (result.gameOver) {
+          // Apply quarterly simulation results
+          dispatch({ type: "APPLY_QUARTER_RESULT", result });
+
+          // Navigate: game over only at end of Q4
+          if (state.quarter === 4 && result.cashAfterResolution < 0) {
             navigateTo("gameOver");
-          } else {
+          } else if (state.quarter === 4) {
             navigateTo("yearEndSummary");
+          } else {
+            navigateTo("quarterlySummary");
           }
         }}
         style={{ marginTop: tokens.spacing.md, width: "100%" }}
       >
-        Simulate Year {state.year}
+        Simulate {quarterLabel} {state.year}
       </MenuButton>
     </BentoCard>
   );

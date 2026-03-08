@@ -22,6 +22,7 @@ export function ModelsCard() {
   const { navigateTo } = useNavigation();
   const activeModels = getActiveModels(state);
   const emptySlots = MAX_MODELS - activeModels.length;
+  const canDesignNew = state.quarter === 1 && !state.quarterSimulated;
 
   return (
     <BentoCard title="Your Models" icon={Laptop} screen="modelManagement">
@@ -62,7 +63,7 @@ export function ModelsCard() {
           navigateTo("designWizard");
         }}
         style={{ marginTop: tokens.spacing.md, width: "100%", fontSize: tokens.font.sizeBase }}
-        disabled={emptySlots === 0}
+        disabled={emptySlots === 0 || !canDesignNew}
       >
         + New Design
       </MenuButton>

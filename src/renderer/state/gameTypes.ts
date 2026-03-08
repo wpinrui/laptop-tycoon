@@ -7,7 +7,7 @@ import {
 } from "../../data/types";
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { COMPETITORS, CompetitorArchetype } from "../../data/competitors";
-import { YearSimulationResult } from "../../simulation/salesTypes";
+import { YearSimulationResult, QuarterSimulationResult } from "../../simulation/salesTypes";
 
 export type ModelType = "brandNew" | "successor" | "specBump";
 
@@ -64,16 +64,21 @@ export interface CompanyState {
   engineeringBonus?: number;
 }
 
+export type Quarter = 1 | 2 | 3 | 4;
+
 export interface GameState {
   companies: CompanyState[];
   companyLogo: string | null;
   year: number;
-  yearSimulated: boolean;
+  quarter: Quarter;
+  quarterSimulated: boolean;
   cash: number;
   brandAwarenessBudget: number;
   sponsorships: string[];
   yearHistory: YearSimulationResult[];
-  lastSimulationResult: YearSimulationResult | null;
+  lastSimulationResult: QuarterSimulationResult | null;
+  /** Accumulated quarterly results for the current year (reset on year advance). */
+  quarterHistory: QuarterSimulationResult[];
 }
 
 /** Get the player's company from the unified companies array. */
@@ -123,11 +128,13 @@ export function createInitialGameState(
     companies: [playerCompany, ...aiCompanies],
     companyLogo,
     year: STARTING_YEAR,
-    yearSimulated: false,
+    quarter: 1 as Quarter,
+    quarterSimulated: false,
     cash: STARTING_CASH,
     brandAwarenessBudget: 0,
     sponsorships: [],
     yearHistory: [],
     lastSimulationResult: null,
+    quarterHistory: [],
   };
 }

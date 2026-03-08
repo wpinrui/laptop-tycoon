@@ -60,6 +60,7 @@ export interface PressRelease {
 export interface FullManufacturingPlan {
   laptopModelId: string;
   year: number;
+  quarter: 1 | 2 | 3 | 4;
   marketing: MarketingPlan;
   manufacturing: ManufacturingPlan;
   pressRelease: PressRelease;

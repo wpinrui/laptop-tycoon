@@ -48,6 +48,18 @@ export interface PerceptionChange {
   delta: number;
 }
 
+export interface QuarterSimulationResult {
+  year: number;
+  quarter: 1 | 2 | 3 | 4;
+  laptopResults: LaptopSalesResult[];
+  playerResults: LaptopSalesResult[];
+  totalRevenue: number;
+  totalProfit: number;
+  cashAfterResolution: number;
+  /** Per-demographic perception changes for the player this quarter */
+  perceptionChanges: PerceptionChange[];
+}
+
 export interface YearSimulationResult {
   year: number;
   laptopResults: LaptopSalesResult[];

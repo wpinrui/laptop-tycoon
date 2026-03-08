@@ -65,7 +65,8 @@ export function YearEndSummaryScreen() {
   const { state, dispatch } = useGame();
   const { navigateTo } = useNavigation();
   const player = getPlayerCompany(state);
-  const result = state.lastSimulationResult;
+  // Use the latest aggregated year result from yearHistory (built after Q4)
+  const result = state.yearHistory[state.yearHistory.length - 1] ?? null;
 
   if (!result) {
     return (
@@ -238,7 +239,7 @@ export function YearEndSummaryScreen() {
       <MenuButton
         variant="accent"
         onClick={() => {
-          dispatch({ type: "ADVANCE_YEAR" });
+          dispatch({ type: "ADVANCE_QUARTER" });
           navigateTo("dashboard");
         }}
         style={{ width: "100%", marginTop: tokens.spacing.md }}

@@ -49,7 +49,10 @@ export function StatusBar({ variant = "embedded" }: { variant?: "embedded" | "fi
     <div style={variant === "fixed" ? fixedStyle : embeddedStyle}>
       <span style={{ ...itemStyle, color: tokens.colors.statusDate, fontWeight: 700 }}>
         <Calendar size={14} strokeWidth={2.5} />
-        {state.yearSimulated ? "Dec" : "Jan"} {state.year}
+        {state.quarterSimulated
+          ? (["Mar", "Jun", "Sep", "Dec"] as const)[state.quarter - 1]
+          : (["Jan", "Apr", "Jul", "Oct"] as const)[state.quarter - 1]
+        } {state.year}
       </span>
       <span style={{ ...itemStyle, color: tokens.colors.statusCash, fontWeight: 700 }}>
         <Coins size={14} strokeWidth={2.5} />
