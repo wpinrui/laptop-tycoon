@@ -42,12 +42,6 @@ export function clearProjectionCache(): void {
 
 // --- Tuning Constants ---
 
-/** Max extra appeal from niche reputation alignment */
-const NICHE_BONUS_CAP = 0.3;
-/** Loyalty multiplier for successor models */
-const SUCCESSOR_LOYALTY = 1.2;
-/** Loyalty multiplier for spec-bump models */
-const SPEC_BUMP_LOYALTY = 1.15;
 /** Exponential decay rate for price overshoot above ceiling */
 const PRICE_OVERSHOOT_DECAY = 3;
 /** Base demand variance for projections */
@@ -200,32 +194,6 @@ function applyPriceSensitivity(
   }
 }
 
-/** Niche fit: dot product of niche reputation with demographic stat weights */
-function calculateNicheFit(
-  nicheReputation: Record<string, number>,
-  demographic: Demographic,
-): number {
-  let nicheScore = 0;
-  for (const stat of ALL_STATS) {
-    const nicheValue = nicheReputation[stat] ?? 0;
-    const weight = demographic.statWeights[stat] ?? 0;
-    nicheScore += (nicheValue / 100) * weight;
-  }
-  return 1 + nicheScore * NICHE_BONUS_CAP;
-}
-
-/** Loyalty modifier for returning products */
-function calculateLoyaltyModifier(laptop: MarketLaptop): number {
-  if (laptop.owner !== "player") return 1.0;
-
-  const model = laptop.model;
-  if (model.design.modelType === "successor") return SUCCESSOR_LOYALTY;
-  if (model.design.modelType === "specBump") return SPEC_BUMP_LOYALTY;
-
-  // Brand new — check if there's a gap from previous models
-  return 1.0;
-}
-
 /**
  * Sample campaign perception modifier from distribution.
  * Returns a perception value (added to brand perception), NOT a multiplier.
@@ -256,7 +224,7 @@ function getLaptopCampaignPerception(laptop: MarketLaptop): number {
 
 /**
  * Calculate full appeal score for a laptop against a demographic.
- * appeal = stat_score * price_score * niche_fit * (1 + effective_perception / 100) * loyalty * screen_fit
+ * appeal = stat_score * price_score * (1 + effective_perception / 100) * screen_fit
  *
  * Note: reach is NOT applied here — it gates the demand pool size instead (in simulateYear).
  */
@@ -274,14 +242,6 @@ function calculateAppeal(
   const pref = demographic.screenSizePreference;
   const screenFit = getScreenSizeFit(laptop.model.design.screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);
 
-  // Niche fit (player only — competitors get 1.0)
-  let nicheFit: number;
-  if (laptop.owner === "player") {
-    nicheFit = calculateNicheFit(state.nicheReputation, demographic);
-  } else {
-    nicheFit = 1.0;
-  }
-
   // Effective perception = global brand perception + laptop campaign modifier
   let effectivePerception: number;
   if (laptop.owner === "player") {
@@ -292,9 +252,7 @@ function calculateAppeal(
   }
   const perceptionMultiplier = 1 + effectivePerception / 100;
 
-  const loyalty = calculateLoyaltyModifier(laptop);
-
-  const appeal = statScore * priceScore * nicheFit * perceptionMultiplier * loyalty * screenFit;
+  const appeal = statScore * priceScore * perceptionMultiplier * screenFit;
   return Math.max(0, appeal);
 }
 

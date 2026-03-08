@@ -7,26 +7,6 @@ import { cardBodyStyle, hintStyle, sectionDividerStyle, sectionHeadingStyle, sma
 import { formatPerception } from "./utils";
 
 import { DEMOGRAPHICS } from "../../../data/demographics";
-import { LaptopStat } from "../../../data/types";
-
-const reputationStats: { label: string; key: LaptopStat }[] = [
-  { label: "Performance", key: "performance" },
-  { label: "Gaming", key: "gamingPerformance" },
-  { label: "Battery Life", key: "batteryLife" },
-  { label: "Display", key: "display" },
-  { label: "Connectivity", key: "connectivity" },
-  { label: "Speakers", key: "speakers" },
-  { label: "Webcam", key: "webcam" },
-  { label: "Design", key: "design" },
-  { label: "Build Quality", key: "buildQuality" },
-  { label: "Keyboard", key: "keyboard" },
-  { label: "Trackpad", key: "trackpad" },
-  { label: "Repairability", key: "repairability" },
-  { label: "Weight", key: "weight" },
-  { label: "Thinness", key: "thinness" },
-  { label: "Thermals", key: "thermals" },
-  { label: "Support", key: "supportAndService" },
-];
 
 export function BrandCard() {
   const { state } = useGame();
@@ -63,23 +43,6 @@ export function BrandCard() {
         </p>
       </div>
 
-      <div style={sectionDividerStyle}>
-        <p style={sectionHeadingStyle}>Niche Reputation</p>
-        {reputationStats.map(({ label, key }) => {
-          const value = Math.round(state.nicheReputation[key] ?? 0);
-          return (
-            <div key={key} style={{ display: "flex", justifyContent: "space-between", marginTop: tokens.spacing.xs }}>
-              <span style={smallTextStyle}>{label}</span>
-              <span style={value > 0 ? smallTextStyle : hintStyle}>
-                {value > 0 ? value : "—"}
-              </span>
-            </div>
-          );
-        })}
-        <p style={{ ...hintStyle, marginTop: tokens.spacing.md }}>
-          Reputation builds with consistent product focus across multiple years
-        </p>
-      </div>
     </BentoCard>
   );
 }

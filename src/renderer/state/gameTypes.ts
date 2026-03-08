@@ -72,7 +72,6 @@ export interface GameState {
   brandPerception: number;
   brandAwarenessBudget: number;
   sponsorships: string[];
-  nicheReputation: Record<string, number>;
   models: LaptopModel[];
   competitors: CompetitorState[];
   yearHistory: YearSimulationResult[];
@@ -107,7 +106,6 @@ export function createInitialGameState(
     brandPerception: 0,
     brandAwarenessBudget: 0,
     sponsorships: [],
-    nicheReputation: {},
     models: [],
     competitors: COMPETITORS.map((c) => ({
       id: c.id,

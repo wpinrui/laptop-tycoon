@@ -4,7 +4,7 @@ import { GameState, LaptopDesign, LaptopModel, ModelStatus, createInitialGameSta
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { YearSimulationResult } from "../../simulation/salesTypes";
 import { clearProjectionCache } from "../../simulation/salesEngine";
-import { updateBrandReach, updateBrandPerception, updateNicheReputation, updateCompetitorBrandReach, updateCompetitorBrandPerception } from "../../simulation/brandProgression";
+import { updateBrandReach, updateBrandPerception, updateCompetitorBrandReach, updateCompetitorBrandPerception } from "../../simulation/brandProgression";
 
 export interface CompetitorModelEntry {
   competitorId: string;
@@ -129,7 +129,6 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         cash: result.cashAfterResolution,
         brandReach: updateBrandReach(state, result),
         brandPerception: updateBrandPerception(state, result),
-        nicheReputation: updateNicheReputation(state, result),
         competitors: state.competitors.map((comp) => ({
           ...comp,
           brandReach: updateCompetitorBrandReach(comp, result),

@@ -1,10 +1,9 @@
 /**
- * Brand reach (per-demographic, S-curve), brand perception (global, decay + value-for-money),
- * and niche reputation evolution.
+ * Brand reach (per-demographic, S-curve) and brand perception (global, decay + value-for-money).
  * Called at year-end after sales simulation resolves.
  */
 
-import { ALL_STATS, DemographicId, LaptopStat } from "../data/types";
+import { ALL_STATS, DemographicId } from "../data/types";
 import { DEMOGRAPHICS } from "../data/demographics";
 import { SPONSORSHIPS } from "../data/sponsorships";
 import { GameState, CompetitorState } from "../renderer/state/gameTypes";
@@ -245,121 +244,3 @@ export function updateCompetitorBrandPerception(
   return comp.brandPerception * PERCEPTION_DECAY;
 }
 
-// ==================== Niche Reputation (unchanged) ====================
-
-/** How quickly niche reputation moves toward current product focus (0-1) */
-const NICHE_LERP_RATE = 0.3;
-/** Tech Enthusiast demographic ID */
-const TECH_ENTHUSIAST_ID = "techEnthusiast";
-/** Extra weight given to Tech Enthusiast sales for niche movement */
-const TECH_ENTHUSIAST_MULTIPLIER = 2.0;
-
-/**
- * Build a weighted-average stat vector across all laptops in the market for
- * the given year. Used to normalise niche reputation against market context.
- */
-function buildMarketStatProfile(
-  state: GameState,
-  result: YearSimulationResult,
-): Record<LaptopStat, number> {
-  const accum = {} as Record<LaptopStat, number>;
-  for (const stat of ALL_STATS) accum[stat] = 0;
-  let totalWeight = 0;
-
-  for (const lr of result.laptopResults) {
-    if (lr.unitsSold <= 0) continue;
-
-    // Find the design — player or competitor
-    let design;
-    if (lr.owner === "player") {
-      design = state.models.find((m) => m.design.id === lr.laptopId)?.design;
-    } else {
-      const comp = state.competitors.find((c) => c.id === lr.owner);
-      design = comp?.models.find((m) => m.design.id === lr.laptopId)?.design;
-    }
-    if (!design) continue;
-
-    const stats = computeStatsForDesign(design, state.year);
-    for (const stat of ALL_STATS) {
-      accum[stat] += (stats[stat] ?? 0) * lr.unitsSold;
-    }
-    totalWeight += lr.unitsSold;
-  }
-
-  if (totalWeight === 0) return accum;
-  for (const stat of ALL_STATS) accum[stat] /= totalWeight;
-  return accum;
-}
-
-/**
- * Update niche reputation based on shipped laptop stats, weighted by units sold.
- * Normalised against market-wide stats so "scoring well" is relative to competitors.
- * Tech Enthusiast sales accelerate reputation movement.
- */
-export function updateNicheReputation(
-  state: GameState,
-  result: YearSimulationResult,
-): Record<string, number> {
-  const old = state.nicheReputation;
-  const playerResults = result.playerResults;
-
-  if (playerResults.length === 0) {
-    // No sales — decay toward zero
-    const decayed: Record<string, number> = {};
-    for (const stat of ALL_STATS) {
-      const current = old[stat] ?? 0;
-      decayed[stat] = current * (1 - NICHE_LERP_RATE);
-    }
-    return decayed;
-  }
-
-  // Market-wide average stat profile for normalisation
-  const marketProfile = buildMarketStatProfile(state, result);
-
-  // Build a weighted stat profile from player laptops sold this year.
-  // Weight = units sold, with Tech Enthusiast sales counting extra.
-  const statAccum = {} as Record<LaptopStat, number>;
-  for (const stat of ALL_STATS) statAccum[stat] = 0;
-  let totalWeight = 0;
-
-  for (const pr of playerResults) {
-    const model = state.models.find((m) => m.design.id === pr.laptopId);
-    if (!model) continue;
-
-    const stats = computeStatsForDesign(model.design, state.year);
-
-    // Calculate effective weight: base units + extra for Tech Enthusiast sales
-    const techSales = pr.demographicBreakdown
-      .filter((d) => d.demographicId === TECH_ENTHUSIAST_ID)
-      .reduce((sum, d) => sum + d.unitsDemanded, 0);
-    const otherSales = pr.unitsSold - Math.min(techSales, pr.unitsSold);
-    const weight = otherSales + techSales * TECH_ENTHUSIAST_MULTIPLIER;
-
-    for (const stat of ALL_STATS) {
-      statAccum[stat] += (stats[stat] ?? 0) * weight;
-    }
-    totalWeight += weight;
-  }
-
-  if (totalWeight === 0) return old;
-
-  // Average player stat profile
-  const avgStats = {} as Record<LaptopStat, number>;
-  for (const stat of ALL_STATS) {
-    avgStats[stat] = statAccum[stat] / totalWeight;
-  }
-
-  // Normalise against market: how much better/worse than market average (0-100).
-  // A stat at market average = 50, double market average = 100, zero = 0.
-  const updated: Record<string, number> = {};
-  for (const stat of ALL_STATS) {
-    const marketAvg = marketProfile[stat] || 1;
-    const ratio = avgStats[stat] / marketAvg;
-    // ratio=1 means market average → target 50; ratio=2 → 100; ratio=0 → 0
-    const target = Math.min(100, ratio * 50);
-    const current = old[stat] ?? 0;
-    updated[stat] = current + NICHE_LERP_RATE * (target - current);
-  }
-
-  return updated;
-}
