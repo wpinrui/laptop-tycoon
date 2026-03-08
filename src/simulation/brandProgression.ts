@@ -22,6 +22,8 @@ const S_CURVE_MIDPOINT = 50;
 const AWARENESS_BUDGET_DIVISOR = 500_000;
 /** Word-of-mouth divisor — every X units sold in a demographic contributes 1 raw reach point */
 const WORD_OF_MOUTH_DIVISOR = 5_000;
+/** Marketing campaign divisor — every $X of campaign spend contributes 1 raw reach point (secondary driver) */
+const CAMPAIGN_REACH_DIVISOR = 2_000_000;
 /** Reach decay rate when no products on sale (proportional, per year) */
 const REACH_INACTIVITY_DECAY = 0.10;
 
@@ -38,7 +40,7 @@ function sCurveGrowthFactor(currentReach: number): number {
 
 /**
  * Update per-demographic brand reach for the player.
- * Growth sources: awareness budget (all demographics), sponsorships (targeted), word of mouth (from sales).
+ * Growth sources: awareness budget (all demographics), sponsorships (targeted), word of mouth (from sales), marketing campaigns (secondary).
  */
 export function updateBrandReach(
   state: GameState,
@@ -56,6 +58,15 @@ export function updateBrandReach(
     for (const db of pr.demographicBreakdown) {
       const demId = db.demographicId as DemographicId;
       unitsByDemographic[demId] = (unitsByDemographic[demId] ?? 0) + db.unitsDemanded;
+    }
+  }
+
+  // Total marketing campaign spend this year (across all player laptops)
+  let totalCampaignSpend = 0;
+  for (const model of state.models) {
+    const plan = model.manufacturingPlan;
+    if (plan && plan.year === state.year && plan.marketing.cost > 0) {
+      totalCampaignSpend += plan.marketing.cost;
     }
   }
 
@@ -80,6 +91,9 @@ export function updateBrandReach(
     // 3. Word of mouth — organic from units sold in this demographic
     const unitsSold = unitsByDemographic[demId] ?? 0;
     rawGrowth += unitsSold / WORD_OF_MOUTH_DIVISOR;
+
+    // 4. Marketing campaigns — secondary reach from ad spend (uniform across demographics)
+    rawGrowth += totalCampaignSpend / CAMPAIGN_REACH_DIVISOR;
 
     // Apply S-curve: growth is modulated by current reach position
     const growth = rawGrowth * sCurveGrowthFactor(current) * 100;
