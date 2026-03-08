@@ -189,6 +189,7 @@ export function ManufacturingStep() {
   const [showDetails, setShowDetails] = useState(true);
 
   const model = gameState.models.find((m) => m.design.id === state.modelId);
+  const inventory = model?.unitsInStock ?? 0;
 
   const baseBom = model?.design.unitCost ?? 0;
   const modelType = model?.design.modelType ?? "brandNew";
@@ -229,7 +230,7 @@ export function ManufacturingStep() {
 
   // Effective values
   const effectivePrice = state.unitPrice || snapPrice(baseTotalPerUnit * 1.5);
-  const effectiveQty = state.unitsOrdered || MIN_BATCH_SIZE;
+  const effectiveQty = state.unitsOrdered;
 
   // Full cost breakdown — uses effective values for price/qty
   const { cost } = buildCostBreakdown(gameState, {
@@ -256,11 +257,14 @@ export function ManufacturingStep() {
 
   if (!model) return <p>Model not found.</p>;
 
+  // Total units available for sale = new manufacturing order + existing inventory
+  const totalAvailable = effectiveQty + inventory;
+
   // Profit uses revenue per unit (after channel margin), not retail price
-  // Cap sold units to order quantity — can't sell more than manufactured
-  const pessimisticSold = Math.min(projections.displayLower, effectiveQty);
+  // Cap sold units to total available — can't sell more than what exists
+  const pessimisticSold = Math.min(projections.displayLower, totalAvailable);
   const pessimisticProfit = pessimisticSold * cost.revenuePerUnit - cost.totalManufacturingSpend;
-  const optimisticSold = Math.min(projections.displayUpper, effectiveQty);
+  const optimisticSold = Math.min(projections.displayUpper, totalAvailable);
   const optimisticProfit = optimisticSold * cost.revenuePerUnit - cost.totalManufacturingSpend;
   const cashAfter = gameState.cash - cost.totalManufacturingSpend;
 
@@ -283,6 +287,28 @@ export function ManufacturingStep() {
       <p style={{ color: tokens.colors.textMuted, margin: 0, marginBottom: tokens.spacing.lg }}>
         Set the retail price and order quantity for {model.design.name}.
       </p>
+
+      {inventory > 0 && (
+        <div style={{
+          ...panelStyle,
+          marginBottom: tokens.spacing.lg,
+          maxWidth: 1080,
+          background: tokens.colors.surface,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}>
+          <div>
+            <div style={{ fontWeight: 600 }}>Existing Inventory</div>
+            <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
+              Unsold units from previous year(s). These will be sold alongside any new manufacturing order.
+            </div>
+          </div>
+          <div style={{ fontSize: tokens.font.sizeLarge, fontWeight: 700, color: tokens.colors.accent }}>
+            {inventory.toLocaleString()} units
+          </div>
+        </div>
+      )}
 
       <div style={twoColumnStyle}>
         {/* Left: Controls */}
@@ -323,19 +349,21 @@ export function ManufacturingStep() {
             <div style={sliderLabelStyle}>
               <span style={{ fontWeight: 600 }}>Order Quantity</span>
               <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
-                Min: {MIN_BATCH_SIZE.toLocaleString()}
+                {inventory > 0
+                  ? `${inventory.toLocaleString()} already in stock`
+                  : `Min: ${MIN_BATCH_SIZE.toLocaleString()}`}
               </span>
             </div>
             <EditableValue
               value={effectiveQty}
               onChange={(v) => dispatch({ type: "SET_UNITS_ORDERED", unitsOrdered: v })}
-              min={MIN_BATCH_SIZE}
+              min={0}
               max={maxQuantity}
               suffix=" units"
             />
             <input
               type="range"
-              min={MIN_BATCH_SIZE}
+              min={0}
               max={maxQuantity}
               step={Math.max(1, Math.round(maxQuantity / 100))}
               value={effectiveQty}
@@ -343,9 +371,14 @@ export function ManufacturingStep() {
               style={{ width: "100%", accentColor: tokens.colors.interactiveAccent }}
             />
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
-              <span>{MIN_BATCH_SIZE.toLocaleString()}</span>
+              <span>0</span>
               <span>{maxQuantity.toLocaleString()}</span>
             </div>
+            {inventory > 0 && (
+              <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, marginTop: tokens.spacing.xs }}>
+                Total available for sale: {(effectiveQty + inventory).toLocaleString()} units (ordered + inventory)
+              </div>
+            )}
           </div>
 
           <div style={panelStyle}>
