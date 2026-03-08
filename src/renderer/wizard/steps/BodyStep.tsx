@@ -270,6 +270,7 @@ function ChassisCard({
           {option.coolingCapacityW > 0 && (
             <span style={{ color: "#4fc3f7" }}>{option.coolingCapacityW}W cooling</span>
           )}
+          <span style={{ color: "#666" }}>{option.yearIntroduced}</span>
         </div>
       </SelectionCard>
     </Tooltip>

@@ -19,7 +19,7 @@ function isStepComplete(step: ManufacturingWizardStep, state: ManufacturingWizar
     case "marketing":
       return state.campaignId !== null;
     case "manufacturing":
-      return state.unitPrice > 0 && state.unitsOrdered > 0;
+      return state.unitPrice > 0 && state.unitsOrdered >= 0;
     case "pressRelease":
       return state.pressReleasePromptIds.every(
         (id) => (state.pressReleaseResponses[id] ?? "").trim().length > 0,

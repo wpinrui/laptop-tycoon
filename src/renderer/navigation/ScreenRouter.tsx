@@ -12,6 +12,8 @@ import { MainMenuScreen } from "../screens/MainMenuScreen";
 import { NewGameScreen } from "../screens/NewGameScreen";
 import { DashboardScreen } from "../screens/dashboard/DashboardScreen";
 import { ModelManagementScreen } from "../screens/ModelManagementScreen";
+import { YearEndSummaryScreen } from "../screens/YearEndSummaryScreen";
+import { GameOverScreen } from "../screens/GameOverScreen";
 
 function PlaceholderScreen({ title }: { title: string }) {
   const { navigateTo } = useNavigation();
@@ -56,6 +58,10 @@ function ScreenContent() {
       return <PlaceholderScreen title="News" />;
     case "history":
       return <PlaceholderScreen title="History" />;
+    case "yearEndSummary":
+      return <YearEndSummaryScreen />;
+    case "gameOver":
+      return <GameOverScreen />;
     default: {
       const _exhaustive: never = screen;
       return _exhaustive;
@@ -64,7 +70,7 @@ function ScreenContent() {
 }
 
 /** Screens where Escape should NOT open the pause menu. */
-const NO_PAUSE_SCREENS = new Set(["mainMenu", "newGame", "designWizard", "manufacturingWizard"]);
+const NO_PAUSE_SCREENS = new Set(["mainMenu", "newGame", "designWizard", "manufacturingWizard", "yearEndSummary", "gameOver"]);
 
 export function ScreenRouter() {
   const { screen, overlay, setOverlay } = useNavigation();

@@ -6,6 +6,7 @@ import {
   Component,
   ChassisOption,
 } from "../data/types";
+import { LaptopDesign } from "../renderer/state/gameTypes";
 import { PORT_TYPES } from "../data/portTypes";
 import { COLOUR_OPTIONS } from "../data/colourOptions";
 import { getScreenSizeDef } from "../data/screenSizes";
@@ -127,4 +128,18 @@ export function computeRawStatTotals(params: RawStatTotalsParams): StatVector {
   }
 
   return totals;
+}
+
+export function computeStatsForDesign(design: LaptopDesign, gameYear: number): StatVector {
+  return computeRawStatTotals({
+    screenSize: design.screenSize,
+    components: design.components,
+    ports: design.ports,
+    chassis: design.chassis,
+    batteryCapacityWh: design.batteryCapacityWh,
+    thicknessCm: design.thicknessCm,
+    bezelMm: design.bezelMm,
+    selectedColours: design.selectedColours,
+    gameYear,
+  });
 }

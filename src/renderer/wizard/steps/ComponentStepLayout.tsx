@@ -144,6 +144,7 @@ function ComponentCard({
           <span style={{ color: "#4caf50" }}>${cost}</span>
           {power > 0 && <span style={{ color: "#ff9800" }}>{power}W</span>}
           {weight > 0 && <span style={{ color: "#888" }}>{weight}g</span>}
+          <span style={{ color: "#666" }}>{component.yearIntroduced}</span>
         </div>
       </SelectionCard>
     </Tooltip>

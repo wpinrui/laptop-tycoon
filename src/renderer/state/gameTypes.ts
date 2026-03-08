@@ -6,6 +6,7 @@ import {
 } from "../../data/types";
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { COMPETITORS, CompetitorArchetype } from "../../data/competitors";
+import { YearSimulationResult } from "../../simulation/salesTypes";
 
 export type ModelType = "brandNew" | "successor" | "specBump";
 
@@ -39,6 +40,16 @@ export interface LaptopModel {
   manufacturingQuantity: number | null;
   yearDesigned: number;
   manufacturingPlan: FullManufacturingPlan | null;
+  /** Unsold units carried forward from previous year(s). */
+  unitsInStock: number;
+}
+
+/** Returns true if any component in the design has been discontinued by the given year. */
+export function hasDiscontinuedComponents(design: LaptopDesign, year: number): boolean {
+  for (const component of Object.values(design.components)) {
+    if (component && component.yearDiscontinued < year) return true;
+  }
+  return false;
 }
 
 export interface CompetitorState {
@@ -59,6 +70,8 @@ export interface GameState {
   nicheReputation: Record<string, number>;
   models: LaptopModel[];
   competitors: CompetitorState[];
+  yearHistory: YearSimulationResult[];
+  lastSimulationResult: YearSimulationResult | null;
 }
 
 export const STARTING_CASH = 50_000_000;
@@ -84,5 +97,7 @@ export function createInitialGameState(
       brandRecognition: c.brandRecognition,
       models: [],
     })),
+    yearHistory: [],
+    lastSimulationResult: null,
   };
 }

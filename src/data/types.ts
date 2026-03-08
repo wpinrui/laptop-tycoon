@@ -23,6 +23,12 @@ export type LaptopStat =
 
 export type StatVector = Partial<Record<LaptopStat, number>>;
 
+export const ALL_STATS: LaptopStat[] = [
+  "performance", "gamingPerformance", "batteryLife", "display", "connectivity",
+  "speakers", "webcam", "design", "buildQuality", "keyboard", "trackpad",
+  "repairability", "weight", "thinness", "thermals", "supportAndService",
+];
+
 // --- Screen Size ---
 
 export type ScreenSizeInches = 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;

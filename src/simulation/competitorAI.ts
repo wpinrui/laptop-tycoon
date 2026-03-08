@@ -297,6 +297,7 @@ function generateSingleModel(
     manufacturingQuantity,
     yearDesigned: year,
     manufacturingPlan: null,
+    unitsInStock: 0,
   };
 }
 

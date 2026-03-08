@@ -285,6 +285,7 @@ function WizardContent() {
                     manufacturingQuantity: null,
                     yearDesigned: gameState.year,
                     manufacturingPlan: null,
+                    unitsInStock: 0,
                   },
                 });
               }

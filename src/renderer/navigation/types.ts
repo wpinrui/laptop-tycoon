@@ -10,6 +10,8 @@ export type Screen =
   | "brandDetail"
   | "reviewsAwards"
   | "news"
-  | "history";
+  | "history"
+  | "yearEndSummary"
+  | "gameOver";
 
 export type Overlay = "pauseMenu" | null;

@@ -107,6 +107,8 @@ export function buildCostBreakdown(gameState: GameState, wizardState: Manufactur
   const campaign = AD_CAMPAIGNS.find((c) => c.id === wizardState.campaignId) ?? AD_CAMPAIGNS[0];
   const campaignCost = getCampaignCost(campaign, gameState.year);
 
+  // If ordering 0 new units (inventory-only), no manufacturing fixed costs apply
+  const orderingNew = wizardState.unitsOrdered > 0;
   const cost = calculateCostBreakdown({
     baseBomCost,
     unitsOrdered: wizardState.unitsOrdered,
@@ -115,9 +117,9 @@ export function buildCostBreakdown(gameState: GameState, wizardState: Manufactur
     assemblyQa: ASSEMBLY_QA_COST,
     packagingLogistics: PACKAGING_LOGISTICS_COST,
     channelMarginRate: CHANNEL_MARGIN_RATE,
-    toolingCost: TOOLING_COST[modelType],
-    certificationCost: CERTIFICATION_COST[modelType],
-    multiModelOverhead: overhead,
+    toolingCost: orderingNew ? TOOLING_COST[modelType] : 0,
+    certificationCost: orderingNew ? CERTIFICATION_COST[modelType] : 0,
+    multiModelOverhead: orderingNew ? overhead : 0,
     adCost: campaignCost,
   });
 

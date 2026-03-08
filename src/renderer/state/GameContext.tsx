@@ -1,6 +1,8 @@
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
-import { GameState, LaptopDesign, LaptopModel, ModelStatus, createInitialGameState } from "./gameTypes";
+import { GameState, LaptopDesign, LaptopModel, ModelStatus, createInitialGameState, hasDiscontinuedComponents } from "./gameTypes";
 import { FullManufacturingPlan } from "../manufacturing/types";
+import { YearSimulationResult } from "../../simulation/salesTypes";
+import { clearProjectionCache } from "../../simulation/salesEngine";
 
 export interface CompetitorModelEntry {
   competitorId: string;
@@ -17,18 +19,57 @@ type GameAction =
   | { type: "SET_MODEL_PRICING"; modelId: string; retailPrice: number; manufacturingQuantity: number }
   | { type: "UPDATE_MODEL_DESIGN"; modelId: string; design: LaptopDesign }
   | { type: "SET_MANUFACTURING_PLAN"; modelId: string; plan: FullManufacturingPlan }
-  | { type: "ADD_COMPETITOR_MODELS"; models: CompetitorModelEntry[] };
+  | { type: "ADD_COMPETITOR_MODELS"; models: CompetitorModelEntry[] }
+  | { type: "APPLY_SIMULATION_RESULT"; result: YearSimulationResult };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case "NEW_GAME":
+      clearProjectionCache();
       return createInitialGameState(action.companyName, action.companyLogo);
     case "LOAD_GAME":
+      clearProjectionCache();
       return action.state;
     case "SET_CASH":
       return { ...state, cash: action.cash };
-    case "ADVANCE_YEAR":
-      return { ...state, year: state.year + 1, yearSimulated: false };
+    case "ADVANCE_YEAR": {
+      const nextYear = state.year + 1;
+      const lastSim = state.lastSimulationResult;
+      return {
+        ...state,
+        year: nextYear,
+        yearSimulated: false,
+        models: state.models.map((m) => {
+          if (m.status === "discontinued") return m;
+
+          // Find sim results for this model to get unsold units.
+          // unsoldUnits already includes existing inventory (simulation sets manufacturingQuantity = newBatch + unitsInStock),
+          // so we use it directly — NOT added to m.unitsInStock, which would double-count.
+          const simResult = lastSim?.laptopResults.find((r) => r.laptopId === m.design.id);
+          const newStock = simResult ? simResult.unsoldUnits : m.unitsInStock;
+
+          // Models that were manufacturing/onSale transition to onSale
+          if (m.status === "manufacturing" || m.status === "onSale") {
+            const discontinued = hasDiscontinuedComponents(m.design, nextYear);
+
+            // Auto-discontinue if components are discontinued and no inventory
+            if (discontinued && newStock <= 0) {
+              return { ...m, status: "discontinued" as const, unitsInStock: 0, manufacturingPlan: null, manufacturingQuantity: null };
+            }
+
+            return {
+              ...m,
+              status: "onSale" as const,
+              unitsInStock: newStock,
+              // Keep plan for prefill, but it won't count as a current-year plan
+              // (AdvanceYearCard checks plan.year === state.year)
+            };
+          }
+
+          return m;
+        }),
+      };
+    }
     case "ADD_MODEL":
       return { ...state, models: [...state.models, action.model] };
     case "UPDATE_MODEL_STATUS":
@@ -76,6 +117,16 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           const newModel = byId.get(comp.id);
           return newModel ? { ...comp, models: [...comp.models, newModel] } : comp;
         }),
+      };
+    }
+    case "APPLY_SIMULATION_RESULT": {
+      const result = action.result;
+      return {
+        ...state,
+        cash: result.cashAfterResolution,
+        yearSimulated: true,
+        yearHistory: [...state.yearHistory, result],
+        lastSimulationResult: result,
       };
     }
     default:
