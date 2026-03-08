@@ -27,6 +27,7 @@ import {
   REACH_VARIANCE_SCALE,
   REPLACEMENT_CYCLE,
   QUARTER_SHARES,
+  QUARTER_SHARES_SUM,
 } from "./tunables";
 import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
 import { sampleCampaignOutcome } from "../renderer/manufacturing/utils/skewNormal";
@@ -211,9 +212,6 @@ function applySalesNoise(baseDemand: number): number {
   const direction = Math.random() < 0.5 ? -1 : 1;
   return Math.round(baseDemand * (1 + direction * noisePercent / 100));
 }
-
-/** Sum of all quarter shares for normalisation. */
-const QUARTER_SHARES_SUM = QUARTER_SHARES.reduce((s, v) => s + v, 0);
 
 /**
  * Run the sales simulation for a single quarter.

@@ -1,28 +1,12 @@
 import { CSSProperties, useState } from "react";
 import { DemographicId } from "../../../data/types";
 import { DEMOGRAPHICS } from "../../../data/demographics";
-import { STARTING_DEMAND_POOL } from "../../../data/startingDemand";
-import { getDemandPoolSize } from "../../../simulation/demographicData";
-import { REPLACEMENT_CYCLE, QUARTER_SHARES } from "../../../simulation/tunables";
+import { getQuarterlyBuyers } from "../../../simulation/demographicData";
 import { tokens } from "../../shell/tokens";
 import { Quarter } from "../../state/gameTypes";
 
-function calculateMarketSize(
-  demographicId: DemographicId,
-  year: number,
-  quarter: Quarter,
-): number {
-  const basePool = STARTING_DEMAND_POOL[demographicId];
-  const population = getDemandPoolSize(demographicId, year, basePool);
-  const replacementCycle = REPLACEMENT_CYCLE[demographicId];
-  const quarterSharesSum = QUARTER_SHARES.reduce((s, v) => s + v, 0);
-  const quarterShare = QUARTER_SHARES[quarter - 1] / quarterSharesSum;
-  return Math.round(population / replacementCycle * quarterShare);
-}
-
-function calculateTotalMarketSize(year: number, quarter: Quarter): number {
-  const allIds = DEMOGRAPHICS.map((d) => d.id);
-  return allIds.reduce((sum, id) => sum + calculateMarketSize(id, year, quarter), 0);
+function getTotalQuarterlyBuyers(year: number, quarter: Quarter): number {
+  return DEMOGRAPHICS.reduce((sum, d) => sum + getQuarterlyBuyers(d.id, year, quarter), 0);
 }
 
 const cardStyle: CSSProperties = {
@@ -50,8 +34,8 @@ export function MarketSizeCard({ year, quarter }: { year: number; quarter: Quart
 
   const marketSize =
     selectedDemographic === "all"
-      ? calculateTotalMarketSize(year, quarter)
-      : calculateMarketSize(selectedDemographic, year, quarter);
+      ? getTotalQuarterlyBuyers(year, quarter)
+      : getQuarterlyBuyers(selectedDemographic, year, quarter);
 
   return (
     <div style={cardStyle}>

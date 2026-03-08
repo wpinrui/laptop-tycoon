@@ -118,6 +118,9 @@ export const REPLACEMENT_CYCLE: Record<DemographicId, number> = {
 /** Buyer distribution across Q1-Q4 (out of sum = 15) */
 export const QUARTER_SHARES = [8, 4, 2, 1] as const;
 
+/** Sum of all quarter shares for normalisation. */
+export const QUARTER_SHARES_SUM = QUARTER_SHARES.reduce<number>((s, v) => s + v, 0);
+
 // ==================== Awards ====================
 
 /** Global perception boost from winning an award */
