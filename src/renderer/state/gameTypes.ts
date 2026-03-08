@@ -64,9 +64,6 @@ export interface CompanyState {
   engineeringBonus?: number;
 }
 
-/** @deprecated Use CompanyState instead */
-export type CompetitorState = CompanyState;
-
 export interface GameState {
   companies: CompanyState[];
   companyLogo: string | null;
@@ -82,11 +79,6 @@ export interface GameState {
 /** Get the player's company from the unified companies array. */
 export function getPlayerCompany(state: GameState): CompanyState {
   return state.companies.find((c) => c.isPlayer)!;
-}
-
-/** Get all AI competitor companies. */
-export function getCompetitors(state: GameState): CompanyState[] {
-  return state.companies.filter((c) => !c.isPlayer);
 }
 
 export const STARTING_CASH = 50_000_000;
