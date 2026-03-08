@@ -278,14 +278,15 @@ Replacement cycle varies by demographic:
 Everyone in the active buyer pool WILL buy a laptop. There is no "don't buy" option in the probability distribution. The replacement cycle already filters out people who aren't in the market this year.
 
 ```
-addressable_pool = quarterly_active_buyers × (brand_reach[demographic] / 100)
+For each company's laptop(s):
+  effective_vp = biased_vp × (brand_reach[demographic] / 100)
 
-For each company's laptop(s) in this demographic's addressable pool:
-  purchase_probability = biased_vp / sum(all biased_vps)
-
-units_demanded = addressable_pool × purchase_probability
+purchase_probability = effective_vp / sum(all effective_vps across all companies)
+units_demanded = quarterly_active_buyers × purchase_probability
 units_sold = min(units_demanded, units_remaining_in_manufacturing_order)
 ```
+
+Reach is a multiplier on competitive strength, not a gate on pool size. Low reach dilutes your effective VP (fewer people in the demographic consider you), high reach lets you compete at full strength. A company with 0% reach gets 0 effective VP and 0 share. Total units across all companies never exceeds the pool.
 
 ### Step 4: Sales Noise
 
@@ -318,7 +319,7 @@ Three components, each serving a distinct role in the sales funnel.
 
 ### Brand Reach (per demographic, 0–100%)
 
-The percentage of a demographic that has heard of your company. Acts as a hard gate on your addressable market. If your reach among Students is 20%, you can only compete for 20% of the Student demand pool.
+The percentage of a demographic that has heard of your company. Acts as a multiplier on your competitive strength within the shared demand pool. If your reach among Students is 20%, your effective value proposition is scaled to 20% — most students don't know you exist, so your pull on the pool is weak. A company with 0% reach gets 0 effective VP and sells nothing.
 
 **Starting values:**
 - Player: 0% across all demographics. Must be bootstrapped through marketing.
