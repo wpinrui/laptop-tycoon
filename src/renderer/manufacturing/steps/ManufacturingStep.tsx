@@ -14,6 +14,7 @@ import {
 } from "../utils/constants";
 import { getActiveModels } from "../../screens/dashboard/utils";
 import { projectDemandRange } from "../../../simulation/salesEngine";
+import { MarketSizeCard } from "../components/MarketSizeCard";
 
 const twoColumnStyle: CSSProperties = {
   display: "grid",
@@ -314,6 +315,8 @@ export function ManufacturingStep() {
       <div style={twoColumnStyle}>
         {/* Left: Controls */}
         <div style={{ display: "flex", flexDirection: "column", gap: tokens.spacing.lg }}>
+          <MarketSizeCard year={gameState.year} quarter={gameState.quarter} />
+
           <div style={panelStyle}>
             <div style={sliderLabelStyle}>
               <span style={{ fontWeight: 600 }}>Retail Price</span>
