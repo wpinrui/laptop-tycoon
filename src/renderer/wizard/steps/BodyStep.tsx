@@ -14,7 +14,7 @@ import {
   specSummary,
   CHASSIS_SLOTS,
   getAvailableChassisOptions,
-} from "../constants";
+} from "../../../data/designConstants";
 import { ChassisOption } from "../../../data/types";
 import { getAllChassisOptions } from "../types";
 import { Tooltip } from "../Tooltip";

@@ -1,5 +1,5 @@
 import { useWizard } from "../WizardContext";
-import { formatWeight, MIN_BATTERY_WH, MAX_BATTERY_WH, BATTERY_STEP_WH, avgUsageMultiplier, batteryWarningThresholdH, applyDisplayMultiplier } from "../constants";
+import { formatWeight, MIN_BATTERY_WH, MAX_BATTERY_WH, BATTERY_STEP_WH, avgUsageMultiplier, batteryWarningThresholdH, applyDisplayMultiplier } from "../../../data/designConstants";
 import { getBatteryEra } from "../../../data/batteryEras";
 import { getScreenSizeDef } from "../../../data/screenSizes";
 import { StatCard } from "./StatCard";

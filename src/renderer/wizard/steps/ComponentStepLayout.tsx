@@ -1,5 +1,5 @@
 import { useWizard } from "../WizardContext";
-import { DISPLAY_SLOTS, applyDisplayMultiplier, specSummary, getAvailableComponents, componentCostDecayed } from "../constants";
+import { DISPLAY_SLOTS, applyDisplayMultiplier, specSummary, getAvailableComponents, componentCostDecayed } from "../../../data/designConstants";
 import { getScreenSizeDef } from "../../../data/screenSizes";
 import { Component, ComponentSlot, ScreenSizeDefinition } from "../../../data/types";
 import { Tooltip } from "../Tooltip";

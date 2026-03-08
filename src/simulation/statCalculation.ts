@@ -27,7 +27,7 @@ import {
   coolingMultiplier,
   availableVolumeCm3,
   totalConsumedVolumeCm3,
-} from "../renderer/wizard/constants";
+} from "../data/designConstants";
 
 export interface RawStatTotalsParams {
   screenSize: ScreenSizeInches;

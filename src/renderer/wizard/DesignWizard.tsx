@@ -7,7 +7,7 @@ import {
   totalConsumedVolumeCm3,
   maxHeightConstraintCm,
   computeLaptopTotals,
-} from "./constants";
+} from "../../data/designConstants";
 import { useGame } from "../state/GameContext";
 import { useNavigation } from "../navigation/NavigationContext";
 import { LaptopDesign } from "../state/gameTypes";

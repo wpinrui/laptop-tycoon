@@ -1,5 +1,5 @@
 import { useWizard } from "../WizardContext";
-import { formatWeight } from "../constants";
+import { formatWeight } from "../../../data/designConstants";
 import { tokens } from "../../shell/tokens";
 import { SCREEN_SIZES, getScreenSizeDef } from "../../../data/screenSizes";
 import { StatCard } from "./StatCard";
