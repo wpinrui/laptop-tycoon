@@ -180,32 +180,55 @@ Each buyer type has:
 | General Consumer | Price, brand recognition, design | High | Largest group. Heavily influenced by marketing and brand. |
 | Budget Buyer | Price above all else | Extreme | Tolerates bad everything if cheap. No brand loyalty. |
 
-### Market Share Calculation
+### Step 1: Raw Value Proposition
 
-Each year, each buyer demographic has a **total demand pool** (grows over time as laptops become ubiquitous).
-
-For each laptop (player's + competitors'), calculate an **appeal score** per demographic:
+For each laptop in the market (player + AI), for each demographic:
 
 ```
-appeal = weighted_stat_score × price_competitiveness × brand_fit × loyalty_modifier
+For each stat:
+  normalized_stat = this_laptop_stat / max(that stat across all laptops this year)
+
+weighted_score = dot_product(normalized_stats, demographic_weight_vector)
+screen_penalty = screen size fit penalty (1.0 if preferred, 0.5 if one class off, 0.1 if two+ off)
+raw_vp = (weighted_score × screen_penalty) / price
 ```
 
-Where:
+### Step 2: Biased Value Proposition
 
-- **Weighted stat score:** Dot product of the laptop's market-relative stats and the demographic's weight vector
-- **Price competitiveness:** How the laptop's price compares to what this demographic expects for this stat profile
-- **Brand fit:** Does the brand have niche reputation matching what this demographic cares about?
-- **Loyalty modifier:** For successors/spec bumps, returning customers from the previous model
+```
+brand_perception_mod = brand_perception[this_demographic] for this company  (-50 to +50)
+laptop_perception_mod = campaign result for this laptop
+biased_vp = raw_vp × (1 + brand_perception_mod / 100) × (1 + laptop_perception_mod / 100)
+```
 
-**Market share** per demographic = laptop's appeal / sum of all appeals in that demographic.
+### Step 3: Demand Resolution
 
-**Units demanded** = market share × demand pool.
+```
+addressable_pool = demographic_population × (brand_reach[this_demographic] / 100)
 
-**Actual units sold** = min(units demanded, units manufactured).
+For each company's laptop(s) + a "don't buy" option:
+  purchase_probability = biased_vp / (sum of all biased_vps + dont_buy_threshold)
 
-### Sales Noise
+units_demanded = addressable_pool × purchase_probability
+units_sold = min(units_demanded, units_remaining_in_manufacturing_order)
+```
 
-Actual sales = sampled from a distribution centred on the simulation output, with **±10–15% variance**. This prevents purely deterministic outcomes and makes the ordering decision a calculated risk, not a solved puzzle. The demand projection shown to the player is the confidence interval of this distribution.
+The **"don't buy" threshold** represents the option of not purchasing any laptop this year. Higher in early years (laptops are optional, desktops dominate), lower in later years (everyone needs a laptop). This prevents unrealistic 100% conversion.
+
+### Step 4: Sales Noise
+
+```
+actual_sales = units_sold × random_factor
+random_factor sampled uniformly from [0.85, 1.15]  (±15% variance)
+```
+
+### Step 5: Demand Projection (shown in manufacturing wizard)
+
+Before the player commits to an order quantity, they see a projected demand range. This uses the same simulation but with:
+- Ad campaign outcomes shown as a range (25th to 75th percentile of the campaign distribution)
+- Additional ±5-10% noise margin applied independently to both ends
+- The prospective campaign's reach contribution included (even though not yet committed to state)
+- Range tightens as brand reach grows (more established brands have more predictable sales)
 
 ### Market Weight Shifts
 
@@ -219,26 +242,102 @@ Era target vectors are predefined at anchor points (2000, 2005, 2010, 2015, 2020
 
 ---
 
-## Brand Reputation
+## Brand System
 
-Two dimensions:
+Three components, each serving a distinct role in the sales funnel.
 
-### Brand Recognition (0–100)
+### Brand Reach (per demographic, 0–100%)
 
-How many people have heard of you. Affects General Consumer and Budget Buyer demographics heavily.
+The percentage of a demographic that has heard of your company. Acts as a hard gate on your addressable market. If your reach among Students is 20%, you can only compete for 20% of the Student demand pool.
 
-- Grows with: sales volume, marketing spend, time in market.
-- Decays with: inactivity (no products on sale), poor sales.
+**Starting values:**
+- Player: 0% across all demographics. Must be bootstrapped through marketing.
+- AI competitors: Pre-set per archetype (e.g., ValueTech 70% uniform, Prestige Computing 60% uniform, OmniBook 75% uniform).
 
-Also affects accuracy of demand projections (higher recognition = tighter estimate range).
+**Growth sources (per demographic, per year):**
 
-### Niche Reputation (vector across stat categories)
+| Source | Calculation | Notes |
+|--------|------------|-------|
+| Word of mouth | units_sold_to_this_demographic / WOM_DIVISOR | Only per-demographic organic source. Creates natural flywheel. |
+| Campaign spend | total_campaign_spend / CAMPAIGN_DIVISOR | Uniform across all demographics. Small contribution. |
+| Sponsorships | Fixed bonuses per sponsorship option | Targeted to specific demographics. Primary mechanism for directed reach growth. |
+| General awareness budget | annual_awareness_spend / AWARENESS_DIVISOR | Uniform across all demographics. |
 
-Where the market believes your brand is strong. For example, a brand known for great displays and build quality.
+All sources are summed into a raw growth input, then passed through an **S-curve (logistic function)**:
 
-- Built by: consistently shipping laptops that score well in a niche.
-- Erodes when: you shift away from your established niche.
-- **Tech Enthusiast multiplier:** Tech Enthusiast perception accelerates niche reputation movement (positive or negative). They are the tastemakers.
+```
+actual_growth = L / (1 + e^(-k * (raw_input - midpoint)))
+```
+
+Where the midpoint shifts based on current reach, producing:
+- Slow growth at low reach (hard to get started)
+- Fast growth in the mid-range (momentum)
+- Plateauing at high reach (diminishing returns)
+
+**Campaign reach is applied before sales simulation runs in the same year.** This ensures a first-year player with 0% reach and a marketing campaign can still generate sales. The projection in the manufacturing wizard must include the prospective campaign's reach contribution.
+
+### Brand Perception (per demographic, -50 to +50)
+
+The accumulated sentiment a demographic has about your company, based on their purchasing experience. Positive perception means buyers give you the benefit of the doubt. Negative perception means scepticism even toward a good product.
+
+**Starting values:**
+- Player: 0 (neutral) across all demographics.
+- AI competitors: Pre-set per archetype to reflect their market position (e.g., ValueTech: +25 Budget Buyer, -15 Business Professional; Prestige Computing: +25 Creative Professional, -20 Budget Buyer; OmniBook: +5 to +10 broadly).
+
+**How it changes (yearly, after sales resolve):**
+
+Only laptops that a demographic actually purchased affect that demographic's perception of the selling company.
+
+```
+experience = your_laptop_raw_vp - mean(raw_vp of all laptops this demographic purchased across all companies)
+perception_contribution = experience × volume_weight × negativity_multiplier
+
+where:
+  volume_weight = units_this_demographic_bought_from_you / normalizing_constant
+  negativity_multiplier = 1.5 if experience < 0, else 1.0
+
+new_perception = old_perception × DECAY + perception_contribution
+DECAY = 0.5 to 0.6 (tunable)
+```
+
+**Key properties:**
+- **Recency bias:** Exponential decay means old experiences fade. A bad laptop from 4 years ago barely registers.
+- **Negativity bias:** Bad experiences hit 1.5× harder than good experiences help. Getting ripped off is memorable.
+- **Only purchasers matter:** A demographic that never buys from you has no perception of you (stays at 0/neutral). This means entering a new market segment starts from a blank slate, not from baggage accumulated in other segments.
+- **Value-for-money drives perception, not raw quality:** The experience score is based on raw value proposition (stats/price), not raw stats alone. An overpriced premium laptop can hurt perception even if technically excellent.
+
+**Edge case behaviour:**
+- *Ultrabook company enters gaming market:* Gamers have 0 perception (never bought from you). Your gaming laptop is evaluated on its merits. No penalty, no bonus.
+- *Company sells both ultraportable and gaming laptop:* Gamers buy the gaming laptop, business professionals buy the ultraportable. Each demographic's perception is shaped only by the product they bought. No cross-contamination.
+- *A few gamers accidentally buy the ultraportable:* Small negative experience (bad value for gamers), but volume_weight is tiny so the perception hit is negligible.
+
+### Laptop Perception (per model, from ad campaign)
+
+How a specific laptop is perceived due to its marketing campaign. This is a one-off modifier for that product in that year, not a persistent brand attribute.
+
+**Source:** The ad campaign selected in the manufacturing wizard. The campaign outcome is sampled from the campaign's distribution (skewed normal, as previously specified). The result is a percentage modifier to perceived value, not a direct sales modifier.
+
+**Range:** Depends on campaign type. Safe campaigns produce small positive modifiers. Risky campaigns can produce large positive or negative modifiers.
+
+---
+
+## Sponsorship / Partnership Options
+
+Available as discrete purchases during the yearly planning phase. The player may purchase multiple sponsorships per year. Each targets specific demographics for reach growth.
+
+| Option | Cost | Reach Effect |
+|--------|------|-------------|
+| Gaming tournament sponsor | $150K | +5% Gamer, +2% Tech Enthusiast |
+| University laptop programme | $300K | +6% Student |
+| Enterprise IT conference | $400K | +5% Corporate, +3% Business Professional |
+| Tech blog partnership | $100K | +4% Tech Enthusiast, +2% Gamer |
+| Retail shelf placement deal | $500K | +3% all demographics |
+| Airport/transit advertising | $250K | +2% Business Professional, +2% General Consumer |
+| TV commercial | $800K | +4% General Consumer, +2% Budget Buyer, +2% all others |
+
+Sponsorship costs should scale with a simple inflation factor per year (same as campaign costs).
+
+A **general awareness budget** slider is also available — annual spend that provides a small uniform reach boost across all demographics, fed through the S-curve.
 
 ---
 
@@ -270,10 +369,10 @@ actual_cost = base_cost × 1.03^(current_year - 2000)
 
 ### Sales Impact
 
-The campaign's outcome is sampled from its distribution at year-end. The result is a percentage modifier applied to demand:
+The campaign's outcome is sampled from its distribution at year-end. The result is a **percentage modifier to perceived value** (laptop perception), not a direct sales modifier:
 
 ```
-adjusted_demand = base_demand × (1 + campaign_bonus / 100)
+biased_vp = raw_vp × (1 + brand_perception_mod / 100) × (1 + laptop_perception_mod / 100)
 ```
 
 The player sees the distribution shape (via a chart) and the min/mean/max range before choosing, but the actual outcome is only revealed after the year simulates.
@@ -313,6 +412,43 @@ Press release responses feed into the **review generation system**. Reviewer tem
 
 ---
 
+## Post-Sales Feedback
+
+### Perception Update
+
+After sales resolve, for each demographic, for each company that sold laptops to that demographic:
+
+```
+experience = company_laptop_raw_vp - mean(raw_vp of all purchased laptops in this demographic)
+perception_contribution = experience × volume_weight × negativity_multiplier
+new_perception = old_perception × DECAY + perception_contribution
+```
+
+Clamp to [-50, +50].
+
+### Reach Update
+
+After sales resolve, all reach growth sources are summed and fed through the S-curve per demographic:
+
+```
+For each demographic:
+  raw_growth = word_of_mouth + campaign_reach + sponsorship_reach + awareness_budget_reach
+  new_reach = old_reach + S_curve(raw_growth, current_reach)
+```
+
+Clamp to [0, 100].
+
+### Player Feedback (Year-End Results Screen)
+
+For each demographic, show:
+- Total pool size
+- Addressable pool (after reach gating)
+- Units sold, market share
+- Top 2-3 loss reasons ranked by impact (stat gap, price, perception, screen size)
+- Perception change for the year with explanation ("Creative Professional perception +3: your display and build quality scored above market average")
+
+---
+
 ## AI Competitors
 
 ### MVP: 3 Competitors
@@ -327,11 +463,55 @@ Each has an archetype, a niche focus, and simple decision rules for generating 1
 
 **Component selection algorithm:** Each competitor has stat priorities. For stats they care about, they pick upper-quartile components. For stats they don't, they pick lower-quartile options. (These percentiles can be tuned — not always strictly upper/lower.)
 
-**Balance lever:** If competitors are too weak or too strong, apply a hidden "engineering bonus" modifier to their stat output. Purely for balance, not exposed to the player.
+AI competitors use the exact same simulation pipeline as the player. Same perception feedback, same reach mechanics, same appeal formula. No special cases.
+
+**AI campaign selection:** Budget brand picks cheap/risky campaigns. Premium brand picks expensive/safe campaigns. Generalist picks mid-tier. Simple lookup per archetype, not a decision engine.
+
+**AI support budget:** Budget brand: minimal. Premium: generous. Generalist: moderate. Fixed per archetype.
+
+**AI death spiral prevention:** The `engineeringBonus` field on competitor definitions serves as a safety valve. If an AI brand's total sales drop below a threshold for 2+ consecutive years, nudge their bonus up slightly to keep them competitive. This is a balance lever, not exposed to the player.
 
 **Visibility:** All competitor laptops are fully visible to the player — full stat blocks (raw + market-relative), price, screen size. No hidden information about the products themselves. The only hidden information is competitor sales figures (available via paid demographic breakdowns — post-MVP).
 
 *For development, use real brand names (Dell, HP, Lenovo, etc.). Replace with fictional names for release.*
+
+---
+
+## Unified Data Model
+
+```typescript
+interface CompanyState {
+  id: string;
+  name: string;
+  isPlayer: boolean;
+  brandReach: Record<DemographicId, number>;       // 0-100 per demographic
+  brandPerception: Record<DemographicId, number>;   // -50 to +50 per demographic
+  models: LaptopModel[];
+  // For AI only:
+  archetype?: "budget" | "premium" | "generalist";
+  engineeringBonus?: number;
+}
+```
+
+Both player and AI competitors use this interface. The simulation iterates over all companies uniformly. Save/load covers one array of CompanyState.
+
+---
+
+## Tunables (centralised in config)
+
+| Constant | Starting Value | Notes |
+|----------|---------------|-------|
+| WOM_DIVISOR | TBD | Units sold per 1 raw reach point from word of mouth |
+| CAMPAIGN_DIVISOR | 2,000,000 | Campaign spend per 1 raw reach point |
+| AWARENESS_DIVISOR | 500,000 | Awareness budget spend per 1 raw reach point |
+| PERCEPTION_DECAY | 0.5–0.6 | Yearly decay on brand perception |
+| NEGATIVITY_MULTIPLIER | 1.5 | Bad experiences hit 1.5× harder |
+| DONT_BUY_BASE_THRESHOLD | TBD | Base "don't buy" value, decreases over years |
+| SCREEN_PENALTY_ONE_OFF | 0.5 | Penalty for screen size one class away from preferred |
+| SCREEN_PENALTY_TWO_OFF | 0.1 | Penalty for screen size two+ classes away |
+| S_CURVE_L | TBD | Max reach growth per year |
+| S_CURVE_K | TBD | S-curve steepness |
+| CAMPAIGN_COST_INFLATION | 1.03 | Annual scaling for campaign and sponsorship costs |
 
 ---
 
@@ -416,7 +596,7 @@ Post-year, the player can pay for a detailed demographic breakdown: which buyer 
 - [ ] Sales simulation with 8 buyer demographics
 - [ ] Momentum-based market weight shifting
 - [ ] 3 AI competitors (budget, premium, generalist), 1 model each, full stats visible
-- [ ] Brand recognition + niche reputation vector
+- [ ] Brand reach (per demographic) + brand perception (per demographic) + laptop perception (from campaigns)
 - [ ] Laptop reviews (2 per model, template-driven)
 - [ ] Year-end awards
 - [ ] ~550 sentence templates for reviews and awards
