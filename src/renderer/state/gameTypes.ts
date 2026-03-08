@@ -81,18 +81,7 @@ export interface GameState {
 export const STARTING_CASH = 50_000_000;
 export const STARTING_YEAR = 2000;
 
-const ZERO_REACH: Record<DemographicId, number> = {
-  corporate: 0,
-  businessProfessional: 0,
-  student: 0,
-  creativeProfessional: 0,
-  gamer: 0,
-  techEnthusiast: 0,
-  generalConsumer: 0,
-  budgetBuyer: 0,
-};
-
-const ZERO_PERCEPTION: Record<DemographicId, number> = {
+const ZERO_DEMOGRAPHICS: Record<DemographicId, number> = {
   corporate: 0,
   businessProfessional: 0,
   student: 0,
@@ -113,8 +102,8 @@ export function createInitialGameState(
     year: STARTING_YEAR,
     yearSimulated: false,
     cash: STARTING_CASH,
-    brandReach: { ...ZERO_REACH },
-    brandPerception: { ...ZERO_PERCEPTION },
+    brandReach: { ...ZERO_DEMOGRAPHICS },
+    brandPerception: { ...ZERO_DEMOGRAPHICS },
     brandAwarenessBudget: 0,
     sponsorships: [],
     models: [],
