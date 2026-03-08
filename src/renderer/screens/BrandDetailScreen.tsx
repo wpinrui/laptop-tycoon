@@ -9,7 +9,6 @@ import { tokens } from "../shell/tokens";
 import { ProgressBar } from "./dashboard/ProgressBar";
 import { perceptionColor } from "./dashboard/utils";
 import { DEMOGRAPHICS } from "../../data/demographics";
-import { DemographicId } from "../../data/types";
 
 const CAMPAIGN_COST = 1_000;
 const CAMPAIGN_REACH_BOOST = 0.5;
@@ -76,7 +75,7 @@ export function BrandDetailScreen() {
       <div style={sectionStyle}>
         <p style={headingStyle}>Brand Reach</p>
         {DEMOGRAPHICS.map((dem) => {
-          const reach = Math.round(state.brandReach[dem.id as DemographicId] ?? 0);
+          const reach = Math.round(state.brandReach[dem.id] ?? 0);
           return (
             <div key={dem.id} style={rowStyle}>
               <span style={labelStyle}>{dem.name}</span>

@@ -75,7 +75,7 @@ export function updateBrandReach(
   const unitsByDemographic: Partial<Record<DemographicId, number>> = {};
   for (const pr of result.playerResults) {
     for (const db of pr.demographicBreakdown) {
-      const demId = db.demographicId as DemographicId;
+      const demId = db.demographicId;
       unitsByDemographic[demId] = (unitsByDemographic[demId] ?? 0) + db.unitsDemanded;
     }
   }
@@ -90,7 +90,7 @@ export function updateBrandReach(
   }
 
   for (const dem of DEMOGRAPHICS) {
-    const demId = dem.id as DemographicId;
+    const demId = dem.id;
     const current = oldReach[demId] ?? 0;
 
     // Raw growth inputs
@@ -142,13 +142,13 @@ export function updateCompetitorBrandReach(
   const unitsByDemographic: Partial<Record<DemographicId, number>> = {};
   for (const cr of compResults) {
     for (const db of cr.demographicBreakdown) {
-      const demId = db.demographicId as DemographicId;
+      const demId = db.demographicId;
       unitsByDemographic[demId] = (unitsByDemographic[demId] ?? 0) + db.unitsDemanded;
     }
   }
 
   for (const dem of DEMOGRAPHICS) {
-    const demId = dem.id as DemographicId;
+    const demId = dem.id;
     const current = oldReach[demId] ?? 0;
 
     // Competitor reach growth from sales + time-in-market
@@ -204,7 +204,8 @@ export function updateBrandPerception(
 
       // Price relative to demographic ceiling
       const ceiling = getPriceCeiling(dem.id, state.year);
-      const priceRatio = model.retailPrice! / ceiling;
+      if (model.retailPrice == null) continue;
+      const priceRatio = model.retailPrice / ceiling;
 
       // Value-for-money: high stat score relative to price = positive, overpaying = negative
       // Centered at 0: priceRatio of 1.0 with average stats = neutral

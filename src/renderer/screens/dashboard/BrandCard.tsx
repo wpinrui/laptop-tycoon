@@ -7,7 +7,7 @@ import { cardBodyStyle, hintStyle, sectionDividerStyle, sectionHeadingStyle, sma
 import { perceptionColor } from "./utils";
 
 import { DEMOGRAPHICS } from "../../../data/demographics";
-import { LaptopStat, DemographicId } from "../../../data/types";
+import { LaptopStat } from "../../../data/types";
 
 const reputationStats: { label: string; key: LaptopStat }[] = [
   { label: "Performance", key: "performance" },
@@ -38,7 +38,7 @@ export function BrandCard() {
     <BentoCard title="Brand" icon={Sparkles} screen="brandDetail">
       <p style={{ ...sectionHeadingStyle, marginBottom: tokens.spacing.sm }}>Brand Reach</p>
       {DEMOGRAPHICS.map((dem) => {
-        const reach = Math.round(state.brandReach[dem.id as DemographicId] ?? 0);
+        const reach = Math.round(state.brandReach[dem.id] ?? 0);
         return (
           <div key={dem.id} style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm, marginTop: tokens.spacing.xs }}>
             <span style={{ ...smallTextStyle, minWidth: 130, flexShrink: 0 }}>{dem.name}</span>
