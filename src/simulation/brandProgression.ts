@@ -59,7 +59,7 @@ export function averageReach(reach: Record<DemographicId, number>): number {
 /**
  * Compute the immediate (same-year) reach boost from marketing campaign spend.
  * This is a flat addition (not S-curved) so it works even at 0% reach.
- * Used by simulateYear and projectDemandRange to gate demand before year-end.
+ * Used by simulateQuarter and projectDemandRange to gate demand.
  * @param extraSpend Additional campaign spend not yet committed to state (e.g. from wizard)
  */
 export function getCampaignReachBoost(state: GameState, extraSpend: number = 0): number {

@@ -178,7 +178,7 @@ function getLaptopCampaignPerception(laptop: MarketLaptop, playerId: string): nu
  * Step 2 – Biased VP:
  *   biased_vp = raw_vp × (1 + brand_perception_mod / 100) × (1 + laptop_perception_mod / 100)
  *
- * Note: reach is NOT applied here — it gates the demand pool size instead (in simulateYear).
+ * Note: reach is NOT applied here — it gates the demand pool size instead (in simulateQuarter).
  */
 function calculateBiasedVP(
   laptop: MarketLaptop,
