@@ -148,9 +148,11 @@ unit_cost = base_cost × (1 / (1 + 0.4 × log10(units_ordered / reference_quanti
 
 **Multiple model overhead:** Running 2 distinct models incurs additional tooling/overhead costs beyond the per-unit manufacturing.
 
-### Demand Projection
+### Market Size Display
 
-After design is finalised but before committing to a quantity, the player sees a projected demand range (e.g., "25,000–40,000 units"). This is derived from the same sales simulation that determines actual results.
+The manufacturing wizard shows the player the projected market size for the current quarter — the total number of active buyers expected to purchase a laptop. Defaults to showing the total across all demographics, but the player can select a specific demographic from a dropdown to see that segment's market size individually.
+
+This is not a demand projection for the player's laptop — it's the size of the market the player is competing in. The player uses this information alongside their brand reach and product specs to decide how many units to order.
 
 ### Unsold Inventory
 
@@ -272,14 +274,11 @@ actual_sales = units_sold × random_factor
 random_factor sampled uniformly from [0.85, 1.15]  (±15% variance)
 ```
 
-### Step 5: Demand Projection (shown in manufacturing wizard)
+### Market Size (shown in manufacturing wizard)
 
-Before the player commits to an order quantity, they see a projected demand range. This uses the same simulation but with:
-- Ad campaign outcomes shown as a range (25th to 75th percentile of the campaign distribution)
-- Additional ±5-10% noise margin applied independently to both ends
-- The prospective campaign's reach contribution included (even though not yet committed to state)
+The player sees the projected market size for the upcoming quarter — the total number of active buyers in the market. This can be filtered by demographic via a dropdown. The market size is calculated directly from `demographic_population / replacement_cycle_years × (quarter_share / 15)`.
 
-Demand projection shows the full-year estimated range (sum of all 4 quarters). The quarterly split is not shown — the player sees total projected annual demand for the purpose of setting their initial manufacturing order.
+This gives the player enough information to estimate their own demand based on their brand reach and product competitiveness, without the game solving the problem for them.
 
 ### Market Weight Shifts
 
@@ -664,7 +663,7 @@ Post-year, the player can pay for a detailed demographic breakdown: which buyer 
 - [ ] 2 model slots with new/successor/spec-bump system
 - [ ] Manufacturing orders with economies of scale
 - [ ] Pricing per model
-- [ ] Demand projection with confidence interval
+- [ ] Market size display (total and per-demographic, per quarter)
 - [ ] Sales simulation with 8 buyer demographics
 - [ ] Quarterly game loop (Q1–Q4 per year, front-loaded buyer distribution)
 - [ ] Mid-year manufacturing wizard access (price adjustment, additional orders, new campaigns)
