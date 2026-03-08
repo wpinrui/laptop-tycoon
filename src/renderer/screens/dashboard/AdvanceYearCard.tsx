@@ -101,7 +101,7 @@ export function AdvanceYearCard() {
           // 5. Apply simulation results (sets cash to revenue + post-manufacturing balance)
           dispatch({ type: "APPLY_SIMULATION_RESULT", result });
 
-          // 5. Navigate to appropriate screen
+          // 6. Navigate to appropriate screen
           if (result.gameOver) {
             navigateTo("gameOver");
           } else {

@@ -33,6 +33,12 @@ import { COMPETITORS } from "../data/competitors";
 let cachedProjectionYear: number | null = null;
 let cachedProjectionModels: LaptopModel[] = [];
 
+/** Clear the projection cache (call on new game to avoid stale data). */
+export function clearProjectionCache(): void {
+  cachedProjectionYear = null;
+  cachedProjectionModels = [];
+}
+
 // --- Tuning Constants ---
 
 /** Brand awareness floor (0-1) when brand recognition is 0 */

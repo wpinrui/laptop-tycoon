@@ -2,6 +2,7 @@ import { createContext, useContext, useReducer, ReactNode, Dispatch } from "reac
 import { GameState, LaptopDesign, LaptopModel, ModelStatus, createInitialGameState, hasDiscontinuedComponents } from "./gameTypes";
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { YearSimulationResult } from "../../simulation/salesTypes";
+import { clearProjectionCache } from "../../simulation/salesEngine";
 
 export interface CompetitorModelEntry {
   competitorId: string;
@@ -24,6 +25,7 @@ type GameAction =
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case "NEW_GAME":
+      clearProjectionCache();
       return createInitialGameState(action.companyName, action.companyLogo);
     case "LOAD_GAME":
       return action.state;

@@ -4,12 +4,13 @@ import { useNavigation } from "../navigation/NavigationContext";
 import { useWizard } from "../wizard/WizardContext";
 import { useMfgWizard } from "../manufacturing/ManufacturingWizardContext";
 import { selectPrompts } from "../manufacturing/data/pressReleasePrompts";
-import { LaptopModel, ModelStatus, hasDiscontinuedComponents } from "../state/gameTypes";
+import { LaptopModel, hasDiscontinuedComponents } from "../state/gameTypes";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { tokens } from "../shell/tokens";
 import { StatusBar } from "../shell/StatusBar";
 import { getActiveModels, MAX_MODELS } from "./dashboard/utils";
+import { STATUS_CONFIG } from "../statusConfig";
 import {
   Laptop,
   Plus,
@@ -20,20 +21,6 @@ import {
   ChevronUp,
   CheckCircle,
 } from "lucide-react";
-
-const STATUS_COLOURS: Record<ModelStatus, string> = {
-  draft: "#ffa726",
-  manufacturing: "#42a5f5",
-  onSale: tokens.colors.success,
-  discontinued: "#888",
-};
-
-const STATUS_LABELS: Record<ModelStatus, string> = {
-  draft: "Draft",
-  manufacturing: "Manufacturing",
-  onSale: "On Sale",
-  discontinued: "Discontinued",
-};
 
 const panelStyle: CSSProperties = {
   display: "flex",
@@ -245,11 +232,11 @@ function ModelCard({
           fontSize: tokens.font.sizeSmall,
           padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
           borderRadius: tokens.borderRadius.sm,
-          background: `${STATUS_COLOURS[status]}22`,
-          color: STATUS_COLOURS[status],
+          background: STATUS_CONFIG[status].bg,
+          color: STATUS_CONFIG[status].color,
           fontWeight: 600,
         }}>
-          {STATUS_LABELS[status]}
+          {STATUS_CONFIG[status].label}
         </span>
       </div>
 

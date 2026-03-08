@@ -2,19 +2,12 @@ import { CSSProperties } from "react";
 import { Laptop } from "lucide-react";
 import { useNavigation } from "../../navigation/NavigationContext";
 import { useGame } from "../../state/GameContext";
-import { ModelStatus } from "../../state/gameTypes";
 import { MenuButton } from "../../shell/MenuButton";
 import { tokens } from "../../shell/tokens";
 import { BentoCard } from "./BentoCard";
 import { emptyStateStyle } from "./styles";
 import { getActiveModels, MAX_MODELS } from "./utils";
-
-const STATUS_CONFIG: Record<ModelStatus, { label: string; color: string; bg: string }> = {
-  draft: { label: "Draft", color: tokens.colors.textMuted, bg: tokens.colors.surface },
-  manufacturing: { label: "Manufacturing", color: tokens.colors.warning, bg: "rgba(255, 167, 38, 0.12)" },
-  onSale: { label: "On Sale", color: tokens.colors.success, bg: "rgba(102, 187, 106, 0.12)" },
-  discontinued: { label: "Discontinued", color: tokens.colors.textMuted, bg: tokens.colors.surface },
-};
+import { STATUS_CONFIG } from "../../statusConfig";
 
 const modelRowStyle: CSSProperties = {
   display: "flex",
