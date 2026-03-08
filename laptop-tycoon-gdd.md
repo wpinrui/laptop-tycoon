@@ -505,14 +505,36 @@ After each quarter, show a brief summary:
 - Cumulative units sold year-to-date
 - Revenue this quarter
 - Cash balance
+- "View details" drill-down into per-demographic comparison table (see below)
 
 After Q4, show the full year-end results screen:
 - Annual totals: units ordered vs sold, revenue, costs, profit/loss
 - Per-model breakdown
-- Per-demographic breakdown with loss reasons (top 2-3 ranked by impact)
+- Per-demographic comparison table (same as quarterly drill-down)
 - Perception changes with explanations
 - Cash balance after year-end resolution
 - Quarterly trend (Q1–Q4 sales graph/table)
+
+### Per-Demographic Comparison Table
+
+The primary feedback mechanism for understanding sales performance. Available every quarter (as a drill-down from the brief summary) and at year-end.
+
+**How it works:**
+1. Player selects a model to compare (any model released that year — theirs or a competitor's)
+2. For each demographic, shows a comparison table with:
+   - The top 4–5 stats that demographic weights most heavily (market-relative scores, 1–100)
+   - Price
+   - Units sold to that demographic
+3. Up to 5 models shown, sorted by market share in that demographic
+4. Searchable — player can swap in any model not in the default top 5
+
+**Stats shown change per demographic** based on their weight vector:
+- Students see: price, battery life, portability, performance
+- Gamers see: gaming performance, thermals, display, performance
+- Corporate sees: keyboard, support, build quality, reliability
+- etc.
+
+**Design rationale:** No computed "loss reasons" or appeal score decomposition. The sales formula is multiplicative (stats × screen penalty × perception / price^sensitivity), so decomposing it into independent factors is inherently approximate. Instead, show the player what each demographic sees — the specs they care about, the price, and who won — and let them draw their own conclusions. Brand perception and reach are visible on the brand management screen for cross-referencing.
 
 ---
 
