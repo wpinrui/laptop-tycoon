@@ -83,14 +83,19 @@ export function QuarterlyTrendTable({ quarters, year }: QuarterlyTrendTableProps
               </td>
             </tr>
           ))}
-          <tr style={{ fontWeight: 700 }}>
-            <td style={{ ...tdStyle, borderTop: `1px solid ${tokens.colors.panelBorder}` }}>Total</td>
-            <td style={{ ...tdRight, borderTop: `1px solid ${tokens.colors.panelBorder}` }}>{formatNumber(totalUnits)}</td>
-            <td style={{ ...tdRight, borderTop: `1px solid ${tokens.colors.panelBorder}` }}>{formatCurrency(totalRevenue)}</td>
-            <td style={{ ...tdRight, borderTop: `1px solid ${tokens.colors.panelBorder}`, color: totalProfit >= 0 ? tokens.colors.success : tokens.colors.danger }}>
-              {formatCurrency(totalProfit)}
-            </td>
-          </tr>
+          {(() => {
+            const totalBorder = { borderTop: `1px solid ${tokens.colors.panelBorder}` };
+            return (
+              <tr style={{ fontWeight: 700 }}>
+                <td style={{ ...tdStyle, ...totalBorder }}>Total</td>
+                <td style={{ ...tdRight, ...totalBorder }}>{formatNumber(totalUnits)}</td>
+                <td style={{ ...tdRight, ...totalBorder }}>{formatCurrency(totalRevenue)}</td>
+                <td style={{ ...tdRight, ...totalBorder, color: totalProfit >= 0 ? tokens.colors.success : tokens.colors.danger }}>
+                  {formatCurrency(totalProfit)}
+                </td>
+              </tr>
+            );
+          })()}
         </tbody>
       </table>
     </div>

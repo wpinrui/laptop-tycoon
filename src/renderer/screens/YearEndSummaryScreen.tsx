@@ -50,36 +50,27 @@ export function YearEndSummaryScreen() {
         <h1 style={{ ...titleStyle, marginBottom: 0 }}>{periodLabel} Results</h1>
         {q4Result && (
           <div style={{ display: "flex", gap: tokens.spacing.xs }}>
-            <button
-              onClick={() => setViewMode("annual")}
-              style={{
-                padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
-                background: isAnnual ? tokens.colors.accent : tokens.colors.surface,
-                color: isAnnual ? tokens.colors.panelBg : tokens.colors.text,
-                border: `1px solid ${tokens.colors.panelBorder}`,
-                borderRadius: tokens.borderRadius.sm,
-                cursor: "pointer",
-                fontSize: tokens.font.sizeSmall,
-                fontWeight: 600,
-              }}
-            >
-              Full Year
-            </button>
-            <button
-              onClick={() => setViewMode("q4")}
-              style={{
-                padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
-                background: !isAnnual ? tokens.colors.accent : tokens.colors.surface,
-                color: !isAnnual ? tokens.colors.panelBg : tokens.colors.text,
-                border: `1px solid ${tokens.colors.panelBorder}`,
-                borderRadius: tokens.borderRadius.sm,
-                cursor: "pointer",
-                fontSize: tokens.font.sizeSmall,
-                fontWeight: 600,
-              }}
-            >
-              Q4 Only
-            </button>
+            {([["annual", "Full Year"], ["q4", "Q4 Only"]] as const).map(([mode, label]) => {
+              const active = viewMode === mode;
+              return (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  style={{
+                    padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+                    background: active ? tokens.colors.accent : tokens.colors.surface,
+                    color: active ? tokens.colors.panelBg : tokens.colors.text,
+                    border: `1px solid ${tokens.colors.panelBorder}`,
+                    borderRadius: tokens.borderRadius.sm,
+                    cursor: "pointer",
+                    fontSize: tokens.font.sizeSmall,
+                    fontWeight: 600,
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
