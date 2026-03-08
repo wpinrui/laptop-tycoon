@@ -1,6 +1,8 @@
 import { DemographicId } from "../data/types";
 import { PriceCeiling, DemandGrowthAnchor } from "./salesTypes";
-import { PRICE_INFLATION_RATE, PRICE_BASE_YEAR } from "./tunables";
+import { PRICE_INFLATION_RATE, PRICE_BASE_YEAR, REPLACEMENT_CYCLE, QUARTER_SHARES, QUARTER_SHARES_SUM } from "./tunables";
+import { Quarter } from "../renderer/state/gameTypes";
+import { STARTING_DEMAND_POOL } from "../data/startingDemand";
 
 // --- Price Ceilings (year-2000 baseline, inflates ~3% per year) ---
 
@@ -63,6 +65,17 @@ export function getDemandPoolSize(demographicId: DemographicId, year: number, ba
   }
 
   return basePool;
+}
+
+// --- Quarterly Active Buyers ---
+
+/** How many buyers from a demographic are expected to purchase in a given quarter. */
+export function getQuarterlyBuyers(demographicId: DemographicId, year: number, quarter: Quarter): number {
+  const basePool = STARTING_DEMAND_POOL[demographicId];
+  const population = getDemandPoolSize(demographicId, year, basePool);
+  const annualActiveBuyers = population / REPLACEMENT_CYCLE[demographicId];
+  const quarterShare = QUARTER_SHARES[quarter - 1] / QUARTER_SHARES_SUM;
+  return Math.round(annualActiveBuyers * quarterShare);
 }
 
 // --- Screen Size Fit (soft filter) ---
