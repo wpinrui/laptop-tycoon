@@ -3,13 +3,11 @@
  * Called at year-end after sales simulation resolves.
  */
 
-import { ALL_STATS, DemographicId } from "../data/types";
+import { DemographicId } from "../data/types";
 import { DEMOGRAPHICS } from "../data/demographics";
 import { SPONSORSHIPS } from "../data/sponsorships";
 import { GameState, CompetitorState } from "../renderer/state/gameTypes";
-import { YearSimulationResult } from "./salesTypes";
-import { computeStatsForDesign } from "./statCalculation";
-import { getPriceCeiling } from "./demographicData";
+import { LaptopSalesResult, YearSimulationResult } from "./salesTypes";
 import {
   S_CURVE_STEEPNESS,
   S_CURVE_MIDPOINT,
@@ -22,6 +20,8 @@ import {
   COMPETITOR_TIME_IN_MARKET_BONUS,
   PERCEPTION_DECAY,
   NEGATIVITY_MULTIPLIER,
+  PERCEPTION_MIN,
+  PERCEPTION_MAX,
 } from "./tunables";
 
 // ==================== Brand Reach ====================
@@ -166,77 +166,92 @@ export function updateCompetitorBrandReach(
 // ==================== Brand Perception ====================
 
 /**
- * Update per-demographic brand perception based on value-for-money of products sold.
- * Each demographic's perception is shaped only by purchases made by that demographic.
- * newPerception[dem] = oldPerception[dem] * decay + thisYearContribution[dem]
+ * Core quarterly perception update for any company.
+ *
+ * Per quarter:
+ *   experience = company_laptop_raw_vp - mean(raw_vp of all purchased laptops in this demographic)
+ *   perception_contribution = experience × volume_weight × negativity_multiplier
+ *   new_perception = old_perception × (DECAY ^ 0.25) + perception_contribution
+ *
+ * Only purchasers affect perception — demographics that didn't buy stay at 0/neutral.
+ * Applied 4 times (quarterly) to produce the annual effect.
  */
-export function updateBrandPerception(
-  state: GameState,
-  result: YearSimulationResult,
+function applyQuarterlyPerception(
+  oldPerception: Record<DemographicId, number>,
+  allLaptopResults: LaptopSalesResult[],
+  companyResults: LaptopSalesResult[],
 ): Record<DemographicId, number> {
-  const oldPerception = state.brandPerception;
   const newPerception = { ...oldPerception };
-
-  // Accumulate weighted contributions per demographic
-  const contributionByDem: Partial<Record<DemographicId, number>> = {};
-  const weightByDem: Partial<Record<DemographicId, number>> = {};
-
-  for (const pr of result.playerResults) {
-    if (pr.unitsSold <= 0) continue;
-    const model = state.models.find((m) => m.design.id === pr.laptopId);
-    if (!model) continue;
-
-    const stats = computeStatsForDesign(model.design, state.year);
-
-    for (const db of pr.demographicBreakdown) {
-      if (db.unitsDemanded <= 0) continue;
-      const dem = DEMOGRAPHICS.find((d) => d.id === db.demographicId);
-      if (!dem) continue;
-
-      let statScore = 0;
-      for (const stat of ALL_STATS) {
-        statScore += (stats[stat] ?? 0) * (dem.statWeights[stat] ?? 0);
-      }
-
-      const ceiling = getPriceCeiling(dem.id, state.year);
-      if (model.retailPrice == null) continue;
-      const priceRatio = model.retailPrice / ceiling;
-
-      const valueForMoney = statScore - priceRatio;
-      const adjusted = valueForMoney < 0 ? valueForMoney * NEGATIVITY_MULTIPLIER : valueForMoney;
-
-      contributionByDem[dem.id] = (contributionByDem[dem.id] ?? 0) + adjusted * db.unitsDemanded;
-      weightByDem[dem.id] = (weightByDem[dem.id] ?? 0) + db.unitsDemanded;
-    }
-  }
+  const quarterlyDecay = Math.pow(PERCEPTION_DECAY, 0.25);
 
   for (const dem of DEMOGRAPHICS) {
     const demId = dem.id;
     const old = oldPerception[demId] ?? 0;
-    const totalContribution = contributionByDem[demId] ?? 0;
-    const totalWeight = weightByDem[demId] ?? 0;
 
-    const thisYearContribution = totalWeight > 0 ? totalContribution / totalWeight : 0;
-    const scaledContribution = thisYearContribution * PERCEPTION_CONTRIBUTION_SCALE;
+    // Collect all purchased laptop rawVPs in this demographic (all companies)
+    const allPurchases: { rawVP: number; units: number }[] = [];
+    for (const lr of allLaptopResults) {
+      const db = lr.demographicBreakdown.find((b) => b.demographicId === demId);
+      if (db && db.unitsDemanded > 0) {
+        allPurchases.push({ rawVP: db.rawVP, units: db.unitsDemanded });
+      }
+    }
 
-    newPerception[demId] = Math.max(-50, Math.min(50, old * PERCEPTION_DECAY + scaledContribution));
+    const totalUnitsAll = allPurchases.reduce((s, p) => s + p.units, 0);
+    const meanRawVP = totalUnitsAll > 0
+      ? allPurchases.reduce((s, p) => s + p.rawVP * p.units, 0) / totalUnitsAll
+      : 0;
+
+    // Collect this company's purchases in this demographic
+    let weightedExperience = 0;
+    let companyUnits = 0;
+    for (const cr of companyResults) {
+      const db = cr.demographicBreakdown.find((b) => b.demographicId === demId);
+      if (db && db.unitsDemanded > 0) {
+        const experience = db.rawVP - meanRawVP;
+        weightedExperience += experience * db.unitsDemanded;
+        companyUnits += db.unitsDemanded;
+      }
+    }
+
+    // Only purchasers affect perception — no purchases means decay only
+    if (companyUnits <= 0) {
+      newPerception[demId] = Math.max(PERCEPTION_MIN, Math.min(PERCEPTION_MAX, old * PERCEPTION_DECAY));
+      continue;
+    }
+
+    // Volume-weighted average experience, apply negativity multiplier
+    const avgExperience = weightedExperience / companyUnits;
+    const adjusted = avgExperience < 0 ? avgExperience * NEGATIVITY_MULTIPLIER : avgExperience;
+    const perceptionContribution = adjusted * PERCEPTION_CONTRIBUTION_SCALE;
+
+    // Apply quarterly: fold 4 quarters of decay + contribution
+    let perception = old;
+    const quarterlyContribution = perceptionContribution / 4;
+    for (let q = 0; q < 4; q++) {
+      perception = perception * quarterlyDecay + quarterlyContribution;
+    }
+
+    newPerception[demId] = Math.max(PERCEPTION_MIN, Math.min(PERCEPTION_MAX, perception));
   }
 
   return newPerception;
 }
 
-/**
- * Update per-demographic brand perception for a competitor.
- * Simplified: each demographic's perception decays toward zero over time.
- */
+/** Update per-demographic brand perception for the player. */
+export function updateBrandPerception(
+  state: GameState,
+  result: Pick<YearSimulationResult, "laptopResults" | "playerResults">,
+): Record<DemographicId, number> {
+  return applyQuarterlyPerception(state.brandPerception, result.laptopResults, result.playerResults);
+}
+
+/** Update per-demographic brand perception for a competitor. */
 export function updateCompetitorBrandPerception(
   comp: CompetitorState,
-  _result: YearSimulationResult,
+  result: YearSimulationResult,
 ): Record<DemographicId, number> {
-  const newPerception = { ...comp.brandPerception };
-  for (const dem of DEMOGRAPHICS) {
-    newPerception[dem.id] = (newPerception[dem.id] ?? 0) * PERCEPTION_DECAY;
-  }
-  return newPerception;
+  const compResults = result.laptopResults.filter((r) => r.owner === comp.id);
+  return applyQuarterlyPerception(comp.brandPerception, result.laptopResults, compResults);
 }
 

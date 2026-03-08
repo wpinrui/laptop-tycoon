@@ -34,6 +34,10 @@ export const PERCEPTION_CONTRIBUTION_SCALE = 5;
 export const PERCEPTION_DECAY = 0.5;
 /** Negativity bias multiplier — bad value-for-money hits harder */
 export const NEGATIVITY_MULTIPLIER = 1.5;
+/** Perception floor (minimum per-demographic perception score) */
+export const PERCEPTION_MIN = -50;
+/** Perception ceiling (maximum per-demographic perception score) */
+export const PERCEPTION_MAX = 50;
 
 // ==================== Sales Engine ====================
 

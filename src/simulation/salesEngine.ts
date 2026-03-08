@@ -17,6 +17,7 @@ import {
   LaptopSalesResult,
   YearSimulationResult,
   DemandProjection,
+  PerceptionChange,
 } from "./salesTypes";
 import {
   CHANNEL_MARGIN_RATE,
@@ -30,7 +31,7 @@ import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
 import { sampleCampaignOutcome } from "../renderer/manufacturing/utils/skewNormal";
 import { generateCompetitorModels } from "./competitorAI";
 import { COMPETITORS } from "../data/competitors";
-import { averageReach, getCampaignReachBoost } from "./brandProgression";
+import { averageReach, getCampaignReachBoost, updateBrandPerception } from "./brandProgression";
 
 // Cache synthetic competitor models per year for stable demand projections
 let cachedProjectionYear: number | null = null;
@@ -182,7 +183,7 @@ function calculateBiasedVP(
   demographic: Demographic,
   state: GameState,
   campaignPerception: number,
-): number {
+): { biasedVP: number; rawVP: number } {
   const weightedScore = calculateWeightedStatScore(normalisedStats, demographic);
   const pref = demographic.screenSizePreference;
   const screenPenalty = getScreenSizeFit(laptop.model.design.screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);
@@ -202,7 +203,7 @@ function calculateBiasedVP(
   const laptopPerceptionMod = campaignPerception;
 
   const biasedVP = rawVP * (1 + brandPerceptionMod / 100) * (1 + laptopPerceptionMod / 100);
-  return Math.max(0, biasedVP);
+  return { biasedVP: Math.max(0, biasedVP), rawVP };
 }
 
 // --- Market Share & Demand Resolution ---
@@ -229,6 +230,7 @@ export function simulateYear(state: GameState): YearSimulationResult {
       totalProfit: 0,
       cashAfterResolution: state.cash,
       gameOver: state.cash < 0,
+      perceptionChanges: [],
     };
   }
 
@@ -263,13 +265,13 @@ export function simulateYear(state: GameState): YearSimulationResult {
     const annualActiveBuyers = demographicPopulation / replacementCycle;
 
     // Calculate biased VP for each laptop in this demographic
-    const vpEntries: { laptopId: string; biasedVP: number; reachGatedPool: number }[] = [];
+    const vpEntries: { laptopId: string; biasedVP: number; rawVP: number; reachGatedPool: number }[] = [];
     let totalBiasedVP = 0;
 
     for (const laptop of allLaptops) {
       const normStats = normalisedStatsMap.get(laptop.id)!;
       const campPerc = campaignPerceptions.get(laptop.id)!;
-      const biasedVP = calculateBiasedVP(laptop, normStats, demographic, state, campPerc);
+      const { biasedVP, rawVP } = calculateBiasedVP(laptop, normStats, demographic, state, campPerc);
 
       // Each laptop's addressable pool is gated by its owner's reach in this demographic
       let reach: number;
@@ -282,12 +284,12 @@ export function simulateYear(state: GameState): YearSimulationResult {
       reach = Math.min(reach, 100);
       const reachGatedPool = annualActiveBuyers * (reach / 100);
 
-      vpEntries.push({ laptopId: laptop.id, biasedVP, reachGatedPool });
+      vpEntries.push({ laptopId: laptop.id, biasedVP, rawVP, reachGatedPool });
       totalBiasedVP += biasedVP;
     }
 
     // Everyone in the active pool buys: purchase_probability = biased_vp / sum(all biased_vps)
-    for (const { laptopId, biasedVP, reachGatedPool } of vpEntries) {
+    for (const { laptopId, biasedVP, rawVP, reachGatedPool } of vpEntries) {
       const purchaseProbability = totalBiasedVP > 0 ? biasedVP / totalBiasedVP : 0;
       const unitsDemanded = Math.round(reachGatedPool * purchaseProbability);
 
@@ -298,6 +300,7 @@ export function simulateYear(state: GameState): YearSimulationResult {
         appeal: biasedVP,
         marketShare: purchaseProbability,
         unitsDemanded,
+        rawVP,
       });
     }
   }
@@ -344,6 +347,9 @@ export function simulateYear(state: GameState): YearSimulationResult {
   const cashAfterResolution = state.cash + playerRevenue;
   const gameOver = cashAfterResolution < 0;
 
+  // Compute player perception changes for tracking in results
+  const perceptionChanges = computePerceptionChanges(state, laptopResults, playerResults);
+
   return {
     year,
     laptopResults,
@@ -352,7 +358,28 @@ export function simulateYear(state: GameState): YearSimulationResult {
     totalProfit: playerProfit,
     cashAfterResolution,
     gameOver,
+    perceptionChanges,
   };
+}
+
+// --- Perception Change Computation ---
+
+/**
+ * Compute per-demographic perception changes for the player.
+ * Delegates to updateBrandPerception (single source of truth) and diffs the result.
+ */
+function computePerceptionChanges(
+  state: GameState,
+  laptopResults: LaptopSalesResult[],
+  playerResults: LaptopSalesResult[],
+): PerceptionChange[] {
+  const newPerception = updateBrandPerception(state, { laptopResults, playerResults });
+
+  return DEMOGRAPHICS.map((dem) => {
+    const oldP = state.brandPerception[dem.id] ?? 0;
+    const newP = newPerception[dem.id] ?? 0;
+    return { demographicId: dem.id, oldPerception: oldP, newPerception: newP, delta: newP - oldP };
+  });
 }
 
 // --- Demand Projection (for manufacturing wizard) ---
@@ -449,7 +476,7 @@ export function projectDemandRange(
 
     for (const laptop of allLaptops) {
       const normStats = normalisedStatsMap.get(laptop.id)!;
-      const vp = calculateBiasedVP(laptop, normStats, demographic, state, 0);
+      const { biasedVP: vp } = calculateBiasedVP(laptop, normStats, demographic, state, 0);
       totalBiasedVP += vp;
       if (laptop.id === modelId) ourBiasedVP = vp;
     }

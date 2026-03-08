@@ -4,7 +4,7 @@ import { GameState, LaptopDesign, LaptopModel, ModelStatus, createInitialGameSta
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { YearSimulationResult } from "../../simulation/salesTypes";
 import { clearProjectionCache } from "../../simulation/salesEngine";
-import { updateBrandReach, updateBrandPerception, updateCompetitorBrandReach, updateCompetitorBrandPerception } from "../../simulation/brandProgression";
+import { updateBrandReach, updateCompetitorBrandReach, updateCompetitorBrandPerception } from "../../simulation/brandProgression";
 
 export interface CompetitorModelEntry {
   competitorId: string;
@@ -132,7 +132,9 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         cash: result.cashAfterResolution,
         brandReach: updateBrandReach(state, result),
-        brandPerception: updateBrandPerception(state, result),
+        brandPerception: Object.fromEntries(
+          result.perceptionChanges.map((pc) => [pc.demographicId, pc.newPerception]),
+        ) as Record<DemographicId, number>,
         competitors: state.competitors.map((comp) => ({
           ...comp,
           brandReach: updateCompetitorBrandReach(comp, result),

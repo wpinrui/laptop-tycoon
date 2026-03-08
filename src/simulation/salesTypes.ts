@@ -21,6 +21,8 @@ export interface DemographicSalesBreakdown {
   appeal: number;
   marketShare: number;
   unitsDemanded: number;
+  /** Raw value proposition (weighted_score × screen_penalty / price) before perception mods */
+  rawVP: number;
 }
 
 export interface LaptopSalesResult {
@@ -38,6 +40,14 @@ export interface LaptopSalesResult {
   demographicBreakdown: DemographicSalesBreakdown[];
 }
 
+/** Per-demographic perception change for a single company */
+export interface PerceptionChange {
+  demographicId: DemographicId;
+  oldPerception: number;
+  newPerception: number;
+  delta: number;
+}
+
 export interface YearSimulationResult {
   year: number;
   laptopResults: LaptopSalesResult[];
@@ -46,6 +56,8 @@ export interface YearSimulationResult {
   totalProfit: number;
   cashAfterResolution: number;
   gameOver: boolean;
+  /** Per-demographic perception changes for the player this year */
+  perceptionChanges: PerceptionChange[];
 }
 
 export interface DemandProjection {
