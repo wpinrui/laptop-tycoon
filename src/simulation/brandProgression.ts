@@ -10,27 +10,21 @@ import { GameState, CompetitorState } from "../renderer/state/gameTypes";
 import { YearSimulationResult } from "./salesTypes";
 import { computeStatsForDesign } from "./statCalculation";
 import { getPriceCeiling } from "./demographicData";
+import {
+  S_CURVE_STEEPNESS,
+  S_CURVE_MIDPOINT,
+  AWARENESS_DIVISOR,
+  WOM_DIVISOR,
+  CAMPAIGN_DIVISOR,
+  CAMPAIGN_IMMEDIATE_REACH_DIVISOR,
+  PERCEPTION_CONTRIBUTION_SCALE,
+  REACH_INACTIVITY_DECAY,
+  COMPETITOR_TIME_IN_MARKET_BONUS,
+  PERCEPTION_DECAY,
+  NEGATIVITY_MULTIPLIER,
+} from "./tunables";
 
 // ==================== Brand Reach ====================
-
-/** S-curve steepness — higher = steeper transition in the middle */
-const S_CURVE_STEEPNESS = 0.08;
-/** S-curve midpoint (reach % where growth is fastest) */
-const S_CURVE_MIDPOINT = 50;
-/** Awareness budget divisor — every $X of awareness budget contributes 1 raw reach point */
-const AWARENESS_BUDGET_DIVISOR = 500_000;
-/** Word-of-mouth divisor — every X units sold in a demographic contributes 1 raw reach point */
-const WORD_OF_MOUTH_DIVISOR = 5_000;
-/** Marketing campaign divisor — every $X of campaign spend contributes 1 raw reach point (S-curve, year-over-year) */
-const CAMPAIGN_REACH_DIVISOR = 2_000_000;
-/** Immediate reach divisor — every $X of campaign spend gives 1% immediate reach (flat, same-year) */
-const CAMPAIGN_IMMEDIATE_REACH_DIVISOR = 500_000;
-/** Scales raw value-for-money contribution into perception points (roughly ±5 per year) */
-const PERCEPTION_CONTRIBUTION_SCALE = 5;
-/** Reach decay rate when no products on sale (proportional, per year) */
-const REACH_INACTIVITY_DECAY = 0.10;
-/** Competitor time-in-market reach growth (raw reach points per year just for existing) */
-const COMPETITOR_TIME_IN_MARKET_BONUS = 0.5;
 
 /**
  * Logistic S-curve growth factor.
@@ -104,7 +98,7 @@ export function updateBrandReach(
     let rawGrowth = 0;
 
     // 1. Awareness budget — small uniform push across all demographics
-    rawGrowth += state.brandAwarenessBudget / AWARENESS_BUDGET_DIVISOR;
+    rawGrowth += state.brandAwarenessBudget / AWARENESS_DIVISOR;
 
     // 2. Sponsorships — targeted boosts
     for (const sponsorshipId of state.sponsorships) {
@@ -116,10 +110,10 @@ export function updateBrandReach(
 
     // 3. Word of mouth — organic from units sold in this demographic
     const unitsSold = unitsByDemographic[demId] ?? 0;
-    rawGrowth += unitsSold / WORD_OF_MOUTH_DIVISOR;
+    rawGrowth += unitsSold / WOM_DIVISOR;
 
     // 4. Marketing campaigns — secondary reach from ad spend (uniform across demographics)
-    rawGrowth += totalCampaignSpend / CAMPAIGN_REACH_DIVISOR;
+    rawGrowth += totalCampaignSpend / CAMPAIGN_DIVISOR;
 
     // Apply S-curve: growth is modulated by current reach position
     const growth = rawGrowth * sCurveGrowthFactor(current) * 100;
@@ -160,7 +154,7 @@ export function updateCompetitorBrandReach(
 
     // Competitor reach growth from sales + time-in-market
     const unitsSold = unitsByDemographic[demId] ?? 0;
-    const rawGrowth = unitsSold / WORD_OF_MOUTH_DIVISOR + COMPETITOR_TIME_IN_MARKET_BONUS;
+    const rawGrowth = unitsSold / WOM_DIVISOR + COMPETITOR_TIME_IN_MARKET_BONUS;
     const growth = rawGrowth * sCurveGrowthFactor(current) * 100;
 
     newReach[demId] = Math.max(0, Math.min(100, current + growth));
@@ -170,11 +164,6 @@ export function updateCompetitorBrandReach(
 }
 
 // ==================== Brand Perception ====================
-
-/** Perception decay factor (50% fade per year — recency bias) */
-const PERCEPTION_DECAY = 0.5;
-/** Negativity bias multiplier — bad value-for-money hits harder */
-const NEGATIVITY_BIAS = 1.5;
 
 /**
  * Update per-demographic brand perception based on value-for-money of products sold.
@@ -214,7 +203,7 @@ export function updateBrandPerception(
       const priceRatio = model.retailPrice / ceiling;
 
       const valueForMoney = statScore - priceRatio;
-      const adjusted = valueForMoney < 0 ? valueForMoney * NEGATIVITY_BIAS : valueForMoney;
+      const adjusted = valueForMoney < 0 ? valueForMoney * NEGATIVITY_MULTIPLIER : valueForMoney;
 
       contributionByDem[dem.id] = (contributionByDem[dem.id] ?? 0) + adjusted * db.unitsDemanded;
       weightByDem[dem.id] = (weightByDem[dem.id] ?? 0) + db.unitsDemanded;

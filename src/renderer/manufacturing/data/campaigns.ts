@@ -1,4 +1,5 @@
 import { AdCampaign } from "../types";
+import { CAMPAIGN_COST_INFLATION, CAMPAIGN_BASE_YEAR } from "../../../simulation/tunables";
 
 export const AD_CAMPAIGNS: AdCampaign[] = [
   {
@@ -38,11 +39,8 @@ export const AD_CAMPAIGNS: AdCampaign[] = [
   },
 ];
 
-export const CAMPAIGN_COST_INFLATION = 1.03;
-export const BASE_YEAR = 2000;
-
 export function getCampaignCost(campaign: AdCampaign, year: number): number {
-  const yearsElapsed = year - BASE_YEAR;
+  const yearsElapsed = year - CAMPAIGN_BASE_YEAR;
   return Math.round(campaign.baseCost * Math.pow(CAMPAIGN_COST_INFLATION, yearsElapsed));
 }
 
