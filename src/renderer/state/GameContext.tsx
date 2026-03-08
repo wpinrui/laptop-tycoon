@@ -309,8 +309,13 @@ function buildYearResult(
           const match = mergedBreakdown.find((b) => b.demographicId === db.demographicId);
           if (match) {
             match.unitsDemanded += db.unitsDemanded;
+            match.totalPool += db.totalPool;
+            match.addressablePool += db.addressablePool;
             match.marketShare = db.marketShare; // Use latest quarter's share
             match.rawVP = db.rawVP;
+            match.weightedStatScore = db.weightedStatScore; // Use latest
+            match.screenPenalty = db.screenPenalty;
+            match.perceptionMod = db.perceptionMod;
           } else {
             mergedBreakdown.push({ ...db });
           }

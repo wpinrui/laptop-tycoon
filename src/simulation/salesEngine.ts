@@ -181,28 +181,38 @@ function getLaptopCampaignPerception(laptop: MarketLaptop, playerId: string): nu
  *
  * Note: reach is NOT applied here — it gates the demand pool size instead (in simulateQuarter).
  */
+interface VPComponents {
+  biasedVP: number;
+  rawVP: number;
+  weightedStatScore: number;
+  screenPenalty: number;
+  /** Combined brand + campaign perception modifier (%) */
+  perceptionMod: number;
+}
+
 function calculateBiasedVP(
   laptop: MarketLaptop,
   normalisedStats: Record<LaptopStat, number>,
   demographic: Demographic,
   state: GameState,
   campaignPerception: number,
-): { biasedVP: number; rawVP: number } {
-  const weightedScore = calculateWeightedStatScore(normalisedStats, demographic);
+): VPComponents {
+  const weightedStatScore = calculateWeightedStatScore(normalisedStats, demographic);
   const pref = demographic.screenSizePreference;
   const screenPenalty = getScreenSizeFit(laptop.model.design.screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);
 
   // Step 1: raw_vp = (weighted_score × screen_penalty) / price
-  const rawVP = (weightedScore * screenPenalty) / laptop.retailPrice;
+  const rawVP = (weightedStatScore * screenPenalty) / laptop.retailPrice;
 
   // Step 2: biased_vp = raw_vp × (1 + brand_perception_mod / 100) × (1 + laptop_perception_mod / 100)
   const company = state.companies.find((c) => c.id === laptop.owner);
   const brandPerceptionMod = company ? (company.brandPerception[demographic.id] ?? 0) : 0;
 
   const laptopPerceptionMod = campaignPerception;
+  const perceptionMod = ((1 + brandPerceptionMod / 100) * (1 + laptopPerceptionMod / 100) - 1) * 100;
 
-  const biasedVP = rawVP * (1 + brandPerceptionMod / 100) * (1 + laptopPerceptionMod / 100);
-  return { biasedVP: Math.max(0, biasedVP), rawVP };
+  const biasedVP = rawVP * (1 + perceptionMod / 100);
+  return { biasedVP: Math.max(0, biasedVP), rawVP, weightedStatScore, screenPenalty, perceptionMod };
 }
 
 // --- Market Share & Demand Resolution ---
@@ -270,13 +280,13 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
     const quarterlyActiveBuyers = annualActiveBuyers * quarterShare;
 
     // Calculate biased VP for each laptop in this demographic
-    const vpEntries: { laptopId: string; biasedVP: number; rawVP: number; reachGatedPool: number }[] = [];
+    const vpEntries: { laptopId: string; vp: VPComponents; reachGatedPool: number }[] = [];
     let totalBiasedVP = 0;
 
     for (const laptop of allLaptops) {
       const normStats = normalisedStatsMap.get(laptop.id)!;
       const campPerc = campaignPerceptions.get(laptop.id)!;
-      const { biasedVP, rawVP } = calculateBiasedVP(laptop, normStats, demographic, state, campPerc);
+      const vp = calculateBiasedVP(laptop, normStats, demographic, state, campPerc);
 
       // Each laptop's addressable pool is gated by its owner's reach in this demographic
       const company = state.companies.find((c) => c.id === laptop.owner);
@@ -287,23 +297,28 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
       reach = Math.min(reach, 100);
       const reachGatedPool = quarterlyActiveBuyers * (reach / 100);
 
-      vpEntries.push({ laptopId: laptop.id, biasedVP, rawVP, reachGatedPool });
-      totalBiasedVP += biasedVP;
+      vpEntries.push({ laptopId: laptop.id, vp, reachGatedPool });
+      totalBiasedVP += vp.biasedVP;
     }
 
     // Everyone in the active pool buys: purchase_probability = biased_vp / sum(all biased_vps)
-    for (const { laptopId, biasedVP, rawVP, reachGatedPool } of vpEntries) {
-      const purchaseProbability = totalBiasedVP > 0 ? biasedVP / totalBiasedVP : 0;
+    for (const { laptopId, vp, reachGatedPool } of vpEntries) {
+      const purchaseProbability = totalBiasedVP > 0 ? vp.biasedVP / totalBiasedVP : 0;
       const unitsDemanded = Math.round(reachGatedPool * purchaseProbability);
 
       const entry = demandByLaptop.get(laptopId)!;
       entry.total += unitsDemanded;
       entry.breakdown.push({
         demographicId: demId,
-        appeal: biasedVP,
+        appeal: vp.biasedVP,
         marketShare: purchaseProbability,
         unitsDemanded,
-        rawVP,
+        rawVP: vp.rawVP,
+        totalPool: Math.round(quarterlyActiveBuyers),
+        addressablePool: Math.round(reachGatedPool),
+        weightedStatScore: vp.weightedStatScore,
+        screenPenalty: vp.screenPenalty,
+        perceptionMod: vp.perceptionMod,
       });
     }
   }

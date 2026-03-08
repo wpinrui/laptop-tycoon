@@ -8,6 +8,7 @@ import { tokens } from "../shell/tokens";
 import { formatCurrency, formatNumber, QUARTER_LABELS } from "../utils/formatCash";
 import { titleStyle, sectionStyle, tableStyle, thStyle, tdStyle, tdRight, summaryRowStyle, sectionHeadingStyle } from "./summaryStyles";
 import { reviewScoreColor } from "../utils/reviewScoreColor";
+import { DemographicDetailSection } from "./DemographicDetailSection";
 
 export function QuarterlySummaryScreen() {
   const { state, dispatch } = useGame();
@@ -83,6 +84,13 @@ export function QuarterlySummaryScreen() {
           </tbody>
         </table>
       </div>
+
+      {/* Demographic detail: pool sizes, market share, loss reasons, perception */}
+      <DemographicDetailSection
+        allLaptopResults={result.laptopResults}
+        playerResults={result.playerResults}
+        perceptionChanges={result.perceptionChanges}
+      />
 
       {/* Reviews published after Q1 */}
       {result.quarter === 1 && state.currentYearReviews.length > 0 && (
