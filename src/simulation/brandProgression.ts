@@ -28,6 +28,8 @@ const CAMPAIGN_REACH_DIVISOR = 2_000_000;
 const CAMPAIGN_IMMEDIATE_REACH_DIVISOR = 500_000;
 /** Reach decay rate when no products on sale (proportional, per year) */
 const REACH_INACTIVITY_DECAY = 0.10;
+/** Competitor time-in-market reach growth (raw reach points per year just for existing) */
+const COMPETITOR_TIME_IN_MARKET_BONUS = 0.5;
 
 /**
  * Logistic S-curve growth factor.
@@ -153,7 +155,7 @@ export function updateCompetitorBrandReach(
 
     // Competitor reach growth from sales + time-in-market
     const unitsSold = unitsByDemographic[demId] ?? 0;
-    const rawGrowth = unitsSold / WORD_OF_MOUTH_DIVISOR + 0.5; // +0.5 time-in-market bonus
+    const rawGrowth = unitsSold / WORD_OF_MOUTH_DIVISOR + COMPETITOR_TIME_IN_MARKET_BONUS;
     const growth = rawGrowth * sCurveGrowthFactor(current) * 100;
 
     newReach[demId] = Math.max(0, Math.min(100, current + growth));
@@ -208,8 +210,7 @@ export function updateBrandPerception(
       const priceRatio = model.retailPrice / ceiling;
 
       // Value-for-money: high stat score relative to price = positive, overpaying = negative
-      // Centered at 0: priceRatio of 1.0 with average stats = neutral
-      const valueForMoney = (statScore * 10 - priceRatio * 10) / 10;
+      const valueForMoney = statScore - priceRatio;
 
       // Apply negativity bias
       const adjusted = valueForMoney < 0 ? valueForMoney * NEGATIVITY_BIAS : valueForMoney;
@@ -230,14 +231,12 @@ export function updateBrandPerception(
 
 /**
  * Update global brand perception for a competitor.
- * Simplified: competitors maintain roughly stable perception with slight drift from sales volume.
+ * Simplified: competitors decay toward zero over time.
  */
 export function updateCompetitorBrandPerception(
   comp: CompetitorState,
   _result: YearSimulationResult,
 ): number {
-  // Competitors decay toward their archetype baseline
-  // Budget brands drift slightly negative, premium slightly positive
   return comp.brandPerception * PERCEPTION_DECAY;
 }
 
