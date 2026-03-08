@@ -343,21 +343,7 @@ The accumulated sentiment a demographic has about your company, based on their p
 - Player: 0 (neutral) across all demographics.
 - AI competitors: Pre-set per archetype to reflect their market position (e.g., ValueTech: +25 Budget Buyer, -15 Business Professional; Prestige Computing: +25 Creative Professional, -20 Budget Buyer; OmniBook: +5 to +10 broadly).
 
-**How it changes (yearly, after sales resolve):**
-
-Only laptops that a demographic actually purchased affect that demographic's perception of the selling company.
-
-```
-experience = your_laptop_raw_vp - mean(raw_vp of all laptops this demographic purchased across all companies)
-perception_contribution = experience × volume_weight × negativity_multiplier
-
-where:
-  volume_weight = units_this_demographic_bought_from_you / normalizing_constant
-  negativity_multiplier = 1.5 if experience < 0, else 1.0
-
-new_perception = old_perception × DECAY + perception_contribution
-DECAY = 0.5 to 0.6 (tunable)
-```
+**How it changes:** See Post-Sales Feedback section for the quarterly update formula.
 
 **Key properties:**
 - **Recency bias:** Exponential decay means old experiences fade. A bad laptop from 4 years ago barely registers.
@@ -402,7 +388,7 @@ A **general awareness budget** slider is also available — annual spend that pr
 
 ## Marketing
 
-Part of the manufacturing wizard. The player selects one ad campaign per model before committing to manufacturing.
+The player may select one ad campaign per model per quarter. Each campaign lasts one quarter only. The player can run a new campaign for the same model in subsequent quarters.
 
 ### Ad Campaigns
 
@@ -416,7 +402,7 @@ Five campaign tiers with increasing risk/reward:
 | Comparative Ad | $600,000 | High | -10% to +30% |
 | Stunt / Viral | $200,000 | Very High | -20% to +40% |
 
-Each campaign has a **skew-normal distribution** defining the probability of different sales impact outcomes. Higher-risk campaigns are cheaper but have wider variance and negative skew (downside tail is fatter).
+Each campaign has a **skew-normal distribution** defining the probability of different perception modifier outcomes. Higher-risk campaigns are cheaper but have wider variance and negative skew (downside tail is fatter).
 
 ### Campaign Cost Inflation
 
@@ -428,13 +414,13 @@ actual_cost = base_cost × 1.03^(current_year - 2000)
 
 ### Sales Impact
 
-The campaign's outcome is sampled from its distribution at year-end. The result is a **percentage modifier to perceived value** (laptop perception), not a direct sales modifier:
+The campaign's outcome is sampled from its distribution when the quarter simulates. The result is a **percentage modifier to perceived value** (laptop perception), not a direct sales modifier:
 
 ```
 biased_vp = raw_vp × (1 + brand_perception_mod / 100) × (1 + laptop_perception_mod / 100)
 ```
 
-The player sees the distribution shape (via a chart) and the min/mean/max range before choosing, but the actual outcome is only revealed after the year simulates.
+The player sees the distribution shape (via a chart) and the min/mean/max range before choosing, but the actual outcome is only revealed after the quarter simulates.
 
 ---
 
