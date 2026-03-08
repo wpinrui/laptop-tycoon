@@ -124,6 +124,10 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     }
     case "APPLY_SIMULATION_RESULT": {
       const result = action.result;
+      // Build lookup of simulation results by laptop id for storing on plans
+      const simByLaptop = new Map(
+        result.playerResults.map((r) => [r.laptopId, r]),
+      );
       return {
         ...state,
         cash: result.cashAfterResolution,
@@ -134,6 +138,23 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           brandReach: updateCompetitorBrandReach(comp, result),
           brandPerception: updateCompetitorBrandPerception(comp, result),
         })),
+        models: state.models.map((m) => {
+          const sim = simByLaptop.get(m.design.id);
+          if (!sim || !m.manufacturingPlan) return m;
+          return {
+            ...m,
+            manufacturingPlan: {
+              ...m.manufacturingPlan,
+              results: {
+                campaignPerceptionMod: sim.campaignPerceptionMod,
+                unitsSold: sim.unitsSold,
+                revenue: sim.revenue,
+                profit: sim.profit,
+                unsoldUnits: sim.unsoldUnits,
+              },
+            },
+          };
+        }),
         yearSimulated: true,
         yearHistory: [...state.yearHistory, result],
         lastSimulationResult: result,

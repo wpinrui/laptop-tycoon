@@ -33,6 +33,8 @@ export interface LaptopSalesResult {
   revenue: number;
   manufacturingCost: number;
   profit: number;
+  /** Sampled campaign perception modifier (%) applied to this laptop's biased VP */
+  campaignPerceptionMod: number;
   demographicBreakdown: DemographicSalesBreakdown[];
 }
 

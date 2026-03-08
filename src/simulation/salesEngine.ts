@@ -27,6 +27,7 @@ import {
   REPLACEMENT_CYCLE,
 } from "./tunables";
 import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
+import { sampleCampaignOutcome } from "../renderer/manufacturing/utils/skewNormal";
 import { generateCompetitorModels } from "./competitorAI";
 import { COMPETITORS } from "../data/competitors";
 import { averageReach, getCampaignReachBoost } from "./brandProgression";
@@ -145,22 +146,15 @@ function calculateWeightedStatScore(
 
 /**
  * Sample campaign perception modifier from distribution.
- * Returns a perception value (added to brand perception), NOT a multiplier.
+ * Returns a percentage modifier to laptop perceived value (laptop_perception_mod).
  */
 function sampleCampaignPerception(campaignId: string | null): number {
   if (!campaignId || campaignId === "no_campaign") return 0;
   const campaign = AD_CAMPAIGNS.find((c) => c.id === campaignId);
   if (!campaign) return 0;
 
-  const { mean, stdDev, min, max } = campaign.distribution;
-  // Box-Muller for normal sample
-  const u1 = Math.random() || 1e-10; // guard against log(0)
-  const u2 = Math.random();
-  const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-  let sample = mean + stdDev * z;
-  sample = Math.max(min, Math.min(max, sample));
-
-  return sample;
+  const { mean, stdDev, skew, min, max } = campaign.distribution;
+  return sampleCampaignOutcome(mean, stdDev, skew, min, max);
 }
 
 /** Get laptop-specific campaign perception modifier */
@@ -331,6 +325,7 @@ export function simulateYear(state: GameState): YearSimulationResult {
       revenue,
       manufacturingCost: laptop.totalManufacturingCost,
       profit,
+      campaignPerceptionMod: campaignPerceptions.get(laptop.id) ?? 0,
       demographicBreakdown: demand.breakdown,
     };
     laptopResults.push(result);

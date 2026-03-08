@@ -57,7 +57,7 @@ export function ConfirmationStep() {
         </div>
         {campaign.distribution.stdDev > 0 && (
           <div style={rowStyle}>
-            <span style={{ color: tokens.colors.textMuted }}>Expected sales impact</span>
+            <span style={{ color: tokens.colors.textMuted }}>Perceived value modifier</span>
             <span style={{ fontWeight: 600 }}>
               {campaign.distribution.min > 0 ? "+" : ""}{campaign.distribution.min}% to +{campaign.distribution.max}%
             </span>
