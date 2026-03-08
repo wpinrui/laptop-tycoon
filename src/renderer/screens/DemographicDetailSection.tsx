@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { CSSProperties, useState, useMemo } from "react";
 import { DEMOGRAPHICS } from "../../data/demographics";
 import { LaptopStat, ALL_STATS, DemographicId, Demographic } from "../../data/types";
 import { LaptopSalesResult, PerceptionChange } from "../../simulation/salesTypes";
@@ -42,7 +42,7 @@ function getTopStats(demographic: Demographic, count: number): LaptopStat[] {
 function resolveLaptopName(
   laptopId: string,
   owner: string,
-  companies: { id: string; name: string; models: { design: { id: string; name: string } }[] }[],
+  companies: CompanyInfo[],
 ): string {
   const company = companies.find((c) => c.id === owner);
   if (!company) return laptopId;
@@ -100,6 +100,10 @@ function scoreColor(value: number, allValues: number[], higherIsBetter: boolean)
 const MAX_COLUMNS = 5;
 const TOP_STATS_COUNT = 5;
 
+const rowLabelStyle: CSSProperties = { ...tdStyle, fontWeight: 600, fontSize: tokens.font.sizeSmall };
+
+type CompanyInfo = { id: string; name: string; models: { design: { id: string; name: string } }[] };
+
 interface DemographicDetailProps {
   allLaptopResults: LaptopSalesResult[];
   playerResults: LaptopSalesResult[];
@@ -126,7 +130,7 @@ function DemographicComparisonTable({
 }: {
   demographic: Demographic;
   allResults: LaptopSalesResult[];
-  companies: { id: string; name: string; models: { design: { id: string; name: string } }[] }[];
+  companies: CompanyInfo[];
 }) {
   const entries = useMemo(() => buildComparisonEntries(allResults, demographic.id), [allResults, demographic.id]);
   const topStats = useMemo(() => getTopStats(demographic, TOP_STATS_COUNT), [demographic]);
@@ -154,7 +158,7 @@ function DemographicComparisonTable({
           value={filterText}
           onChange={(e) => setFilterText(e.target.value)}
           style={{
-            padding: `2px ${tokens.spacing.xs}px`,
+            padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
             fontSize: tokens.font.sizeSmall,
             background: tokens.colors.surface,
             color: tokens.colors.text,
@@ -181,7 +185,7 @@ function DemographicComparisonTable({
             const scores = visible.map((e) => Math.round((e.normalizedStats[stat] ?? 0) * 100));
             return (
               <tr key={stat}>
-                <td style={{ ...tdStyle, fontWeight: 600, fontSize: tokens.font.sizeSmall }}>{STAT_LABELS[stat]}</td>
+                <td style={rowLabelStyle}>{STAT_LABELS[stat]}</td>
                 {visible.map((e, i) => (
                   <td key={e.laptopId} style={{ ...tdRight, color: scoreColor(scores[i], scores, true) }}>
                     {scores[i]}
@@ -191,7 +195,7 @@ function DemographicComparisonTable({
             );
           })}
           <tr>
-            <td style={{ ...tdStyle, fontWeight: 600, fontSize: tokens.font.sizeSmall }}>Price</td>
+            <td style={rowLabelStyle}>Price</td>
             {visible.map((e) => (
               <td key={e.laptopId} style={{ ...tdRight, color: scoreColor(e.retailPrice, priceValues, false) }}>
                 ${formatNumber(e.retailPrice)}
@@ -199,7 +203,7 @@ function DemographicComparisonTable({
             ))}
           </tr>
           <tr>
-            <td style={{ ...tdStyle, fontWeight: 600, fontSize: tokens.font.sizeSmall }}>Units Sold</td>
+            <td style={rowLabelStyle}>Units Sold</td>
             {visible.map((e) => (
               <td key={e.laptopId} style={{ ...tdRight, color: scoreColor(e.unitsSold, unitValues, true) }}>
                 {formatNumber(e.unitsSold)}
@@ -258,7 +262,7 @@ export function DemographicDetailSection({ allLaptopResults, playerResults, perc
                   border: `1px solid ${tokens.colors.panelBorder}`,
                   borderRadius: tokens.borderRadius.sm,
                   cursor: "pointer",
-                  marginBottom: 2,
+                  marginBottom: tokens.spacing.xs,
                   fontSize: tokens.font.sizeBase,
                   fontWeight: 600,
                   textAlign: "left",
