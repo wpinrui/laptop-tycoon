@@ -10,8 +10,7 @@ import { hasDiscontinuedComponents, LaptopModel } from "../../state/gameTypes";
 import { COMPETITORS } from "../../../data/competitors";
 import { generateCompetitorModels } from "../../../simulation/competitorAI";
 import { simulateQuarter } from "../../../simulation/salesEngine";
-
-const QUARTER_LABELS = ["Q1", "Q2", "Q3", "Q4"] as const;
+import { QUARTER_LABELS } from "../../utils/formatCash";
 
 /** Models that need a current-year manufacturing plan before simulation. */
 function modelsNeedingPlans(state: { year: number; models: ReturnType<typeof getActiveModels> }) {
@@ -69,9 +68,10 @@ export function AdvanceYearCard() {
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
 
-          // Q1 only: generate competitor models for this year
+          // Q1 only: generate competitor models once (reused for dispatch + simulation)
+          const generated = isQ1 ? generateCompetitorModels(state.year, COMPETITORS) : [];
+
           if (isQ1) {
-            const generated = generateCompetitorModels(state.year, COMPETITORS);
             const competitorModels = COMPETITORS.map((c, i) => ({
               competitorId: c.id,
               model: generated[i],
@@ -80,8 +80,8 @@ export function AdvanceYearCard() {
           }
 
           // Q1: transition active models with current-year plans to "manufacturing"
+          const hasCurrentPlan = (m: LaptopModel) => m.manufacturingPlan?.year === state.year;
           if (isQ1) {
-            const hasCurrentPlan = (m: LaptopModel) => m.manufacturingPlan?.year === state.year;
             for (const model of activeModels) {
               if (hasCurrentPlan(model)) {
                 dispatch({ type: "UPDATE_MODEL_STATUS", modelId: model.design.id, status: "manufacturing" });
@@ -105,9 +105,7 @@ export function AdvanceYearCard() {
           // Build state for simulation
           const stateForSim = (() => {
             if (isQ1) {
-              const generated = generateCompetitorModels(state.year, COMPETITORS);
               const byCompetitorId = new Map(COMPETITORS.map((c, i) => [c.id, generated[i]]));
-              const hasCurrentPlan = (m: LaptopModel) => m.manufacturingPlan?.year === state.year;
               return {
                 ...state,
                 cash: cashAfterManufacturing,

@@ -7,6 +7,7 @@ import { MenuButton } from "../shell/MenuButton";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
 import { DEMOGRAPHICS } from "../../data/demographics";
+import { formatCurrency, formatNumber } from "../utils/formatCash";
 
 const titleStyle: CSSProperties = {
   margin: 0,
@@ -52,14 +53,6 @@ const sectionHeadingStyle: CSSProperties = {
   marginBottom: tokens.spacing.sm,
   color: tokens.colors.accent,
 };
-
-function formatCurrency(amount: number): string {
-  return "$" + amount.toLocaleString("en-US", { maximumFractionDigits: 0 });
-}
-
-function formatNumber(n: number): string {
-  return n.toLocaleString("en-US");
-}
 
 export function YearEndSummaryScreen() {
   const { state, dispatch } = useGame();

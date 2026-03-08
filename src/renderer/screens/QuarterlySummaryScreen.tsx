@@ -6,8 +6,7 @@ import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
-
-const QUARTER_LABELS = ["Q1", "Q2", "Q3", "Q4"] as const;
+import { formatCurrency, formatNumber, QUARTER_LABELS } from "../utils/formatCash";
 
 const titleStyle: CSSProperties = {
   margin: 0,
@@ -53,14 +52,6 @@ const sectionHeadingStyle: CSSProperties = {
   marginBottom: tokens.spacing.sm,
   color: tokens.colors.accent,
 };
-
-function formatCurrency(amount: number): string {
-  return "$" + amount.toLocaleString("en-US", { maximumFractionDigits: 0 });
-}
-
-function formatNumber(n: number): string {
-  return n.toLocaleString("en-US");
-}
 
 export function QuarterlySummaryScreen() {
   const { state, dispatch } = useGame();
