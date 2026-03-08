@@ -6,7 +6,7 @@
 import { DemographicId } from "../data/types";
 import { DEMOGRAPHICS } from "../data/demographics";
 import { SPONSORSHIPS } from "../data/sponsorships";
-import { GameState, CompetitorState } from "../renderer/state/gameTypes";
+import { GameState, CompanyState, getPlayerCompany } from "../renderer/state/gameTypes";
 import { LaptopSalesResult, YearSimulationResult } from "./salesTypes";
 import {
   S_CURVE_STEEPNESS,
@@ -39,8 +39,9 @@ function sCurveGrowthFactor(currentReach: number): number {
 
 /** Sum marketing campaign spend across all player laptops for the current year */
 function getTotalCampaignSpend(state: GameState): number {
+  const player = getPlayerCompany(state);
   let total = 0;
-  for (const model of state.models) {
+  for (const model of player.models) {
     const plan = model.manufacturingPlan;
     if (plan && plan.year === state.year && plan.marketing.cost > 0) {
       total += plan.marketing.cost;
@@ -73,9 +74,10 @@ export function updateBrandReach(
   state: GameState,
   result: YearSimulationResult,
 ): Record<DemographicId, number> {
-  const oldReach = state.brandReach;
+  const player = getPlayerCompany(state);
+  const oldReach = player.brandReach;
   const newReach = { ...oldReach };
-  const hasProductsOnSale = state.models.some(
+  const hasProductsOnSale = player.models.some(
     (m) => m.status === "manufacturing" || m.status === "onSale",
   );
 
@@ -132,7 +134,7 @@ export function updateBrandReach(
  * Competitors grow reach from sales volume + time-in-market (simplified).
  */
 export function updateCompetitorBrandReach(
-  comp: CompetitorState,
+  comp: CompanyState,
   result: YearSimulationResult,
 ): Record<DemographicId, number> {
   const oldReach = comp.brandReach;
@@ -238,20 +240,19 @@ function applyQuarterlyPerception(
   return newPerception;
 }
 
-/** Update per-demographic brand perception for the player. */
+/** Update per-demographic brand perception for any company. */
 export function updateBrandPerception(
-  state: GameState,
-  result: Pick<YearSimulationResult, "laptopResults" | "playerResults">,
+  company: CompanyState,
+  result: Pick<YearSimulationResult, "laptopResults"> & { companyResults: LaptopSalesResult[] },
 ): Record<DemographicId, number> {
-  return applyQuarterlyPerception(state.brandPerception, result.laptopResults, result.playerResults);
+  return applyQuarterlyPerception(company.brandPerception, result.laptopResults, result.companyResults);
 }
 
 /** Update per-demographic brand perception for a competitor. */
 export function updateCompetitorBrandPerception(
-  comp: CompetitorState,
+  comp: CompanyState,
   result: YearSimulationResult,
 ): Record<DemographicId, number> {
   const compResults = result.laptopResults.filter((r) => r.owner === comp.id);
   return applyQuarterlyPerception(comp.brandPerception, result.laptopResults, compResults);
 }
-

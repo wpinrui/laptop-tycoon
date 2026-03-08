@@ -1,6 +1,6 @@
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
 import { DemographicId } from "../../data/types";
-import { GameState, LaptopDesign, LaptopModel, ModelStatus, createInitialGameState, hasDiscontinuedComponents } from "./gameTypes";
+import { GameState, LaptopDesign, LaptopModel, ModelStatus, CompanyState, createInitialGameState, hasDiscontinuedComponents } from "./gameTypes";
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { YearSimulationResult } from "../../simulation/salesTypes";
 import { clearProjectionCache } from "../../simulation/salesEngine";
@@ -25,6 +25,31 @@ type GameAction =
   | { type: "APPLY_SIMULATION_RESULT"; result: YearSimulationResult }
   | { type: "RUN_AWARENESS_CAMPAIGN"; cost: number; reachBoost: number };
 
+/** Update a specific company in the companies array. */
+function updateCompany(
+  companies: CompanyState[],
+  predicate: (c: CompanyState) => boolean,
+  updater: (c: CompanyState) => CompanyState,
+): CompanyState[] {
+  return companies.map((c) => (predicate(c) ? updater(c) : c));
+}
+
+/** Update the player company in the companies array. */
+function updatePlayer(
+  companies: CompanyState[],
+  updater: (c: CompanyState) => CompanyState,
+): CompanyState[] {
+  return updateCompany(companies, (c) => c.isPlayer, updater);
+}
+
+/** Update player's models. */
+function updatePlayerModels(
+  companies: CompanyState[],
+  modelUpdater: (models: LaptopModel[]) => LaptopModel[],
+): CompanyState[] {
+  return updatePlayer(companies, (p) => ({ ...p, models: modelUpdater(p.models) }));
+}
+
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case "NEW_GAME":
@@ -42,84 +67,99 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         year: nextYear,
         yearSimulated: false,
-        models: state.models.map((m) => {
-          if (m.status === "discontinued") return m;
+        companies: updatePlayerModels(state.companies, (models) =>
+          models.map((m) => {
+            if (m.status === "discontinued") return m;
 
-          // Find sim results for this model to get unsold units.
-          // unsoldUnits already includes existing inventory (simulation sets manufacturingQuantity = newBatch + unitsInStock),
-          // so we use it directly — NOT added to m.unitsInStock, which would double-count.
-          const simResult = lastSim?.laptopResults.find((r) => r.laptopId === m.design.id);
-          const newStock = simResult ? simResult.unsoldUnits : m.unitsInStock;
+            // Find sim results for this model to get unsold units.
+            const simResult = lastSim?.laptopResults.find((r) => r.laptopId === m.design.id);
+            const newStock = simResult ? simResult.unsoldUnits : m.unitsInStock;
 
-          // Models that were manufacturing/onSale transition to onSale
-          if (m.status === "manufacturing" || m.status === "onSale") {
-            const discontinued = hasDiscontinuedComponents(m.design, nextYear);
+            // Models that were manufacturing/onSale transition to onSale
+            if (m.status === "manufacturing" || m.status === "onSale") {
+              const discontinued = hasDiscontinuedComponents(m.design, nextYear);
 
-            // Auto-discontinue if components are discontinued and no inventory
-            if (discontinued && newStock <= 0) {
-              return { ...m, status: "discontinued" as const, unitsInStock: 0, manufacturingPlan: null, manufacturingQuantity: null };
+              if (discontinued && newStock <= 0) {
+                return { ...m, status: "discontinued" as const, unitsInStock: 0, manufacturingPlan: null, manufacturingQuantity: null };
+              }
+
+              return {
+                ...m,
+                status: "onSale" as const,
+                unitsInStock: newStock,
+              };
             }
 
-            return {
-              ...m,
-              status: "onSale" as const,
-              unitsInStock: newStock,
-              // Keep plan for prefill, but it won't count as a current-year plan
-              // (AdvanceYearCard checks plan.year === state.year)
-            };
-          }
-
-          return m;
-        }),
+            return m;
+          }),
+        ),
       };
     }
     case "ADD_MODEL":
-      return { ...state, models: [...state.models, action.model] };
+      return {
+        ...state,
+        companies: updatePlayer(state.companies, (p) => ({
+          ...p,
+          models: [...p.models, action.model],
+        })),
+      };
     case "UPDATE_MODEL_STATUS":
       return {
         ...state,
-        models: state.models.map((m) =>
-          m.design.id === action.modelId ? { ...m, status: action.status } : m,
+        companies: updatePlayerModels(state.companies, (models) =>
+          models.map((m) =>
+            m.design.id === action.modelId ? { ...m, status: action.status } : m,
+          ),
         ),
       };
     case "SET_MODEL_PRICING":
       return {
         ...state,
-        models: state.models.map((m) =>
-          m.design.id === action.modelId
-            ? { ...m, retailPrice: action.retailPrice, manufacturingQuantity: action.manufacturingQuantity }
-            : m,
+        companies: updatePlayerModels(state.companies, (models) =>
+          models.map((m) =>
+            m.design.id === action.modelId
+              ? { ...m, retailPrice: action.retailPrice, manufacturingQuantity: action.manufacturingQuantity }
+              : m,
+          ),
         ),
       };
     case "UPDATE_MODEL_DESIGN":
       return {
         ...state,
-        models: state.models.map((m) =>
-          m.design.id === action.modelId ? { ...m, design: action.design } : m,
+        companies: updatePlayerModels(state.companies, (models) =>
+          models.map((m) =>
+            m.design.id === action.modelId ? { ...m, design: action.design } : m,
+          ),
         ),
       };
     case "SET_MANUFACTURING_PLAN":
       return {
         ...state,
-        models: state.models.map((m) =>
-          m.design.id === action.modelId
-            ? {
-                ...m,
-                manufacturingPlan: action.plan,
-                retailPrice: action.plan.manufacturing.unitPrice,
-                manufacturingQuantity: action.plan.manufacturing.unitsOrdered,
-              }
-            : m,
+        companies: updatePlayerModels(state.companies, (models) =>
+          models.map((m) =>
+            m.design.id === action.modelId
+              ? {
+                  ...m,
+                  manufacturingPlan: action.plan,
+                  retailPrice: action.plan.manufacturing.unitPrice,
+                  manufacturingQuantity: action.plan.manufacturing.unitsOrdered,
+                }
+              : m,
+          ),
         ),
       };
     case "ADD_COMPETITOR_MODELS": {
       const byId = new Map(action.models.map((m) => [m.competitorId, m.model]));
       return {
         ...state,
-        competitors: state.competitors.map((comp) => {
-          const newModel = byId.get(comp.id);
-          return newModel ? { ...comp, models: [...comp.models, newModel] } : comp;
-        }),
+        companies: updateCompany(
+          state.companies,
+          (c) => !c.isPlayer && byId.has(c.id),
+          (comp) => {
+            const newModel = byId.get(comp.id);
+            return newModel ? { ...comp, models: [...comp.models, newModel] } : comp;
+          },
+        ),
       };
     }
     case "APPLY_SIMULATION_RESULT": {
@@ -128,33 +168,45 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       const simByLaptop = new Map(
         result.playerResults.map((r) => [r.laptopId, r]),
       );
+
+      const newPlayerReach = updateBrandReach(state, result);
+      const newPlayerPerception = Object.fromEntries(
+        result.perceptionChanges.map((pc) => [pc.demographicId, pc.newPerception]),
+      ) as Record<DemographicId, number>;
+
       return {
         ...state,
         cash: result.cashAfterResolution,
-        brandReach: updateBrandReach(state, result),
-        brandPerception: Object.fromEntries(
-          result.perceptionChanges.map((pc) => [pc.demographicId, pc.newPerception]),
-        ) as Record<DemographicId, number>,
-        competitors: state.competitors.map((comp) => ({
-          ...comp,
-          brandReach: updateCompetitorBrandReach(comp, result),
-          brandPerception: updateCompetitorBrandPerception(comp, result),
-        })),
-        models: state.models.map((m) => {
-          const sim = simByLaptop.get(m.design.id);
-          if (!sim || !m.manufacturingPlan) return m;
+        companies: state.companies.map((comp) => {
+          if (comp.isPlayer) {
+            return {
+              ...comp,
+              brandReach: newPlayerReach,
+              brandPerception: newPlayerPerception,
+              models: comp.models.map((m) => {
+                const sim = simByLaptop.get(m.design.id);
+                if (!sim || !m.manufacturingPlan) return m;
+                return {
+                  ...m,
+                  manufacturingPlan: {
+                    ...m.manufacturingPlan,
+                    results: {
+                      campaignPerceptionMod: sim.campaignPerceptionMod,
+                      unitsSold: sim.unitsSold,
+                      revenue: sim.revenue,
+                      profit: sim.profit,
+                      unsoldUnits: sim.unsoldUnits,
+                    },
+                  },
+                };
+              }),
+            };
+          }
+          // Competitor: update brand reach & perception
           return {
-            ...m,
-            manufacturingPlan: {
-              ...m.manufacturingPlan,
-              results: {
-                campaignPerceptionMod: sim.campaignPerceptionMod,
-                unitsSold: sim.unitsSold,
-                revenue: sim.revenue,
-                profit: sim.profit,
-                unsoldUnits: sim.unsoldUnits,
-              },
-            },
+            ...comp,
+            brandReach: updateCompetitorBrandReach(comp, result),
+            brandPerception: updateCompetitorBrandPerception(comp, result),
           };
         }),
         yearSimulated: true,
@@ -163,14 +215,16 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
     case "RUN_AWARENESS_CAMPAIGN": {
-      const newReach = { ...state.brandReach };
-      for (const key of Object.keys(newReach) as DemographicId[]) {
-        newReach[key] = Math.min(100, newReach[key] + action.reachBoost);
-      }
       return {
         ...state,
         cash: state.cash - action.cost,
-        brandReach: newReach,
+        companies: updatePlayer(state.companies, (p) => {
+          const newReach = { ...p.brandReach };
+          for (const key of Object.keys(newReach) as DemographicId[]) {
+            newReach[key] = Math.min(100, newReach[key] + action.reachBoost);
+          }
+          return { ...p, brandReach: newReach };
+        }),
       };
     }
     default:

@@ -1,4 +1,4 @@
-import { GameState } from "../state/gameTypes";
+import { GameState, getPlayerCompany } from "../state/gameTypes";
 
 const SLOT_PREFIX = "laptop-tycoon-save-";
 export const MAX_SLOTS = 5;
@@ -24,7 +24,7 @@ export function saveToSlot(index: number, state: GameState): boolean {
     const envelope: SaveEnvelope = {
       meta: {
         slotIndex: index,
-        companyName: state.companyName,
+        companyName: getPlayerCompany(state).name,
         year: state.year,
         savedAt: Date.now(),
       },

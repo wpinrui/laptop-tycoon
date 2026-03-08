@@ -1,6 +1,7 @@
 import { CSSProperties } from "react";
 import { Sparkles } from "lucide-react";
 import { useGame } from "../state/GameContext";
+import { getPlayerCompany } from "../state/gameTypes";
 import { useNavigation } from "../navigation/NavigationContext";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
@@ -60,6 +61,7 @@ const hintStyle: CSSProperties = {
 export function BrandDetailScreen() {
   const { state, dispatch } = useGame();
   const { navigateTo } = useNavigation();
+  const player = getPlayerCompany(state);
 
   const canAfford = state.cash >= CAMPAIGN_COST;
 
@@ -73,7 +75,7 @@ export function BrandDetailScreen() {
       <div style={sectionStyle}>
         <p style={headingStyle}>Brand Reach</p>
         {DEMOGRAPHICS.map((dem) => {
-          const reach = Math.round(state.brandReach[dem.id] ?? 0);
+          const reach = Math.round(player.brandReach[dem.id] ?? 0);
           return (
             <div key={dem.id} style={rowStyle}>
               <span style={labelStyle}>{dem.name}</span>
@@ -91,7 +93,7 @@ export function BrandDetailScreen() {
       <div style={sectionStyle}>
         <p style={headingStyle}>Brand Perception</p>
         {DEMOGRAPHICS.map((dem) => {
-          const perception = formatPerception(state.brandPerception[dem.id] ?? 0);
+          const perception = formatPerception(player.brandPerception[dem.id] ?? 0);
           return (
             <div key={dem.id} style={rowStyle}>
               <span style={labelStyle}>{dem.name}</span>

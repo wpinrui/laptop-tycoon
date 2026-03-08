@@ -1,6 +1,7 @@
 import { CSSProperties, useState, useRef, useEffect } from "react";
 import { useMfgWizard } from "../ManufacturingWizardContext";
 import { useGame } from "../../state/GameContext";
+import { getPlayerCompany } from "../../state/gameTypes";
 import { tokens } from "../../shell/tokens";
 import { calculateBomUnitCost, buildCostBreakdown } from "../utils/economiesOfScale";
 import { AD_CAMPAIGNS, getCampaignCost } from "../data/campaigns";
@@ -188,7 +189,7 @@ export function ManufacturingStep() {
   const { state: gameState } = useGame();
   const [showDetails, setShowDetails] = useState(true);
 
-  const model = gameState.models.find((m) => m.design.id === state.modelId);
+  const model = getPlayerCompany(gameState).models.find((m) => m.design.id === state.modelId);
   const inventory = model?.unitsInStock ?? 0;
 
   const baseBom = model?.design.unitCost ?? 0;
@@ -251,7 +252,7 @@ export function ManufacturingStep() {
   };
 
   // Other player models for price reference
-  const otherPlayerModels = gameState.models.filter(
+  const otherPlayerModels = getPlayerCompany(gameState).models.filter(
     (m) => m.design.id !== state.modelId && m.retailPrice !== null && m.status !== "discontinued",
   );
 

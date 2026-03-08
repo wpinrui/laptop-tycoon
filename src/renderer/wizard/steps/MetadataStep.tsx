@@ -1,5 +1,6 @@
 import { useWizard } from "../WizardContext";
 import { useGame } from "../../state/GameContext";
+import { getPlayerCompany } from "../../state/gameTypes";
 import { ModelType } from "../types";
 import { tokens } from "../../shell/tokens";
 
@@ -16,7 +17,7 @@ export function MetadataStep() {
   const showPredecessor = state.modelType !== "brandNew";
 
   // Populate predecessor models from game state (exclude the model currently being edited)
-  const predecessorModels = gameState.models
+  const predecessorModels = getPlayerCompany(gameState).models
     .filter((m) => m.design.id !== state.editingModelId)
     .map((m) => ({ id: m.design.id, name: m.design.name, year: m.yearDesigned }));
 
@@ -99,7 +100,7 @@ export function MetadataStep() {
               value={state.predecessorId ?? ""}
               onChange={(e) => {
                 const id = e.target.value || null;
-                const model = gameState.models.find((m) => m.design.id === id);
+                const model = getPlayerCompany(gameState).models.find((m) => m.design.id === id);
                 dispatch({ type: "SET_PREDECESSOR", predecessorId: id, predecessorDesign: model?.design, gameYear });
               }}
               style={{

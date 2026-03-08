@@ -1,6 +1,7 @@
 import { CSSProperties, useState } from "react";
 import { useNavigation } from "../navigation/NavigationContext";
 import { useGame } from "../state/GameContext";
+import { getPlayerCompany } from "../state/gameTypes";
 import { ContentPanel } from "./ContentPanel";
 import { MenuButton } from "./MenuButton";
 import { SaveSlotPicker } from "./SaveSlotPicker";
@@ -67,7 +68,7 @@ export function PauseMenu() {
       <div style={overlayStyle} onClick={(e) => { if (e.target === e.currentTarget) setOverlay(null); }}>
         <ContentPanel maxWidth={420}>
           <h1 style={titleStyle}>Paused</h1>
-          <p style={subtitleStyle}>{state.companyName}</p>
+          <p style={subtitleStyle}>{getPlayerCompany(state).name}</p>
           <div style={menuStyle}>
             <MenuButton variant="accent" onClick={() => setOverlay(null)}>
               Resume

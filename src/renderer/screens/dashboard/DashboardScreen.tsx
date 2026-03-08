@@ -1,5 +1,6 @@
 import { CSSProperties } from "react";
 import { useGame } from "../../state/GameContext";
+import { getPlayerCompany } from "../../state/gameTypes";
 import { ContentPanel } from "../../shell/ContentPanel";
 import { tokens } from "../../shell/tokens";
 import { StatusBar } from "../../shell/StatusBar";
@@ -67,6 +68,7 @@ const columnStyle: CSSProperties = {
 
 export function DashboardScreen() {
   const { state } = useGame();
+  const player = getPlayerCompany(state);
 
   return (
     <ContentPanel maxWidth={tokens.layout.panelMaxWidth} style={panelStyle}>
@@ -75,7 +77,7 @@ export function DashboardScreen() {
           {state.companyLogo && (
             <img src={state.companyLogo} alt="Logo" style={logoStyle} />
           )}
-          <h1 style={titleStyle}>{state.companyName}</h1>
+          <h1 style={titleStyle}>{player.name}</h1>
         </div>
       </div>
 
