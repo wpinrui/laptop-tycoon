@@ -27,6 +27,7 @@ import {
   REPLACEMENT_CYCLE,
 } from "./tunables";
 import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
+import { sampleCampaignOutcome } from "../renderer/manufacturing/utils/skewNormal";
 import { generateCompetitorModels } from "./competitorAI";
 import { COMPETITORS } from "../data/competitors";
 import { averageReach, getCampaignReachBoost } from "./brandProgression";
@@ -152,15 +153,8 @@ function sampleCampaignPerception(campaignId: string | null): number {
   const campaign = AD_CAMPAIGNS.find((c) => c.id === campaignId);
   if (!campaign) return 0;
 
-  const { mean, stdDev, min, max } = campaign.distribution;
-  // Box-Muller for normal sample
-  const u1 = Math.random() || 1e-10; // guard against log(0)
-  const u2 = Math.random();
-  const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-  let sample = mean + stdDev * z;
-  sample = Math.max(min, Math.min(max, sample));
-
-  return sample;
+  const { mean, stdDev, skew, min, max } = campaign.distribution;
+  return sampleCampaignOutcome(mean, stdDev, skew, min, max);
 }
 
 /** Get laptop-specific campaign perception modifier */
