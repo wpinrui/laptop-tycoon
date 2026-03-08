@@ -1,4 +1,5 @@
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
+import { DemographicId } from "../../data/types";
 import { GameState, LaptopDesign, LaptopModel, ModelStatus, createInitialGameState, hasDiscontinuedComponents } from "./gameTypes";
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { YearSimulationResult } from "../../simulation/salesTypes";
@@ -21,7 +22,8 @@ type GameAction =
   | { type: "UPDATE_MODEL_DESIGN"; modelId: string; design: LaptopDesign }
   | { type: "SET_MANUFACTURING_PLAN"; modelId: string; plan: FullManufacturingPlan }
   | { type: "ADD_COMPETITOR_MODELS"; models: CompetitorModelEntry[] }
-  | { type: "APPLY_SIMULATION_RESULT"; result: YearSimulationResult };
+  | { type: "APPLY_SIMULATION_RESULT"; result: YearSimulationResult }
+  | { type: "RUN_AWARENESS_CAMPAIGN"; cost: number; reachBoost: number };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
@@ -136,6 +138,17 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         yearSimulated: true,
         yearHistory: [...state.yearHistory, result],
         lastSimulationResult: result,
+      };
+    }
+    case "RUN_AWARENESS_CAMPAIGN": {
+      const newReach = { ...state.brandReach };
+      for (const key of Object.keys(newReach) as DemographicId[]) {
+        newReach[key] = Math.min(100, newReach[key] + action.reachBoost);
+      }
+      return {
+        ...state,
+        cash: state.cash - action.cost,
+        brandReach: newReach,
       };
     }
     default:

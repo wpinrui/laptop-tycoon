@@ -14,6 +14,7 @@ import { DashboardScreen } from "../screens/dashboard/DashboardScreen";
 import { ModelManagementScreen } from "../screens/ModelManagementScreen";
 import { YearEndSummaryScreen } from "../screens/YearEndSummaryScreen";
 import { GameOverScreen } from "../screens/GameOverScreen";
+import { BrandDetailScreen } from "../screens/BrandDetailScreen";
 
 function PlaceholderScreen({ title }: { title: string }) {
   const { navigateTo } = useNavigation();
@@ -51,7 +52,7 @@ function ScreenContent() {
     case "marketOverview":
       return <PlaceholderScreen title="Market Overview" />;
     case "brandDetail":
-      return <PlaceholderScreen title="Brand Detail" />;
+      return <BrandDetailScreen />;
     case "reviewsAwards":
       return <PlaceholderScreen title="Reviews & Awards" />;
     case "news":
