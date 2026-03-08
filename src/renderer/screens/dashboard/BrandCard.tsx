@@ -1,5 +1,6 @@
 import { Sparkles } from "lucide-react";
 import { useGame } from "../../state/GameContext";
+import { getPlayerCompany } from "../../state/gameTypes";
 import { tokens } from "../../shell/tokens";
 import { BentoCard } from "./BentoCard";
 import { ProgressBar } from "./ProgressBar";
@@ -10,12 +11,13 @@ import { DEMOGRAPHICS } from "../../../data/demographics";
 
 export function BrandCard() {
   const { state } = useGame();
+  const player = getPlayerCompany(state);
 
   return (
     <BentoCard title="Brand" icon={Sparkles} screen="brandDetail">
       <p style={{ ...sectionHeadingStyle, marginBottom: tokens.spacing.sm }}>Brand Reach</p>
       {DEMOGRAPHICS.map((dem) => {
-        const reach = Math.round(state.brandReach[dem.id] ?? 0);
+        const reach = Math.round(player.brandReach[dem.id] ?? 0);
         return (
           <div key={dem.id} style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm, marginTop: tokens.spacing.xs }}>
             <span style={{ ...smallTextStyle, minWidth: 130, flexShrink: 0 }}>{dem.name}</span>
@@ -31,7 +33,7 @@ export function BrandCard() {
       <div style={sectionDividerStyle}>
         <p style={sectionHeadingStyle}>Brand Perception</p>
         {DEMOGRAPHICS.map((dem) => {
-          const perception = formatPerception(state.brandPerception[dem.id] ?? 0);
+          const perception = formatPerception(player.brandPerception[dem.id] ?? 0);
           return (
             <div key={dem.id} style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm, marginTop: tokens.spacing.xs }}>
               <span style={{ ...smallTextStyle, minWidth: 130, flexShrink: 0 }}>{dem.name}</span>

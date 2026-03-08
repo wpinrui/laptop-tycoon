@@ -27,7 +27,7 @@ export interface DemographicSalesBreakdown {
 
 export interface LaptopSalesResult {
   laptopId: string;
-  owner: "player" | string; // competitor id
+  owner: string; // company id
   retailPrice: number;
   unitsDemanded: number;
   unitsSold: number;

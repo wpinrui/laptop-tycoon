@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMfgWizard } from "./ManufacturingWizardContext";
 import { useGame } from "../state/GameContext";
+import { getPlayerCompany } from "../state/gameTypes";
 import { useNavigation } from "../navigation/NavigationContext";
 import { MfgStepIndicator } from "./MfgStepIndicator";
 import { ManufacturingWizardStep, ManufacturingWizardState, MFG_WIZARD_STEPS, FullManufacturingPlan } from "./types";
@@ -84,7 +85,7 @@ function WizardContent() {
     navigateTo("modelManagement");
   }
 
-  const model = gameState.models.find((m) => m.design.id === state.modelId);
+  const model = getPlayerCompany(gameState).models.find((m) => m.design.id === state.modelId);
 
   const stepContent = (() => {
     switch (state.currentStep) {

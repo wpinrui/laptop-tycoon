@@ -6,7 +6,7 @@ import {
 } from "../data/types";
 import { DEMOGRAPHICS } from "../data/demographics";
 import { STARTING_DEMAND_POOL } from "../data/startingDemand";
-import { GameState, LaptopModel } from "../renderer/state/gameTypes";
+import { GameState, LaptopModel, getPlayerCompany } from "../renderer/state/gameTypes";
 import { computeStatsForDesign } from "./statCalculation";
 import {
   getDemandPoolSize,
@@ -47,7 +47,7 @@ export function clearProjectionCache(): void {
 
 interface MarketLaptop {
   id: string;
-  owner: "player" | string;
+  owner: string; // company id
   model: LaptopModel;
   stats: StatVector;
   retailPrice: number;
@@ -57,9 +57,10 @@ interface MarketLaptop {
 
 function buildMarketLaptops(state: GameState): MarketLaptop[] {
   const laptops: MarketLaptop[] = [];
+  const player = getPlayerCompany(state);
 
   // Player models
-  for (const model of state.models) {
+  for (const model of player.models) {
     if (model.status !== "manufacturing" && model.status !== "onSale") continue;
     if (!model.retailPrice) continue;
 
@@ -81,7 +82,7 @@ function buildMarketLaptops(state: GameState): MarketLaptop[] {
 
     laptops.push({
       id: model.design.id,
-      owner: "player",
+      owner: player.id,
       model,
       stats,
       retailPrice: model.retailPrice,
@@ -91,7 +92,8 @@ function buildMarketLaptops(state: GameState): MarketLaptop[] {
   }
 
   // Competitor models (current year only)
-  for (const comp of state.competitors) {
+  for (const comp of state.companies) {
+    if (comp.isPlayer) continue;
     for (const model of comp.models) {
       if (model.yearDesigned !== state.year) continue;
       if (!model.retailPrice || !model.manufacturingQuantity) continue;
@@ -159,8 +161,8 @@ function sampleCampaignPerception(campaignId: string | null): number {
 }
 
 /** Get laptop-specific campaign perception modifier */
-function getLaptopCampaignPerception(laptop: MarketLaptop): number {
-  if (laptop.owner !== "player") return 0;
+function getLaptopCampaignPerception(laptop: MarketLaptop, playerId: string): number {
+  if (laptop.owner !== playerId) return 0;
   const plan = laptop.model.manufacturingPlan;
   if (!plan) return 0;
   return sampleCampaignPerception(plan.marketing.campaignId);
@@ -192,13 +194,8 @@ function calculateBiasedVP(
   const rawVP = (weightedScore * screenPenalty) / laptop.retailPrice;
 
   // Step 2: biased_vp = raw_vp × (1 + brand_perception_mod / 100) × (1 + laptop_perception_mod / 100)
-  let brandPerceptionMod: number;
-  if (laptop.owner === "player") {
-    brandPerceptionMod = state.brandPerception[demographic.id] ?? 0;
-  } else {
-    const comp = state.competitors.find((c) => c.id === laptop.owner);
-    brandPerceptionMod = comp ? (comp.brandPerception[demographic.id] ?? 0) : 0;
-  }
+  const company = state.companies.find((c) => c.id === laptop.owner);
+  const brandPerceptionMod = company ? (company.brandPerception[demographic.id] ?? 0) : 0;
 
   const laptopPerceptionMod = campaignPerception;
 
@@ -220,6 +217,7 @@ function applySalesNoise(baseDemand: number): number {
 export function simulateYear(state: GameState): YearSimulationResult {
   const year = state.year;
   const allLaptops = buildMarketLaptops(state);
+  const player = getPlayerCompany(state);
 
   if (allLaptops.length === 0) {
     return {
@@ -246,7 +244,7 @@ export function simulateYear(state: GameState): YearSimulationResult {
   // Pre-sample campaign perception modifiers (once per laptop, consistent across demographics)
   const campaignPerceptions = new Map<string, number>();
   for (const laptop of allLaptops) {
-    campaignPerceptions.set(laptop.id, getLaptopCampaignPerception(laptop));
+    campaignPerceptions.set(laptop.id, getLaptopCampaignPerception(laptop, player.id));
   }
 
   // For each laptop, accumulate demand across all demographics
@@ -274,12 +272,10 @@ export function simulateYear(state: GameState): YearSimulationResult {
       const { biasedVP, rawVP } = calculateBiasedVP(laptop, normStats, demographic, state, campPerc);
 
       // Each laptop's addressable pool is gated by its owner's reach in this demographic
-      let reach: number;
-      if (laptop.owner === "player") {
-        reach = (state.brandReach[demId] ?? 0) + campaignReachBoost;
-      } else {
-        const comp = state.competitors.find((c) => c.id === laptop.owner);
-        reach = comp ? (comp.brandReach[demId] ?? 0) : 0;
+      const company = state.companies.find((c) => c.id === laptop.owner);
+      let reach = company ? (company.brandReach[demId] ?? 0) : 0;
+      if (company?.isPlayer) {
+        reach += campaignReachBoost;
       }
       reach = Math.min(reach, 100);
       const reachGatedPool = annualActiveBuyers * (reach / 100);
@@ -333,13 +329,13 @@ export function simulateYear(state: GameState): YearSimulationResult {
     };
     laptopResults.push(result);
 
-    if (laptop.owner === "player") {
+    if (laptop.owner === player.id) {
       playerRevenue += revenue;
       playerProfit += profit;
     }
   }
 
-  const playerResults = laptopResults.filter((r) => r.owner === "player");
+  const playerResults = laptopResults.filter((r) => r.owner === player.id);
 
   // Cash flow resolution
   // Manufacturing cost was already deducted when manufacturing plan was set
@@ -348,7 +344,7 @@ export function simulateYear(state: GameState): YearSimulationResult {
   const gameOver = cashAfterResolution < 0;
 
   // Compute player perception changes for tracking in results
-  const perceptionChanges = computePerceptionChanges(state, laptopResults, playerResults);
+  const perceptionChanges = computePerceptionChanges(state, laptopResults);
 
   return {
     year,
@@ -371,12 +367,12 @@ export function simulateYear(state: GameState): YearSimulationResult {
 function computePerceptionChanges(
   state: GameState,
   laptopResults: LaptopSalesResult[],
-  playerResults: LaptopSalesResult[],
 ): PerceptionChange[] {
-  const newPerception = updateBrandPerception(state, { laptopResults, playerResults });
+  const player = getPlayerCompany(state);
+  const newPerception = updateBrandPerception(player, laptopResults);
 
   return DEMOGRAPHICS.map((dem) => {
-    const oldP = state.brandPerception[dem.id] ?? 0;
+    const oldP = player.brandPerception[dem.id] ?? 0;
     const newP = newPerception[dem.id] ?? 0;
     return { demographicId: dem.id, oldPerception: oldP, newPerception: newP, delta: newP - oldP };
   });
@@ -395,16 +391,17 @@ export function projectDemandRange(
   uncommittedCampaignSpend: number = 0,
 ): DemandProjection {
   const year = state.year;
+  const player = getPlayerCompany(state);
 
   // Build a temporary market with this model + current competitor models
-  const model = state.models.find((m) => m.design.id === modelId);
+  const model = player.models.find((m) => m.design.id === modelId);
   if (!model) return { low: 0, high: 0, expected: 0 };
 
   const stats = computeStatsForDesign(model.design, year);
 
   const tempLaptop: MarketLaptop = {
     id: modelId,
-    owner: "player",
+    owner: player.id,
     model: { ...model, retailPrice, manufacturingQuantity: 0 },
     stats,
     retailPrice,
@@ -437,13 +434,13 @@ export function projectDemandRange(
 
   // Also include other player models
   const otherPlayerModels: MarketLaptop[] = [];
-  for (const pm of state.models) {
+  for (const pm of player.models) {
     if (pm.design.id === modelId) continue;
     if (pm.status !== "manufacturing" && pm.status !== "onSale") continue;
     if (!pm.retailPrice) continue;
     otherPlayerModels.push({
       id: pm.design.id,
-      owner: "player",
+      owner: player.id,
       model: pm,
       stats: computeStatsForDesign(pm.design, year),
       retailPrice: pm.retailPrice,
@@ -483,14 +480,14 @@ export function projectDemandRange(
 
     const share = totalBiasedVP > 0 ? ourBiasedVP / totalBiasedVP : 0;
     // Gate by player's reach in this demographic (including immediate campaign boost)
-    const reach = Math.min((state.brandReach[demId] ?? 0) + campaignReachBoost, 100);
+    const reach = Math.min((player.brandReach[demId] ?? 0) + campaignReachBoost, 100);
     totalExpected += annualActiveBuyers * (reach / 100) * share;
   }
 
   const expected = Math.round(totalExpected);
 
   // Confidence interval based on average reach (higher = tighter)
-  const reachFactor = Math.max(0.1, 1 - averageReach(state.brandReach) / 100);
+  const reachFactor = Math.max(0.1, 1 - averageReach(player.brandReach) / 100);
   const variance = BASE_DEMAND_VARIANCE + reachFactor * REACH_VARIANCE_SCALE;
 
   const low = Math.max(0, Math.round(expected * (1 - variance)));

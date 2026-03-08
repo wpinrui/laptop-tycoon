@@ -4,7 +4,7 @@ import { useNavigation } from "../navigation/NavigationContext";
 import { useWizard } from "../wizard/WizardContext";
 import { useMfgWizard } from "../manufacturing/ManufacturingWizardContext";
 import { selectPrompts } from "../manufacturing/data/pressReleasePrompts";
-import { LaptopModel, hasDiscontinuedComponents } from "../state/gameTypes";
+import { LaptopModel, hasDiscontinuedComponents, getPlayerCompany } from "../state/gameTypes";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { tokens } from "../shell/tokens";
@@ -70,8 +70,9 @@ export function ModelManagementScreen() {
   const [confirmScrapId, setConfirmScrapId] = useState<string | null>(null);
   const [showDiscontinued, setShowDiscontinued] = useState(false);
 
+  const player = getPlayerCompany(state);
   const activeModels = getActiveModels(state);
-  const discontinuedModels = state.models.filter((m) => m.status === "discontinued");
+  const discontinuedModels = player.models.filter((m) => m.status === "discontinued");
   const emptySlots = MAX_MODELS - activeModels.length;
 
   function handleEdit(model: LaptopModel) {

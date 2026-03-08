@@ -1,5 +1,6 @@
 import { CSSProperties } from "react";
 import { useGame } from "../state/GameContext";
+import { getPlayerCompany } from "../state/gameTypes";
 import { useNavigation } from "../navigation/NavigationContext";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
@@ -18,6 +19,7 @@ const containerStyle: CSSProperties = {
 export function GameOverScreen() {
   const { state } = useGame();
   const { navigateTo } = useNavigation();
+  const player = getPlayerCompany(state);
   const result = state.lastSimulationResult;
 
   return (
@@ -38,7 +40,7 @@ export function GameOverScreen() {
           color: tokens.colors.textMuted,
           maxWidth: 400,
         }}>
-          {state.companyName} has run out of cash after Year {result?.year ?? state.year}.
+          {player.name} has run out of cash after Year {result?.year ?? state.year}.
           The company could not cover its debts and has been forced to close.
         </p>
 

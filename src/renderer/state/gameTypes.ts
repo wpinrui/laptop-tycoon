@@ -53,29 +53,32 @@ export function hasDiscontinuedComponents(design: LaptopDesign, year: number): b
   return false;
 }
 
-export interface CompetitorState {
+export interface CompanyState {
   id: string;
   name: string;
-  archetype: CompetitorArchetype;
+  isPlayer: boolean;
   brandReach: Record<DemographicId, number>;
   brandPerception: Record<DemographicId, number>;
   models: LaptopModel[];
+  archetype?: CompetitorArchetype;
+  engineeringBonus?: number;
 }
 
 export interface GameState {
-  companyName: string;
+  companies: CompanyState[];
   companyLogo: string | null;
   year: number;
   yearSimulated: boolean;
   cash: number;
-  brandReach: Record<DemographicId, number>;
-  brandPerception: Record<DemographicId, number>;
   brandAwarenessBudget: number;
   sponsorships: string[];
-  models: LaptopModel[];
-  competitors: CompetitorState[];
   yearHistory: YearSimulationResult[];
   lastSimulationResult: YearSimulationResult | null;
+}
+
+/** Get the player's company from the unified companies array. */
+export function getPlayerCompany(state: GameState): CompanyState {
+  return state.companies.find((c) => c.isPlayer)!;
 }
 
 export const STARTING_CASH = 50_000_000;
@@ -96,25 +99,34 @@ export function createInitialGameState(
   companyName: string,
   companyLogo: string | null,
 ): GameState {
+  const playerCompany: CompanyState = {
+    id: "player",
+    name: companyName,
+    isPlayer: true,
+    brandReach: { ...ZERO_DEMOGRAPHICS },
+    brandPerception: { ...ZERO_DEMOGRAPHICS },
+    models: [],
+  };
+
+  const aiCompanies: CompanyState[] = COMPETITORS.map((c) => ({
+    id: c.id,
+    name: c.name,
+    isPlayer: false,
+    brandReach: { ...c.brandReach },
+    brandPerception: { ...c.brandPerception },
+    models: [],
+    archetype: c.archetype,
+    engineeringBonus: c.engineeringBonus,
+  }));
+
   return {
-    companyName,
+    companies: [playerCompany, ...aiCompanies],
     companyLogo,
     year: STARTING_YEAR,
     yearSimulated: false,
     cash: STARTING_CASH,
-    brandReach: { ...ZERO_DEMOGRAPHICS },
-    brandPerception: { ...ZERO_DEMOGRAPHICS },
     brandAwarenessBudget: 0,
     sponsorships: [],
-    models: [],
-    competitors: COMPETITORS.map((c) => ({
-      id: c.id,
-      name: c.name,
-      archetype: c.archetype,
-      brandReach: { ...c.brandReach },
-      brandPerception: { ...c.brandPerception },
-      models: [],
-    })),
     yearHistory: [],
     lastSimulationResult: null,
   };

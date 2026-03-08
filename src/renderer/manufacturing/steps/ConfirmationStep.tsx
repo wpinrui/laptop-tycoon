@@ -1,6 +1,7 @@
 import { CSSProperties } from "react";
 import { useMfgWizard } from "../ManufacturingWizardContext";
 import { useGame } from "../../state/GameContext";
+import { getPlayerCompany } from "../../state/gameTypes";
 import { tokens } from "../../shell/tokens";
 import { AD_CAMPAIGNS } from "../data/campaigns";
 import { buildCostBreakdown } from "../utils/economiesOfScale";
@@ -24,7 +25,7 @@ export function ConfirmationStep() {
   const { state } = useMfgWizard();
   const { state: gameState } = useGame();
 
-  const model = gameState.models.find((m) => m.design.id === state.modelId);
+  const model = getPlayerCompany(gameState).models.find((m) => m.design.id === state.modelId);
   if (!model) return <p>Model not found.</p>;
 
   const campaign = AD_CAMPAIGNS.find((c) => c.id === state.campaignId) ?? AD_CAMPAIGNS[0];

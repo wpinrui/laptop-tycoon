@@ -83,18 +83,25 @@ export function AdvanceYearCard() {
             }
           }
           const cashAfterManufacturing = state.cash - totalMfgSpend;
-          // 4. Run sales simulation with projected state (competitors + adjusted cash + updated statuses)
+
+          // 4. Run sales simulation with projected state
+          const byCompetitorId = new Map(competitorModels.map((cm) => [cm.competitorId, cm.model]));
           const stateForSim = {
             ...state,
             cash: cashAfterManufacturing,
-            models: state.models.map((m) =>
-              activeModels.some((am) => am.design.id === m.design.id && hasCurrentPlan(am))
-                ? { ...m, status: "manufacturing" as const }
-                : m,
-            ),
-            competitors: state.competitors.map((comp) => {
-              const newModel = competitorModels.find((cm) => cm.competitorId === comp.id);
-              return newModel ? { ...comp, models: [...comp.models, newModel.model] } : comp;
+            companies: state.companies.map((comp) => {
+              if (comp.isPlayer) {
+                return {
+                  ...comp,
+                  models: comp.models.map((m) =>
+                    activeModels.some((am) => am.design.id === m.design.id && hasCurrentPlan(am))
+                      ? { ...m, status: "manufacturing" as const }
+                      : m,
+                  ),
+                };
+              }
+              const newModel = byCompetitorId.get(comp.id);
+              return newModel ? { ...comp, models: [...comp.models, newModel] } : comp;
             }),
           };
           const result = simulateYear(stateForSim);

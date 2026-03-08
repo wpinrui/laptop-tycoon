@@ -1,10 +1,10 @@
-import { GameState } from "../../state/gameTypes";
+import { GameState, getPlayerCompany } from "../../state/gameTypes";
 import { tokens } from "../../shell/tokens";
 
 export const MAX_MODELS = 2;
 
 export function getActiveModels(state: GameState) {
-  return state.models.filter((m) => m.status !== "discontinued");
+  return getPlayerCompany(state).models.filter((m) => m.status !== "discontinued");
 }
 
 export function formatPerception(raw: number): { value: number; sign: string; color: string } {

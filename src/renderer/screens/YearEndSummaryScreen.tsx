@@ -1,5 +1,6 @@
 import { CSSProperties } from "react";
 import { useGame } from "../state/GameContext";
+import { getPlayerCompany } from "../state/gameTypes";
 import { useNavigation } from "../navigation/NavigationContext";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
@@ -63,6 +64,7 @@ function formatNumber(n: number): string {
 export function YearEndSummaryScreen() {
   const { state, dispatch } = useGame();
   const { navigateTo } = useNavigation();
+  const player = getPlayerCompany(state);
   const result = state.lastSimulationResult;
 
   if (!result) {
@@ -107,7 +109,7 @@ export function YearEndSummaryScreen() {
           </thead>
           <tbody>
             {playerResults.map((r) => {
-              const model = state.models.find((m) => m.design.id === r.laptopId);
+              const model = player.models.find((m) => m.design.id === r.laptopId);
               const profitColor = r.profit >= 0 ? tokens.colors.success : tokens.colors.danger;
               const totalUnits = r.unitsSold + r.unsoldUnits;
               return (
@@ -134,7 +136,7 @@ export function YearEndSummaryScreen() {
             Top Buyers
           </h3>
           {playerResults.map((r, idx) => {
-            const model = state.models.find((m) => m.design.id === r.laptopId);
+            const model = player.models.find((m) => m.design.id === r.laptopId);
             return (
               <div key={r.laptopId} style={{ marginBottom: tokens.spacing.sm }}>
                 <p style={{ margin: 0, marginBottom: tokens.spacing.xs, fontWeight: 600 }}>

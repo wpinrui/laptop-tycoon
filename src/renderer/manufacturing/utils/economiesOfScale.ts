@@ -4,7 +4,7 @@ import {
 } from "./constants";
 import { AD_CAMPAIGNS, getCampaignCost } from "../data/campaigns";
 import { ManufacturingWizardState } from "../types";
-import { GameState } from "../../state/gameTypes";
+import { GameState, getPlayerCompany } from "../../state/gameTypes";
 import { getActiveModels } from "../../screens/dashboard/utils";
 
 /** EoS discount applies only to the BOM portion */
@@ -99,7 +99,7 @@ export function calculateCostBreakdown(params: {
 
 /** Build cost breakdown from game + wizard state. Avoids repeating the same param construction. */
 export function buildCostBreakdown(gameState: GameState, wizardState: ManufacturingWizardState): { cost: CostBreakdown; campaignCost: number } {
-  const model = gameState.models.find((m) => m.design.id === wizardState.modelId);
+  const model = getPlayerCompany(gameState).models.find((m) => m.design.id === wizardState.modelId);
   const baseBomCost = model?.design.unitCost ?? 0;
   const modelType = model?.design.modelType ?? "brandNew";
   const activeModelCount = getActiveModels(gameState).length;
