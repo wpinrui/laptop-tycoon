@@ -4,7 +4,7 @@ import { useNavigation } from "../navigation/NavigationContext";
 import { useWizard } from "../wizard/WizardContext";
 import { useMfgWizard } from "../manufacturing/ManufacturingWizardContext";
 import { selectPrompts } from "../manufacturing/data/pressReleasePrompts";
-import { LaptopModel, ModelStatus } from "../state/gameTypes";
+import { LaptopModel, ModelStatus, hasDiscontinuedComponents } from "../state/gameTypes";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { tokens } from "../shell/tokens";
@@ -156,6 +156,7 @@ export function ModelManagementScreen() {
             onScrapClick={() => setConfirmScrapId(model.design.id)}
             onScrapConfirm={() => handleScrap(model.design.id)}
             onScrapCancel={() => setConfirmScrapId(null)}
+            gameYear={state.year}
           />
         ))
       )}
@@ -191,6 +192,7 @@ export function ModelManagementScreen() {
                   onScrapConfirm={() => {}}
                   onScrapCancel={() => {}}
                   disabled
+                  gameYear={state.year}
                 />
               ))}
             </div>
@@ -212,6 +214,7 @@ function ModelCard({
   onScrapConfirm,
   onScrapCancel,
   disabled,
+  gameYear,
 }: {
   model: LaptopModel;
   confirmScrap: boolean;
@@ -221,9 +224,11 @@ function ModelCard({
   onScrapConfirm: () => void;
   onScrapCancel: () => void;
   disabled?: boolean;
+  gameYear: number;
 }) {
   const { design, status, retailPrice, manufacturingQuantity, yearDesigned, manufacturingPlan } = model;
-  const hasPlan = manufacturingPlan !== null;
+  const hasPlan = manufacturingPlan !== null && manufacturingPlan.year === gameYear;
+  const isRetailOnly = hasDiscontinuedComponents(design, gameYear);
 
   return (
     <div style={{ ...modelCardStyle, opacity: disabled ? 0.5 : 1 }}>
@@ -257,7 +262,24 @@ function ModelCard({
         {manufacturingQuantity !== null && (
           <SpecRow label="Manufacturing Qty" value={manufacturingQuantity.toLocaleString()} />
         )}
+        {model.unitsInStock > 0 && (
+          <SpecRow label="Inventory" value={`${model.unitsInStock.toLocaleString()} units`} />
+        )}
       </div>
+
+      {isRetailOnly && model.unitsInStock > 0 && (
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: tokens.spacing.xs,
+          marginTop: tokens.spacing.sm,
+          color: tokens.colors.warning,
+          fontSize: tokens.font.sizeSmall,
+          fontWeight: 600,
+        }}>
+          Retail only — components discontinued, selling remaining inventory
+        </div>
+      )}
 
       {hasPlan && (
         <div style={{
@@ -299,6 +321,17 @@ function ModelCard({
                 </MenuButton>
               )}
             </>
+          )}
+          {status === "onSale" && !isRetailOnly && onAddManufacturing && (
+            <MenuButton
+              variant="accent"
+              onClick={onAddManufacturing}
+              style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
+                <Factory size={14} /> {hasPlan ? "Edit Manufacturing Plan" : "New Manufacturing Plan"}
+              </span>
+            </MenuButton>
           )}
           <InlineConfirm
             label={status === "draft" ? "Scrap" : "Discontinue"}

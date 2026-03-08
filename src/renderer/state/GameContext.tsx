@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
-import { GameState, LaptopDesign, LaptopModel, ModelStatus, createInitialGameState } from "./gameTypes";
+import { GameState, LaptopDesign, LaptopModel, ModelStatus, createInitialGameState, hasDiscontinuedComponents } from "./gameTypes";
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { YearSimulationResult } from "../../simulation/salesTypes";
 
@@ -29,8 +29,43 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return action.state;
     case "SET_CASH":
       return { ...state, cash: action.cash };
-    case "ADVANCE_YEAR":
-      return { ...state, year: state.year + 1, yearSimulated: false };
+    case "ADVANCE_YEAR": {
+      const nextYear = state.year + 1;
+      const lastSim = state.lastSimulationResult;
+      return {
+        ...state,
+        year: nextYear,
+        yearSimulated: false,
+        models: state.models.map((m) => {
+          if (m.status === "discontinued") return m;
+
+          // Find sim results for this model to get unsold units
+          const simResult = lastSim?.laptopResults.find((r) => r.laptopId === m.design.id);
+          const unsoldFromSim = simResult?.unsoldUnits ?? 0;
+          const newStock = m.unitsInStock + unsoldFromSim;
+
+          // Models that were manufacturing/onSale transition to onSale
+          if (m.status === "manufacturing" || m.status === "onSale") {
+            const discontinued = hasDiscontinuedComponents(m.design, nextYear);
+
+            // Auto-discontinue if components are discontinued and no inventory
+            if (discontinued && newStock <= 0) {
+              return { ...m, status: "discontinued" as const, unitsInStock: 0, manufacturingPlan: null, manufacturingQuantity: null };
+            }
+
+            return {
+              ...m,
+              status: "onSale" as const,
+              unitsInStock: newStock,
+              // Keep plan for prefill, but it won't count as a current-year plan
+              // (AdvanceYearCard checks plan.year === state.year)
+            };
+          }
+
+          return m;
+        }),
+      };
+    }
     case "ADD_MODEL":
       return { ...state, models: [...state.models, action.model] };
     case "UPDATE_MODEL_STATUS":

@@ -6,26 +6,38 @@ import { tokens } from "../../shell/tokens";
 import { BentoCard } from "./BentoCard";
 import { cardBodyStyle } from "./styles";
 import { getActiveModels } from "./utils";
+import { hasDiscontinuedComponents } from "../../state/gameTypes";
 import { COMPETITORS } from "../../../data/competitors";
 import { generateCompetitorModels } from "../../../simulation/competitorAI";
 import { simulateYear } from "../../../simulation/salesEngine";
+
+/** Models that need a current-year manufacturing plan before simulation. */
+function modelsNeedingPlans(state: { year: number; models: ReturnType<typeof getActiveModels> }) {
+  return state.models.filter((m) => {
+    // Discontinued components → retail-only from inventory, no plan needed
+    if (hasDiscontinuedComponents(m.design, state.year)) return false;
+    // Draft or onSale without a current-year plan
+    const hasPlanForYear = m.manufacturingPlan?.year === state.year;
+    return !hasPlanForYear;
+  });
+}
 
 export function AdvanceYearCard() {
   const { state, dispatch } = useGame();
   const { navigateTo } = useNavigation();
   const activeModels = getActiveModels(state);
-  const allHavePlans = activeModels.length > 0 && activeModels.every(
-    (m) => m.manufacturingPlan !== null
-  );
+
+  // Models that need plans = non-inventory-only models without a current-year plan
+  const needPlans = modelsNeedingPlans({ year: state.year, models: activeModels });
+  const allReady = activeModels.length > 0 && needPlans.length === 0;
   const warnings: string[] = [];
 
   if (activeModels.length === 0) {
     warnings.push("Design at least one laptop model");
   }
-  if (activeModels.length > 0 && !allHavePlans) {
-    const modelsWithoutPlans = activeModels.filter((m) => m.manufacturingPlan === null);
+  if (activeModels.length > 0 && needPlans.length > 0) {
     warnings.push(
-      `Add manufacturing plans for: ${modelsWithoutPlans.map((m) => m.design.name).join(", ")}`,
+      `Add manufacturing plans for: ${needPlans.map((m) => m.design.name).join(", ")}`,
     );
   }
 
@@ -42,7 +54,7 @@ export function AdvanceYearCard() {
       )}
       <MenuButton
         variant="accent"
-        disabled={!allHavePlans}
+        disabled={!allReady}
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
 

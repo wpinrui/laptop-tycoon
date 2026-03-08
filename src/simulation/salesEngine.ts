@@ -72,15 +72,23 @@ function buildMarketLaptops(state: GameState): MarketLaptop[] {
   // Player models
   for (const model of state.models) {
     if (model.status !== "manufacturing" && model.status !== "onSale") continue;
-    if (!model.retailPrice || !model.manufacturingQuantity) continue;
+    if (!model.retailPrice) continue;
 
     const stats = computeStatsForDesign(model.design, state.year);
 
     // Calculate total manufacturing cost from plan
     const plan = model.manufacturingPlan;
-    const totalMfgCost = plan
+    const isCurrentYearPlan = plan && plan.year === state.year;
+
+    // Manufacturing quantity = new batch (if any) + existing inventory
+    const newBatch = isCurrentYearPlan ? (model.manufacturingQuantity ?? 0) : 0;
+    const totalAvailable = newBatch + model.unitsInStock;
+
+    if (totalAvailable <= 0) continue;
+
+    const totalMfgCost = isCurrentYearPlan
       ? plan.manufacturing.totalCost + plan.marketing.cost
-      : model.manufacturingQuantity * model.design.unitCost;
+      : 0; // Inventory-only: no new manufacturing cost
 
     laptops.push({
       id: model.design.id,
@@ -88,7 +96,7 @@ function buildMarketLaptops(state: GameState): MarketLaptop[] {
       model,
       stats,
       retailPrice: model.retailPrice,
-      manufacturingQuantity: model.manufacturingQuantity,
+      manufacturingQuantity: totalAvailable,
       totalManufacturingCost: totalMfgCost,
     });
   }
