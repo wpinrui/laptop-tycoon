@@ -1,5 +1,5 @@
 import { AdCampaign } from "../types";
-import { CAMPAIGN_COST_INFLATION, CAMPAIGN_BASE_YEAR } from "../../../simulation/tunables";
+import { getInflatedCost } from "../../../simulation/costInflation";
 
 export const AD_CAMPAIGNS: AdCampaign[] = [
   {
@@ -40,8 +40,7 @@ export const AD_CAMPAIGNS: AdCampaign[] = [
 ];
 
 export function getCampaignCost(campaign: AdCampaign, year: number): number {
-  const yearsElapsed = year - CAMPAIGN_BASE_YEAR;
-  return Math.round(campaign.baseCost * Math.pow(CAMPAIGN_COST_INFLATION, yearsElapsed));
+  return getInflatedCost(campaign.baseCost, year);
 }
 
 export function getRiskLabel(campaign: AdCampaign): string {
