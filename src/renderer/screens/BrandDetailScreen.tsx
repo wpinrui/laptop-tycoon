@@ -1,5 +1,5 @@
-import { CSSProperties } from "react";
-import { Sparkles } from "lucide-react";
+import { CSSProperties, useState } from "react";
+import { Sparkles, Check } from "lucide-react";
 import { useGame } from "../state/GameContext";
 import { getPlayerCompany } from "../state/gameTypes";
 import { useNavigation } from "../navigation/NavigationContext";
@@ -10,9 +10,9 @@ import { tokens } from "../shell/tokens";
 import { ProgressBar } from "./dashboard/ProgressBar";
 import { formatPerception } from "./dashboard/utils";
 import { DEMOGRAPHICS } from "../../data/demographics";
+import { SPONSORSHIPS, getSponsorshipCost } from "../../data/sponsorships";
 
-const CAMPAIGN_COST = 1_000;
-const CAMPAIGN_REACH_BOOST = 0.5;
+const BUDGET_PRESETS = [0, 100_000, 250_000, 500_000, 1_000_000, 2_000_000];
 
 const headerStyle: CSSProperties = {
   display: "flex",
@@ -58,20 +58,57 @@ const hintStyle: CSSProperties = {
   marginTop: tokens.spacing.xs,
 };
 
+const sponsorshipCardStyle: CSSProperties = {
+  background: tokens.colors.surface,
+  borderRadius: tokens.borderRadius.md,
+  padding: tokens.spacing.md,
+  marginBottom: tokens.spacing.sm,
+  cursor: "pointer",
+  transition: "background 0.15s, border-color 0.15s",
+  border: `1px solid ${tokens.colors.panelBorder}`,
+};
+
+const sponsorshipActiveStyle: CSSProperties = {
+  ...sponsorshipCardStyle,
+  border: `1px solid ${tokens.colors.accent}`,
+  background: tokens.colors.interactiveAccentBg,
+};
+
+const demographicTagStyle: CSSProperties = {
+  display: "inline-block",
+  fontSize: tokens.font.sizeSmall,
+  color: tokens.colors.accent,
+  background: tokens.colors.accentBg,
+  borderRadius: tokens.borderRadius.sm,
+  padding: "2px 6px",
+  marginRight: 4,
+  marginTop: 4,
+};
+
 export function BrandDetailScreen() {
   const { state, dispatch } = useGame();
   const { navigateTo } = useNavigation();
   const player = getPlayerCompany(state);
+  const [hoveredSponsorship, setHoveredSponsorship] = useState<string | null>(null);
 
-  const canAfford = state.cash >= CAMPAIGN_COST;
+  const totalSponsorshipCost = state.sponsorships.reduce((sum, id) => {
+    const s = SPONSORSHIPS.find((sp) => sp.id === id);
+    return sum + (s ? getSponsorshipCost(s, state.year) : 0);
+  }, 0);
+
+  const totalAnnualSpend = state.brandAwarenessBudget + totalSponsorshipCost;
 
   return (
-    <ContentPanel maxWidth={700}>
+    <ContentPanel maxWidth={720}>
       <div style={headerStyle}>
         <Sparkles size={24} color={tokens.colors.accent} />
         <h2 style={{ margin: 0 }}>Brand Management</h2>
+        <span style={{ marginLeft: "auto", fontSize: tokens.font.sizeBase, color: tokens.colors.textMuted }}>
+          Annual spend: <span style={{ color: tokens.colors.warning, fontWeight: 600 }}>${totalAnnualSpend.toLocaleString()}</span>
+        </span>
       </div>
 
+      {/* Brand Reach */}
       <div style={sectionStyle}>
         <p style={headingStyle}>Brand Reach</p>
         {DEMOGRAPHICS.map((dem) => {
@@ -90,6 +127,7 @@ export function BrandDetailScreen() {
         </p>
       </div>
 
+      {/* Brand Perception */}
       <div style={sectionStyle}>
         <p style={headingStyle}>Brand Perception</p>
         {DEMOGRAPHICS.map((dem) => {
@@ -110,30 +148,83 @@ export function BrandDetailScreen() {
         </p>
       </div>
 
+      {/* Awareness Budget */}
       <div style={{ borderTop: `1px solid ${tokens.colors.panelBorder}`, paddingTop: tokens.spacing.lg, ...sectionStyle }}>
-        <p style={headingStyle}>Awareness Campaign</p>
-        <p style={{ ...hintStyle, marginBottom: tokens.spacing.md }}>
-          Run a small awareness campaign to boost brand reach across all demographics.
-          This is a placeholder — full sponsorship and budget controls coming soon.
+        <p style={headingStyle}>Awareness Budget</p>
+        <p style={{ ...hintStyle, marginBottom: tokens.spacing.md, marginTop: 0 }}>
+          Annual general spend that feeds a small amount of brand reach into all demographics.
+          Cost is deducted upfront for the year.
         </p>
-        <MenuButton
-          variant="accent"
-          disabled={!canAfford}
-          onClick={() => {
-            dispatch({
-              type: "RUN_AWARENESS_CAMPAIGN",
-              cost: CAMPAIGN_COST,
-              reachBoost: CAMPAIGN_REACH_BOOST,
-            });
-          }}
-        >
-          Run Awareness Campaign (${CAMPAIGN_COST.toLocaleString()})
-        </MenuButton>
-        {!canAfford && (
-          <p style={{ ...hintStyle, color: tokens.colors.danger, marginTop: tokens.spacing.sm }}>
-            Not enough cash
-          </p>
-        )}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: tokens.spacing.sm }}>
+          {BUDGET_PRESETS.map((preset) => {
+            const isSelected = state.brandAwarenessBudget === preset;
+            const canAfford = state.cash >= preset - state.brandAwarenessBudget;
+            return (
+              <MenuButton
+                key={preset}
+                variant={isSelected ? "accent" : "surface"}
+                disabled={!isSelected && !canAfford}
+                onClick={() => dispatch({ type: "SET_AWARENESS_BUDGET", budget: preset })}
+                style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+              >
+                {preset === 0 ? "None" : `$${(preset / 1000).toFixed(0)}K`}
+              </MenuButton>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Sponsorships */}
+      <div style={{ borderTop: `1px solid ${tokens.colors.panelBorder}`, paddingTop: tokens.spacing.lg, ...sectionStyle }}>
+        <p style={headingStyle}>Sponsorships & Partnerships</p>
+        <p style={{ ...hintStyle, marginBottom: tokens.spacing.md, marginTop: 0 }}>
+          Discrete annual deals that target specific demographics. Toggle to purchase or cancel.
+          Costs are adjusted for inflation.
+        </p>
+        {SPONSORSHIPS.map((sponsorship) => {
+          const isActive = state.sponsorships.includes(sponsorship.id);
+          const cost = getSponsorshipCost(sponsorship, state.year);
+          const canAfford = state.cash >= cost;
+          const isHovered = hoveredSponsorship === sponsorship.id;
+          const targetedDemos = DEMOGRAPHICS.filter((d) => (sponsorship.reachBonus[d.id] ?? 0) > 0);
+
+          return (
+            <div
+              key={sponsorship.id}
+              style={{
+                ...(isActive ? sponsorshipActiveStyle : sponsorshipCardStyle),
+                ...(isHovered && !isActive ? { background: tokens.colors.surfaceHover } : {}),
+                ...((!canAfford && !isActive) ? { opacity: 0.5, cursor: "not-allowed" } : {}),
+              }}
+              onClick={() => {
+                if (!canAfford && !isActive) return;
+                dispatch({ type: "TOGGLE_SPONSORSHIP", sponsorshipId: sponsorship.id });
+              }}
+              onMouseEnter={() => setHoveredSponsorship(sponsorship.id)}
+              onMouseLeave={() => setHoveredSponsorship(null)}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm }}>
+                  {isActive && <Check size={16} color={tokens.colors.accent} />}
+                  <span style={{ fontWeight: 600, fontSize: tokens.font.sizeBase }}>{sponsorship.name}</span>
+                </div>
+                <span style={{ fontWeight: 600, fontSize: tokens.font.sizeBase, color: isActive ? tokens.colors.accent : tokens.colors.text }}>
+                  ${cost.toLocaleString()}
+                </span>
+              </div>
+              <p style={{ ...hintStyle, marginTop: tokens.spacing.xs, marginBottom: tokens.spacing.xs }}>
+                {sponsorship.description}
+              </p>
+              <div>
+                {targetedDemos.map((dem) => (
+                  <span key={dem.id} style={demographicTagStyle}>
+                    {dem.name} +{sponsorship.reachBonus[dem.id]}%
+                  </span>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <MenuButton onClick={() => navigateTo("dashboard")} style={{ marginTop: tokens.spacing.md }}>

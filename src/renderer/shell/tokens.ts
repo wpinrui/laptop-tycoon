@@ -21,6 +21,7 @@ export const tokens = {
     successBg: "rgba(102, 187, 106, 0.1)",
     successBorder: "rgba(102, 187, 106, 0.3)",
     dangerBg: "rgba(239, 83, 80, 0.1)",
+    accentBg: "rgba(79, 195, 247, 0.1)",
     warning: "#ffa726",
     warningDark: "#d32f2f",
     interactiveAccent: "#90caf9",

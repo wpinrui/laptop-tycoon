@@ -7,6 +7,7 @@ import { clearProjectionCache } from "../../simulation/salesEngine";
 import { updateBrandReach, updateCompetitorBrandReach, applySingleQuarterPerception } from "../../simulation/brandProgression";
 import { applyDeathSpiralPrevention } from "../../simulation/deathSpiralPrevention";
 import { LaptopReview, Award, applyAwardBonuses } from "../../simulation/reviewsAwards";
+import { SPONSORSHIPS, getSponsorshipCost } from "../../data/sponsorships";
 
 export interface CompetitorModelEntry {
   competitorId: string;
@@ -25,7 +26,8 @@ type GameAction =
   | { type: "SET_MANUFACTURING_PLAN"; modelId: string; plan: FullManufacturingPlan }
   | { type: "ADD_COMPETITOR_MODELS"; models: CompetitorModelEntry[] }
   | { type: "APPLY_QUARTER_RESULT"; result: QuarterSimulationResult }
-  | { type: "RUN_AWARENESS_CAMPAIGN"; cost: number; reachBoost: number }
+  | { type: "SET_AWARENESS_BUDGET"; budget: number }
+  | { type: "TOGGLE_SPONSORSHIP"; sponsorshipId: string }
   | { type: "SET_REVIEWS"; reviews: LaptopReview[] }
   | { type: "SET_AWARDS"; awards: Award[] };
 
@@ -93,6 +95,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         quarterHistory: [],
         currentYearReviews: [],
         currentYearAwards: [],
+        brandAwarenessBudget: 0,
+        sponsorships: [],
         companies: updatePlayerModels(companiesAfterSpiral, (models) =>
           models.map((m) => {
             if (m.status === "discontinued") return m;
@@ -253,17 +257,34 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         lastSimulationResult: result,
       };
     }
-    case "RUN_AWARENESS_CAMPAIGN": {
+    case "SET_AWARENESS_BUDGET": {
+      // Refund old budget, charge new budget
+      const cashDelta = state.brandAwarenessBudget - action.budget;
       return {
         ...state,
-        cash: state.cash - action.cost,
-        companies: updatePlayer(state.companies, (p) => {
-          const newReach = { ...p.brandReach };
-          for (const key of Object.keys(newReach) as DemographicId[]) {
-            newReach[key] = Math.min(100, newReach[key] + action.reachBoost);
-          }
-          return { ...p, brandReach: newReach };
-        }),
+        cash: state.cash + cashDelta,
+        brandAwarenessBudget: action.budget,
+      };
+    }
+    case "TOGGLE_SPONSORSHIP": {
+      const isActive = state.sponsorships.includes(action.sponsorshipId);
+      const sponsorship = SPONSORSHIPS.find((s) => s.id === action.sponsorshipId);
+      if (!sponsorship) return state;
+      const cost = getSponsorshipCost(sponsorship, state.year);
+      if (isActive) {
+        // Remove and refund
+        return {
+          ...state,
+          cash: state.cash + cost,
+          sponsorships: state.sponsorships.filter((id) => id !== action.sponsorshipId),
+        };
+      }
+      // Purchase
+      if (state.cash < cost) return state;
+      return {
+        ...state,
+        cash: state.cash - cost,
+        sponsorships: [...state.sponsorships, action.sponsorshipId],
       };
     }
     case "SET_REVIEWS":
