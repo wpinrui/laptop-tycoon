@@ -15,8 +15,9 @@ function calculateMarketSize(
   const basePool = STARTING_DEMAND_POOL[demographicId];
   const population = getDemandPoolSize(demographicId, year, basePool);
   const replacementCycle = REPLACEMENT_CYCLE[demographicId];
-  const quarterShare = QUARTER_SHARES[quarter - 1];
-  return Math.round(population / replacementCycle * quarterShare / 15);
+  const quarterSharesSum = QUARTER_SHARES.reduce((s, v) => s + v, 0);
+  const quarterShare = QUARTER_SHARES[quarter - 1] / quarterSharesSum;
+  return Math.round(population / replacementCycle * quarterShare);
 }
 
 function calculateTotalMarketSize(year: number, quarter: Quarter): number {
