@@ -28,6 +28,7 @@ import {
   REPLACEMENT_CYCLE,
   QUARTER_SHARES,
   QUARTER_SHARES_SUM,
+  PRICE_SENSITIVITY_EXPONENT,
 } from "./tunables";
 import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
 import { sampleCampaignOutcome } from "../renderer/manufacturing/utils/skewNormal";
@@ -201,8 +202,9 @@ function calculateBiasedVP(
   const pref = demographic.screenSizePreference;
   const screenPenalty = getScreenSizeFit(laptop.model.design.screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);
 
-  // Step 1: raw_vp = (weighted_score × screen_penalty) / price
-  const rawVP = (weightedStatScore * screenPenalty) / laptop.retailPrice;
+  // Step 1: raw_vp = (weighted_score × screen_penalty) / price ^ sensitivity_factor
+  const sensitivityExponent = PRICE_SENSITIVITY_EXPONENT[demographic.priceSensitivity];
+  const rawVP = (weightedStatScore * screenPenalty) / Math.pow(laptop.retailPrice, sensitivityExponent);
 
   // Step 2: biased_vp = raw_vp × (1 + brand_perception_mod / 100) × (1 + laptop_perception_mod / 100)
   const company = state.companies.find((c) => c.id === laptop.owner);
