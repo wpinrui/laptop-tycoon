@@ -2,11 +2,19 @@ import { CSSProperties } from "react";
 import { Laptop } from "lucide-react";
 import { useNavigation } from "../../navigation/NavigationContext";
 import { useGame } from "../../state/GameContext";
+import { ModelStatus } from "../../state/gameTypes";
 import { MenuButton } from "../../shell/MenuButton";
 import { tokens } from "../../shell/tokens";
 import { BentoCard } from "./BentoCard";
 import { cardBodyStyle, emptyStateStyle } from "./styles";
 import { getActiveModels, MAX_MODELS } from "./utils";
+
+const STATUS_LABELS: Record<ModelStatus, string> = {
+  draft: "Draft",
+  manufacturing: "Manufacturing",
+  onSale: "On Sale",
+  discontinued: "Discontinued",
+};
 
 const modelRowStyle: CSSProperties = {
   display: "flex",
@@ -36,14 +44,17 @@ export function ModelsCard() {
         activeModels.map((model) => (
           <div key={model.design.id} style={modelRowStyle}>
             <div>
-              <span>{model.design.name}</span>
-              {model.retailPrice !== null && (
-                <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, marginLeft: tokens.spacing.sm }}>
-                  ${model.retailPrice.toLocaleString()}
-                </span>
-              )}
+              <div>{model.design.name}</div>
+              <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, display: "flex", gap: tokens.spacing.sm }}>
+                {model.retailPrice !== null && (
+                  <span>${model.retailPrice.toLocaleString()}</span>
+                )}
+                {model.unitsInStock > 0 && (
+                  <span>{model.unitsInStock.toLocaleString()} in stock</span>
+                )}
+              </div>
             </div>
-            <span style={statusBadgeStyle}>{model.status}</span>
+            <span style={statusBadgeStyle}>{STATUS_LABELS[model.status]}</span>
           </div>
         ))
       )}
