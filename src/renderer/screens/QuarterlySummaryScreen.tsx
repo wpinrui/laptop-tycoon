@@ -1,4 +1,3 @@
-import { CSSProperties } from "react";
 import { useGame } from "../state/GameContext";
 import { getPlayerCompany } from "../state/gameTypes";
 import { useNavigation } from "../navigation/NavigationContext";
@@ -7,51 +6,7 @@ import { MenuButton } from "../shell/MenuButton";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
 import { formatCurrency, formatNumber, QUARTER_LABELS } from "../utils/formatCash";
-
-const titleStyle: CSSProperties = {
-  margin: 0,
-  marginBottom: tokens.spacing.lg,
-  fontSize: tokens.font.sizeTitle,
-  fontWeight: 700,
-};
-
-const sectionStyle: CSSProperties = {
-  marginBottom: tokens.spacing.lg,
-};
-
-const tableStyle: CSSProperties = {
-  width: "100%",
-  borderCollapse: "collapse",
-  marginTop: tokens.spacing.sm,
-};
-
-const thStyle: CSSProperties = {
-  textAlign: "left",
-  padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
-  borderBottom: `1px solid ${tokens.colors.panelBorder}`,
-  color: tokens.colors.textMuted,
-  fontSize: tokens.font.sizeSmall,
-  fontWeight: 600,
-};
-
-const tdStyle: CSSProperties = {
-  padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
-  borderBottom: `1px solid ${tokens.colors.surface}`,
-};
-
-const tdRight: CSSProperties = { ...tdStyle, textAlign: "right" };
-
-const summaryRowStyle: CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  padding: `${tokens.spacing.xs}px 0`,
-};
-
-const sectionHeadingStyle: CSSProperties = {
-  margin: 0,
-  marginBottom: tokens.spacing.sm,
-  color: tokens.colors.accent,
-};
+import { titleStyle, sectionStyle, tableStyle, thStyle, tdStyle, tdRight, summaryRowStyle, sectionHeadingStyle } from "./summaryStyles";
 
 export function QuarterlySummaryScreen() {
   const { state, dispatch } = useGame();

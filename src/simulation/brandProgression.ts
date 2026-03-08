@@ -167,8 +167,6 @@ export function updateCompetitorBrandReach(
 
 // ==================== Brand Perception ====================
 
-// ==================== Brand Perception ====================
-
 const QUARTERLY_DECAY = Math.pow(PERCEPTION_DECAY, 0.25);
 
 /**
