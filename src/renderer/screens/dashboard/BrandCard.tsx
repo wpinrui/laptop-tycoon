@@ -10,12 +10,20 @@ import { LaptopStat } from "../../../data/types";
 const reputationStats: { label: string; key: LaptopStat }[] = [
   { label: "Performance", key: "performance" },
   { label: "Gaming", key: "gamingPerformance" },
-  { label: "Display", key: "display" },
-  { label: "Build Quality", key: "buildQuality" },
   { label: "Battery Life", key: "batteryLife" },
+  { label: "Display", key: "display" },
+  { label: "Connectivity", key: "connectivity" },
+  { label: "Speakers", key: "speakers" },
+  { label: "Webcam", key: "webcam" },
   { label: "Design", key: "design" },
-  { label: "Portability", key: "weight" },
+  { label: "Build Quality", key: "buildQuality" },
+  { label: "Keyboard", key: "keyboard" },
+  { label: "Trackpad", key: "trackpad" },
+  { label: "Repairability", key: "repairability" },
+  { label: "Weight", key: "weight" },
+  { label: "Thinness", key: "thinness" },
   { label: "Thermals", key: "thermals" },
+  { label: "Support", key: "supportAndService" },
 ];
 
 export function BrandCard() {

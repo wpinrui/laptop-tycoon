@@ -4,29 +4,29 @@
  */
 
 import { ALL_STATS, LaptopStat } from "../data/types";
-import { GameState } from "../renderer/state/gameTypes";
+import { GameState, CompetitorState } from "../renderer/state/gameTypes";
 import { YearSimulationResult } from "./salesTypes";
 import { computeStatsForDesign } from "./statCalculation";
 
 // --- Brand Recognition Tuning ---
 
-/** Units sold per +1 brand recognition */
+/** Units sold per +1 raw brand recognition growth */
 const SALES_VOLUME_DIVISOR = 10_000;
-/** Marketing spend per +1 brand recognition */
+/** Marketing spend per +1 raw brand recognition growth */
 const MARKETING_SPEND_DIVISOR = 2_000_000;
 /** Time-in-market bonus per year with products on sale */
 const TIME_IN_MARKET_BONUS = 1;
-/** Decay when player has no products on sale */
-const INACTIVITY_DECAY = -5;
-/** Decay when player has products but sold very few */
-const POOR_SALES_DECAY = -2;
+/** Proportional decay rate when player has no products on sale */
+const INACTIVITY_DECAY_RATE = 0.15;
+/** Proportional decay rate when player has products but poor sales */
+const POOR_SALES_DECAY_RATE = 0.05;
 /** Threshold below which sales are considered "poor" */
 const POOR_SALES_THRESHOLD = 1_000;
 
 /**
- * Update brand recognition based on year-end results.
- * Grows with: sales volume, marketing spend, time in market.
- * Decays with: inactivity (no products on sale), poor sales.
+ * Update brand recognition with diminishing returns.
+ * Growth is scaled by (1 - recognition/100) so it's harder to gain at higher levels.
+ * Decay is proportional to current recognition.
  */
 export function updateBrandRecognition(
   state: GameState,
@@ -48,21 +48,44 @@ export function updateBrandRecognition(
     (m) => m.status === "manufacturing" || m.status === "onSale",
   );
 
-  // Growth components
-  const salesGrowth = totalUnitsSold / SALES_VOLUME_DIVISOR;
-  const marketingGrowth = totalMarketingSpend / MARKETING_SPEND_DIVISOR;
-  const timeBonus = hasProductsOnSale ? TIME_IN_MARKET_BONUS : 0;
+  // Raw growth (before diminishing returns)
+  const rawGrowth =
+    totalUnitsSold / SALES_VOLUME_DIVISOR +
+    totalMarketingSpend / MARKETING_SPEND_DIVISOR +
+    (hasProductsOnSale ? TIME_IN_MARKET_BONUS : 0);
 
-  // Decay component
+  // Diminishing returns: harder to grow at higher recognition
+  const headroom = 1 - old / 100;
+  const growth = rawGrowth * headroom;
+
+  // Proportional decay
   let decay = 0;
   if (!hasProductsOnSale) {
-    decay = INACTIVITY_DECAY;
+    decay = old * INACTIVITY_DECAY_RATE;
   } else if (totalUnitsSold < POOR_SALES_THRESHOLD) {
-    decay = POOR_SALES_DECAY;
+    decay = old * POOR_SALES_DECAY_RATE;
   }
 
-  const delta = salesGrowth + marketingGrowth + timeBonus + decay;
-  return Math.max(0, Math.min(100, old + delta));
+  return Math.max(0, Math.min(100, old + growth - decay));
+}
+
+/**
+ * Update a competitor's brand recognition based on their sales volume.
+ */
+export function updateCompetitorBrandRecognition(
+  comp: CompetitorState,
+  result: YearSimulationResult,
+): number {
+  const old = comp.brandRecognition;
+
+  const compResults = result.laptopResults.filter((r) => r.owner === comp.id);
+  const totalUnitsSold = compResults.reduce((sum, r) => sum + r.unitsSold, 0);
+
+  const rawGrowth = totalUnitsSold / SALES_VOLUME_DIVISOR + TIME_IN_MARKET_BONUS;
+  const headroom = 1 - old / 100;
+  const growth = rawGrowth * headroom;
+
+  return Math.max(0, Math.min(100, old + growth));
 }
 
 // --- Niche Reputation Tuning ---
@@ -75,7 +98,45 @@ const TECH_ENTHUSIAST_ID = "techEnthusiast";
 const TECH_ENTHUSIAST_MULTIPLIER = 2.0;
 
 /**
+ * Build a weighted-average stat vector across all laptops in the market for
+ * the given year. Used to normalise niche reputation against market context.
+ */
+function buildMarketStatProfile(
+  state: GameState,
+  result: YearSimulationResult,
+): Record<LaptopStat, number> {
+  const accum = {} as Record<LaptopStat, number>;
+  for (const stat of ALL_STATS) accum[stat] = 0;
+  let totalWeight = 0;
+
+  for (const lr of result.laptopResults) {
+    if (lr.unitsSold <= 0) continue;
+
+    // Find the design — player or competitor
+    let design;
+    if (lr.owner === "player") {
+      design = state.models.find((m) => m.design.id === lr.laptopId)?.design;
+    } else {
+      const comp = state.competitors.find((c) => c.id === lr.owner);
+      design = comp?.models.find((m) => m.design.id === lr.laptopId)?.design;
+    }
+    if (!design) continue;
+
+    const stats = computeStatsForDesign(design, state.year);
+    for (const stat of ALL_STATS) {
+      accum[stat] += (stats[stat] ?? 0) * lr.unitsSold;
+    }
+    totalWeight += lr.unitsSold;
+  }
+
+  if (totalWeight === 0) return accum;
+  for (const stat of ALL_STATS) accum[stat] /= totalWeight;
+  return accum;
+}
+
+/**
  * Update niche reputation based on shipped laptop stats, weighted by units sold.
+ * Normalised against market-wide stats so "scoring well" is relative to competitors.
  * Tech Enthusiast sales accelerate reputation movement.
  */
 export function updateNicheReputation(
@@ -95,9 +156,12 @@ export function updateNicheReputation(
     return decayed;
   }
 
+  // Market-wide average stat profile for normalisation
+  const marketProfile = buildMarketStatProfile(state, result);
+
   // Build a weighted stat profile from player laptops sold this year.
   // Weight = units sold, with Tech Enthusiast sales counting extra.
-  const statAccum: Record<LaptopStat, number> = {} as Record<LaptopStat, number>;
+  const statAccum = {} as Record<LaptopStat, number>;
   for (const stat of ALL_STATS) statAccum[stat] = 0;
   let totalWeight = 0;
 
@@ -122,19 +186,20 @@ export function updateNicheReputation(
 
   if (totalWeight === 0) return old;
 
-  // Normalise to get average stat profile (raw scores)
-  const avgStats: Record<string, number> = {};
+  // Average player stat profile
+  const avgStats = {} as Record<LaptopStat, number>;
   for (const stat of ALL_STATS) {
     avgStats[stat] = statAccum[stat] / totalWeight;
   }
 
-  // Find the max raw stat to normalise into 0-100 range
-  const maxStat = Math.max(...ALL_STATS.map((s) => avgStats[s]), 1);
-
-  // Lerp niche reputation toward normalised stat profile
+  // Normalise against market: how much better/worse than market average (0-100).
+  // A stat at market average = 50, double market average = 100, zero = 0.
   const updated: Record<string, number> = {};
   for (const stat of ALL_STATS) {
-    const target = (avgStats[stat] / maxStat) * 100;
+    const marketAvg = marketProfile[stat] || 1;
+    const ratio = avgStats[stat] / marketAvg;
+    // ratio=1 means market average → target 50; ratio=2 → 100; ratio=0 → 0
+    const target = Math.min(100, ratio * 50);
     const current = old[stat] ?? 0;
     updated[stat] = current + NICHE_LERP_RATE * (target - current);
   }
