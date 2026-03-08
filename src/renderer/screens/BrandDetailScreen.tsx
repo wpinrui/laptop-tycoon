@@ -7,6 +7,7 @@ import { MenuButton } from "../shell/MenuButton";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
 import { ProgressBar } from "./dashboard/ProgressBar";
+import { perceptionColor } from "./dashboard/utils";
 import { DEMOGRAPHICS } from "../../data/demographics";
 import { DemographicId } from "../../data/types";
 
@@ -56,14 +57,6 @@ const hintStyle: CSSProperties = {
   color: tokens.colors.textMuted,
   marginTop: tokens.spacing.xs,
 };
-
-function perceptionColor(value: number): string {
-  if (value > 10) return tokens.colors.success;
-  if (value > 0) return tokens.colors.text;
-  if (value < -10) return tokens.colors.danger;
-  if (value < 0) return tokens.colors.warning;
-  return tokens.colors.textMuted;
-}
 
 export function BrandDetailScreen() {
   const { state, dispatch } = useGame();

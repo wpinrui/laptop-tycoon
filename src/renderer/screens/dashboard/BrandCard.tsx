@@ -4,6 +4,7 @@ import { tokens } from "../../shell/tokens";
 import { BentoCard } from "./BentoCard";
 import { ProgressBar } from "./ProgressBar";
 import { cardBodyStyle, hintStyle, sectionDividerStyle, sectionHeadingStyle, smallTextStyle } from "./styles";
+import { perceptionColor } from "./utils";
 
 import { DEMOGRAPHICS } from "../../../data/demographics";
 import { LaptopStat, DemographicId } from "../../../data/types";
@@ -26,14 +27,6 @@ const reputationStats: { label: string; key: LaptopStat }[] = [
   { label: "Thermals", key: "thermals" },
   { label: "Support", key: "supportAndService" },
 ];
-
-function perceptionColor(value: number): string {
-  if (value > 10) return tokens.colors.success;
-  if (value > 0) return tokens.colors.text;
-  if (value < -10) return tokens.colors.danger;
-  if (value < 0) return tokens.colors.warning;
-  return tokens.colors.textMuted;
-}
 
 export function BrandCard() {
   const { state } = useGame();

@@ -363,10 +363,10 @@ export function simulateYear(state: GameState): YearSimulationResult {
       // Each laptop's addressable pool is gated by its owner's reach in this demographic
       let reach: number;
       if (laptop.owner === "player") {
-        reach = (state.brandReach[demId as keyof typeof state.brandReach] ?? 0) + campaignReachBoost;
+        reach = (state.brandReach[demId] ?? 0) + campaignReachBoost;
       } else {
         const comp = state.competitors.find((c) => c.id === laptop.owner);
-        reach = comp ? (comp.brandReach[demId as keyof typeof comp.brandReach] ?? 0) : 0;
+        reach = comp ? (comp.brandReach[demId] ?? 0) : 0;
       }
       reach = Math.min(reach, 100);
       const reachGatedPool = fullPool * (reach / 100);
@@ -543,7 +543,7 @@ export function projectDemandRange(
 
     const share = totalAppeal > 0 ? ourAppeal / totalAppeal : 0;
     // Gate by player's reach in this demographic (including immediate campaign boost)
-    const reach = Math.min((state.brandReach[demId as keyof typeof state.brandReach] ?? 0) + campaignReachBoost, 100);
+    const reach = Math.min((state.brandReach[demId] ?? 0) + campaignReachBoost, 100);
     totalExpected += fullPool * (reach / 100) * share;
   }
 
