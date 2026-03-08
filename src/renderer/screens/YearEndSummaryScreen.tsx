@@ -152,6 +152,45 @@ export function YearEndSummaryScreen() {
         </div>
       )}
 
+      {/* Perception changes */}
+      {result.perceptionChanges && result.perceptionChanges.some((pc) => Math.abs(pc.delta) >= 0.1) && (
+        <div style={sectionStyle}>
+          <h3 style={sectionHeadingStyle}>
+            Brand Perception Changes
+          </h3>
+          <table style={tableStyle}>
+            <thead>
+              <tr>
+                <th style={thStyle}>Demographic</th>
+                <th style={{ ...thStyle, textAlign: "right" }}>Before</th>
+                <th style={{ ...thStyle, textAlign: "right" }}>After</th>
+                <th style={{ ...thStyle, textAlign: "right" }}>Change</th>
+              </tr>
+            </thead>
+            <tbody>
+              {result.perceptionChanges
+                .filter((pc) => Math.abs(pc.delta) >= 0.1)
+                .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+                .map((pc) => {
+                  const demName = DEMOGRAPHICS.find((d) => d.id === pc.demographicId)?.name ?? pc.demographicId;
+                  const deltaColor = pc.delta > 0 ? tokens.colors.success : pc.delta < 0 ? tokens.colors.danger : undefined;
+                  const sign = pc.delta > 0 ? "+" : "";
+                  return (
+                    <tr key={pc.demographicId}>
+                      <td style={tdStyle}>{demName}</td>
+                      <td style={tdRight}>{pc.oldPerception.toFixed(1)}</td>
+                      <td style={tdRight}>{pc.newPerception.toFixed(1)}</td>
+                      <td style={{ ...tdRight, color: deltaColor, fontWeight: 600 }}>
+                        {sign}{pc.delta.toFixed(1)}
+                      </td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {/* Financial summary */}
       <div style={{
         ...sectionStyle,
