@@ -30,9 +30,9 @@ A text-driven tycoon game where the player runs a laptop company from 2000 onwar
 
 The player may have up to **2 models** on sale simultaneously. When creating a model, they choose one of:
 
-- **Brand New:** Fresh design. Full body + component design from scratch. Highest cost.
-- **Successor:** Builds on a previous model. New body + new components.
-- **Spec Bump:** Reuses the previous model's body and screen size. Only component slots (Processing, Display & Media, Connectivity & Power) can be changed — Screen Size and Body steps are locked to the predecessor's choices. No body R&D cost, lower overall R&D cost. Improvement may be limited by carrying over an older chassis design.
+- **Brand New:** Fresh design. Full body + component design from scratch. Highest R&D cost.
+- **Successor:** Pre-populates component selections from a predecessor model. New body + new components. Reduced R&D cost. No special sales advantage over Brand New — purely a design-flow and cost distinction.
+- **Spec Bump:** Reuses the previous model's body and screen size. Only component slots (Processing, Display & Media, Connectivity & Power) can be changed — Screen Size and Body steps are locked to the predecessor's choices. Lowest R&D cost. Improvement may be limited by carrying over an older chassis design.
 
 ### Design Wizard Flow
 
@@ -44,7 +44,7 @@ Name the laptop and choose model type (Brand New, Successor, or Spec Bump). For 
 
 Choose a screen size (10"–18") via slider. This gates all downstream decisions (chassis options, cooling capacity, battery space, weight). Each size has fixed base stats for cooling capacity (W), battery capacity (Wh), and base weight (g). Larger screens offer more cooling and battery headroom but are heavier.
 
-Screen size acts as a **soft filter with penalties** in the sales simulation. Each buyer segment has a preferred screen size range. Offering a different size applies a purchase-likelihood penalty that scales with how far you are from their preference (per-inch penalty defined per demographic).
+Different demographics prefer different screen sizes. This is reflected in the sales simulation.
 
 #### Step 3 — Components
 
@@ -150,7 +150,7 @@ unit_cost = base_cost × (1 / (1 + 0.4 × log10(units_ordered / reference_quanti
 
 ### Demand Projection
 
-After design is finalised but before committing to a quantity, the player sees a projected demand range (e.g., "25,000–40,000 units"). The range tightens as brand reach grows. This is derived from the same sales simulation that determines actual results.
+After design is finalised but before committing to a quantity, the player sees a projected demand range (e.g., "25,000–40,000 units"). This is derived from the same sales simulation that determines actual results.
 
 ### Unsold Inventory
 
@@ -184,9 +184,9 @@ Each buyer type has:
 | Student | Price, battery, portability, performance | Very high | Large population throughout. |
 | Creative Professional | Display, performance, build quality, design | Low | Small but high margin. Grows significantly post-2010. |
 | Gamer | Gaming perf, display, thermals | Moderate | Tiny pre-2005, explodes after. |
-| Tech Enthusiast | Performance, value-for-money, connectivity, repairability | Moderate | Small but outsized effect on brand reputation. Tastemakers. |
-| General Consumer | Price, design | High | Largest group. High brand reach dependency — unlikely to consider low-reach brands. Heavily influenced by marketing and brand. |
-| Budget Buyer | Price above all else | Extreme | Tolerates bad everything if cheap. No brand loyalty. |
+| Tech Enthusiast | Performance, value-for-money, connectivity, repairability | Moderate | Small population. 2-year replacement cycle. |
+| General Consumer | Price, design | High | Largest group. |
+| Budget Buyer | Price above all else | Extreme | Tolerates bad everything if cheap enough. |
 
 ### Quarterly Structure
 
@@ -278,7 +278,6 @@ Before the player commits to an order quantity, they see a projected demand rang
 - Ad campaign outcomes shown as a range (25th to 75th percentile of the campaign distribution)
 - Additional ±5-10% noise margin applied independently to both ends
 - The prospective campaign's reach contribution included (even though not yet committed to state)
-- Range tightens as brand reach grows (more established brands have more predictable sales)
 
 Demand projection shows the full-year estimated range (sum of all 4 quarters). The quarterly split is not shown — the player sees total projected annual demand for the purpose of setting their initial manufacturing order.
 
