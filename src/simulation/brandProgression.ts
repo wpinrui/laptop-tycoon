@@ -22,8 +22,10 @@ const S_CURVE_MIDPOINT = 50;
 const AWARENESS_BUDGET_DIVISOR = 500_000;
 /** Word-of-mouth divisor — every X units sold in a demographic contributes 1 raw reach point */
 const WORD_OF_MOUTH_DIVISOR = 5_000;
-/** Marketing campaign divisor — every $X of campaign spend contributes 1 raw reach point (secondary driver) */
+/** Marketing campaign divisor — every $X of campaign spend contributes 1 raw reach point (S-curve, year-over-year) */
 const CAMPAIGN_REACH_DIVISOR = 2_000_000;
+/** Immediate reach divisor — every $X of campaign spend gives 1% immediate reach (flat, same-year) */
+const CAMPAIGN_IMMEDIATE_REACH_DIVISOR = 500_000;
 /** Reach decay rate when no products on sale (proportional, per year) */
 const REACH_INACTIVITY_DECAY = 0.10;
 
@@ -36,6 +38,22 @@ function sCurveGrowthFactor(currentReach: number): number {
   const expTerm = Math.exp(-S_CURVE_STEEPNESS * (x - S_CURVE_MIDPOINT));
   // Derivative of logistic: peaks at midpoint, low at extremes
   return S_CURVE_STEEPNESS * expTerm / Math.pow(1 + expTerm, 2);
+}
+
+/**
+ * Compute the immediate (same-year) reach boost from marketing campaign spend.
+ * This is a flat addition (not S-curved) so it works even at 0% reach.
+ * Used by simulateYear and projectDemandRange to gate demand before year-end.
+ */
+export function getCampaignReachBoost(state: GameState): number {
+  let totalCampaignSpend = 0;
+  for (const model of state.models) {
+    const plan = model.manufacturingPlan;
+    if (plan && plan.year === state.year && plan.marketing.cost > 0) {
+      totalCampaignSpend += plan.marketing.cost;
+    }
+  }
+  return totalCampaignSpend / CAMPAIGN_IMMEDIATE_REACH_DIVISOR;
 }
 
 /**

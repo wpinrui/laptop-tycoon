@@ -28,6 +28,7 @@ import {
 import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
 import { generateCompetitorModels } from "./competitorAI";
 import { COMPETITORS } from "../data/competitors";
+import { getCampaignReachBoost } from "./brandProgression";
 
 // Cache synthetic competitor models per year for stable demand projections
 let cachedProjectionYear: number | null = null;
@@ -324,6 +325,9 @@ export function simulateYear(state: GameState): YearSimulationResult {
     };
   }
 
+  // Immediate reach boost from marketing campaign spend (flat, not S-curved)
+  const campaignReachBoost = getCampaignReachBoost(state);
+
   // Pre-compute normalised stats for all laptops
   const normalisedStatsMap = new Map<string, Record<LaptopStat, number>>();
   for (const laptop of allLaptops) {
@@ -359,11 +363,12 @@ export function simulateYear(state: GameState): YearSimulationResult {
       // Each laptop's addressable pool is gated by its owner's reach in this demographic
       let reach: number;
       if (laptop.owner === "player") {
-        reach = state.brandReach[demId as keyof typeof state.brandReach] ?? 0;
+        reach = (state.brandReach[demId as keyof typeof state.brandReach] ?? 0) + campaignReachBoost;
       } else {
         const comp = state.competitors.find((c) => c.id === laptop.owner);
         reach = comp ? (comp.brandReach[demId as keyof typeof comp.brandReach] ?? 0) : 0;
       }
+      reach = Math.min(reach, 100);
       const reachGatedPool = fullPool * (reach / 100);
 
       appeals.push({ laptopId: laptop.id, appeal, reachGatedPool });
@@ -515,6 +520,9 @@ export function projectDemandRange(
     normalisedStatsMap.set(laptop.id, normaliseStats(laptop, allLaptops));
   }
 
+  // Immediate reach boost from marketing campaign spend
+  const campaignReachBoost = getCampaignReachBoost(state);
+
   // Sum demand across demographics for our model
   let totalExpected = 0;
   for (const demographic of DEMOGRAPHICS) {
@@ -533,8 +541,8 @@ export function projectDemandRange(
     }
 
     const share = totalAppeal > 0 ? ourAppeal / totalAppeal : 0;
-    // Gate by player's reach in this demographic
-    const reach = state.brandReach[demId as keyof typeof state.brandReach] ?? 0;
+    // Gate by player's reach in this demographic (including immediate campaign boost)
+    const reach = Math.min((state.brandReach[demId as keyof typeof state.brandReach] ?? 0) + campaignReachBoost, 100);
     totalExpected += fullPool * (reach / 100) * share;
   }
 
