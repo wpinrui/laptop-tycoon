@@ -24,7 +24,10 @@ import {
   CHANNEL_MARGIN_RATE,
   DEMAND_NOISE_MIN,
   DEMAND_NOISE_MAX,
-} from "../renderer/manufacturing/utils/constants";
+  PRICE_OVERSHOOT_DECAY,
+  BASE_DEMAND_VARIANCE,
+  REACH_VARIANCE_SCALE,
+} from "./tunables";
 import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
 import { generateCompetitorModels } from "./competitorAI";
 import { COMPETITORS } from "../data/competitors";
@@ -39,15 +42,6 @@ export function clearProjectionCache(): void {
   cachedProjectionYear = null;
   cachedProjectionModels = [];
 }
-
-// --- Tuning Constants ---
-
-/** Exponential decay rate for price overshoot above ceiling */
-const PRICE_OVERSHOOT_DECAY = 3;
-/** Base demand variance for projections */
-const BASE_DEMAND_VARIANCE = 0.15;
-/** Additional variance scaled by average reach */
-const REACH_VARIANCE_SCALE = 0.20;
 
 // --- Market Entry: all laptops competing this year ---
 

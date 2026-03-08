@@ -1,5 +1,6 @@
 import { DemographicId } from "../data/types";
 import { PriceCeiling, DemandGrowthAnchor } from "./salesTypes";
+import { PRICE_INFLATION_RATE, PRICE_BASE_YEAR } from "./tunables";
 
 // --- Price Ceilings (year-2000 baseline, inflates ~3% per year) ---
 
@@ -13,9 +14,6 @@ export const PRICE_CEILINGS: PriceCeiling[] = [
   { demographicId: "gamer", baseCeiling: 2000 },
   { demographicId: "creativeProfessional", baseCeiling: 2500 },
 ];
-
-export const PRICE_INFLATION_RATE = 1.03;
-export const PRICE_BASE_YEAR = 2000;
 
 export function getPriceCeiling(demographicId: DemographicId, year: number): number {
   const entry = PRICE_CEILINGS.find((p) => p.demographicId === demographicId);
