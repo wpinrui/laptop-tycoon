@@ -4,7 +4,7 @@ import { tokens } from "../../shell/tokens";
 import { BentoCard } from "./BentoCard";
 import { ProgressBar } from "./ProgressBar";
 import { cardBodyStyle, hintStyle, sectionDividerStyle, sectionHeadingStyle, smallTextStyle } from "./styles";
-import { perceptionColor } from "./utils";
+import { formatPerception } from "./utils";
 
 import { DEMOGRAPHICS } from "../../../data/demographics";
 import { LaptopStat } from "../../../data/types";
@@ -31,8 +31,7 @@ const reputationStats: { label: string; key: LaptopStat }[] = [
 export function BrandCard() {
   const { state } = useGame();
 
-  const perceptionValue = Math.round(state.brandPerception);
-  const perceptionSign = perceptionValue > 0 ? "+" : "";
+  const perception = formatPerception(state.brandPerception);
 
   return (
     <BentoCard title="Brand" icon={Sparkles} screen="brandDetail">
@@ -54,8 +53,8 @@ export function BrandCard() {
       <div style={sectionDividerStyle}>
         <p style={sectionHeadingStyle}>Brand Perception</p>
         <div style={{ display: "flex", alignItems: "baseline", gap: tokens.spacing.sm, marginTop: tokens.spacing.xs }}>
-          <span style={{ ...cardBodyStyle, fontSize: 20, color: perceptionColor(perceptionValue) }}>
-            {perceptionSign}{perceptionValue}
+          <span style={{ ...cardBodyStyle, fontSize: 20, color: perception.color }}>
+            {perception.sign}{perception.value}
           </span>
           <span style={hintStyle}>/ 50</span>
         </div>

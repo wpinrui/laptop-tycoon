@@ -25,6 +25,7 @@ import {
 import { PORT_TYPES } from "../data/portTypes";
 import { COLOUR_OPTIONS } from "../data/colourOptions";
 import { STARTING_DEMAND_POOL } from "../data/startingDemand";
+import { averageReach } from "./brandProgression";
 
 const COMPONENT_SLOTS: ComponentSlot[] = [
   "cpu", "gpu", "ram", "storage",
@@ -286,9 +287,7 @@ function generateSingleModel(
 
   // Manufacturing quantity heuristic: base pool size scaled by average brand reach
   const totalDemand = Object.values(STARTING_DEMAND_POOL).reduce((sum, v) => sum + v, 0);
-  const reachValues = Object.values(competitor.brandReach);
-  const avgReach = reachValues.reduce((s, v) => s + v, 0) / reachValues.length;
-  const brandFactor = avgReach / 100;
+  const brandFactor = averageReach(competitor.brandReach) / 100;
   const competitorShare = 1 / totalPlayerCount;
   const manufacturingQuantity = Math.round(totalDemand * competitorShare * brandFactor * (0.8 + Math.random() * 0.4));
 

@@ -7,7 +7,7 @@ import { MenuButton } from "../shell/MenuButton";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
 import { ProgressBar } from "./dashboard/ProgressBar";
-import { perceptionColor } from "./dashboard/utils";
+import { formatPerception } from "./dashboard/utils";
 import { DEMOGRAPHICS } from "../../data/demographics";
 
 const CAMPAIGN_COST = 1_000;
@@ -62,8 +62,7 @@ export function BrandDetailScreen() {
   const { navigateTo } = useNavigation();
 
   const canAfford = state.cash >= CAMPAIGN_COST;
-  const perceptionValue = Math.round(state.brandPerception);
-  const perceptionSign = perceptionValue > 0 ? "+" : "";
+  const perception = formatPerception(state.brandPerception);
 
   return (
     <ContentPanel maxWidth={700}>
@@ -93,8 +92,8 @@ export function BrandDetailScreen() {
       <div style={sectionStyle}>
         <p style={headingStyle}>Brand Perception</p>
         <div style={{ display: "flex", alignItems: "baseline", gap: tokens.spacing.sm }}>
-          <span style={{ fontSize: 28, fontWeight: 700, color: perceptionColor(perceptionValue) }}>
-            {perceptionSign}{perceptionValue}
+          <span style={{ fontSize: 28, fontWeight: 700, color: perception.color }}>
+            {perception.sign}{perception.value}
           </span>
           <span style={{ color: tokens.colors.textMuted }}>/ 50</span>
         </div>

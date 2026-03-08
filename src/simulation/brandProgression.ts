@@ -26,6 +26,8 @@ const WORD_OF_MOUTH_DIVISOR = 5_000;
 const CAMPAIGN_REACH_DIVISOR = 2_000_000;
 /** Immediate reach divisor — every $X of campaign spend gives 1% immediate reach (flat, same-year) */
 const CAMPAIGN_IMMEDIATE_REACH_DIVISOR = 500_000;
+/** Scales raw value-for-money contribution into perception points (roughly ±5 per year) */
+const PERCEPTION_CONTRIBUTION_SCALE = 5;
 /** Reach decay rate when no products on sale (proportional, per year) */
 const REACH_INACTIVITY_DECAY = 0.10;
 /** Competitor time-in-market reach growth (raw reach points per year just for existing) */
@@ -42,6 +44,24 @@ function sCurveGrowthFactor(currentReach: number): number {
   return S_CURVE_STEEPNESS * expTerm / Math.pow(1 + expTerm, 2);
 }
 
+/** Sum marketing campaign spend across all player laptops for the current year */
+function getTotalCampaignSpend(state: GameState): number {
+  let total = 0;
+  for (const model of state.models) {
+    const plan = model.manufacturingPlan;
+    if (plan && plan.year === state.year && plan.marketing.cost > 0) {
+      total += plan.marketing.cost;
+    }
+  }
+  return total;
+}
+
+/** Average reach across all demographics */
+export function averageReach(reach: Record<DemographicId, number>): number {
+  const values = Object.values(reach);
+  return values.reduce((s, v) => s + v, 0) / values.length;
+}
+
 /**
  * Compute the immediate (same-year) reach boost from marketing campaign spend.
  * This is a flat addition (not S-curved) so it works even at 0% reach.
@@ -49,14 +69,7 @@ function sCurveGrowthFactor(currentReach: number): number {
  * @param extraSpend Additional campaign spend not yet committed to state (e.g. from wizard)
  */
 export function getCampaignReachBoost(state: GameState, extraSpend: number = 0): number {
-  let totalCampaignSpend = extraSpend;
-  for (const model of state.models) {
-    const plan = model.manufacturingPlan;
-    if (plan && plan.year === state.year && plan.marketing.cost > 0) {
-      totalCampaignSpend += plan.marketing.cost;
-    }
-  }
-  return totalCampaignSpend / CAMPAIGN_IMMEDIATE_REACH_DIVISOR;
+  return (getTotalCampaignSpend(state) + extraSpend) / CAMPAIGN_IMMEDIATE_REACH_DIVISOR;
 }
 
 /**
@@ -82,14 +95,7 @@ export function updateBrandReach(
     }
   }
 
-  // Total marketing campaign spend this year (across all player laptops)
-  let totalCampaignSpend = 0;
-  for (const model of state.models) {
-    const plan = model.manufacturingPlan;
-    if (plan && plan.year === state.year && plan.marketing.cost > 0) {
-      totalCampaignSpend += plan.marketing.cost;
-    }
-  }
+  const totalCampaignSpend = getTotalCampaignSpend(state);
 
   for (const dem of DEMOGRAPHICS) {
     const demId = dem.id;
@@ -222,8 +228,7 @@ export function updateBrandPerception(
 
   const thisYearContribution = totalWeight > 0 ? weightedContribution / totalWeight : 0;
 
-  // Scale contribution to reasonable perception range (roughly -5 to +5 per year)
-  const scaledContribution = thisYearContribution * 5;
+  const scaledContribution = thisYearContribution * PERCEPTION_CONTRIBUTION_SCALE;
 
   const newPerception = old * PERCEPTION_DECAY + scaledContribution;
   return Math.max(-50, Math.min(50, newPerception));

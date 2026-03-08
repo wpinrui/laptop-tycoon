@@ -28,7 +28,7 @@ import {
 import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
 import { generateCompetitorModels } from "./competitorAI";
 import { COMPETITORS } from "../data/competitors";
-import { getCampaignReachBoost } from "./brandProgression";
+import { averageReach, getCampaignReachBoost } from "./brandProgression";
 
 // Cache synthetic competitor models per year for stable demand projections
 let cachedProjectionYear: number | null = null;
@@ -550,9 +550,7 @@ export function projectDemandRange(
   const expected = Math.round(totalExpected);
 
   // Confidence interval based on average reach (higher = tighter)
-  const reachValues = Object.values(state.brandReach);
-  const avgReach = reachValues.reduce((s, v) => s + v, 0) / reachValues.length;
-  const reachFactor = Math.max(0.1, 1 - avgReach / 100);
+  const reachFactor = Math.max(0.1, 1 - averageReach(state.brandReach) / 100);
   const variance = BASE_DEMAND_VARIANCE + reachFactor * REACH_VARIANCE_SCALE;
 
   const low = Math.max(0, Math.round(expected * (1 - variance)));
