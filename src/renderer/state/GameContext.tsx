@@ -28,6 +28,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       clearProjectionCache();
       return createInitialGameState(action.companyName, action.companyLogo);
     case "LOAD_GAME":
+      clearProjectionCache();
       return action.state;
     case "SET_CASH":
       return { ...state, cash: action.cash };
