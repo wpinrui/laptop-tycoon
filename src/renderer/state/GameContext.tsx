@@ -41,10 +41,11 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         models: state.models.map((m) => {
           if (m.status === "discontinued") return m;
 
-          // Find sim results for this model to get unsold units
+          // Find sim results for this model to get unsold units.
+          // unsoldUnits already includes existing inventory (simulation sets manufacturingQuantity = newBatch + unitsInStock),
+          // so we use it directly — NOT added to m.unitsInStock, which would double-count.
           const simResult = lastSim?.laptopResults.find((r) => r.laptopId === m.design.id);
-          const unsoldFromSim = simResult?.unsoldUnits ?? 0;
-          const newStock = m.unitsInStock + unsoldFromSim;
+          const newStock = simResult ? simResult.unsoldUnits : m.unitsInStock;
 
           // Models that were manufacturing/onSale transition to onSale
           if (m.status === "manufacturing" || m.status === "onSale") {

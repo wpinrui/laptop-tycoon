@@ -46,6 +46,12 @@ const summaryRowStyle: CSSProperties = {
   padding: `${tokens.spacing.xs}px 0`,
 };
 
+const sectionHeadingStyle: CSSProperties = {
+  margin: 0,
+  marginBottom: tokens.spacing.sm,
+  color: tokens.colors.accent,
+};
+
 function formatCurrency(amount: number): string {
   return "$" + amount.toLocaleString("en-US", { maximumFractionDigits: 0 });
 }
@@ -85,7 +91,7 @@ export function YearEndSummaryScreen() {
 
       {/* Per-model breakdown */}
       <div style={sectionStyle}>
-        <h3 style={{ margin: 0, marginBottom: tokens.spacing.sm, color: tokens.colors.accent }}>
+        <h3 style={sectionHeadingStyle}>
           Sales by Model
         </h3>
         <table style={tableStyle}>
@@ -124,7 +130,7 @@ export function YearEndSummaryScreen() {
       {/* Top demographics */}
       {playerResults.length > 0 && (
         <div style={sectionStyle}>
-          <h3 style={{ margin: 0, marginBottom: tokens.spacing.sm, color: tokens.colors.accent }}>
+          <h3 style={sectionHeadingStyle}>
             Top Buyers
           </h3>
           {playerResults.map((r, idx) => {
@@ -153,7 +159,7 @@ export function YearEndSummaryScreen() {
         background: tokens.colors.surface,
         borderRadius: tokens.borderRadius.md,
       }}>
-        <h3 style={{ margin: 0, marginBottom: tokens.spacing.sm, color: tokens.colors.accent }}>
+        <h3 style={sectionHeadingStyle}>
           Financial Summary
         </h3>
         <div style={summaryRowStyle}>
