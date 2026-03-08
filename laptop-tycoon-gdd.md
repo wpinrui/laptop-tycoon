@@ -150,7 +150,16 @@ unit_cost = base_cost × (1 / (1 + 0.4 × log10(units_ordered / reference_quanti
 
 ### Market Size Display
 
-The manufacturing wizard shows the player the projected market size for the current quarter — the total number of active buyers expected to purchase a laptop. Defaults to showing the total across all demographics, but the player can select a specific demographic from a dropdown to see that segment's market size individually.
+The manufacturing wizard shows the player the projected market size for the current quarter — the total number of active buyers expected to purchase a laptop.
+
+**Layout:** A card displaying:
+```
+Projected market size for Q1
+          40,000
+       General Consumer
+```
+
+The demographic name is a dropdown selector. The player can switch between demographics to see each segment's market size. Defaults to showing the total across all demographics.
 
 This is not a demand projection for the player's laptop — it's the size of the market the player is competing in. The player uses this information alongside their brand reach and product specs to decide how many units to order.
 
