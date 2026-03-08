@@ -5,6 +5,7 @@ import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
+import { DEMOGRAPHICS } from "../../data/demographics";
 
 const titleStyle: CSSProperties = {
   margin: 0,
@@ -134,7 +135,7 @@ export function YearEndSummaryScreen() {
                 </p>
                 {topDemographics[idx].map((d) => (
                   <div key={d.demographicId} style={{ ...summaryRowStyle, paddingLeft: tokens.spacing.md }}>
-                    <span style={{ color: tokens.colors.textMuted }}>{d.demographicId}</span>
+                    <span style={{ color: tokens.colors.textMuted }}>{DEMOGRAPHICS.find((dem) => dem.id === d.demographicId)?.name ?? d.demographicId}</span>
                     <span>{formatNumber(d.unitsDemanded)} units ({(d.marketShare * 100).toFixed(1)}% share)</span>
                   </div>
                 ))}
