@@ -230,8 +230,19 @@ For each stat:
 
 weighted_score = dot_product(normalized_stats, demographic_weight_vector)
 screen_penalty = screen size fit penalty (1.0 if preferred, 0.5 if one class off, 0.1 if two+ off)
-raw_vp = (weighted_score × screen_penalty) / price
+sensitivity_factor = PRICE_SENSITIVITY_EXPONENT[demographic.priceSensitivity]
+raw_vp = (weighted_score × screen_penalty) / price ^ sensitivity_factor
 ```
+
+**Price sensitivity exponent** varies by demographic. At `moderate` (1.0) the formula behaves as a simple inverse. Lower exponents (Corporate, Creative Professional) make the demographic more tolerant of high prices — enabling high-margin niche strategies. Higher exponents (Student, Budget Buyer) punish price increases more steeply — these segments flock to whoever is cheapest.
+
+| Sensitivity Level | Exponent | Demographics |
+|-------------------|----------|-------------|
+| low | 0.8 | Corporate, Creative Professional |
+| moderate | 1.0 | Business Professional, Gamer, Tech Enthusiast |
+| high | 1.2 | General Consumer |
+| veryHigh | 1.4 | Student |
+| extreme | 1.6 | Budget Buyer |
 
 ### Step 2: Biased Value Proposition
 
@@ -557,6 +568,7 @@ Both player and AI competitors use this interface. The simulation iterates over 
 
 | Constant | Starting Value | Notes |
 |----------|---------------|-------|
+| PRICE_SENSITIVITY_EXPONENT | low=0.8, moderate=1.0, high=1.2, veryHigh=1.4, extreme=1.6 | Exponent on price in raw VP formula per demographic sensitivity level |
 | WOM_DIVISOR | TBD | Units sold per 1 raw reach point from word of mouth |
 | CAMPAIGN_DIVISOR | 2,000,000 | Campaign spend per 1 raw reach point |
 | AWARENESS_DIVISOR | 500,000 | Awareness budget spend per 1 raw reach point |
