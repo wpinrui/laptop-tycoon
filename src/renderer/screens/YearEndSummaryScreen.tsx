@@ -8,6 +8,7 @@ import { tokens } from "../shell/tokens";
 import { DEMOGRAPHICS } from "../../data/demographics";
 import { formatCurrency, formatNumber } from "../utils/formatCash";
 import { titleStyle, sectionStyle, tableStyle, thStyle, tdStyle, tdRight, summaryRowStyle, sectionHeadingStyle } from "./summaryStyles";
+import { AwardsTable } from "./AwardsTable";
 
 export function YearEndSummaryScreen() {
   const { state, dispatch } = useGame();
@@ -146,31 +147,7 @@ export function YearEndSummaryScreen() {
       {state.currentYearAwards.length > 0 && (
         <div style={sectionStyle}>
           <h3 style={sectionHeadingStyle}>Year-End Awards</h3>
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Award</th>
-                <th style={thStyle}>Winner</th>
-                <th style={thStyle}>Company</th>
-              </tr>
-            </thead>
-            <tbody>
-              {state.currentYearAwards.map((a) => {
-                const isPlayer = a.ownerCompanyId === "player";
-                return (
-                  <tr key={a.category}>
-                    <td style={tdStyle}>{a.categoryLabel}</td>
-                    <td style={{ ...tdStyle, fontWeight: isPlayer ? 700 : 400, color: isPlayer ? tokens.colors.accent : undefined }}>
-                      {a.winnerName}
-                    </td>
-                    <td style={{ ...tdStyle, color: isPlayer ? tokens.colors.accent : tokens.colors.textMuted }}>
-                      {a.ownerCompanyName}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <AwardsTable awards={state.currentYearAwards} />
           <p style={{ margin: 0, marginTop: tokens.spacing.xs, color: tokens.colors.textMuted, fontSize: tokens.font.sizeSmall }}>
             Award winners receive +2 brand perception and +1% brand reach across all demographics.
           </p>

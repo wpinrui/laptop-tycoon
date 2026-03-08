@@ -7,6 +7,7 @@ import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
 import { formatCurrency, formatNumber, QUARTER_LABELS } from "../utils/formatCash";
 import { titleStyle, sectionStyle, tableStyle, thStyle, tdStyle, tdRight, summaryRowStyle, sectionHeadingStyle } from "./summaryStyles";
+import { reviewScoreColor } from "../utils/reviewScoreColor";
 
 export function QuarterlySummaryScreen() {
   const { state, dispatch } = useGame();
@@ -97,7 +98,7 @@ export function QuarterlySummaryScreen() {
             .map((r) => (
               <div key={`${r.laptopId}-${r.outlet}`} style={{ ...summaryRowStyle }}>
                 <span>{r.outletName}: {r.laptopName}</span>
-                <span style={{ fontWeight: 700, color: r.score >= 7 ? tokens.colors.success : r.score >= 5 ? tokens.colors.warning : tokens.colors.danger }}>
+                <span style={{ fontWeight: 700, color: reviewScoreColor(r.score) }}>
                   {r.score}/10
                 </span>
               </div>

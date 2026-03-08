@@ -6,6 +6,8 @@ import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
 import { titleStyle, sectionStyle, sectionHeadingStyle, tableStyle, thStyle, tdStyle, tdRight } from "./summaryStyles";
 import { AWARD_CATEGORY_LIST } from "../../simulation/reviewsAwards";
+import { AwardsTable } from "./AwardsTable";
+import { reviewScoreColor } from "../utils/reviewScoreColor";
 
 export function ReviewsAwardsScreen() {
   const { state } = useGame();
@@ -35,7 +37,7 @@ export function ReviewsAwardsScreen() {
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: tokens.spacing.sm }}>
                 <span style={{ fontWeight: 600 }}>{r.outletName}</span>
-                <span style={{ fontWeight: 700, fontSize: tokens.font.sizeTitle, color: r.score >= 7 ? tokens.colors.success : r.score >= 5 ? tokens.colors.warning : tokens.colors.danger }}>
+                <span style={{ fontWeight: 700, fontSize: tokens.font.sizeTitle, color: reviewScoreColor(r.score) }}>
                   {r.score}/10
                 </span>
               </div>
@@ -85,31 +87,7 @@ export function ReviewsAwardsScreen() {
       <div style={sectionStyle}>
         <h3 style={sectionHeadingStyle}>Year-End Awards</h3>
         {awards.length > 0 ? (
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Award</th>
-                <th style={thStyle}>Winner</th>
-                <th style={thStyle}>Company</th>
-              </tr>
-            </thead>
-            <tbody>
-              {awards.map((a) => {
-                const isPlayer = a.ownerCompanyId === "player";
-                return (
-                  <tr key={a.category}>
-                    <td style={tdStyle}>{a.categoryLabel}</td>
-                    <td style={{ ...tdStyle, fontWeight: isPlayer ? 700 : 400, color: isPlayer ? tokens.colors.accent : undefined }}>
-                      {a.winnerName}
-                    </td>
-                    <td style={{ ...tdStyle, color: isPlayer ? tokens.colors.accent : tokens.colors.textMuted }}>
-                      {a.ownerCompanyName}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <AwardsTable awards={awards} />
         ) : (
           <div>
             {AWARD_CATEGORY_LIST.map((cat) => (

@@ -332,6 +332,21 @@ const VERDICT_TEMPLATES = {
   ],
 };
 
+// ==================== Review Scoring Constants ====================
+
+/** Minimum ratio clamp when comparing a stat to market average */
+const RATIO_CLAMP_MIN = 0.5;
+/** Maximum ratio clamp when comparing a stat to market average */
+const RATIO_CLAMP_MAX = 1.5;
+/** Ratio above which a stat is considered "good" in review sentiment */
+const SENTIMENT_GOOD_THRESHOLD = 1.15;
+/** Ratio below which a stat is considered "bad" in review sentiment */
+const SENTIMENT_BAD_THRESHOLD = 0.85;
+/** Maximum stat commentaries per review */
+const MAX_STATS_PER_REVIEW = 6;
+/** Divisor for normalising retail price in value scoring (higher price = lower value) */
+const VALUE_PRICE_DIVISOR = 1000;
+
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -360,14 +375,14 @@ function computeReviewScore(
     const avg = marketAvg[stat] ?? 0;
     if (avg > 0) {
       const ratio = val / avg;
-      above += Math.min(Math.max(ratio, 0.5), 1.5); // clamp between 0.5-1.5
+      above += Math.min(Math.max(ratio, RATIO_CLAMP_MIN), RATIO_CLAMP_MAX);
       total += 1;
     }
   }
   if (total === 0) return 5;
-  const avgRatio = above / total; // 0.5 to 1.5
-  // Map 0.5-1.5 → 1-10
-  const score = 1 + (avgRatio - 0.5) * 9;
+  const avgRatio = above / total;
+  // Map RATIO_CLAMP_MIN–RATIO_CLAMP_MAX → 1–10
+  const score = 1 + (avgRatio - RATIO_CLAMP_MIN) * (9 / (RATIO_CLAMP_MAX - RATIO_CLAMP_MIN));
   // Add slight randomness (±0.5)
   const noisy = score + (Math.random() - 0.5);
   return Math.round(Math.min(10, Math.max(1, noisy)));
@@ -379,8 +394,8 @@ function computeReviewScore(
 function getSentiment(value: number, avg: number): "good" | "neutral" | "bad" {
   if (avg === 0) return "neutral";
   const ratio = value / avg;
-  if (ratio > 1.15) return "good";
-  if (ratio < 0.85) return "bad";
+  if (ratio > SENTIMENT_GOOD_THRESHOLD) return "good";
+  if (ratio < SENTIMENT_BAD_THRESHOLD) return "bad";
   return "neutral";
 }
 
@@ -443,7 +458,7 @@ export function generateReviews(state: GameState, q1Result: QuarterSimulationRes
       sentences.push(fillTemplate(pickRandom(INTRO_TEMPLATES[outlet]), vars));
 
       // Stat commentaries (pick 5-6 relevant stats)
-      const statsToReview = focusStats.slice(0, Math.min(6, focusStats.length));
+      const statsToReview = focusStats.slice(0, Math.min(MAX_STATS_PER_REVIEW, focusStats.length));
       for (const stat of statsToReview) {
         const templates = STAT_TEMPLATES[stat];
         if (!templates) continue;
@@ -549,7 +564,7 @@ export function determineAwards(
       // Value = sum of stats / price (higher = better value)
       scored = entries.map((e) => ({
         entry: e,
-        score: ALL_STATS.reduce((sum, s) => sum + (e.stats[s] ?? 0), 0) / Math.max(1, e.retailPrice / 1000),
+        score: ALL_STATS.reduce((sum, s) => sum + (e.stats[s] ?? 0), 0) / Math.max(1, e.retailPrice / VALUE_PRICE_DIVISOR),
       }));
     } else if (cat.scoring === "portable") {
       // Portable = weight + thinness + batteryLife (all high = good)
