@@ -412,7 +412,7 @@ export function ManufacturingStep() {
               {otherPlayerModels.map((m) => (
                 <div key={m.design.id} style={detailRowStyle}>
                   <span>{m.design.name}</span>
-                  <span style={{ fontWeight: 500, color: tokens.colors.text }}>{fmt(m.retailPrice!)}</span>
+                  <span style={{ fontWeight: 500, color: tokens.colors.text }}>{fmt(m.retailPrice ?? 0)}</span>
                 </div>
               ))}
             </div>
