@@ -1,7 +1,6 @@
 import {
   LaptopStat,
   Demographic,
-  PriceSensitivity,
   StatVector,
   ALL_STATS,
 } from "../data/types";
@@ -10,7 +9,6 @@ import { STARTING_DEMAND_POOL } from "../data/startingDemand";
 import { GameState, LaptopModel } from "../renderer/state/gameTypes";
 import { computeStatsForDesign } from "./statCalculation";
 import {
-  getPriceCeiling,
   getDemandPoolSize,
   getScreenSizeFit,
 } from "./demographicData";
@@ -24,9 +22,9 @@ import {
   CHANNEL_MARGIN_RATE,
   DEMAND_NOISE_MIN,
   DEMAND_NOISE_MAX,
-  PRICE_OVERSHOOT_DECAY,
   BASE_DEMAND_VARIANCE,
   REACH_VARIANCE_SCALE,
+  REPLACEMENT_CYCLE,
 } from "./tunables";
 import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
 import { generateCompetitorModels } from "./competitorAI";
@@ -117,6 +115,7 @@ function buildMarketLaptops(state: GameState): MarketLaptop[] {
 
 /**
  * Compute market-relative stat scores by normalising each stat against all laptops in the market.
+ * normalized_stat = this_laptop_stat / max(that stat across all laptops this year)
  * Returns a 0-1 score per stat where 1.0 = best in market.
  */
 function normaliseStats(laptop: MarketLaptop, allLaptops: MarketLaptop[]): Record<LaptopStat, number> {
@@ -125,10 +124,8 @@ function normaliseStats(laptop: MarketLaptop, allLaptops: MarketLaptop[]): Recor
   for (const stat of ALL_STATS) {
     const values = allLaptops.map((l) => l.stats[stat] ?? 0);
     const max = Math.max(...values);
-    const min = Math.min(...values);
-    const range = max - min;
     const raw = laptop.stats[stat] ?? 0;
-    result[stat] = range > 0 ? (raw - min) / range : 0.5;
+    result[stat] = max > 0 ? raw / max : 0;
   }
 
   return result;
@@ -144,48 +141,6 @@ function calculateWeightedStatScore(
     score += (normalisedStats[stat] ?? 0) * (demographic.statWeights[stat] ?? 0);
   }
   return score;
-}
-
-/** Price competitiveness: below ceiling = good (diminishing returns), above = sharp dropoff */
-function calculatePriceCompetitiveness(
-  retailPrice: number,
-  demographic: Demographic,
-  year: number,
-): number {
-  const ceiling = getPriceCeiling(demographic.id, year);
-
-  if (retailPrice <= ceiling) {
-    // Below ceiling: cheaper is better with diminishing returns
-    // Score ranges from 0.5 (at ceiling) to 1.0 (at $0)
-    const ratio = retailPrice / ceiling;
-    return 0.5 + 0.5 * (1 - Math.sqrt(ratio));
-  } else {
-    // Above ceiling: sharp exponential dropoff
-    const overshoot = (retailPrice - ceiling) / ceiling;
-    return 0.5 * Math.exp(-PRICE_OVERSHOOT_DECAY * overshoot);
-  }
-}
-
-/** Scale price sensitivity effect based on demographic */
-function applyPriceSensitivity(
-  priceScore: number,
-  sensitivity: Demographic["priceSensitivity"],
-): number {
-  // Higher sensitivity = price matters more (score deviations amplified)
-  const exponents: Record<PriceSensitivity, number> = {
-    low: 0.5,
-    moderate: 1.0,
-    high: 1.5,
-    veryHigh: 2.0,
-    extreme: 3.0,
-  };
-  const exp = exponents[sensitivity];
-  // Amplify deviation from neutral (0.5)
-  if (priceScore >= 0.5) {
-    return 0.5 + 0.5 * Math.pow((priceScore - 0.5) / 0.5, 1 / exp);
-  } else {
-    return 0.5 - 0.5 * Math.pow((0.5 - priceScore) / 0.5, exp);
-  }
 }
 
 /**
@@ -217,37 +172,43 @@ function getLaptopCampaignPerception(laptop: MarketLaptop): number {
 }
 
 /**
- * Calculate full appeal score for a laptop against a demographic.
- * appeal = stat_score * price_score * (1 + effective_perception / 100) * screen_fit
+ * Calculate biased value proposition for a laptop against a demographic.
+ *
+ * Step 1 – Raw VP:
+ *   raw_vp = (weighted_score × screen_penalty) / price
+ *
+ * Step 2 – Biased VP:
+ *   biased_vp = raw_vp × (1 + brand_perception_mod / 100) × (1 + laptop_perception_mod / 100)
  *
  * Note: reach is NOT applied here — it gates the demand pool size instead (in simulateYear).
  */
-function calculateAppeal(
+function calculateBiasedVP(
   laptop: MarketLaptop,
   normalisedStats: Record<LaptopStat, number>,
   demographic: Demographic,
-  year: number,
   state: GameState,
   campaignPerception: number,
 ): number {
-  const statScore = calculateWeightedStatScore(normalisedStats, demographic);
-  const rawPriceScore = calculatePriceCompetitiveness(laptop.retailPrice, demographic, year);
-  const priceScore = applyPriceSensitivity(rawPriceScore, demographic.priceSensitivity);
+  const weightedScore = calculateWeightedStatScore(normalisedStats, demographic);
   const pref = demographic.screenSizePreference;
-  const screenFit = getScreenSizeFit(laptop.model.design.screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);
+  const screenPenalty = getScreenSizeFit(laptop.model.design.screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);
 
-  // Effective perception = per-demographic brand perception + laptop campaign modifier
-  let effectivePerception: number;
+  // Step 1: raw_vp = (weighted_score × screen_penalty) / price
+  const rawVP = (weightedScore * screenPenalty) / laptop.retailPrice;
+
+  // Step 2: biased_vp = raw_vp × (1 + brand_perception_mod / 100) × (1 + laptop_perception_mod / 100)
+  let brandPerceptionMod: number;
   if (laptop.owner === "player") {
-    effectivePerception = (state.brandPerception[demographic.id] ?? 0) + campaignPerception;
+    brandPerceptionMod = state.brandPerception[demographic.id] ?? 0;
   } else {
     const comp = state.competitors.find((c) => c.id === laptop.owner);
-    effectivePerception = comp ? (comp.brandPerception[demographic.id] ?? 0) : 0;
+    brandPerceptionMod = comp ? (comp.brandPerception[demographic.id] ?? 0) : 0;
   }
-  const perceptionMultiplier = 1 + effectivePerception / 100;
 
-  const appeal = statScore * priceScore * perceptionMultiplier * screenFit;
-  return Math.max(0, appeal);
+  const laptopPerceptionMod = campaignPerception;
+
+  const biasedVP = rawVP * (1 + brandPerceptionMod / 100) * (1 + laptopPerceptionMod / 100);
+  return Math.max(0, biasedVP);
 }
 
 // --- Market Share & Demand Resolution ---
@@ -301,16 +262,20 @@ export function simulateYear(state: GameState): YearSimulationResult {
   for (const demographic of DEMOGRAPHICS) {
     const demId = demographic.id;
     const basePool = STARTING_DEMAND_POOL[demId];
-    const fullPool = getDemandPoolSize(demId, year, basePool);
+    const demographicPopulation = getDemandPoolSize(demId, year, basePool);
 
-    // Calculate appeal for each laptop in this demographic
-    const appeals: { laptopId: string; appeal: number; reachGatedPool: number }[] = [];
-    let totalAppeal = 0;
+    // annual_active_buyers = demographic_population / replacement_cycle_years
+    const replacementCycle = REPLACEMENT_CYCLE[demId];
+    const annualActiveBuyers = demographicPopulation / replacementCycle;
+
+    // Calculate biased VP for each laptop in this demographic
+    const vpEntries: { laptopId: string; biasedVP: number; reachGatedPool: number }[] = [];
+    let totalBiasedVP = 0;
 
     for (const laptop of allLaptops) {
       const normStats = normalisedStatsMap.get(laptop.id)!;
       const campPerc = campaignPerceptions.get(laptop.id)!;
-      const appeal = calculateAppeal(laptop, normStats, demographic, year, state, campPerc);
+      const biasedVP = calculateBiasedVP(laptop, normStats, demographic, state, campPerc);
 
       // Each laptop's addressable pool is gated by its owner's reach in this demographic
       let reach: number;
@@ -321,23 +286,23 @@ export function simulateYear(state: GameState): YearSimulationResult {
         reach = comp ? (comp.brandReach[demId] ?? 0) : 0;
       }
       reach = Math.min(reach, 100);
-      const reachGatedPool = fullPool * (reach / 100);
+      const reachGatedPool = annualActiveBuyers * (reach / 100);
 
-      appeals.push({ laptopId: laptop.id, appeal, reachGatedPool });
-      totalAppeal += appeal;
+      vpEntries.push({ laptopId: laptop.id, biasedVP, reachGatedPool });
+      totalBiasedVP += biasedVP;
     }
 
-    // Distribute each laptop's reach-gated pool by market share
-    for (const { laptopId, appeal, reachGatedPool } of appeals) {
-      const share = totalAppeal > 0 ? appeal / totalAppeal : 0;
-      const unitsDemanded = Math.round(reachGatedPool * share);
+    // Everyone in the active pool buys: purchase_probability = biased_vp / sum(all biased_vps)
+    for (const { laptopId, biasedVP, reachGatedPool } of vpEntries) {
+      const purchaseProbability = totalBiasedVP > 0 ? biasedVP / totalBiasedVP : 0;
+      const unitsDemanded = Math.round(reachGatedPool * purchaseProbability);
 
       const entry = demandByLaptop.get(laptopId)!;
       entry.total += unitsDemanded;
       entry.breakdown.push({
         demographicId: demId,
-        appeal,
-        marketShare: share,
+        appeal: biasedVP,
+        marketShare: purchaseProbability,
         unitsDemanded,
       });
     }
@@ -481,22 +446,23 @@ export function projectDemandRange(
   for (const demographic of DEMOGRAPHICS) {
     const demId = demographic.id;
     const basePool = STARTING_DEMAND_POOL[demId];
-    const fullPool = getDemandPoolSize(demId, year, basePool);
+    const demographicPopulation = getDemandPoolSize(demId, year, basePool);
+    const annualActiveBuyers = demographicPopulation / REPLACEMENT_CYCLE[demId];
 
-    let totalAppeal = 0;
-    let ourAppeal = 0;
+    let totalBiasedVP = 0;
+    let ourBiasedVP = 0;
 
     for (const laptop of allLaptops) {
       const normStats = normalisedStatsMap.get(laptop.id)!;
-      const appeal = calculateAppeal(laptop, normStats, demographic, year, state, 0);
-      totalAppeal += appeal;
-      if (laptop.id === modelId) ourAppeal = appeal;
+      const vp = calculateBiasedVP(laptop, normStats, demographic, state, 0);
+      totalBiasedVP += vp;
+      if (laptop.id === modelId) ourBiasedVP = vp;
     }
 
-    const share = totalAppeal > 0 ? ourAppeal / totalAppeal : 0;
+    const share = totalBiasedVP > 0 ? ourBiasedVP / totalBiasedVP : 0;
     // Gate by player's reach in this demographic (including immediate campaign boost)
     const reach = Math.min((state.brandReach[demId] ?? 0) + campaignReachBoost, 100);
-    totalExpected += fullPool * (reach / 100) * share;
+    totalExpected += annualActiveBuyers * (reach / 100) * share;
   }
 
   const expected = Math.round(totalExpected);
