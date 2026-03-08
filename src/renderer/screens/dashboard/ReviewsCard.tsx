@@ -4,6 +4,7 @@ import { tokens } from "../../shell/tokens";
 import { BentoCard } from "./BentoCard";
 import { cardBodyStyle, hintStyle, sectionDividerStyle, sectionHeadingStyle, smallTextStyle } from "./styles";
 import { AWARD_CATEGORY_LIST } from "../../../simulation/reviewsAwards";
+import { AWARD_PERCEPTION_BONUS, AWARD_REACH_BONUS } from "../../../simulation/tunables";
 
 export function ReviewsCard() {
   const { state } = useGame();
@@ -49,7 +50,7 @@ export function ReviewsCard() {
         )}
         <p style={{ ...hintStyle, marginTop: tokens.spacing.sm }}>
           {awards.length > 0
-            ? "Award winners receive +2 perception and +1% reach"
+            ? `Award winners receive +${AWARD_PERCEPTION_BONUS} perception and +${AWARD_REACH_BONUS}% reach`
             : "Awards announced after Q4"
           }
         </p>
