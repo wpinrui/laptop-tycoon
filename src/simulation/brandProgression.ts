@@ -20,6 +20,8 @@ import {
   COMPETITOR_TIME_IN_MARKET_BONUS,
   PERCEPTION_DECAY,
   NEGATIVITY_MULTIPLIER,
+  PERCEPTION_MIN,
+  PERCEPTION_MAX,
 } from "./tunables";
 
 // ==================== Brand Reach ====================
@@ -214,7 +216,7 @@ function applyQuarterlyPerception(
 
     // Only purchasers affect perception — no purchases means decay only
     if (companyUnits <= 0) {
-      newPerception[demId] = Math.max(-50, Math.min(50, old * PERCEPTION_DECAY));
+      newPerception[demId] = Math.max(PERCEPTION_MIN, Math.min(PERCEPTION_MAX, old * PERCEPTION_DECAY));
       continue;
     }
 
@@ -230,7 +232,7 @@ function applyQuarterlyPerception(
       perception = perception * quarterlyDecay + quarterlyContribution;
     }
 
-    newPerception[demId] = Math.max(-50, Math.min(50, perception));
+    newPerception[demId] = Math.max(PERCEPTION_MIN, Math.min(PERCEPTION_MAX, perception));
   }
 
   return newPerception;
