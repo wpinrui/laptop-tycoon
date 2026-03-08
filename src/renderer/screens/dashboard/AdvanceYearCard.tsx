@@ -6,7 +6,7 @@ import { tokens } from "../../shell/tokens";
 import { BentoCard } from "./BentoCard";
 import { cardBodyStyle } from "./styles";
 import { getActiveModels } from "./utils";
-import { hasDiscontinuedComponents } from "../../state/gameTypes";
+import { hasDiscontinuedComponents, LaptopModel } from "../../state/gameTypes";
 import { COMPETITORS } from "../../../data/competitors";
 import { generateCompetitorModels } from "../../../simulation/competitorAI";
 import { simulateYear } from "../../../simulation/salesEngine";
@@ -66,9 +66,10 @@ export function AdvanceYearCard() {
           }));
           dispatch({ type: "ADD_COMPETITOR_MODELS", models: competitorModels });
 
-          // 2. Transition active models with plans to "manufacturing"
+          // 2. Transition active models with current-year plans to "manufacturing"
+          const hasCurrentPlan = (m: LaptopModel) => m.manufacturingPlan?.year === state.year;
           for (const model of activeModels) {
-            if (model.manufacturingPlan) {
+            if (hasCurrentPlan(model)) {
               dispatch({ type: "UPDATE_MODEL_STATUS", modelId: model.design.id, status: "manufacturing" });
             }
           }
@@ -76,9 +77,9 @@ export function AdvanceYearCard() {
           // 3. Calculate post-manufacturing cash for simulation input
           let totalMfgSpend = 0;
           for (const model of activeModels) {
-            if (model.manufacturingPlan) {
-              totalMfgSpend += model.manufacturingPlan.manufacturing.totalCost
-                + model.manufacturingPlan.marketing.cost;
+            if (hasCurrentPlan(model)) {
+              totalMfgSpend += model.manufacturingPlan!.manufacturing.totalCost
+                + model.manufacturingPlan!.marketing.cost;
             }
           }
           const cashAfterManufacturing = state.cash - totalMfgSpend;
@@ -87,7 +88,7 @@ export function AdvanceYearCard() {
             ...state,
             cash: cashAfterManufacturing,
             models: state.models.map((m) =>
-              activeModels.some((am) => am.design.id === m.design.id && am.manufacturingPlan)
+              activeModels.some((am) => am.design.id === m.design.id && hasCurrentPlan(am))
                 ? { ...m, status: "manufacturing" as const }
                 : m,
             ),
