@@ -6,6 +6,7 @@ import { tokens } from "../shell/tokens";
 import { formatNumber } from "../utils/formatCash";
 import { sectionStyle, tableStyle, thStyle, tdStyle, tdRight, sectionHeadingStyle } from "./summaryStyles";
 import { useGame } from "../state/GameContext";
+import { CompanyState } from "../state/gameTypes";
 
 /** Human-readable stat labels */
 const STAT_LABELS: Record<LaptopStat, string> = {
@@ -42,7 +43,7 @@ function getTopStats(demographic: Demographic, count: number): LaptopStat[] {
 function resolveLaptopName(
   laptopId: string,
   owner: string,
-  companies: CompanyInfo[],
+  companies: CompanyState[],
 ): string {
   const company = companies.find((c) => c.id === owner);
   if (!company) return laptopId;
@@ -102,8 +103,6 @@ const TOP_STATS_COUNT = 5;
 
 const rowLabelStyle: CSSProperties = { ...tdStyle, fontWeight: 600, fontSize: tokens.font.sizeSmall };
 
-type CompanyInfo = { id: string; name: string; models: { design: { id: string; name: string } }[] };
-
 interface DemographicDetailProps {
   allLaptopResults: LaptopSalesResult[];
   playerResults: LaptopSalesResult[];
@@ -130,7 +129,7 @@ function DemographicComparisonTable({
 }: {
   demographic: Demographic;
   allResults: LaptopSalesResult[];
-  companies: CompanyInfo[];
+  companies: CompanyState[];
 }) {
   const entries = useMemo(() => buildComparisonEntries(allResults, demographic.id), [allResults, demographic.id]);
   const topStats = useMemo(() => getTopStats(demographic, TOP_STATS_COUNT), [demographic]);
