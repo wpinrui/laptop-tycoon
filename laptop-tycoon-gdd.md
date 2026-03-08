@@ -66,7 +66,7 @@ Pick era-appropriate parts for each slot. The wizard displays cost, power draw, 
 **Component availability:**
 
 - Each component has an "available from" year and a cost curve that decreases over time as the tech matures.
-- Cutting-edge components exist early at high cost (e.g., SSDs in 2006). Being first with cutting-edge components is expensive but your laptop may score higher against the competition while the technology remains exclusive.
+- Cutting-edge components exist early at high cost (e.g., SSDs in 2006).
 - Outdated components disappear from the list after a few years (manufacturer discontinuation).
 - The number of choices per slot grows in later eras.
 
