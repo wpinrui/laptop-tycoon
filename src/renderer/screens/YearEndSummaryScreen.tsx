@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useGame } from "../state/GameContext";
 import { getPlayerCompany } from "../state/gameTypes";
 import { useNavigation } from "../navigation/NavigationContext";
@@ -5,18 +6,26 @@ import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
-import { DEMOGRAPHICS } from "../../data/demographics";
 import { formatCurrency, formatNumber } from "../utils/formatCash";
 import { titleStyle, sectionStyle, tableStyle, thStyle, tdStyle, tdRight, summaryRowStyle, sectionHeadingStyle } from "./summaryStyles";
 import { AwardsTable } from "./AwardsTable";
 import { AWARD_PERCEPTION_BONUS, AWARD_REACH_BONUS } from "../../simulation/tunables";
+import { DemographicDetailSection } from "./DemographicDetailSection";
+import { QuarterlyTrendTable } from "./QuarterlyTrendTable";
+
+type ViewMode = "annual" | "q4";
 
 export function YearEndSummaryScreen() {
   const { state, dispatch } = useGame();
   const { navigateTo } = useNavigation();
   const player = getPlayerCompany(state);
+  const [viewMode, setViewMode] = useState<ViewMode>("annual");
+
   // Use the latest aggregated year result from yearHistory (built after Q4)
-  const result = state.yearHistory[state.yearHistory.length - 1] ?? null;
+  const yearResult = state.yearHistory[state.yearHistory.length - 1] ?? null;
+  const q4Result = state.quarterHistory[state.quarterHistory.length - 1] ?? null;
+
+  const result = viewMode === "q4" && q4Result ? q4Result : yearResult;
 
   if (!result) {
     return (
@@ -32,15 +41,48 @@ export function YearEndSummaryScreen() {
   const totalSold = playerResults.reduce((sum, r) => sum + r.unitsSold, 0);
   const totalUnsold = playerResults.reduce((sum, r) => sum + r.unsoldUnits, 0);
 
-  // Top demographics for each model
-  const topDemographics = playerResults.map((r) => {
-    const sorted = [...r.demographicBreakdown].sort((a, b) => b.unitsDemanded - a.unitsDemanded);
-    return sorted.slice(0, 3);
-  });
+  const isAnnual = viewMode === "annual";
+  const periodLabel = isAnnual ? `Year ${yearResult!.year}` : `Q4 ${yearResult!.year}`;
 
   return (
     <ContentPanel maxWidth={900}>
-      <h1 style={titleStyle}>Year {result.year} Results</h1>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: tokens.spacing.lg }}>
+        <h1 style={{ ...titleStyle, marginBottom: 0 }}>{periodLabel} Results</h1>
+        {q4Result && (
+          <div style={{ display: "flex", gap: tokens.spacing.xs }}>
+            <button
+              onClick={() => setViewMode("annual")}
+              style={{
+                padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+                background: isAnnual ? tokens.colors.accent : tokens.colors.surface,
+                color: isAnnual ? tokens.colors.panelBg : tokens.colors.text,
+                border: `1px solid ${tokens.colors.panelBorder}`,
+                borderRadius: tokens.borderRadius.sm,
+                cursor: "pointer",
+                fontSize: tokens.font.sizeSmall,
+                fontWeight: 600,
+              }}
+            >
+              Full Year
+            </button>
+            <button
+              onClick={() => setViewMode("q4")}
+              style={{
+                padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+                background: !isAnnual ? tokens.colors.accent : tokens.colors.surface,
+                color: !isAnnual ? tokens.colors.panelBg : tokens.colors.text,
+                border: `1px solid ${tokens.colors.panelBorder}`,
+                borderRadius: tokens.borderRadius.sm,
+                cursor: "pointer",
+                fontSize: tokens.font.sizeSmall,
+                fontWeight: 600,
+              }}
+            >
+              Q4 Only
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Per-model breakdown */}
       <div style={sectionStyle}>
@@ -80,68 +122,16 @@ export function YearEndSummaryScreen() {
         </table>
       </div>
 
-      {/* Top demographics */}
-      {playerResults.length > 0 && (
-        <div style={sectionStyle}>
-          <h3 style={sectionHeadingStyle}>
-            Top Buyers
-          </h3>
-          {playerResults.map((r, idx) => {
-            const model = player.models.find((m) => m.design.id === r.laptopId);
-            return (
-              <div key={r.laptopId} style={{ marginBottom: tokens.spacing.sm }}>
-                <p style={{ margin: 0, marginBottom: tokens.spacing.xs, fontWeight: 600 }}>
-                  {model?.design.name}
-                </p>
-                {topDemographics[idx].map((d) => (
-                  <div key={d.demographicId} style={{ ...summaryRowStyle, paddingLeft: tokens.spacing.md }}>
-                    <span style={{ color: tokens.colors.textMuted }}>{DEMOGRAPHICS.find((dem) => dem.id === d.demographicId)?.name ?? d.demographicId}</span>
-                    <span>{formatNumber(d.unitsDemanded)} units ({(d.marketShare * 100).toFixed(1)}% share)</span>
-                  </div>
-                ))}
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {/* Demographic detail: pool sizes, market share, loss reasons, perception */}
+      <DemographicDetailSection
+        allLaptopResults={result.laptopResults}
+        playerResults={result.playerResults}
+        perceptionChanges={result.perceptionChanges}
+      />
 
-      {/* Perception changes */}
-      {result.perceptionChanges && result.perceptionChanges.some((pc) => Math.abs(pc.delta) >= 0.1) && (
-        <div style={sectionStyle}>
-          <h3 style={sectionHeadingStyle}>
-            Brand Perception Changes
-          </h3>
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Demographic</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>Before</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>After</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>Change</th>
-              </tr>
-            </thead>
-            <tbody>
-              {result.perceptionChanges
-                .filter((pc) => Math.abs(pc.delta) >= 0.1)
-                .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
-                .map((pc) => {
-                  const demName = DEMOGRAPHICS.find((d) => d.id === pc.demographicId)?.name ?? pc.demographicId;
-                  const deltaColor = pc.delta > 0 ? tokens.colors.success : pc.delta < 0 ? tokens.colors.danger : undefined;
-                  const sign = pc.delta > 0 ? "+" : "";
-                  return (
-                    <tr key={pc.demographicId}>
-                      <td style={tdStyle}>{demName}</td>
-                      <td style={tdRight}>{pc.oldPerception.toFixed(1)}</td>
-                      <td style={tdRight}>{pc.newPerception.toFixed(1)}</td>
-                      <td style={{ ...tdRight, color: deltaColor, fontWeight: 600 }}>
-                        {sign}{pc.delta.toFixed(1)}
-                      </td>
-                    </tr>
-                  );
-                })}
-            </tbody>
-          </table>
-        </div>
+      {/* Quarterly Trend (only in annual view) */}
+      {isAnnual && state.quarterHistory.length > 0 && (
+        <QuarterlyTrendTable quarters={state.quarterHistory} year={yearResult!.year} />
       )}
 
       {/* Year-End Awards */}
@@ -205,7 +195,7 @@ export function YearEndSummaryScreen() {
         }}
         style={{ width: "100%", marginTop: tokens.spacing.md }}
       >
-        Continue to Year {result.year + 1}
+        Continue to Year {yearResult!.year + 1}
       </MenuButton>
       <StatusBar />
     </ContentPanel>
