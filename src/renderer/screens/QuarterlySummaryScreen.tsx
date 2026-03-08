@@ -7,6 +7,7 @@ import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
 import { formatCurrency, formatNumber, QUARTER_LABELS } from "../utils/formatCash";
 import { titleStyle, sectionStyle, tableStyle, thStyle, tdStyle, tdRight, summaryRowStyle, sectionHeadingStyle } from "./summaryStyles";
+import { reviewScoreColor } from "../utils/reviewScoreColor";
 
 export function QuarterlySummaryScreen() {
   const { state, dispatch } = useGame();
@@ -82,6 +83,28 @@ export function QuarterlySummaryScreen() {
           </tbody>
         </table>
       </div>
+
+      {/* Reviews published after Q1 */}
+      {result.quarter === 1 && state.currentYearReviews.length > 0 && (
+        <div style={{
+          ...sectionStyle,
+          padding: tokens.spacing.md,
+          background: tokens.colors.surface,
+          borderRadius: tokens.borderRadius.md,
+        }}>
+          <h3 style={sectionHeadingStyle}>Reviews Published</h3>
+          {state.currentYearReviews
+            .filter((r) => r.owner === "player")
+            .map((r) => (
+              <div key={`${r.laptopId}-${r.outlet}`} style={{ ...summaryRowStyle }}>
+                <span>{r.outletName}: {r.laptopName}</span>
+                <span style={{ fontWeight: 700, color: reviewScoreColor(r.score) }}>
+                  {r.score}/10
+                </span>
+              </div>
+            ))}
+        </div>
+      )}
 
       {/* Financial summary */}
       <div style={{

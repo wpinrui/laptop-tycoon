@@ -16,6 +16,7 @@ import { YearEndSummaryScreen } from "../screens/YearEndSummaryScreen";
 import { QuarterlySummaryScreen } from "../screens/QuarterlySummaryScreen";
 import { GameOverScreen } from "../screens/GameOverScreen";
 import { BrandDetailScreen } from "../screens/BrandDetailScreen";
+import { ReviewsAwardsScreen } from "../screens/ReviewsAwardsScreen";
 
 function PlaceholderScreen({ title }: { title: string }) {
   const { navigateTo } = useNavigation();
@@ -55,7 +56,7 @@ function ScreenContent() {
     case "brandDetail":
       return <BrandDetailScreen />;
     case "reviewsAwards":
-      return <PlaceholderScreen title="Reviews & Awards" />;
+      return <ReviewsAwardsScreen />;
     case "news":
       return <PlaceholderScreen title="News" />;
     case "history":

@@ -8,6 +8,7 @@ import {
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { COMPETITORS, CompetitorArchetype } from "../../data/competitors";
 import { YearSimulationResult, QuarterSimulationResult } from "../../simulation/salesTypes";
+import { LaptopReview, Award } from "../../simulation/reviewsAwards";
 
 export type ModelType = "brandNew" | "successor" | "specBump";
 
@@ -81,6 +82,10 @@ export interface GameState {
   lastSimulationResult: QuarterSimulationResult | null;
   /** Accumulated quarterly results for the current year (reset on year advance). */
   quarterHistory: QuarterSimulationResult[];
+  /** Reviews published after Q1 for the current year (reset on year advance). */
+  currentYearReviews: LaptopReview[];
+  /** Awards published after Q4 for the most recently completed year. */
+  currentYearAwards: Award[];
 }
 
 /** Get the player's company from the unified companies array. */
@@ -138,5 +143,7 @@ export function createInitialGameState(
     yearHistory: [],
     lastSimulationResult: null,
     quarterHistory: [],
+    currentYearReviews: [],
+    currentYearAwards: [],
   };
 }

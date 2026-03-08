@@ -8,6 +8,8 @@ import { tokens } from "../shell/tokens";
 import { DEMOGRAPHICS } from "../../data/demographics";
 import { formatCurrency, formatNumber } from "../utils/formatCash";
 import { titleStyle, sectionStyle, tableStyle, thStyle, tdStyle, tdRight, summaryRowStyle, sectionHeadingStyle } from "./summaryStyles";
+import { AwardsTable } from "./AwardsTable";
+import { AWARD_PERCEPTION_BONUS, AWARD_REACH_BONUS } from "../../simulation/tunables";
 
 export function YearEndSummaryScreen() {
   const { state, dispatch } = useGame();
@@ -139,6 +141,17 @@ export function YearEndSummaryScreen() {
                 })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Year-End Awards */}
+      {state.currentYearAwards.length > 0 && (
+        <div style={sectionStyle}>
+          <h3 style={sectionHeadingStyle}>Year-End Awards</h3>
+          <AwardsTable awards={state.currentYearAwards} />
+          <p style={{ margin: 0, marginTop: tokens.spacing.xs, color: tokens.colors.textMuted, fontSize: tokens.font.sizeSmall }}>
+            Award winners receive +{AWARD_PERCEPTION_BONUS} brand perception and +{AWARD_REACH_BONUS}% brand reach across all demographics.
+          </p>
         </div>
       )}
 

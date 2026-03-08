@@ -10,6 +10,8 @@ import { hasDiscontinuedComponents, LaptopModel } from "../../state/gameTypes";
 import { COMPETITORS } from "../../../data/competitors";
 import { generateCompetitorModels } from "../../../simulation/competitorAI";
 import { simulateQuarter } from "../../../simulation/salesEngine";
+import { generateReviews, determineAwards } from "../../../simulation/reviewsAwards";
+import { QuarterSimulationResult, LaptopSalesResult } from "../../../simulation/salesTypes";
 import { QUARTER_LABELS } from "../../utils/formatCash";
 
 /** Models that need a current-year manufacturing plan before simulation. */
@@ -21,6 +23,29 @@ function modelsNeedingPlans(state: { year: number; models: ReturnType<typeof get
     const hasPlanForYear = m.manufacturingPlan?.year === state.year;
     return !hasPlanForYear;
   });
+}
+
+/** Aggregate laptop sales results across all quarters for award determination. */
+function aggregateLaptopResults(quarters: QuarterSimulationResult[]): LaptopSalesResult[] {
+  const map = new Map<string, LaptopSalesResult>();
+  for (const q of quarters) {
+    for (const lr of q.laptopResults) {
+      const existing = map.get(lr.laptopId);
+      if (existing) {
+        map.set(lr.laptopId, {
+          ...existing,
+          unitsDemanded: existing.unitsDemanded + lr.unitsDemanded,
+          unitsSold: existing.unitsSold + lr.unitsSold,
+          revenue: existing.revenue + lr.revenue,
+          profit: existing.profit + lr.profit,
+          unsoldUnits: lr.unsoldUnits,
+        });
+      } else {
+        map.set(lr.laptopId, { ...lr });
+      }
+    }
+  }
+  return Array.from(map.values());
 }
 
 export function AdvanceYearCard() {
@@ -133,6 +158,21 @@ export function AdvanceYearCard() {
 
           // Apply quarterly simulation results
           dispatch({ type: "APPLY_QUARTER_RESULT", result });
+
+          // After Q1: generate and publish laptop reviews
+          if (state.quarter === 1) {
+            const reviews = generateReviews(stateForSim, result);
+            dispatch({ type: "SET_REVIEWS", reviews });
+          }
+
+          // After Q4: determine year-end awards (uses all quarterly results)
+          if (state.quarter === 4) {
+            const allQuarterResults = [...state.quarterHistory, result];
+            // Aggregate laptop results across all quarters for award determination
+            const yearLaptopResults = aggregateLaptopResults(allQuarterResults);
+            const awards = determineAwards(stateForSim, yearLaptopResults);
+            dispatch({ type: "SET_AWARDS", awards });
+          }
 
           // Navigate: game over only at end of Q4
           if (state.quarter === 4 && result.cashAfterResolution < 0) {
