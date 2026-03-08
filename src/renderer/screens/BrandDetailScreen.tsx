@@ -78,7 +78,7 @@ const demographicTagStyle: CSSProperties = {
   display: "inline-block",
   fontSize: tokens.font.sizeSmall,
   color: tokens.colors.accent,
-  background: "rgba(79, 195, 247, 0.1)",
+  background: tokens.colors.accentBg,
   borderRadius: tokens.borderRadius.sm,
   padding: "2px 6px",
   marginRight: 4,
@@ -186,7 +186,7 @@ export function BrandDetailScreen() {
           const cost = getSponsorshipCost(sponsorship, state.year);
           const canAfford = state.cash >= cost;
           const isHovered = hoveredSponsorship === sponsorship.id;
-          const demNames = DEMOGRAPHICS.filter((d) => (sponsorship.reachBonus[d.id] ?? 0) > 0);
+          const targetedDemos = DEMOGRAPHICS.filter((d) => (sponsorship.reachBonus[d.id] ?? 0) > 0);
 
           return (
             <div
@@ -216,7 +216,7 @@ export function BrandDetailScreen() {
                 {sponsorship.description}
               </p>
               <div>
-                {demNames.map((dem) => (
+                {targetedDemos.map((dem) => (
                   <span key={dem.id} style={demographicTagStyle}>
                     {dem.name} +{sponsorship.reachBonus[dem.id]}%
                   </span>
