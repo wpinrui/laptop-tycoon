@@ -69,7 +69,7 @@ export function YearEndSummaryScreen() {
   }
 
   const playerResults = result.playerResults;
-  const totalOrdered = playerResults.reduce((sum, r) => sum + r.unitsSold + r.unsoldUnits, 0);
+  const totalAvailable = playerResults.reduce((sum, r) => sum + r.unitsSold + r.unsoldUnits, 0);
   const totalSold = playerResults.reduce((sum, r) => sum + r.unitsSold, 0);
   const totalUnsold = playerResults.reduce((sum, r) => sum + r.unsoldUnits, 0);
 
@@ -92,7 +92,7 @@ export function YearEndSummaryScreen() {
           <thead>
             <tr>
               <th style={thStyle}>Model</th>
-              <th style={{ ...thStyle, textAlign: "right" }}>Ordered</th>
+              <th style={{ ...thStyle, textAlign: "right" }}>Available</th>
               <th style={{ ...thStyle, textAlign: "right" }}>Sold</th>
               <th style={{ ...thStyle, textAlign: "right" }}>Unsold</th>
               <th style={{ ...thStyle, textAlign: "right" }}>Revenue</th>
@@ -103,10 +103,11 @@ export function YearEndSummaryScreen() {
             {playerResults.map((r) => {
               const model = state.models.find((m) => m.design.id === r.laptopId);
               const profitColor = r.profit >= 0 ? tokens.colors.success : tokens.colors.danger;
+              const totalUnits = r.unitsSold + r.unsoldUnits;
               return (
                 <tr key={r.laptopId}>
                   <td style={tdStyle}>{model?.design.name ?? "Unknown"}</td>
-                  <td style={tdRight}>{formatNumber(r.unitsSold + r.unsoldUnits)}</td>
+                  <td style={tdRight}>{formatNumber(totalUnits)}</td>
                   <td style={tdRight}>{formatNumber(r.unitsSold)}</td>
                   <td style={{ ...tdRight, color: r.unsoldUnits > 0 ? tokens.colors.warning : undefined }}>
                     {formatNumber(r.unsoldUnits)}
@@ -156,8 +157,8 @@ export function YearEndSummaryScreen() {
           Financial Summary
         </h3>
         <div style={summaryRowStyle}>
-          <span>Total Units Ordered</span>
-          <span>{formatNumber(totalOrdered)}</span>
+          <span>Total Units Available</span>
+          <span>{formatNumber(totalAvailable)}</span>
         </div>
         <div style={summaryRowStyle}>
           <span>Total Units Sold</span>
@@ -165,7 +166,7 @@ export function YearEndSummaryScreen() {
         </div>
         {totalUnsold > 0 && (
           <div style={summaryRowStyle}>
-            <span style={{ color: tokens.colors.warning }}>Unsold Inventory (Write-off)</span>
+            <span style={{ color: tokens.colors.warning }}>Unsold (carried to inventory)</span>
             <span style={{ color: tokens.colors.warning }}>{formatNumber(totalUnsold)}</span>
           </div>
         )}
