@@ -1,4 +1,4 @@
-import { DemographicId } from "../data/types";
+import { DemographicId, LaptopStat } from "../data/types";
 
 /** Price ceiling for a demographic (year-2000 dollars, inflates over time) */
 export interface PriceCeiling {
@@ -33,6 +33,8 @@ export interface DemographicSalesBreakdown {
   screenPenalty: number;
   /** Combined perception modifier % (brand + campaign) */
   perceptionMod: number;
+  /** Market-relative normalised stats (0–1 per stat, 1 = best in market) */
+  normalizedStats: Record<LaptopStat, number>;
 }
 
 export interface LaptopSalesResult {

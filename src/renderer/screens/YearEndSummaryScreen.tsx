@@ -113,7 +113,7 @@ export function YearEndSummaryScreen() {
         </table>
       </div>
 
-      {/* Demographic detail: pool sizes, market share, loss reasons, perception */}
+      {/* Demographic detail: comparison tables, perception */}
       <DemographicDetailSection
         allLaptopResults={result.laptopResults}
         playerResults={result.playerResults}

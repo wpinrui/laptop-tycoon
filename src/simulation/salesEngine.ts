@@ -321,6 +321,7 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
         weightedStatScore: vp.weightedStatScore,
         screenPenalty: vp.screenPenalty,
         perceptionMod: vp.perceptionMod,
+        normalizedStats: normalisedStatsMap.get(laptopId)!,
       });
     }
   }
