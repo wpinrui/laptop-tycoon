@@ -344,7 +344,7 @@ export function simulateYear(state: GameState): YearSimulationResult {
   const gameOver = cashAfterResolution < 0;
 
   // Compute player perception changes for tracking in results
-  const perceptionChanges = computePerceptionChanges(state, laptopResults, playerResults);
+  const perceptionChanges = computePerceptionChanges(state, laptopResults);
 
   return {
     year,
@@ -367,10 +367,9 @@ export function simulateYear(state: GameState): YearSimulationResult {
 function computePerceptionChanges(
   state: GameState,
   laptopResults: LaptopSalesResult[],
-  playerResults: LaptopSalesResult[],
 ): PerceptionChange[] {
   const player = getPlayerCompany(state);
-  const newPerception = updateBrandPerception(player, { laptopResults, companyResults: playerResults });
+  const newPerception = updateBrandPerception(player, laptopResults);
 
   return DEMOGRAPHICS.map((dem) => {
     const oldP = player.brandPerception[dem.id] ?? 0;

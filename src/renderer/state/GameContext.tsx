@@ -4,7 +4,7 @@ import { GameState, LaptopDesign, LaptopModel, ModelStatus, CompanyState, create
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { YearSimulationResult } from "../../simulation/salesTypes";
 import { clearProjectionCache } from "../../simulation/salesEngine";
-import { updateBrandReach, updateCompetitorBrandReach, updateCompetitorBrandPerception } from "../../simulation/brandProgression";
+import { updateBrandReach, updateCompetitorBrandReach, updateBrandPerception } from "../../simulation/brandProgression";
 
 export interface CompetitorModelEntry {
   competitorId: string;
@@ -155,10 +155,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         companies: updateCompany(
           state.companies,
           (c) => !c.isPlayer && byId.has(c.id),
-          (comp) => {
-            const newModel = byId.get(comp.id);
-            return newModel ? { ...comp, models: [...comp.models, newModel] } : comp;
-          },
+          (comp) => ({ ...comp, models: [...comp.models, byId.get(comp.id)!] }),
         ),
       };
     }
@@ -206,7 +203,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           return {
             ...comp,
             brandReach: updateCompetitorBrandReach(comp, result),
-            brandPerception: updateCompetitorBrandPerception(comp, result),
+            brandPerception: updateBrandPerception(comp, result.laptopResults),
           };
         }),
         yearSimulated: true,

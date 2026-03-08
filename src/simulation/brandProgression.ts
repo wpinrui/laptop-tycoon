@@ -240,19 +240,11 @@ function applyQuarterlyPerception(
   return newPerception;
 }
 
-/** Update per-demographic brand perception for any company. */
+/** Update per-demographic brand perception for any company (player or competitor). */
 export function updateBrandPerception(
   company: CompanyState,
-  result: Pick<YearSimulationResult, "laptopResults"> & { companyResults: LaptopSalesResult[] },
+  allLaptopResults: LaptopSalesResult[],
 ): Record<DemographicId, number> {
-  return applyQuarterlyPerception(company.brandPerception, result.laptopResults, result.companyResults);
-}
-
-/** Update per-demographic brand perception for a competitor. */
-export function updateCompetitorBrandPerception(
-  comp: CompanyState,
-  result: YearSimulationResult,
-): Record<DemographicId, number> {
-  const compResults = result.laptopResults.filter((r) => r.owner === comp.id);
-  return applyQuarterlyPerception(comp.brandPerception, result.laptopResults, compResults);
+  const companyResults = allLaptopResults.filter((r) => r.owner === company.id);
+  return applyQuarterlyPerception(company.brandPerception, allLaptopResults, companyResults);
 }
