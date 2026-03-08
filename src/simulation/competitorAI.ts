@@ -284,9 +284,11 @@ function generateSingleModel(
 
   const retailPrice = Math.round(totals.totalCost * competitor.pricingStrategy.marginMultiplier);
 
-  // Manufacturing quantity heuristic: base pool size scaled by brand recognition
+  // Manufacturing quantity heuristic: base pool size scaled by average brand reach
   const totalDemand = Object.values(STARTING_DEMAND_POOL).reduce((sum, v) => sum + v, 0);
-  const brandFactor = competitor.brandRecognition / 100;
+  const reachValues = Object.values(competitor.brandReach);
+  const avgReach = reachValues.reduce((s, v) => s + v, 0) / reachValues.length;
+  const brandFactor = avgReach / 100;
   const competitorShare = 1 / totalPlayerCount;
   const manufacturingQuantity = Math.round(totalDemand * competitorShare * brandFactor * (0.8 + Math.random() * 0.4));
 

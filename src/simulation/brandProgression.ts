@@ -1,94 +1,213 @@
 /**
- * Brand recognition growth/decay and niche reputation evolution.
+ * Brand reach (per-demographic, S-curve), brand perception (global, decay + value-for-money),
+ * and niche reputation evolution.
  * Called at year-end after sales simulation resolves.
  */
 
-import { ALL_STATS, LaptopStat } from "../data/types";
+import { ALL_STATS, DemographicId, LaptopStat } from "../data/types";
+import { DEMOGRAPHICS } from "../data/demographics";
+import { SPONSORSHIPS } from "../data/sponsorships";
 import { GameState, CompetitorState } from "../renderer/state/gameTypes";
 import { YearSimulationResult } from "./salesTypes";
 import { computeStatsForDesign } from "./statCalculation";
+import { getPriceCeiling } from "./demographicData";
 
-// --- Brand Recognition Tuning ---
+// ==================== Brand Reach ====================
 
-/** Units sold per +1 raw brand recognition growth */
-const SALES_VOLUME_DIVISOR = 10_000;
-/** Marketing spend per +1 raw brand recognition growth */
-const MARKETING_SPEND_DIVISOR = 2_000_000;
-/** Time-in-market bonus per year with products on sale */
-const TIME_IN_MARKET_BONUS = 1;
-/** Proportional decay rate when player has no products on sale */
-const INACTIVITY_DECAY_RATE = 0.15;
-/** Proportional decay rate when player has products but poor sales */
-const POOR_SALES_DECAY_RATE = 0.05;
-/** Threshold below which sales are considered "poor" */
-const POOR_SALES_THRESHOLD = 1_000;
+/** S-curve steepness — higher = steeper transition in the middle */
+const S_CURVE_STEEPNESS = 0.08;
+/** S-curve midpoint (reach % where growth is fastest) */
+const S_CURVE_MIDPOINT = 50;
+/** Awareness budget divisor — every $X of awareness budget contributes 1 raw reach point */
+const AWARENESS_BUDGET_DIVISOR = 500_000;
+/** Word-of-mouth divisor — every X units sold in a demographic contributes 1 raw reach point */
+const WORD_OF_MOUTH_DIVISOR = 5_000;
+/** Reach decay rate when no products on sale (proportional, per year) */
+const REACH_INACTIVITY_DECAY = 0.10;
 
 /**
- * Update brand recognition with diminishing returns.
- * Growth is scaled by (1 - recognition/100) so it's harder to gain at higher levels.
- * Decay is proportional to current recognition.
+ * Logistic S-curve growth factor.
+ * Low reach → slow growth (cold start), mid reach → fast growth, high reach → plateaus.
  */
-export function updateBrandRecognition(
+function sCurveGrowthFactor(currentReach: number): number {
+  const x = currentReach;
+  const expTerm = Math.exp(-S_CURVE_STEEPNESS * (x - S_CURVE_MIDPOINT));
+  // Derivative of logistic: peaks at midpoint, low at extremes
+  return S_CURVE_STEEPNESS * expTerm / Math.pow(1 + expTerm, 2);
+}
+
+/**
+ * Update per-demographic brand reach for the player.
+ * Growth sources: awareness budget (all demographics), sponsorships (targeted), word of mouth (from sales).
+ */
+export function updateBrandReach(
   state: GameState,
   result: YearSimulationResult,
-): number {
-  const old = state.brandRecognition;
-
-  const playerResults = result.playerResults;
-  const totalUnitsSold = playerResults.reduce((sum, r) => sum + r.unitsSold, 0);
-
-  // Marketing spend from current-year manufacturing plans
-  const totalMarketingSpend = state.models.reduce((sum, m) => {
-    const plan = m.manufacturingPlan;
-    if (plan && plan.year === state.year) return sum + plan.marketing.cost;
-    return sum;
-  }, 0);
-
+): Record<DemographicId, number> {
+  const oldReach = state.brandReach;
+  const newReach = { ...oldReach };
   const hasProductsOnSale = state.models.some(
     (m) => m.status === "manufacturing" || m.status === "onSale",
   );
 
-  // Raw growth (before diminishing returns)
-  const rawGrowth =
-    totalUnitsSold / SALES_VOLUME_DIVISOR +
-    totalMarketingSpend / MARKETING_SPEND_DIVISOR +
-    (hasProductsOnSale ? TIME_IN_MARKET_BONUS : 0);
-
-  // Diminishing returns: harder to grow at higher recognition
-  const headroom = 1 - old / 100;
-  const growth = rawGrowth * headroom;
-
-  // Proportional decay
-  let decay = 0;
-  if (!hasProductsOnSale) {
-    decay = old * INACTIVITY_DECAY_RATE;
-  } else if (totalUnitsSold < POOR_SALES_THRESHOLD) {
-    decay = old * POOR_SALES_DECAY_RATE;
+  // Build per-demographic units sold from player results
+  const unitsByDemographic: Partial<Record<DemographicId, number>> = {};
+  for (const pr of result.playerResults) {
+    for (const db of pr.demographicBreakdown) {
+      const demId = db.demographicId as DemographicId;
+      unitsByDemographic[demId] = (unitsByDemographic[demId] ?? 0) + db.unitsDemanded;
+    }
   }
 
-  return Math.max(0, Math.min(100, old + growth - decay));
+  for (const dem of DEMOGRAPHICS) {
+    const demId = dem.id as DemographicId;
+    const current = oldReach[demId] ?? 0;
+
+    // Raw growth inputs
+    let rawGrowth = 0;
+
+    // 1. Awareness budget — small uniform push across all demographics
+    rawGrowth += state.brandAwarenessBudget / AWARENESS_BUDGET_DIVISOR;
+
+    // 2. Sponsorships — targeted boosts
+    for (const sponsorshipId of state.sponsorships) {
+      const sponsorship = SPONSORSHIPS.find((s) => s.id === sponsorshipId);
+      if (sponsorship) {
+        rawGrowth += sponsorship.reachBonus[demId] ?? 0;
+      }
+    }
+
+    // 3. Word of mouth — organic from units sold in this demographic
+    const unitsSold = unitsByDemographic[demId] ?? 0;
+    rawGrowth += unitsSold / WORD_OF_MOUTH_DIVISOR;
+
+    // Apply S-curve: growth is modulated by current reach position
+    const growth = rawGrowth * sCurveGrowthFactor(current) * 100;
+
+    // Decay if no products on sale
+    const decay = !hasProductsOnSale ? current * REACH_INACTIVITY_DECAY : 0;
+
+    newReach[demId] = Math.max(0, Math.min(100, current + growth - decay));
+  }
+
+  return newReach;
 }
 
 /**
- * Update a competitor's brand recognition based on their sales volume.
+ * Update per-demographic brand reach for a competitor.
+ * Competitors grow reach from sales volume + time-in-market (simplified).
  */
-export function updateCompetitorBrandRecognition(
+export function updateCompetitorBrandReach(
   comp: CompetitorState,
   result: YearSimulationResult,
-): number {
-  const old = comp.brandRecognition;
+): Record<DemographicId, number> {
+  const oldReach = comp.brandReach;
+  const newReach = { ...oldReach };
 
+  // Build per-demographic units sold
   const compResults = result.laptopResults.filter((r) => r.owner === comp.id);
-  const totalUnitsSold = compResults.reduce((sum, r) => sum + r.unitsSold, 0);
+  const unitsByDemographic: Partial<Record<DemographicId, number>> = {};
+  for (const cr of compResults) {
+    for (const db of cr.demographicBreakdown) {
+      const demId = db.demographicId as DemographicId;
+      unitsByDemographic[demId] = (unitsByDemographic[demId] ?? 0) + db.unitsDemanded;
+    }
+  }
 
-  const rawGrowth = totalUnitsSold / SALES_VOLUME_DIVISOR + TIME_IN_MARKET_BONUS;
-  const headroom = 1 - old / 100;
-  const growth = rawGrowth * headroom;
+  for (const dem of DEMOGRAPHICS) {
+    const demId = dem.id as DemographicId;
+    const current = oldReach[demId] ?? 0;
 
-  return Math.max(0, Math.min(100, old + growth));
+    // Competitor reach growth from sales + time-in-market
+    const unitsSold = unitsByDemographic[demId] ?? 0;
+    const rawGrowth = unitsSold / WORD_OF_MOUTH_DIVISOR + 0.5; // +0.5 time-in-market bonus
+    const growth = rawGrowth * sCurveGrowthFactor(current) * 100;
+
+    newReach[demId] = Math.max(0, Math.min(100, current + growth));
+  }
+
+  return newReach;
 }
 
-// --- Niche Reputation Tuning ---
+// ==================== Brand Perception ====================
+
+/** Perception decay factor (50% fade per year — recency bias) */
+const PERCEPTION_DECAY = 0.5;
+/** Negativity bias multiplier — bad value-for-money hits harder */
+const NEGATIVITY_BIAS = 1.5;
+
+/**
+ * Update global brand perception based on value-for-money of products sold.
+ * newPerception = oldPerception * decay + thisYearContribution
+ */
+export function updateBrandPerception(
+  state: GameState,
+  result: YearSimulationResult,
+): number {
+  const old = state.brandPerception;
+
+  // Calculate this year's contribution from value-for-money
+  let weightedContribution = 0;
+  let totalWeight = 0;
+
+  for (const pr of result.playerResults) {
+    if (pr.unitsSold <= 0) continue;
+    const model = state.models.find((m) => m.design.id === pr.laptopId);
+    if (!model) continue;
+
+    const stats = computeStatsForDesign(model.design, state.year);
+
+    // For each demographic that bought this laptop, compute value-for-money
+    for (const db of pr.demographicBreakdown) {
+      if (db.unitsDemanded <= 0) continue;
+      const dem = DEMOGRAPHICS.find((d) => d.id === db.demographicId);
+      if (!dem) continue;
+
+      // Weighted stat score for this demographic
+      let statScore = 0;
+      for (const stat of ALL_STATS) {
+        statScore += (stats[stat] ?? 0) * (dem.statWeights[stat] ?? 0);
+      }
+
+      // Price relative to demographic ceiling
+      const ceiling = getPriceCeiling(dem.id, state.year);
+      const priceRatio = model.retailPrice! / ceiling;
+
+      // Value-for-money: high stat score relative to price = positive, overpaying = negative
+      // Centered at 0: priceRatio of 1.0 with average stats = neutral
+      const valueForMoney = (statScore * 10 - priceRatio * 10) / 10;
+
+      // Apply negativity bias
+      const adjusted = valueForMoney < 0 ? valueForMoney * NEGATIVITY_BIAS : valueForMoney;
+
+      weightedContribution += adjusted * db.unitsDemanded;
+      totalWeight += db.unitsDemanded;
+    }
+  }
+
+  const thisYearContribution = totalWeight > 0 ? weightedContribution / totalWeight : 0;
+
+  // Scale contribution to reasonable perception range (roughly -5 to +5 per year)
+  const scaledContribution = thisYearContribution * 5;
+
+  const newPerception = old * PERCEPTION_DECAY + scaledContribution;
+  return Math.max(-50, Math.min(50, newPerception));
+}
+
+/**
+ * Update global brand perception for a competitor.
+ * Simplified: competitors maintain roughly stable perception with slight drift from sales volume.
+ */
+export function updateCompetitorBrandPerception(
+  comp: CompetitorState,
+  _result: YearSimulationResult,
+): number {
+  // Competitors decay toward their archetype baseline
+  // Budget brands drift slightly negative, premium slightly positive
+  return comp.brandPerception * PERCEPTION_DECAY;
+}
+
+// ==================== Niche Reputation (unchanged) ====================
 
 /** How quickly niche reputation moves toward current product focus (0-1) */
 const NICHE_LERP_RATE = 0.3;

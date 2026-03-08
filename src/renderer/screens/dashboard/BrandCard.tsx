@@ -5,7 +5,8 @@ import { BentoCard } from "./BentoCard";
 import { ProgressBar } from "./ProgressBar";
 import { cardBodyStyle, hintStyle, sectionDividerStyle, sectionHeadingStyle, smallTextStyle } from "./styles";
 
-import { LaptopStat } from "../../../data/types";
+import { DEMOGRAPHICS } from "../../../data/demographics";
+import { LaptopStat, DemographicId } from "../../../data/types";
 
 const reputationStats: { label: string; key: LaptopStat }[] = [
   { label: "Performance", key: "performance" },
@@ -26,19 +27,50 @@ const reputationStats: { label: string; key: LaptopStat }[] = [
   { label: "Support", key: "supportAndService" },
 ];
 
+function perceptionColor(value: number): string {
+  if (value > 10) return tokens.colors.success;
+  if (value > 0) return tokens.colors.text;
+  if (value < -10) return tokens.colors.danger;
+  if (value < 0) return tokens.colors.warning;
+  return tokens.colors.textMuted;
+}
+
 export function BrandCard() {
   const { state } = useGame();
 
+  const perceptionValue = Math.round(state.brandPerception);
+  const perceptionSign = perceptionValue > 0 ? "+" : "";
+
   return (
     <BentoCard title="Brand" icon={Sparkles} screen="brandDetail">
-      <p style={{ ...sectionHeadingStyle, marginBottom: tokens.spacing.sm }}>Recognition</p>
-      <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm }}>
-        <ProgressBar value={Math.round(state.brandRecognition)} height={8} />
-        <span style={cardBodyStyle}>{Math.round(state.brandRecognition)}/100</span>
-      </div>
+      <p style={{ ...sectionHeadingStyle, marginBottom: tokens.spacing.sm }}>Brand Reach</p>
+      {DEMOGRAPHICS.map((dem) => {
+        const reach = Math.round(state.brandReach[dem.id as DemographicId] ?? 0);
+        return (
+          <div key={dem.id} style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm, marginTop: tokens.spacing.xs }}>
+            <span style={{ ...smallTextStyle, minWidth: 130, flexShrink: 0 }}>{dem.name}</span>
+            <ProgressBar value={reach} height={6} />
+            <span style={{ ...smallTextStyle, minWidth: 36, textAlign: "right" }}>{reach}%</span>
+          </div>
+        );
+      })}
       <p style={{ ...hintStyle, marginTop: tokens.spacing.xs }}>
-        Grows with sales volume and positive reviews
+        Percentage of each demographic that has heard of your company
       </p>
+
+      <div style={sectionDividerStyle}>
+        <p style={sectionHeadingStyle}>Brand Perception</p>
+        <div style={{ display: "flex", alignItems: "baseline", gap: tokens.spacing.sm, marginTop: tokens.spacing.xs }}>
+          <span style={{ ...cardBodyStyle, fontSize: 20, color: perceptionColor(perceptionValue) }}>
+            {perceptionSign}{perceptionValue}
+          </span>
+          <span style={hintStyle}>/ 50</span>
+        </div>
+        <p style={{ ...hintStyle, marginTop: tokens.spacing.xs }}>
+          Accumulated sentiment — positive = benefit of the doubt, negative = scepticism
+        </p>
+      </div>
+
       <div style={sectionDividerStyle}>
         <p style={sectionHeadingStyle}>Niche Reputation</p>
         {reputationStats.map(({ label, key }) => {
