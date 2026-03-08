@@ -5,7 +5,7 @@ import {
   LaptopStat,
 } from "../data/types";
 import { CompetitorArchetype, CompetitorDefinition } from "../data/competitors";
-import { LaptopDesign, LaptopModel } from "../renderer/state/gameTypes";
+import { LaptopDesign, LaptopModel, CompanyState } from "../renderer/state/gameTypes";
 import {
   getAvailableComponents,
   getAvailableChassisOptions,
@@ -25,7 +25,6 @@ import {
 import { PORT_TYPES } from "../data/portTypes";
 import { COLOUR_OPTIONS } from "../data/colourOptions";
 import { STARTING_DEMAND_POOL } from "../data/startingDemand";
-import { CompanyState } from "../renderer/state/gameTypes";
 import { averageReach } from "./brandProgression";
 
 const COMPONENT_SLOTS: ComponentSlot[] = [
@@ -77,11 +76,9 @@ function pickComponent(
   if (available.length === 0) return null;
 
   const { archetype, statPriorities } = competitor;
-  // engineeringBonus shifts component percentile up, keeping competitors competitive
-  const bonus = engineeringBonus;
 
   if (archetype === "budget") {
-    return pickComponentByPercentile(available, clamp(0.15 + bonus, 0, 1), (c) => totalStatValue(c));
+    return pickComponentByPercentile(available, clamp(0.15 + engineeringBonus, 0, 1), (c) => totalStatValue(c));
   }
 
   if (archetype === "premium") {
@@ -89,14 +86,14 @@ function pickComponent(
       const relevance = (c: Component) => statRelevance(c, statPriorities.high);
       const maxRelevance = Math.max(...available.map(relevance));
       if (maxRelevance > 0) {
-        return pickComponentByPercentile(available, clamp(0.8 + bonus, 0, 1), relevance);
+        return pickComponentByPercentile(available, clamp(0.8 + engineeringBonus, 0, 1), relevance);
       }
     }
-    return pickComponentByPercentile(available, clamp(0.6 + bonus, 0, 1), (c) => totalStatValue(c));
+    return pickComponentByPercentile(available, clamp(0.6 + engineeringBonus, 0, 1), (c) => totalStatValue(c));
   }
 
   // generalist — middle 50%
-  return pickComponentByPercentile(available, clamp(0.5 + bonus, 0, 1), (c) => totalStatValue(c));
+  return pickComponentByPercentile(available, clamp(0.5 + engineeringBonus, 0, 1), (c) => totalStatValue(c));
 }
 
 function pickChassisOption(

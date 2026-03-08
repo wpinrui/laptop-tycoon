@@ -121,8 +121,6 @@ export const QUARTER_SHARES = [8, 4, 2, 1] as const;
 /** Sum of all quarter shares for normalisation. */
 export const QUARTER_SHARES_SUM = QUARTER_SHARES.reduce<number>((s, v) => s + v, 0);
 
-// ==================== Awards ====================
-
 // ==================== AI Death Spiral Prevention ====================
 
 /** Minimum annual unit sales before an AI competitor is considered "struggling" */
