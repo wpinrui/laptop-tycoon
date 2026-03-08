@@ -74,6 +74,7 @@ export function ModelManagementScreen() {
   const activeModels = getActiveModels(state);
   const discontinuedModels = player.models.filter((m) => m.status === "discontinued");
   const emptySlots = MAX_MODELS - activeModels.length;
+  const canDesignNew = state.quarter === 1 && !state.quarterSimulated;
 
   function handleEdit(model: LaptopModel) {
     wizardDispatch({ type: "LOAD_DESIGN", design: model.design });
@@ -111,7 +112,7 @@ export function ModelManagementScreen() {
           <MenuButton
             variant="accent"
             onClick={() => navigateTo("designWizard")}
-            disabled={emptySlots === 0}
+            disabled={emptySlots === 0 || !canDesignNew}
           >
             <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
               <Plus size={16} /> New Design
@@ -139,12 +140,13 @@ export function ModelManagementScreen() {
             key={model.design.id}
             model={model}
             confirmScrap={confirmScrapId === model.design.id}
-            onEdit={() => handleEdit(model)}
+            onEdit={canDesignNew ? () => handleEdit(model) : undefined}
             onAddManufacturing={() => handleManufacturing(model)}
             onScrapClick={() => setConfirmScrapId(model.design.id)}
             onScrapConfirm={() => handleScrap(model.design.id)}
             onScrapCancel={() => setConfirmScrapId(null)}
             gameYear={state.year}
+            gameQuarter={state.quarter}
           />
         ))
       )}
@@ -181,6 +183,7 @@ export function ModelManagementScreen() {
                   onScrapCancel={() => {}}
                   disabled
                   gameYear={state.year}
+                  gameQuarter={state.quarter}
                 />
               ))}
             </div>
@@ -203,6 +206,7 @@ function ModelCard({
   onScrapCancel,
   disabled,
   gameYear,
+  gameQuarter,
 }: {
   model: LaptopModel;
   confirmScrap: boolean;
@@ -213,9 +217,10 @@ function ModelCard({
   onScrapCancel: () => void;
   disabled?: boolean;
   gameYear: number;
+  gameQuarter: 1 | 2 | 3 | 4;
 }) {
   const { design, status, retailPrice, manufacturingQuantity, yearDesigned, manufacturingPlan } = model;
-  const hasPlan = manufacturingPlan !== null && manufacturingPlan.year === gameYear;
+  const hasPlan = manufacturingPlan !== null && manufacturingPlan.year === gameYear && manufacturingPlan.quarter === gameQuarter;
   const isRetailOnly = hasDiscontinuedComponents(design, gameYear);
 
   return (
@@ -310,7 +315,7 @@ function ModelCard({
               )}
             </>
           )}
-          {status === "onSale" && !isRetailOnly && onAddManufacturing && (
+          {(status === "onSale" || status === "manufacturing") && !isRetailOnly && onAddManufacturing && (
             <MenuButton
               variant="accent"
               onClick={onAddManufacturing}

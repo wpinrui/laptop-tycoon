@@ -11,6 +11,7 @@ export type Screen =
   | "reviewsAwards"
   | "news"
   | "history"
+  | "quarterlySummary"
   | "yearEndSummary"
   | "gameOver";
 

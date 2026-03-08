@@ -1,4 +1,3 @@
-import { CSSProperties } from "react";
 import { useGame } from "../state/GameContext";
 import { getPlayerCompany } from "../state/gameTypes";
 import { useNavigation } from "../navigation/NavigationContext";
@@ -7,65 +6,15 @@ import { MenuButton } from "../shell/MenuButton";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
 import { DEMOGRAPHICS } from "../../data/demographics";
-
-const titleStyle: CSSProperties = {
-  margin: 0,
-  marginBottom: tokens.spacing.lg,
-  fontSize: tokens.font.sizeTitle,
-  fontWeight: 700,
-};
-
-const sectionStyle: CSSProperties = {
-  marginBottom: tokens.spacing.lg,
-};
-
-const tableStyle: CSSProperties = {
-  width: "100%",
-  borderCollapse: "collapse",
-  marginTop: tokens.spacing.sm,
-};
-
-const thStyle: CSSProperties = {
-  textAlign: "left",
-  padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
-  borderBottom: `1px solid ${tokens.colors.panelBorder}`,
-  color: tokens.colors.textMuted,
-  fontSize: tokens.font.sizeSmall,
-  fontWeight: 600,
-};
-
-const tdStyle: CSSProperties = {
-  padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
-  borderBottom: `1px solid ${tokens.colors.surface}`,
-};
-
-const tdRight: CSSProperties = { ...tdStyle, textAlign: "right" };
-
-const summaryRowStyle: CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  padding: `${tokens.spacing.xs}px 0`,
-};
-
-const sectionHeadingStyle: CSSProperties = {
-  margin: 0,
-  marginBottom: tokens.spacing.sm,
-  color: tokens.colors.accent,
-};
-
-function formatCurrency(amount: number): string {
-  return "$" + amount.toLocaleString("en-US", { maximumFractionDigits: 0 });
-}
-
-function formatNumber(n: number): string {
-  return n.toLocaleString("en-US");
-}
+import { formatCurrency, formatNumber } from "../utils/formatCash";
+import { titleStyle, sectionStyle, tableStyle, thStyle, tdStyle, tdRight, summaryRowStyle, sectionHeadingStyle } from "./summaryStyles";
 
 export function YearEndSummaryScreen() {
   const { state, dispatch } = useGame();
   const { navigateTo } = useNavigation();
   const player = getPlayerCompany(state);
-  const result = state.lastSimulationResult;
+  // Use the latest aggregated year result from yearHistory (built after Q4)
+  const result = state.yearHistory[state.yearHistory.length - 1] ?? null;
 
   if (!result) {
     return (
@@ -238,7 +187,7 @@ export function YearEndSummaryScreen() {
       <MenuButton
         variant="accent"
         onClick={() => {
-          dispatch({ type: "ADVANCE_YEAR" });
+          dispatch({ type: "ADVANCE_QUARTER" });
           navigateTo("dashboard");
         }}
         style={{ width: "100%", marginTop: tokens.spacing.md }}

@@ -59,6 +59,7 @@ function WizardContent() {
     const plan: FullManufacturingPlan = {
       laptopModelId: state.modelId,
       year: gameState.year,
+      quarter: gameState.quarter,
       marketing: {
         campaignId: state.campaignId,
         cost: campaignCost,

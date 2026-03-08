@@ -1,13 +1,13 @@
 /**
  * Brand reach (per-demographic, S-curve) and brand perception (per-demographic, decay + value-for-money).
- * Called at year-end after sales simulation resolves.
+ * Called quarterly after sales simulation resolves.
  */
 
 import { DemographicId } from "../data/types";
 import { DEMOGRAPHICS } from "../data/demographics";
 import { SPONSORSHIPS } from "../data/sponsorships";
 import { GameState, CompanyState, getPlayerCompany } from "../renderer/state/gameTypes";
-import { LaptopSalesResult, YearSimulationResult } from "./salesTypes";
+import { LaptopSalesResult, QuarterSimulationResult } from "./salesTypes";
 import {
   S_CURVE_STEEPNESS,
   S_CURVE_MIDPOINT,
@@ -59,7 +59,7 @@ export function averageReach(reach: Record<DemographicId, number>): number {
 /**
  * Compute the immediate (same-year) reach boost from marketing campaign spend.
  * This is a flat addition (not S-curved) so it works even at 0% reach.
- * Used by simulateYear and projectDemandRange to gate demand before year-end.
+ * Used by simulateQuarter and projectDemandRange to gate demand.
  * @param extraSpend Additional campaign spend not yet committed to state (e.g. from wizard)
  */
 export function getCampaignReachBoost(state: GameState, extraSpend: number = 0): number {
@@ -67,12 +67,12 @@ export function getCampaignReachBoost(state: GameState, extraSpend: number = 0):
 }
 
 /**
- * Update per-demographic brand reach for the player.
- * Growth sources: awareness budget (all demographics), sponsorships (targeted), word of mouth (from sales), marketing campaigns (secondary).
+ * Update per-demographic brand reach for the player (quarterly).
+ * Growth sources are divided by 4 for quarterly application.
  */
 export function updateBrandReach(
   state: GameState,
-  result: YearSimulationResult,
+  result: QuarterSimulationResult,
 ): Record<DemographicId, number> {
   const player = getPlayerCompany(state);
   const oldReach = player.brandReach;
@@ -96,32 +96,32 @@ export function updateBrandReach(
     const demId = dem.id;
     const current = oldReach[demId] ?? 0;
 
-    // Raw growth inputs
+    // Raw growth inputs (divided by 4 for quarterly application)
     let rawGrowth = 0;
 
     // 1. Awareness budget — small uniform push across all demographics
-    rawGrowth += state.brandAwarenessBudget / AWARENESS_DIVISOR;
+    rawGrowth += (state.brandAwarenessBudget / AWARENESS_DIVISOR) / 4;
 
-    // 2. Sponsorships — targeted boosts
+    // 2. Sponsorships — targeted boosts (applied if purchased this quarter)
     for (const sponsorshipId of state.sponsorships) {
       const sponsorship = SPONSORSHIPS.find((s) => s.id === sponsorshipId);
       if (sponsorship) {
-        rawGrowth += sponsorship.reachBonus[demId] ?? 0;
+        rawGrowth += (sponsorship.reachBonus[demId] ?? 0) / 4;
       }
     }
 
-    // 3. Word of mouth — organic from units sold in this demographic
+    // 3. Word of mouth — organic from units sold this quarter
     const unitsSold = unitsByDemographic[demId] ?? 0;
     rawGrowth += unitsSold / WOM_DIVISOR;
 
-    // 4. Marketing campaigns — secondary reach from ad spend (uniform across demographics)
-    rawGrowth += totalCampaignSpend / CAMPAIGN_DIVISOR;
+    // 4. Marketing campaigns — secondary reach from ad spend (uniform, quarterly)
+    rawGrowth += (totalCampaignSpend / CAMPAIGN_DIVISOR) / 4;
 
     // Apply S-curve: growth is modulated by current reach position
     const growth = rawGrowth * sCurveGrowthFactor(current) * 100;
 
-    // Decay if no products on sale
-    const decay = !hasProductsOnSale ? current * REACH_INACTIVITY_DECAY : 0;
+    // Decay if no products on sale (quarterly portion)
+    const decay = !hasProductsOnSale ? current * (REACH_INACTIVITY_DECAY / 4) : 0;
 
     newReach[demId] = Math.max(0, Math.min(100, current + growth - decay));
   }
@@ -130,12 +130,12 @@ export function updateBrandReach(
 }
 
 /**
- * Update per-demographic brand reach for a competitor.
+ * Update per-demographic brand reach for a competitor (quarterly).
  * Competitors grow reach from sales volume + time-in-market (simplified).
  */
 export function updateCompetitorBrandReach(
   comp: CompanyState,
-  result: YearSimulationResult,
+  result: QuarterSimulationResult,
 ): Record<DemographicId, number> {
   const oldReach = comp.brandReach;
   const newReach = { ...oldReach };
@@ -154,9 +154,9 @@ export function updateCompetitorBrandReach(
     const demId = dem.id;
     const current = oldReach[demId] ?? 0;
 
-    // Competitor reach growth from sales + time-in-market
+    // Competitor reach growth from sales + time-in-market (quarterly)
     const unitsSold = unitsByDemographic[demId] ?? 0;
-    const rawGrowth = unitsSold / WOM_DIVISOR + COMPETITOR_TIME_IN_MARKET_BONUS;
+    const rawGrowth = unitsSold / WOM_DIVISOR + (COMPETITOR_TIME_IN_MARKET_BONUS / 4);
     const growth = rawGrowth * sCurveGrowthFactor(current) * 100;
 
     newReach[demId] = Math.max(0, Math.min(100, current + growth));
@@ -167,24 +167,24 @@ export function updateCompetitorBrandReach(
 
 // ==================== Brand Perception ====================
 
+const QUARTERLY_DECAY = Math.pow(PERCEPTION_DECAY, 0.25);
+
 /**
- * Core quarterly perception update for any company.
+ * Apply a single quarter of perception update for a company.
  *
  * Per quarter:
  *   experience = company_laptop_raw_vp - mean(raw_vp of all purchased laptops in this demographic)
  *   perception_contribution = experience × volume_weight × negativity_multiplier
- *   new_perception = old_perception × (DECAY ^ 0.25) + perception_contribution
+ *   new_perception = old_perception × (DECAY ^ 0.25) + perception_contribution / 4
  *
  * Only purchasers affect perception — demographics that didn't buy stay at 0/neutral.
- * Applied 4 times (quarterly) to produce the annual effect.
  */
-function applyQuarterlyPerception(
+function applyOneQuarterPerception(
   oldPerception: Record<DemographicId, number>,
   allLaptopResults: LaptopSalesResult[],
   companyResults: LaptopSalesResult[],
 ): Record<DemographicId, number> {
   const newPerception = { ...oldPerception };
-  const quarterlyDecay = Math.pow(PERCEPTION_DECAY, 0.25);
 
   for (const dem of DEMOGRAPHICS) {
     const demId = dem.id;
@@ -216,35 +216,32 @@ function applyQuarterlyPerception(
       }
     }
 
-    // Only purchasers affect perception — no purchases means decay only
+    // Only purchasers affect perception — no purchases means quarterly decay only
     if (companyUnits <= 0) {
-      newPerception[demId] = Math.max(PERCEPTION_MIN, Math.min(PERCEPTION_MAX, old * PERCEPTION_DECAY));
+      newPerception[demId] = Math.max(PERCEPTION_MIN, Math.min(PERCEPTION_MAX, old * QUARTERLY_DECAY));
       continue;
     }
 
     // Volume-weighted average experience, apply negativity multiplier
     const avgExperience = weightedExperience / companyUnits;
     const adjusted = avgExperience < 0 ? avgExperience * NEGATIVITY_MULTIPLIER : avgExperience;
-    const perceptionContribution = adjusted * PERCEPTION_CONTRIBUTION_SCALE;
+    const perceptionContribution = (adjusted * PERCEPTION_CONTRIBUTION_SCALE) / 4;
 
-    // Apply quarterly: fold 4 quarters of decay + contribution
-    let perception = old;
-    const quarterlyContribution = perceptionContribution / 4;
-    for (let q = 0; q < 4; q++) {
-      perception = perception * quarterlyDecay + quarterlyContribution;
-    }
-
+    const perception = old * QUARTERLY_DECAY + perceptionContribution;
     newPerception[demId] = Math.max(PERCEPTION_MIN, Math.min(PERCEPTION_MAX, perception));
   }
 
   return newPerception;
 }
 
-/** Update per-demographic brand perception for any company (player or competitor). */
-export function updateBrandPerception(
+/**
+ * Apply a single quarter of perception update for any company.
+ * Used by the sales engine for per-quarter perception tracking.
+ */
+export function applySingleQuarterPerception(
   company: CompanyState,
   allLaptopResults: LaptopSalesResult[],
 ): Record<DemographicId, number> {
   const companyResults = allLaptopResults.filter((r) => r.owner === company.id);
-  return applyQuarterlyPerception(company.brandPerception, allLaptopResults, companyResults);
+  return applyOneQuarterPerception(company.brandPerception, allLaptopResults, companyResults);
 }
