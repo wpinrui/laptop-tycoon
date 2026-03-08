@@ -242,13 +242,13 @@ function calculateAppeal(
   const pref = demographic.screenSizePreference;
   const screenFit = getScreenSizeFit(laptop.model.design.screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);
 
-  // Effective perception = global brand perception + laptop campaign modifier
+  // Effective perception = per-demographic brand perception + laptop campaign modifier
   let effectivePerception: number;
   if (laptop.owner === "player") {
-    effectivePerception = state.brandPerception + campaignPerception;
+    effectivePerception = (state.brandPerception[demographic.id] ?? 0) + campaignPerception;
   } else {
     const comp = state.competitors.find((c) => c.id === laptop.owner);
-    effectivePerception = comp ? comp.brandPerception : 0;
+    effectivePerception = comp ? (comp.brandPerception[demographic.id] ?? 0) : 0;
   }
   const perceptionMultiplier = 1 + effectivePerception / 100;
 

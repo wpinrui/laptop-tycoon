@@ -11,8 +11,6 @@ import { DEMOGRAPHICS } from "../../../data/demographics";
 export function BrandCard() {
   const { state } = useGame();
 
-  const perception = formatPerception(state.brandPerception);
-
   return (
     <BentoCard title="Brand" icon={Sparkles} screen="brandDetail">
       <p style={{ ...sectionHeadingStyle, marginBottom: tokens.spacing.sm }}>Brand Reach</p>
@@ -32,12 +30,17 @@ export function BrandCard() {
 
       <div style={sectionDividerStyle}>
         <p style={sectionHeadingStyle}>Brand Perception</p>
-        <div style={{ display: "flex", alignItems: "baseline", gap: tokens.spacing.sm, marginTop: tokens.spacing.xs }}>
-          <span style={{ ...cardBodyStyle, fontSize: 20, color: perception.color }}>
-            {perception.sign}{perception.value}
-          </span>
-          <span style={hintStyle}>/ 50</span>
-        </div>
+        {DEMOGRAPHICS.map((dem) => {
+          const perception = formatPerception(state.brandPerception[dem.id] ?? 0);
+          return (
+            <div key={dem.id} style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm, marginTop: tokens.spacing.xs }}>
+              <span style={{ ...smallTextStyle, minWidth: 130, flexShrink: 0 }}>{dem.name}</span>
+              <span style={{ ...cardBodyStyle, fontSize: 14, minWidth: 50, textAlign: "right", color: perception.color }}>
+                {perception.sign}{perception.value}
+              </span>
+            </div>
+          );
+        })}
         <p style={{ ...hintStyle, marginTop: tokens.spacing.xs }}>
           Accumulated sentiment — positive = benefit of the doubt, negative = scepticism
         </p>

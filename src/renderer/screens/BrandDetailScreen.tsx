@@ -62,7 +62,6 @@ export function BrandDetailScreen() {
   const { navigateTo } = useNavigation();
 
   const canAfford = state.cash >= CAMPAIGN_COST;
-  const perception = formatPerception(state.brandPerception);
 
   return (
     <ContentPanel maxWidth={700}>
@@ -91,14 +90,21 @@ export function BrandDetailScreen() {
 
       <div style={sectionStyle}>
         <p style={headingStyle}>Brand Perception</p>
-        <div style={{ display: "flex", alignItems: "baseline", gap: tokens.spacing.sm }}>
-          <span style={{ fontSize: 28, fontWeight: 700, color: perception.color }}>
-            {perception.sign}{perception.value}
-          </span>
-          <span style={{ color: tokens.colors.textMuted }}>/ 50</span>
-        </div>
+        {DEMOGRAPHICS.map((dem) => {
+          const perception = formatPerception(state.brandPerception[dem.id] ?? 0);
+          return (
+            <div key={dem.id} style={rowStyle}>
+              <span style={labelStyle}>{dem.name}</span>
+              <span style={{ minWidth: 50, textAlign: "right", fontWeight: 600, color: perception.color }}>
+                {perception.sign}{perception.value}
+              </span>
+              <span style={{ color: tokens.colors.textMuted, fontSize: tokens.font.sizeSmall }}>/ 50</span>
+            </div>
+          );
+        })}
         <p style={hintStyle}>
           Accumulated sentiment from product quality and value-for-money. Decays 50% per year.
+          Each demographic forms opinions independently based on their own purchases.
         </p>
       </div>
 

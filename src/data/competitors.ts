@@ -7,7 +7,7 @@ export interface CompetitorDefinition {
   name: string;
   archetype: CompetitorArchetype;
   brandReach: Record<DemographicId, number>;
-  brandPerception: number;
+  brandPerception: Record<DemographicId, number>;
   statPriorities: {
     high: LaptopStat[];
     low: LaptopStat[];
@@ -38,7 +38,16 @@ export const COMPETITORS: CompetitorDefinition[] = [
       generalConsumer: 35,
       budgetBuyer: 50,
     },
-    brandPerception: -5,
+    brandPerception: {
+      corporate: -10,
+      businessProfessional: -15,
+      student: 10,
+      creativeProfessional: -10,
+      gamer: -5,
+      techEnthusiast: 0,
+      generalConsumer: 5,
+      budgetBuyer: 25,
+    },
     statPriorities: {
       high: [],
       low: ["buildQuality", "design", "supportAndService", "display"],
@@ -65,7 +74,16 @@ export const COMPETITORS: CompetitorDefinition[] = [
       generalConsumer: 30,
       budgetBuyer: 10,
     },
-    brandPerception: 15,
+    brandPerception: {
+      corporate: 10,
+      businessProfessional: 20,
+      student: -5,
+      creativeProfessional: 25,
+      gamer: -10,
+      techEnthusiast: 10,
+      generalConsumer: 5,
+      budgetBuyer: -20,
+    },
     statPriorities: {
       high: ["design", "display", "buildQuality", "keyboard"],
       low: [],
@@ -92,7 +110,16 @@ export const COMPETITORS: CompetitorDefinition[] = [
       generalConsumer: 40,
       budgetBuyer: 30,
     },
-    brandPerception: 5,
+    brandPerception: {
+      corporate: 10,
+      businessProfessional: 8,
+      student: 7,
+      creativeProfessional: 5,
+      gamer: 5,
+      techEnthusiast: 6,
+      generalConsumer: 10,
+      budgetBuyer: 7,
+    },
     statPriorities: {
       high: [],
       low: [],
