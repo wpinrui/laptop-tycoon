@@ -282,6 +282,18 @@ function buildYearResult(
     for (const lr of q.laptopResults) {
       const existing = laptopResultMap.get(lr.laptopId);
       if (existing) {
+        // Merge demographicBreakdown: sum unitsDemanded per demographic across quarters
+        const mergedBreakdown = [...existing.demographicBreakdown];
+        for (const db of lr.demographicBreakdown) {
+          const match = mergedBreakdown.find((b) => b.demographicId === db.demographicId);
+          if (match) {
+            match.unitsDemanded += db.unitsDemanded;
+            match.marketShare = db.marketShare; // Use latest quarter's share
+            match.rawVP = db.rawVP;
+          } else {
+            mergedBreakdown.push({ ...db });
+          }
+        }
         laptopResultMap.set(lr.laptopId, {
           ...existing,
           unitsDemanded: existing.unitsDemanded + lr.unitsDemanded,
@@ -289,6 +301,7 @@ function buildYearResult(
           revenue: existing.revenue + lr.revenue,
           profit: existing.profit + lr.profit,
           unsoldUnits: lr.unsoldUnits, // Last quarter's unsold
+          demographicBreakdown: mergedBreakdown,
         });
       } else {
         laptopResultMap.set(lr.laptopId, { ...lr });

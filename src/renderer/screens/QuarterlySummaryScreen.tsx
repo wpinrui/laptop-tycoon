@@ -73,7 +73,7 @@ export function QuarterlySummaryScreen() {
                   <td style={tdRight}>{formatNumber(r.unitsSold)}</td>
                   <td style={tdRight}>{formatNumber(ytd?.unitsSold ?? r.unitsSold)}</td>
                   <td style={tdRight}>{formatCurrency(r.revenue)}</td>
-                  <td style={{ ...tdRight, color: r.unsoldUnits > 0 ? tokens.colors.textMuted : tokens.colors.warning }}>
+                  <td style={{ ...tdRight, color: r.unsoldUnits > 0 ? tokens.colors.warning : undefined }}>
                     {formatNumber(r.unsoldUnits)}
                   </td>
                 </tr>
