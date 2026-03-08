@@ -29,6 +29,10 @@ import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
 import { generateCompetitorModels } from "./competitorAI";
 import { COMPETITORS } from "../data/competitors";
 
+// Cache synthetic competitor models per year for stable demand projections
+let cachedProjectionYear: number | null = null;
+let cachedProjectionModels: LaptopModel[] = [];
+
 // --- Tuning Constants ---
 
 /** Brand awareness floor (0-1) when brand recognition is 0 */
@@ -445,9 +449,12 @@ export function projectDemandRange(
   };
 
   // Build competitor laptops for comparison.
-  // Generate synthetic models for the current year so the projection
-  // reflects realistic competition (competitors are generated at sim time).
-  const syntheticModels = generateCompetitorModels(year, COMPETITORS);
+  // Generate synthetic models once per year for stable projections.
+  if (cachedProjectionYear !== year) {
+    cachedProjectionYear = year;
+    cachedProjectionModels = generateCompetitorModels(year, COMPETITORS);
+  }
+  const syntheticModels = cachedProjectionModels;
   const competitorLaptops: MarketLaptop[] = [];
   for (let i = 0; i < COMPETITORS.length; i++) {
     const comp = COMPETITORS[i];
