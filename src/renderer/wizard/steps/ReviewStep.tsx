@@ -15,7 +15,7 @@ import {
   CHASSIS_SLOTS,
   computeLaptopTotals,
   componentCostDecayed,
-} from "../constants";
+} from "../../../data/designConstants";
 import { getAllChassisOptions, WIZARD_STEP_LABELS, WIZARD_STEPS, COMPONENT_STEP_SLOTS, WizardStep } from "../types";
 import { getScreenSizeDef } from "../../../data/screenSizes";
 import { getBatteryEra } from "../../../data/batteryEras";

@@ -16,7 +16,7 @@ import {
 } from "../../data/types";
 import { LaptopDesign } from "../state/gameTypes";
 import { useGame } from "../state/GameContext";
-import { getAvailableComponents, getAvailableChassisOptions, CHASSIS_SLOTS } from "./constants";
+import { getAvailableComponents, getAvailableChassisOptions, CHASSIS_SLOTS } from "../../data/designConstants";
 import { COLOUR_OPTIONS } from "../../data/colourOptions";
 
 type WizardAction =

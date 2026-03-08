@@ -15,7 +15,7 @@ import {
   THICKNESS_STEP_CM,
   BEZEL_MIN_MM,
   BEZEL_MAX_MM,
-} from "../renderer/wizard/constants";
+} from "../data/designConstants";
 import {
   MATERIALS,
   COOLING_SOLUTIONS,

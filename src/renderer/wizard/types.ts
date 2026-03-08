@@ -10,7 +10,7 @@ import {
   MIN_BATTERY_WH,
   THICKNESS_DEFAULT_CM,
   BEZEL_DEFAULT_MM,
-} from "./constants";
+} from "../../data/designConstants";
 
 export type WizardStep =
   | "metadata"

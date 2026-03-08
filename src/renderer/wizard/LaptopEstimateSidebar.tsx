@@ -11,7 +11,7 @@ import {
   batteryWarningThresholdH,
   avgUsageMultiplier,
   computeLaptopTotals,
-} from "./constants";
+} from "../../data/designConstants";
 import { getScreenSizeDef } from "../../data/screenSizes";
 import { getAllChassisOptions } from "./types";
 import { STAT_CONFIG, computeStatTotals, getStatColor } from "./StatBar";

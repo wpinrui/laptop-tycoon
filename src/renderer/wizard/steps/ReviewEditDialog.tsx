@@ -21,7 +21,7 @@ import {
   minThicknessForVolumeCm,
   getAvailableComponents,
   getAvailableChassisOptions,
-} from "../constants";
+} from "../../../data/designConstants";
 import { getAllChassisOptions } from "../types";
 import { getScreenSizeDef, SCREEN_SIZES } from "../../../data/screenSizes";
 import { getBatteryEra } from "../../../data/batteryEras";

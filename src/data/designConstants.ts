@@ -1,16 +1,16 @@
-import { ChassisOption, ChassisOptionSlot, Component, ComponentSlot, ScreenSizeInches } from "../../data/types";
-import { PORT_TYPES } from "../../data/portTypes";
-import { ALL_COMPONENTS } from "../../data/components";
-import { COLOUR_OPTIONS } from "../../data/colourOptions";
-import { getScreenSizeDef } from "../../data/screenSizes";
-import { getBatteryEra } from "../../data/batteryEras";
-import { SLOT_CONFIGS } from "../../data/slotConfigs";
+import { ChassisOption, ChassisOptionSlot, Component, ComponentSlot, ScreenSizeInches } from "./types";
+import { PORT_TYPES } from "./portTypes";
+import { ALL_COMPONENTS } from "./components";
+import { COLOUR_OPTIONS } from "./colourOptions";
+import { getScreenSizeDef } from "./screenSizes";
+import { getBatteryEra } from "./batteryEras";
+import { SLOT_CONFIGS } from "./slotConfigs";
 import {
   MATERIALS,
   COOLING_SOLUTIONS,
   KEYBOARD_FEATURES,
   TRACKPAD_FEATURES,
-} from "../../data/chassisOptions";
+} from "./chassisOptions";
 
 export const MIN_BATTERY_WH = 20;
 export const MAX_BATTERY_WH = 100;
