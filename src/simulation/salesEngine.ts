@@ -180,7 +180,7 @@ function getLaptopCampaignPerception(laptop: MarketLaptop, playerId: string): nu
  * Step 2 – Biased VP:
  *   biased_vp = raw_vp × (1 + brand_perception_mod / 100) × (1 + laptop_perception_mod / 100)
  *
- * Note: reach is NOT applied here — it gates the demand pool size instead (in simulateQuarter).
+ * Note: reach is NOT applied here — it multiplies effective VP in simulateQuarter.
  */
 interface VPComponents {
   biasedVP: number;
@@ -281,32 +281,32 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
     // Quarterly active buyers = annual × quarter share
     const quarterlyActiveBuyers = annualActiveBuyers * quarterShare;
 
-    // Calculate biased VP for each laptop in this demographic
-    const vpEntries: { laptopId: string; vp: VPComponents; reachGatedPool: number }[] = [];
-    let totalBiasedVP = 0;
+    // Calculate effective VP for each laptop: biased_vp × (reach / 100)
+    // Reach multiplies competitive strength within one shared pool (no per-company pools)
+    const vpEntries: { laptopId: string; vp: VPComponents; effectiveVP: number }[] = [];
+    let totalEffectiveVP = 0;
 
     for (const laptop of allLaptops) {
       const normStats = normalisedStatsMap.get(laptop.id)!;
       const campPerc = campaignPerceptions.get(laptop.id)!;
       const vp = calculateBiasedVP(laptop, normStats, demographic, state, campPerc);
 
-      // Each laptop's addressable pool is gated by its owner's reach in this demographic
       const company = state.companies.find((c) => c.id === laptop.owner);
       let reach = company ? (company.brandReach[demId] ?? 0) : 0;
       if (company?.isPlayer) {
         reach += campaignReachBoost;
       }
       reach = Math.min(reach, 100);
-      const reachGatedPool = quarterlyActiveBuyers * (reach / 100);
+      const effectiveVP = vp.biasedVP * (reach / 100);
 
-      vpEntries.push({ laptopId: laptop.id, vp, reachGatedPool });
-      totalBiasedVP += vp.biasedVP;
+      vpEntries.push({ laptopId: laptop.id, vp, effectiveVP });
+      totalEffectiveVP += effectiveVP;
     }
 
-    // Everyone in the active pool buys: purchase_probability = biased_vp / sum(all biased_vps)
-    for (const { laptopId, vp, reachGatedPool } of vpEntries) {
-      const purchaseProbability = totalBiasedVP > 0 ? vp.biasedVP / totalBiasedVP : 0;
-      const unitsDemanded = Math.round(reachGatedPool * purchaseProbability);
+    // Everyone in the shared pool buys: purchase_probability = effective_vp / sum(all effective_vps)
+    for (const { laptopId, vp, effectiveVP } of vpEntries) {
+      const purchaseProbability = totalEffectiveVP > 0 ? effectiveVP / totalEffectiveVP : 0;
+      const unitsDemanded = Math.round(quarterlyActiveBuyers * purchaseProbability);
 
       const entry = demandByLaptop.get(laptopId)!;
       entry.total += unitsDemanded;
@@ -317,7 +317,6 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
         unitsDemanded,
         rawVP: vp.rawVP,
         totalPool: Math.round(quarterlyActiveBuyers),
-        addressablePool: Math.round(reachGatedPool),
         weightedStatScore: vp.weightedStatScore,
         screenPenalty: vp.screenPenalty,
         perceptionMod: vp.perceptionMod,
@@ -493,20 +492,28 @@ export function projectDemandRange(
     const quarterShare = QUARTER_SHARES[state.quarter - 1] / QUARTER_SHARES_SUM;
     const quarterlyActiveBuyers = annualActiveBuyers * quarterShare;
 
-    let totalBiasedVP = 0;
-    let ourBiasedVP = 0;
+    let totalEffectiveVP = 0;
+    let ourEffectiveVP = 0;
 
     for (const laptop of allLaptops) {
       const normStats = normalisedStatsMap.get(laptop.id)!;
       const { biasedVP: vp } = calculateBiasedVP(laptop, normStats, demographic, state, 0);
-      totalBiasedVP += vp;
-      if (laptop.id === modelId) ourBiasedVP = vp;
+
+      // effective_vp = biased_vp × (reach / 100)
+      const company = state.companies.find((c) => c.id === laptop.owner);
+      let reach = company ? (company.brandReach[demId] ?? 0) : 0;
+      if (company?.isPlayer) {
+        reach += campaignReachBoost;
+      }
+      reach = Math.min(reach, 100);
+      const effectiveVP = vp * (reach / 100);
+
+      totalEffectiveVP += effectiveVP;
+      if (laptop.id === modelId) ourEffectiveVP = effectiveVP;
     }
 
-    const share = totalBiasedVP > 0 ? ourBiasedVP / totalBiasedVP : 0;
-    // Gate by player's reach in this demographic (including immediate campaign boost)
-    const reach = Math.min((player.brandReach[demId] ?? 0) + campaignReachBoost, 100);
-    totalExpected += quarterlyActiveBuyers * (reach / 100) * share;
+    const share = totalEffectiveVP > 0 ? ourEffectiveVP / totalEffectiveVP : 0;
+    totalExpected += quarterlyActiveBuyers * share;
   }
 
   const expected = Math.round(totalExpected);

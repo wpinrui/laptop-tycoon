@@ -23,10 +23,8 @@ export interface DemographicSalesBreakdown {
   unitsDemanded: number;
   /** Raw value proposition (weighted_score × screen_penalty / price) before perception mods */
   rawVP: number;
-  /** Total demographic pool size this quarter (before reach gating) */
+  /** Total demographic pool size this quarter */
   totalPool: number;
-  /** Reach-gated addressable pool for this laptop */
-  addressablePool: number;
   /** Weighted stat score (dot product of normalised stats × demographic weights) */
   weightedStatScore: number;
   /** Screen size fit penalty (0.05–1.0) */
