@@ -142,6 +142,41 @@ export function YearEndSummaryScreen() {
         </div>
       )}
 
+      {/* Year-End Awards */}
+      {state.currentYearAwards.length > 0 && (
+        <div style={sectionStyle}>
+          <h3 style={sectionHeadingStyle}>Year-End Awards</h3>
+          <table style={tableStyle}>
+            <thead>
+              <tr>
+                <th style={thStyle}>Award</th>
+                <th style={thStyle}>Winner</th>
+                <th style={thStyle}>Company</th>
+              </tr>
+            </thead>
+            <tbody>
+              {state.currentYearAwards.map((a) => {
+                const isPlayer = a.ownerCompanyId === "player";
+                return (
+                  <tr key={a.category}>
+                    <td style={tdStyle}>{a.categoryLabel}</td>
+                    <td style={{ ...tdStyle, fontWeight: isPlayer ? 700 : 400, color: isPlayer ? tokens.colors.accent : undefined }}>
+                      {a.winnerName}
+                    </td>
+                    <td style={{ ...tdStyle, color: isPlayer ? tokens.colors.accent : tokens.colors.textMuted }}>
+                      {a.ownerCompanyName}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <p style={{ margin: 0, marginTop: tokens.spacing.xs, color: tokens.colors.textMuted, fontSize: tokens.font.sizeSmall }}>
+            Award winners receive +2 brand perception and +1% brand reach across all demographics.
+          </p>
+        </div>
+      )}
+
       {/* Financial summary */}
       <div style={{
         ...sectionStyle,

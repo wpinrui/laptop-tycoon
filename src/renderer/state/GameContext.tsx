@@ -6,6 +6,7 @@ import { QuarterSimulationResult } from "../../simulation/salesTypes";
 import { clearProjectionCache } from "../../simulation/salesEngine";
 import { updateBrandReach, updateCompetitorBrandReach, applySingleQuarterPerception } from "../../simulation/brandProgression";
 import { applyDeathSpiralPrevention } from "../../simulation/deathSpiralPrevention";
+import { LaptopReview, Award, applyAwardBonuses } from "../../simulation/reviewsAwards";
 
 export interface CompetitorModelEntry {
   competitorId: string;
@@ -24,7 +25,9 @@ type GameAction =
   | { type: "SET_MANUFACTURING_PLAN"; modelId: string; plan: FullManufacturingPlan }
   | { type: "ADD_COMPETITOR_MODELS"; models: CompetitorModelEntry[] }
   | { type: "APPLY_QUARTER_RESULT"; result: QuarterSimulationResult }
-  | { type: "RUN_AWARENESS_CAMPAIGN"; cost: number; reachBoost: number };
+  | { type: "RUN_AWARENESS_CAMPAIGN"; cost: number; reachBoost: number }
+  | { type: "SET_REVIEWS"; reviews: LaptopReview[] }
+  | { type: "SET_AWARDS"; awards: Award[] };
 
 /** Update a specific company in the companies array. */
 function updateCompany(
@@ -88,6 +91,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         quarter: 1 as Quarter,
         quarterSimulated: false,
         quarterHistory: [],
+        currentYearReviews: [],
+        currentYearAwards: [],
         companies: updatePlayerModels(companiesAfterSpiral, (models) =>
           models.map((m) => {
             if (m.status === "discontinued") return m;
@@ -261,6 +266,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         }),
       };
     }
+    case "SET_REVIEWS":
+      return { ...state, currentYearReviews: action.reviews };
+    case "SET_AWARDS":
+      return {
+        ...state,
+        currentYearAwards: action.awards,
+        companies: applyAwardBonuses(state.companies, action.awards),
+      };
     default:
       return state;
   }

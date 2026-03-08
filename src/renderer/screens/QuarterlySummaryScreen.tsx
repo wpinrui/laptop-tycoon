@@ -83,6 +83,28 @@ export function QuarterlySummaryScreen() {
         </table>
       </div>
 
+      {/* Reviews published after Q1 */}
+      {result.quarter === 1 && state.currentYearReviews.length > 0 && (
+        <div style={{
+          ...sectionStyle,
+          padding: tokens.spacing.md,
+          background: tokens.colors.surface,
+          borderRadius: tokens.borderRadius.md,
+        }}>
+          <h3 style={sectionHeadingStyle}>Reviews Published</h3>
+          {state.currentYearReviews
+            .filter((r) => r.owner === "player")
+            .map((r) => (
+              <div key={`${r.laptopId}-${r.outlet}`} style={{ ...summaryRowStyle }}>
+                <span>{r.outletName}: {r.laptopName}</span>
+                <span style={{ fontWeight: 700, color: r.score >= 7 ? tokens.colors.success : r.score >= 5 ? tokens.colors.warning : tokens.colors.danger }}>
+                  {r.score}/10
+                </span>
+              </div>
+            ))}
+        </div>
+      )}
+
       {/* Financial summary */}
       <div style={{
         ...sectionStyle,
