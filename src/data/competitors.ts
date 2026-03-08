@@ -52,7 +52,7 @@ export const COMPETITORS: CompetitorDefinition[] = [
       high: [],
       low: ["buildQuality", "design", "supportAndService", "display"],
     },
-    pricingStrategy: { marginMultiplier: 0.85 },
+    pricingStrategy: { marginMultiplier: 1.05 },
     screenSizePreference: [14, 15],
     chassisPreferences: {
       materialTier: "low",

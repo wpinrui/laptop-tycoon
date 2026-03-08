@@ -165,7 +165,7 @@ This is not a demand projection for the player's laptop — it's the size of the
 
 ### Unsold Inventory
 
-Unsold units are written off. If you order 50,000 and sell 30,000, you eat the cost on 20,000. No carryover, no clearance system.
+Unsold units carry over as inventory to the next year. If you order 50,000 and sell 30,000, the remaining 20,000 stay in stock and are available for sale next year alongside any new manufacturing batch. No clearance system.
 
 ### Cash Flow
 
@@ -687,7 +687,7 @@ Post-year, the player can pay for a detailed demographic breakdown: which buyer 
 - [ ] ~550 sentence templates for reviews and awards
 - [ ] Marketing campaigns (5 tiers, skew-normal distributions, cost inflation)
 - [ ] Press release prompts (3 per model from pool of 12, feeds into reviews)
-- [ ] Unsold inventory written off
+- [ ] Unsold inventory carried over
 - [ ] Game over on negative cash after Q4
 - [ ] Thermals as single collapsed stat (noise + temperature)
 
