@@ -1,5 +1,5 @@
 /**
- * Brand reach (per-demographic, S-curve) and brand perception (global, decay + value-for-money).
+ * Brand reach (per-demographic, S-curve) and brand perception (per-demographic, decay + value-for-money).
  * Called at year-end after sales simulation resolves.
  */
 
@@ -177,18 +177,20 @@ const PERCEPTION_DECAY = 0.5;
 const NEGATIVITY_BIAS = 1.5;
 
 /**
- * Update global brand perception based on value-for-money of products sold.
- * newPerception = oldPerception * decay + thisYearContribution
+ * Update per-demographic brand perception based on value-for-money of products sold.
+ * Each demographic's perception is shaped only by purchases made by that demographic.
+ * newPerception[dem] = oldPerception[dem] * decay + thisYearContribution[dem]
  */
 export function updateBrandPerception(
   state: GameState,
   result: YearSimulationResult,
-): number {
-  const old = state.brandPerception;
+): Record<DemographicId, number> {
+  const oldPerception = state.brandPerception;
+  const newPerception = { ...oldPerception };
 
-  // Calculate this year's contribution from value-for-money
-  let weightedContribution = 0;
-  let totalWeight = 0;
+  // Accumulate weighted contributions per demographic
+  const contributionByDem: Partial<Record<DemographicId, number>> = {};
+  const weightByDem: Partial<Record<DemographicId, number>> = {};
 
   for (const pr of result.playerResults) {
     if (pr.unitsSold <= 0) continue;
@@ -197,50 +199,55 @@ export function updateBrandPerception(
 
     const stats = computeStatsForDesign(model.design, state.year);
 
-    // For each demographic that bought this laptop, compute value-for-money
     for (const db of pr.demographicBreakdown) {
       if (db.unitsDemanded <= 0) continue;
       const dem = DEMOGRAPHICS.find((d) => d.id === db.demographicId);
       if (!dem) continue;
 
-      // Weighted stat score for this demographic
       let statScore = 0;
       for (const stat of ALL_STATS) {
         statScore += (stats[stat] ?? 0) * (dem.statWeights[stat] ?? 0);
       }
 
-      // Price relative to demographic ceiling
       const ceiling = getPriceCeiling(dem.id, state.year);
       if (model.retailPrice == null) continue;
       const priceRatio = model.retailPrice / ceiling;
 
-      // Value-for-money: high stat score relative to price = positive, overpaying = negative
       const valueForMoney = statScore - priceRatio;
-
-      // Apply negativity bias
       const adjusted = valueForMoney < 0 ? valueForMoney * NEGATIVITY_BIAS : valueForMoney;
 
-      weightedContribution += adjusted * db.unitsDemanded;
-      totalWeight += db.unitsDemanded;
+      contributionByDem[dem.id] = (contributionByDem[dem.id] ?? 0) + adjusted * db.unitsDemanded;
+      weightByDem[dem.id] = (weightByDem[dem.id] ?? 0) + db.unitsDemanded;
     }
   }
 
-  const thisYearContribution = totalWeight > 0 ? weightedContribution / totalWeight : 0;
+  for (const dem of DEMOGRAPHICS) {
+    const demId = dem.id;
+    const old = oldPerception[demId] ?? 0;
+    const totalContribution = contributionByDem[demId] ?? 0;
+    const totalWeight = weightByDem[demId] ?? 0;
 
-  const scaledContribution = thisYearContribution * PERCEPTION_CONTRIBUTION_SCALE;
+    const thisYearContribution = totalWeight > 0 ? totalContribution / totalWeight : 0;
+    const scaledContribution = thisYearContribution * PERCEPTION_CONTRIBUTION_SCALE;
 
-  const newPerception = old * PERCEPTION_DECAY + scaledContribution;
-  return Math.max(-50, Math.min(50, newPerception));
+    newPerception[demId] = Math.max(-50, Math.min(50, old * PERCEPTION_DECAY + scaledContribution));
+  }
+
+  return newPerception;
 }
 
 /**
- * Update global brand perception for a competitor.
- * Simplified: competitors decay toward zero over time.
+ * Update per-demographic brand perception for a competitor.
+ * Simplified: each demographic's perception decays toward zero over time.
  */
 export function updateCompetitorBrandPerception(
   comp: CompetitorState,
   _result: YearSimulationResult,
-): number {
-  return comp.brandPerception * PERCEPTION_DECAY;
+): Record<DemographicId, number> {
+  const newPerception = { ...comp.brandPerception };
+  for (const dem of DEMOGRAPHICS) {
+    newPerception[dem.id] = (newPerception[dem.id] ?? 0) * PERCEPTION_DECAY;
+  }
+  return newPerception;
 }
 

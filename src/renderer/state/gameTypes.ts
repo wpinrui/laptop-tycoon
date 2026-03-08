@@ -58,7 +58,7 @@ export interface CompetitorState {
   name: string;
   archetype: CompetitorArchetype;
   brandReach: Record<DemographicId, number>;
-  brandPerception: number;
+  brandPerception: Record<DemographicId, number>;
   models: LaptopModel[];
 }
 
@@ -69,7 +69,7 @@ export interface GameState {
   yearSimulated: boolean;
   cash: number;
   brandReach: Record<DemographicId, number>;
-  brandPerception: number;
+  brandPerception: Record<DemographicId, number>;
   brandAwarenessBudget: number;
   sponsorships: string[];
   models: LaptopModel[];
@@ -92,6 +92,17 @@ const ZERO_REACH: Record<DemographicId, number> = {
   budgetBuyer: 0,
 };
 
+const ZERO_PERCEPTION: Record<DemographicId, number> = {
+  corporate: 0,
+  businessProfessional: 0,
+  student: 0,
+  creativeProfessional: 0,
+  gamer: 0,
+  techEnthusiast: 0,
+  generalConsumer: 0,
+  budgetBuyer: 0,
+};
+
 export function createInitialGameState(
   companyName: string,
   companyLogo: string | null,
@@ -103,7 +114,7 @@ export function createInitialGameState(
     yearSimulated: false,
     cash: STARTING_CASH,
     brandReach: { ...ZERO_REACH },
-    brandPerception: 0,
+    brandPerception: { ...ZERO_PERCEPTION },
     brandAwarenessBudget: 0,
     sponsorships: [],
     models: [],
@@ -112,7 +123,7 @@ export function createInitialGameState(
       name: c.name,
       archetype: c.archetype,
       brandReach: { ...c.brandReach },
-      brandPerception: c.brandPerception,
+      brandPerception: { ...c.brandPerception },
       models: [],
     })),
     yearHistory: [],
