@@ -35,7 +35,14 @@ export function ModelsCard() {
       ) : (
         activeModels.map((model) => (
           <div key={model.design.id} style={modelRowStyle}>
-            <span>{model.design.name}</span>
+            <div>
+              <span>{model.design.name}</span>
+              {model.retailPrice !== null && (
+                <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, marginLeft: tokens.spacing.sm }}>
+                  ${model.retailPrice.toLocaleString()}
+                </span>
+              )}
+            </div>
             <span style={statusBadgeStyle}>{model.status}</span>
           </div>
         ))

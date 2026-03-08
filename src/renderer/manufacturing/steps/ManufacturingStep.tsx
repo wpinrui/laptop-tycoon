@@ -249,6 +249,11 @@ export function ManufacturingStep() {
     displayUpper: Math.round(projection.high * (1 + upperAdBonus / 100)),
   };
 
+  // Other player models for price reference
+  const otherPlayerModels = gameState.models.filter(
+    (m) => m.design.id !== state.modelId && m.retailPrice !== null && m.status !== "discontinued",
+  );
+
   if (!model) return <p>Model not found.</p>;
 
   // Profit uses revenue per unit (after channel margin), not retail price
@@ -367,6 +372,18 @@ export function ManufacturingStep() {
               <span>{fmt(SUPPORT_BUDGET_MAX)}</span>
             </div>
           </div>
+
+          {otherPlayerModels.length > 0 && (
+            <div style={panelStyle}>
+              <div style={{ fontWeight: 600, marginBottom: tokens.spacing.sm }}>Your Other Models</div>
+              {otherPlayerModels.map((m) => (
+                <div key={m.design.id} style={detailRowStyle}>
+                  <span>{m.design.name}</span>
+                  <span style={{ fontWeight: 500, color: tokens.colors.text }}>{fmt(m.retailPrice!)}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right: Projections */}
