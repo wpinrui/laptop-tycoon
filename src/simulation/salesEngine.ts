@@ -26,6 +26,8 @@ import {
   DEMAND_NOISE_MAX,
 } from "../renderer/manufacturing/utils/constants";
 import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
+import { generateCompetitorModels } from "./competitorAI";
+import { COMPETITORS } from "../data/competitors";
 
 // --- Tuning Constants ---
 
@@ -442,23 +444,24 @@ export function projectDemandRange(
     totalManufacturingCost: 0,
   };
 
-  // Build competitor laptops for comparison
+  // Build competitor laptops for comparison.
+  // Generate synthetic models for the current year so the projection
+  // reflects realistic competition (competitors are generated at sim time).
+  const syntheticModels = generateCompetitorModels(year, COMPETITORS);
   const competitorLaptops: MarketLaptop[] = [];
-  for (const comp of state.competitors) {
-    // Use most recent models (previous year's, since current year hasn't generated yet)
-    const latestModels = comp.models.filter((m) => m.yearDesigned === year - 1 || m.yearDesigned === year);
-    for (const cm of latestModels) {
-      if (!cm.retailPrice) continue;
-      competitorLaptops.push({
-        id: cm.design.id,
-        owner: comp.id,
-        model: cm,
-        stats: computeStatsForDesign(cm.design, year),
-        retailPrice: cm.retailPrice,
-        manufacturingQuantity: cm.manufacturingQuantity ?? 0,
-        totalManufacturingCost: 0,
-      });
-    }
+  for (let i = 0; i < COMPETITORS.length; i++) {
+    const comp = COMPETITORS[i];
+    const cm = syntheticModels[i];
+    if (!cm.retailPrice) continue;
+    competitorLaptops.push({
+      id: cm.design.id,
+      owner: comp.id,
+      model: cm,
+      stats: computeStatsForDesign(cm.design, year),
+      retailPrice: cm.retailPrice,
+      manufacturingQuantity: cm.manufacturingQuantity ?? 0,
+      totalManufacturingCost: 0,
+    });
   }
 
   // Also include other player models
