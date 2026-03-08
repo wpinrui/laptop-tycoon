@@ -3,6 +3,7 @@ import {
   ComponentSlot,
   ChassisOption,
   ScreenSizeInches,
+  DemographicId,
 } from "../../data/types";
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { COMPETITORS, CompetitorArchetype } from "../../data/competitors";
@@ -56,7 +57,8 @@ export interface CompetitorState {
   id: string;
   name: string;
   archetype: CompetitorArchetype;
-  brandRecognition: number;
+  brandReach: Record<DemographicId, number>;
+  brandPerception: number;
   models: LaptopModel[];
 }
 
@@ -66,7 +68,10 @@ export interface GameState {
   year: number;
   yearSimulated: boolean;
   cash: number;
-  brandRecognition: number;
+  brandReach: Record<DemographicId, number>;
+  brandPerception: number;
+  brandAwarenessBudget: number;
+  sponsorships: string[];
   nicheReputation: Record<string, number>;
   models: LaptopModel[];
   competitors: CompetitorState[];
@@ -76,6 +81,17 @@ export interface GameState {
 
 export const STARTING_CASH = 50_000_000;
 export const STARTING_YEAR = 2000;
+
+const ZERO_REACH: Record<DemographicId, number> = {
+  corporate: 0,
+  businessProfessional: 0,
+  student: 0,
+  creativeProfessional: 0,
+  gamer: 0,
+  techEnthusiast: 0,
+  generalConsumer: 0,
+  budgetBuyer: 0,
+};
 
 export function createInitialGameState(
   companyName: string,
@@ -87,14 +103,18 @@ export function createInitialGameState(
     year: STARTING_YEAR,
     yearSimulated: false,
     cash: STARTING_CASH,
-    brandRecognition: 0,
+    brandReach: { ...ZERO_REACH },
+    brandPerception: 0,
+    brandAwarenessBudget: 0,
+    sponsorships: [],
     nicheReputation: {},
     models: [],
     competitors: COMPETITORS.map((c) => ({
       id: c.id,
       name: c.name,
       archetype: c.archetype,
-      brandRecognition: c.brandRecognition,
+      brandReach: { ...c.brandReach },
+      brandPerception: c.brandPerception,
       models: [],
     })),
     yearHistory: [],

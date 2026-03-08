@@ -1,0 +1,93 @@
+import { DemographicId } from "./types";
+
+export interface Sponsorship {
+  id: string;
+  name: string;
+  description: string;
+  baseCost: number;
+  reachBonus: Partial<Record<DemographicId, number>>;
+}
+
+export const SPONSORSHIPS: Sponsorship[] = [
+  {
+    id: "gaming_tournament",
+    name: "Gaming Tournament Sponsor",
+    description: "Sponsor a major esports tournament. Highly targeted at gamers and tech enthusiasts.",
+    baseCost: 150_000,
+    reachBonus: {
+      gamer: 5,
+      techEnthusiast: 2,
+    },
+  },
+  {
+    id: "university_programme",
+    name: "University Laptop Programme",
+    description: "Partner with universities to offer student discounts and campus presence.",
+    baseCost: 300_000,
+    reachBonus: {
+      student: 6,
+    },
+  },
+  {
+    id: "enterprise_conference",
+    name: "Enterprise IT Conference",
+    description: "Exhibit at a major enterprise IT conference. Reaches corporate and business buyers.",
+    baseCost: 400_000,
+    reachBonus: {
+      corporate: 5,
+      businessProfessional: 3,
+    },
+  },
+  {
+    id: "tech_blog_partnership",
+    name: "Tech Blog Partnership",
+    description: "Partner with popular tech review sites for sponsored content and reviews.",
+    baseCost: 100_000,
+    reachBonus: {
+      techEnthusiast: 4,
+      gamer: 2,
+    },
+  },
+  {
+    id: "retail_shelf_placement",
+    name: "Retail Shelf Placement Deal",
+    description: "Secure premium shelf placement at major retail chains. Broad but shallow reach.",
+    baseCost: 500_000,
+    reachBonus: {
+      corporate: 3,
+      businessProfessional: 3,
+      student: 3,
+      creativeProfessional: 3,
+      gamer: 3,
+      techEnthusiast: 3,
+      generalConsumer: 3,
+      budgetBuyer: 3,
+    },
+  },
+  {
+    id: "transit_ads",
+    name: "Airport & Transit Ads",
+    description: "Billboard and digital ads in airports and transit hubs. Targets business travellers.",
+    baseCost: 250_000,
+    reachBonus: {
+      businessProfessional: 2,
+      generalConsumer: 2,
+    },
+  },
+  {
+    id: "tv_commercial",
+    name: "TV Commercial",
+    description: "National TV ad campaign. Expensive but reaches the broadest audience.",
+    baseCost: 800_000,
+    reachBonus: {
+      corporate: 2,
+      businessProfessional: 2,
+      student: 2,
+      creativeProfessional: 2,
+      gamer: 2,
+      techEnthusiast: 2,
+      generalConsumer: 4,
+      budgetBuyer: 2,
+    },
+  },
+];

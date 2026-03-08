@@ -28,6 +28,7 @@ import {
 import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
 import { generateCompetitorModels } from "./competitorAI";
 import { COMPETITORS } from "../data/competitors";
+import { averageReach, getCampaignReachBoost } from "./brandProgression";
 
 // Cache synthetic competitor models per year for stable demand projections
 let cachedProjectionYear: number | null = null;
@@ -41,10 +42,6 @@ export function clearProjectionCache(): void {
 
 // --- Tuning Constants ---
 
-/** Brand awareness floor (0-1) when brand recognition is 0 */
-const BRAND_AWARENESS_MIN = 0.3;
-/** Brand awareness ceiling added as recognition approaches 100 */
-const BRAND_AWARENESS_RANGE = 0.7;
 /** Max extra appeal from niche reputation alignment */
 const NICHE_BONUS_CAP = 0.3;
 /** Loyalty multiplier for successor models */
@@ -53,12 +50,10 @@ const SUCCESSOR_LOYALTY = 1.2;
 const SPEC_BUMP_LOYALTY = 1.15;
 /** Exponential decay rate for price overshoot above ceiling */
 const PRICE_OVERSHOOT_DECAY = 3;
-/** Base demand variance (±%) before brand recognition adjustment */
+/** Base demand variance for projections */
 const BASE_DEMAND_VARIANCE = 0.15;
-/** Additional variance scaled by brand recognition factor */
-const RECOGNITION_VARIANCE_SCALE = 0.20;
-/** Divisor for brand recognition when computing projection confidence */
-const RECOGNITION_CONFIDENCE_DIVISOR = 150;
+/** Additional variance scaled by average reach */
+const REACH_VARIANCE_SCALE = 0.20;
 
 // --- Market Entry: all laptops competing this year ---
 
@@ -205,28 +200,18 @@ function applyPriceSensitivity(
   }
 }
 
-/** Map brand recognition (0-100) to an awareness factor */
-function brandAwareness(brandRecognition: number): number {
-  return BRAND_AWARENESS_MIN + BRAND_AWARENESS_RANGE * (brandRecognition / 100);
-}
-
-/** Brand fit: how well the player's niche reputation aligns with what this demographic cares about */
-function calculateBrandFit(
-  brandRecognition: number,
+/** Niche fit: dot product of niche reputation with demographic stat weights */
+function calculateNicheFit(
   nicheReputation: Record<string, number>,
   demographic: Demographic,
 ): number {
-  const awarenessBase = brandAwareness(brandRecognition);
-
-  // Niche alignment bonus: dot product of niche scores with demographic weights
   let nicheScore = 0;
   for (const stat of ALL_STATS) {
     const nicheValue = nicheReputation[stat] ?? 0;
     const weight = demographic.statWeights[stat] ?? 0;
     nicheScore += (nicheValue / 100) * weight;
   }
-
-  return awarenessBase * (1 + nicheScore * NICHE_BONUS_CAP);
+  return 1 + nicheScore * NICHE_BONUS_CAP;
 }
 
 /** Loyalty modifier for returning products */
@@ -241,11 +226,14 @@ function calculateLoyaltyModifier(laptop: MarketLaptop): number {
   return 1.0;
 }
 
-/** Sample campaign bonus from skew-normal distribution */
-function sampleCampaignBonus(campaignId: string | null): number {
-  if (!campaignId || campaignId === "no_campaign") return 1.0;
+/**
+ * Sample campaign perception modifier from distribution.
+ * Returns a perception value (added to brand perception), NOT a multiplier.
+ */
+function sampleCampaignPerception(campaignId: string | null): number {
+  if (!campaignId || campaignId === "no_campaign") return 0;
   const campaign = AD_CAMPAIGNS.find((c) => c.id === campaignId);
-  if (!campaign) return 1.0;
+  if (!campaign) return 0;
 
   const { mean, stdDev, min, max } = campaign.distribution;
   // Box-Muller for normal sample
@@ -255,25 +243,22 @@ function sampleCampaignBonus(campaignId: string | null): number {
   let sample = mean + stdDev * z;
   sample = Math.max(min, Math.min(max, sample));
 
-  return 1 + sample / 100;
+  return sample;
 }
 
-/** Get marketing modifier for a laptop */
-function getMarketingModifier(laptop: MarketLaptop): number {
-  if (laptop.owner !== "player") {
-    // Competitors get a baseline marketing boost based on brand recognition
-    return 1.0;
-  }
-
+/** Get laptop-specific campaign perception modifier */
+function getLaptopCampaignPerception(laptop: MarketLaptop): number {
+  if (laptop.owner !== "player") return 0;
   const plan = laptop.model.manufacturingPlan;
-  if (!plan) return 1.0;
-
-  return sampleCampaignBonus(plan.marketing.campaignId);
+  if (!plan) return 0;
+  return sampleCampaignPerception(plan.marketing.campaignId);
 }
 
 /**
  * Calculate full appeal score for a laptop against a demographic.
- * appeal = weighted_stat_score * price_competitiveness * brand_fit * loyalty * screen_fit * marketing
+ * appeal = stat_score * price_score * niche_fit * (1 + effective_perception / 100) * loyalty * screen_fit
+ *
+ * Note: reach is NOT applied here — it gates the demand pool size instead (in simulateYear).
  */
 function calculateAppeal(
   laptop: MarketLaptop,
@@ -281,7 +266,7 @@ function calculateAppeal(
   demographic: Demographic,
   year: number,
   state: GameState,
-  marketingModifier: number,
+  campaignPerception: number,
 ): number {
   const statScore = calculateWeightedStatScore(normalisedStats, demographic);
   const rawPriceScore = calculatePriceCompetitiveness(laptop.retailPrice, demographic, year);
@@ -289,17 +274,27 @@ function calculateAppeal(
   const pref = demographic.screenSizePreference;
   const screenFit = getScreenSizeFit(laptop.model.design.screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);
 
-  let brandFit: number;
+  // Niche fit (player only — competitors get 1.0)
+  let nicheFit: number;
   if (laptop.owner === "player") {
-    brandFit = calculateBrandFit(state.brandRecognition, state.nicheReputation, demographic);
+    nicheFit = calculateNicheFit(state.nicheReputation, demographic);
+  } else {
+    nicheFit = 1.0;
+  }
+
+  // Effective perception = global brand perception + laptop campaign modifier
+  let effectivePerception: number;
+  if (laptop.owner === "player") {
+    effectivePerception = state.brandPerception + campaignPerception;
   } else {
     const comp = state.competitors.find((c) => c.id === laptop.owner);
-    brandFit = comp ? brandAwareness(comp.brandRecognition) : 0.5;
+    effectivePerception = comp ? comp.brandPerception : 0;
   }
+  const perceptionMultiplier = 1 + effectivePerception / 100;
 
   const loyalty = calculateLoyaltyModifier(laptop);
 
-  const appeal = statScore * priceScore * brandFit * loyalty * screenFit * marketingModifier;
+  const appeal = statScore * priceScore * nicheFit * perceptionMultiplier * loyalty * screenFit;
   return Math.max(0, appeal);
 }
 
@@ -330,16 +325,19 @@ export function simulateYear(state: GameState): YearSimulationResult {
     };
   }
 
+  // Immediate reach boost from marketing campaign spend (flat, not S-curved)
+  const campaignReachBoost = getCampaignReachBoost(state);
+
   // Pre-compute normalised stats for all laptops
   const normalisedStatsMap = new Map<string, Record<LaptopStat, number>>();
   for (const laptop of allLaptops) {
     normalisedStatsMap.set(laptop.id, normaliseStats(laptop, allLaptops));
   }
 
-  // Pre-sample marketing modifiers (once per laptop, consistent across demographics)
-  const marketingModifiers = new Map<string, number>();
+  // Pre-sample campaign perception modifiers (once per laptop, consistent across demographics)
+  const campaignPerceptions = new Map<string, number>();
   for (const laptop of allLaptops) {
-    marketingModifiers.set(laptop.id, getMarketingModifier(laptop));
+    campaignPerceptions.set(laptop.id, getLaptopCampaignPerception(laptop));
   }
 
   // For each laptop, accumulate demand across all demographics
@@ -351,24 +349,36 @@ export function simulateYear(state: GameState): YearSimulationResult {
   for (const demographic of DEMOGRAPHICS) {
     const demId = demographic.id;
     const basePool = STARTING_DEMAND_POOL[demId];
-    const pool = getDemandPoolSize(demId, year, basePool);
+    const fullPool = getDemandPoolSize(demId, year, basePool);
 
     // Calculate appeal for each laptop in this demographic
-    const appeals: { laptopId: string; appeal: number }[] = [];
+    const appeals: { laptopId: string; appeal: number; reachGatedPool: number }[] = [];
     let totalAppeal = 0;
 
     for (const laptop of allLaptops) {
       const normStats = normalisedStatsMap.get(laptop.id)!;
-      const mktMod = marketingModifiers.get(laptop.id)!;
-      const appeal = calculateAppeal(laptop, normStats, demographic, year, state, mktMod);
-      appeals.push({ laptopId: laptop.id, appeal });
+      const campPerc = campaignPerceptions.get(laptop.id)!;
+      const appeal = calculateAppeal(laptop, normStats, demographic, year, state, campPerc);
+
+      // Each laptop's addressable pool is gated by its owner's reach in this demographic
+      let reach: number;
+      if (laptop.owner === "player") {
+        reach = (state.brandReach[demId] ?? 0) + campaignReachBoost;
+      } else {
+        const comp = state.competitors.find((c) => c.id === laptop.owner);
+        reach = comp ? (comp.brandReach[demId] ?? 0) : 0;
+      }
+      reach = Math.min(reach, 100);
+      const reachGatedPool = fullPool * (reach / 100);
+
+      appeals.push({ laptopId: laptop.id, appeal, reachGatedPool });
       totalAppeal += appeal;
     }
 
-    // Distribute demand pool by market share
-    for (const { laptopId, appeal } of appeals) {
+    // Distribute each laptop's reach-gated pool by market share
+    for (const { laptopId, appeal, reachGatedPool } of appeals) {
       const share = totalAppeal > 0 ? appeal / totalAppeal : 0;
-      const unitsDemanded = Math.round(pool * share);
+      const unitsDemanded = Math.round(reachGatedPool * share);
 
       const entry = demandByLaptop.get(laptopId)!;
       entry.total += unitsDemanded;
@@ -443,6 +453,7 @@ export function projectDemandRange(
   state: GameState,
   modelId: string,
   retailPrice: number,
+  uncommittedCampaignSpend: number = 0,
 ): DemandProjection {
   const year = state.year;
 
@@ -510,32 +521,37 @@ export function projectDemandRange(
     normalisedStatsMap.set(laptop.id, normaliseStats(laptop, allLaptops));
   }
 
+  // Immediate reach boost from marketing campaign spend (committed + uncommitted from wizard)
+  const campaignReachBoost = getCampaignReachBoost(state, uncommittedCampaignSpend);
+
   // Sum demand across demographics for our model
   let totalExpected = 0;
   for (const demographic of DEMOGRAPHICS) {
     const demId = demographic.id;
     const basePool = STARTING_DEMAND_POOL[demId];
-    const pool = getDemandPoolSize(demId, year, basePool);
+    const fullPool = getDemandPoolSize(demId, year, basePool);
 
     let totalAppeal = 0;
     let ourAppeal = 0;
 
     for (const laptop of allLaptops) {
       const normStats = normalisedStatsMap.get(laptop.id)!;
-      const appeal = calculateAppeal(laptop, normStats, demographic, year, state, 1.0);
+      const appeal = calculateAppeal(laptop, normStats, demographic, year, state, 0);
       totalAppeal += appeal;
       if (laptop.id === modelId) ourAppeal = appeal;
     }
 
     const share = totalAppeal > 0 ? ourAppeal / totalAppeal : 0;
-    totalExpected += pool * share;
+    // Gate by player's reach in this demographic (including immediate campaign boost)
+    const reach = Math.min((state.brandReach[demId] ?? 0) + campaignReachBoost, 100);
+    totalExpected += fullPool * (reach / 100) * share;
   }
 
   const expected = Math.round(totalExpected);
 
-  // Confidence interval based on brand recognition (higher = tighter)
-  const recognitionFactor = Math.max(0.1, 1 - state.brandRecognition / RECOGNITION_CONFIDENCE_DIVISOR);
-  const variance = BASE_DEMAND_VARIANCE + recognitionFactor * RECOGNITION_VARIANCE_SCALE;
+  // Confidence interval based on average reach (higher = tighter)
+  const reachFactor = Math.max(0.1, 1 - averageReach(state.brandReach) / 100);
+  const variance = BASE_DEMAND_VARIANCE + reachFactor * REACH_VARIANCE_SCALE;
 
   const low = Math.max(0, Math.round(expected * (1 - variance)));
   const high = Math.round(expected * (1 + variance));

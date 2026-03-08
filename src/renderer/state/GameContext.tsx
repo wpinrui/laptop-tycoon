@@ -1,8 +1,10 @@
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
+import { DemographicId } from "../../data/types";
 import { GameState, LaptopDesign, LaptopModel, ModelStatus, createInitialGameState, hasDiscontinuedComponents } from "./gameTypes";
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { YearSimulationResult } from "../../simulation/salesTypes";
 import { clearProjectionCache } from "../../simulation/salesEngine";
+import { updateBrandReach, updateBrandPerception, updateNicheReputation, updateCompetitorBrandReach, updateCompetitorBrandPerception } from "../../simulation/brandProgression";
 
 export interface CompetitorModelEntry {
   competitorId: string;
@@ -20,7 +22,8 @@ type GameAction =
   | { type: "UPDATE_MODEL_DESIGN"; modelId: string; design: LaptopDesign }
   | { type: "SET_MANUFACTURING_PLAN"; modelId: string; plan: FullManufacturingPlan }
   | { type: "ADD_COMPETITOR_MODELS"; models: CompetitorModelEntry[] }
-  | { type: "APPLY_SIMULATION_RESULT"; result: YearSimulationResult };
+  | { type: "APPLY_SIMULATION_RESULT"; result: YearSimulationResult }
+  | { type: "RUN_AWARENESS_CAMPAIGN"; cost: number; reachBoost: number };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
@@ -124,9 +127,28 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         cash: result.cashAfterResolution,
+        brandReach: updateBrandReach(state, result),
+        brandPerception: updateBrandPerception(state, result),
+        nicheReputation: updateNicheReputation(state, result),
+        competitors: state.competitors.map((comp) => ({
+          ...comp,
+          brandReach: updateCompetitorBrandReach(comp, result),
+          brandPerception: updateCompetitorBrandPerception(comp, result),
+        })),
         yearSimulated: true,
         yearHistory: [...state.yearHistory, result],
         lastSimulationResult: result,
+      };
+    }
+    case "RUN_AWARENESS_CAMPAIGN": {
+      const newReach = { ...state.brandReach };
+      for (const key of Object.keys(newReach) as DemographicId[]) {
+        newReach[key] = Math.min(100, newReach[key] + action.reachBoost);
+      }
+      return {
+        ...state,
+        cash: state.cash - action.cost,
+        brandReach: newReach,
       };
     }
     default:

@@ -1,4 +1,4 @@
-import { LaptopStat, ScreenSizeInches } from "./types";
+import { DemographicId, LaptopStat, ScreenSizeInches } from "./types";
 
 export type CompetitorArchetype = "budget" | "premium" | "generalist";
 
@@ -6,7 +6,8 @@ export interface CompetitorDefinition {
   id: string;
   name: string;
   archetype: CompetitorArchetype;
-  brandRecognition: number;
+  brandReach: Record<DemographicId, number>;
+  brandPerception: number;
   statPriorities: {
     high: LaptopStat[];
     low: LaptopStat[];
@@ -27,7 +28,17 @@ export const COMPETITORS: CompetitorDefinition[] = [
     id: "valuetech",
     name: "ValueTech",
     archetype: "budget",
-    brandRecognition: 30,
+    brandReach: {
+      corporate: 15,
+      businessProfessional: 10,
+      student: 40,
+      creativeProfessional: 5,
+      gamer: 10,
+      techEnthusiast: 20,
+      generalConsumer: 35,
+      budgetBuyer: 50,
+    },
+    brandPerception: -5,
     statPriorities: {
       high: [],
       low: ["buildQuality", "design", "supportAndService", "display"],
@@ -44,7 +55,17 @@ export const COMPETITORS: CompetitorDefinition[] = [
     id: "prestige",
     name: "Prestige Computing",
     archetype: "premium",
-    brandRecognition: 50,
+    brandReach: {
+      corporate: 40,
+      businessProfessional: 55,
+      student: 20,
+      creativeProfessional: 60,
+      gamer: 15,
+      techEnthusiast: 35,
+      generalConsumer: 30,
+      budgetBuyer: 10,
+    },
+    brandPerception: 15,
     statPriorities: {
       high: ["design", "display", "buildQuality", "keyboard"],
       low: [],
@@ -61,7 +82,17 @@ export const COMPETITORS: CompetitorDefinition[] = [
     id: "omnibook",
     name: "OmniBook",
     archetype: "generalist",
-    brandRecognition: 40,
+    brandReach: {
+      corporate: 35,
+      businessProfessional: 30,
+      student: 30,
+      creativeProfessional: 25,
+      gamer: 20,
+      techEnthusiast: 25,
+      generalConsumer: 40,
+      budgetBuyer: 30,
+    },
+    brandPerception: 5,
     statPriorities: {
       high: [],
       low: [],
