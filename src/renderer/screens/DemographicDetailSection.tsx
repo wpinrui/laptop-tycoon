@@ -1,57 +1,109 @@
+import { useState, useMemo } from "react";
 import { DEMOGRAPHICS } from "../../data/demographics";
-import { DemographicId } from "../../data/types";
+import { LaptopStat, ALL_STATS, DemographicId, Demographic } from "../../data/types";
 import { LaptopSalesResult, PerceptionChange } from "../../simulation/salesTypes";
-import { computeLossReasons, LOSS_REASON_LABELS, LossReason } from "../../simulation/lossReasons";
 import { tokens } from "../shell/tokens";
 import { formatNumber } from "../utils/formatCash";
 import { sectionStyle, tableStyle, thStyle, tdStyle, tdRight, sectionHeadingStyle } from "./summaryStyles";
+import { useGame } from "../state/GameContext";
 
-interface DemographicDetailProps {
-  /** All laptop results (player + competitors) for the period */
-  allLaptopResults: LaptopSalesResult[];
-  /** Player laptop results only */
-  playerResults: LaptopSalesResult[];
-  /** Perception changes for the period */
-  perceptionChanges: PerceptionChange[];
+/** Human-readable stat labels */
+const STAT_LABELS: Record<LaptopStat, string> = {
+  performance: "Performance",
+  gamingPerformance: "Gaming Performance",
+  batteryLife: "Battery Life",
+  display: "Display",
+  connectivity: "Connectivity",
+  speakers: "Speakers",
+  webcam: "Webcam",
+  design: "Design",
+  buildQuality: "Build Quality",
+  keyboard: "Keyboard",
+  trackpad: "Trackpad",
+  repairability: "Repairability",
+  weight: "Weight",
+  thinness: "Thinness",
+  thermals: "Thermals",
+  supportAndService: "Support & Service",
+};
+
+/** Get top N stats by weight for a demographic */
+function getTopStats(demographic: Demographic, count: number): LaptopStat[] {
+  return [...ALL_STATS]
+    .sort((a, b) => {
+      const diff = (demographic.statWeights[b] ?? 0) - (demographic.statWeights[a] ?? 0);
+      if (diff !== 0) return diff;
+      return a.localeCompare(b);
+    })
+    .slice(0, count);
 }
 
-/** Aggregate player results across all models for a given demographic */
-function aggregatePlayerDemographic(
-  playerResults: LaptopSalesResult[],
-  demId: DemographicId,
-) {
-  let totalPool = 0;
-  let addressablePool = 0;
-  let unitsSold = 0;
-
-  for (const lr of playerResults) {
-    const db = lr.demographicBreakdown.find((b) => b.demographicId === demId);
-    if (!db) continue;
-    totalPool = db.totalPool; // Same across models for same demographic
-    addressablePool = db.addressablePool; // Same across models for same owner+demographic
-    unitsSold += db.unitsDemanded;
-  }
-
-  // Market share: player units vs total units in this demographic
-  return { totalPool, addressablePool, unitsSold };
+/** Resolve a laptop's display name from game state companies */
+function resolveLaptopName(
+  laptopId: string,
+  owner: string,
+  companies: { id: string; name: string; models: { design: { id: string; name: string } }[] }[],
+): string {
+  const company = companies.find((c) => c.id === owner);
+  if (!company) return laptopId;
+  const model = company.models.find((m) => m.design.id === laptopId);
+  return model ? `${company.name} ${model.design.name}` : `${company.name} (${laptopId.slice(0, 6)})`;
 }
 
-function getTotalDemographicUnits(
+interface ComparisonEntry {
+  laptopId: string;
+  owner: string;
+  retailPrice: number;
+  unitsSold: number;
+  marketShare: number;
+  normalizedStats: Record<LaptopStat, number>;
+}
+
+/** Build comparison entries for a demographic from all laptop results */
+function buildComparisonEntries(
   allResults: LaptopSalesResult[],
   demId: DemographicId,
-): number {
-  let total = 0;
+): ComparisonEntry[] {
+  const entries: ComparisonEntry[] = [];
   for (const lr of allResults) {
     const db = lr.demographicBreakdown.find((b) => b.demographicId === demId);
-    if (db) total += db.unitsDemanded;
+    if (!db) continue;
+    entries.push({
+      laptopId: lr.laptopId,
+      owner: lr.owner,
+      retailPrice: lr.retailPrice,
+      unitsSold: db.unitsDemanded,
+      marketShare: db.marketShare,
+      normalizedStats: db.normalizedStats,
+    });
   }
-  return total;
+  entries.sort((a, b) => b.marketShare - a.marketShare);
+  return entries;
 }
 
-function lossReasonColor(reason: LossReason): string {
-  if (reason.impact < -0.15) return tokens.colors.danger;
-  if (reason.impact < -0.05) return tokens.colors.warning;
-  return tokens.colors.textMuted;
+/** Color a score cell: green if best, red if worst, neutral otherwise */
+function scoreColor(value: number, allValues: number[], higherIsBetter: boolean): string | undefined {
+  if (allValues.length < 2) return undefined;
+  const max = Math.max(...allValues);
+  const min = Math.min(...allValues);
+  if (max === min) return undefined;
+  if (higherIsBetter) {
+    if (value === max) return tokens.colors.success;
+    if (value === min) return tokens.colors.danger;
+  } else {
+    if (value === min) return tokens.colors.success;
+    if (value === max) return tokens.colors.danger;
+  }
+  return undefined;
+}
+
+const MAX_COLUMNS = 5;
+const TOP_STATS_COUNT = 5;
+
+interface DemographicDetailProps {
+  allLaptopResults: LaptopSalesResult[];
+  playerResults: LaptopSalesResult[];
+  perceptionChanges: PerceptionChange[];
 }
 
 function perceptionExplanation(pc: PerceptionChange): string {
@@ -67,84 +119,168 @@ function perceptionExplanation(pc: PerceptionChange): string {
   return "Slight decline from underwhelming experiences";
 }
 
+function DemographicComparisonTable({
+  demographic,
+  allResults,
+  companies,
+}: {
+  demographic: Demographic;
+  allResults: LaptopSalesResult[];
+  companies: { id: string; name: string; models: { design: { id: string; name: string } }[] }[];
+}) {
+  const entries = useMemo(() => buildComparisonEntries(allResults, demographic.id), [allResults, demographic.id]);
+  const topStats = useMemo(() => getTopStats(demographic, TOP_STATS_COUNT), [demographic]);
+  const [filterText, setFilterText] = useState("");
+
+  if (entries.length === 0) return null;
+
+  const filtered = filterText
+    ? entries.filter((e) =>
+        resolveLaptopName(e.laptopId, e.owner, companies).toLowerCase().includes(filterText.toLowerCase()),
+      )
+    : entries;
+
+  const visible = filtered.slice(0, MAX_COLUMNS);
+
+  const priceValues = visible.map((e) => e.retailPrice);
+  const unitValues = visible.map((e) => e.unitsSold);
+
+  return (
+    <div style={{ marginBottom: tokens.spacing.md }}>
+      {entries.length > MAX_COLUMNS && (
+        <input
+          type="text"
+          placeholder="Filter models..."
+          value={filterText}
+          onChange={(e) => setFilterText(e.target.value)}
+          style={{
+            padding: `2px ${tokens.spacing.xs}px`,
+            fontSize: tokens.font.sizeSmall,
+            background: tokens.colors.surface,
+            color: tokens.colors.text,
+            border: `1px solid ${tokens.colors.panelBorder}`,
+            borderRadius: tokens.borderRadius.sm,
+            width: 140,
+            marginBottom: tokens.spacing.xs,
+          }}
+        />
+      )}
+      <table style={tableStyle}>
+        <thead>
+          <tr>
+            <th style={thStyle}></th>
+            {visible.map((e) => (
+              <th key={e.laptopId} style={{ ...thStyle, textAlign: "right", maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {resolveLaptopName(e.laptopId, e.owner, companies)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {topStats.map((stat) => {
+            const scores = visible.map((e) => Math.round((e.normalizedStats[stat] ?? 0) * 100));
+            return (
+              <tr key={stat}>
+                <td style={{ ...tdStyle, fontWeight: 600, fontSize: tokens.font.sizeSmall }}>{STAT_LABELS[stat]}</td>
+                {visible.map((e, i) => (
+                  <td key={e.laptopId} style={{ ...tdRight, color: scoreColor(scores[i], scores, true) }}>
+                    {scores[i]}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
+          <tr>
+            <td style={{ ...tdStyle, fontWeight: 600, fontSize: tokens.font.sizeSmall }}>Price</td>
+            {visible.map((e) => (
+              <td key={e.laptopId} style={{ ...tdRight, color: scoreColor(e.retailPrice, priceValues, false) }}>
+                ${formatNumber(e.retailPrice)}
+              </td>
+            ))}
+          </tr>
+          <tr>
+            <td style={{ ...tdStyle, fontWeight: 600, fontSize: tokens.font.sizeSmall }}>Units Sold</td>
+            {visible.map((e) => (
+              <td key={e.laptopId} style={{ ...tdRight, color: scoreColor(e.unitsSold, unitValues, true) }}>
+                {formatNumber(e.unitsSold)}
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function DemographicDetailSection({ allLaptopResults, playerResults, perceptionChanges }: DemographicDetailProps) {
+  const { state } = useGame();
+  const [expandedDem, setExpandedDem] = useState<DemographicId | null>(null);
+
   if (playerResults.length === 0) return null;
 
-  // Get all demographics that have any activity
   const activeDemographics = DEMOGRAPHICS.filter((dem) => {
-    const totalUnits = getTotalDemographicUnits(allLaptopResults, dem.id);
-    return totalUnits > 0;
+    return allLaptopResults.some((lr) =>
+      lr.demographicBreakdown.some((b) => b.demographicId === dem.id && b.unitsDemanded > 0),
+    );
   });
-
-  // Compute loss reasons per model per demographic
-  const lossReasonsByModelDem = new Map<string, LossReason[]>();
-  for (const lr of playerResults) {
-    for (const db of lr.demographicBreakdown) {
-      const reasons = computeLossReasons(db, allLaptopResults, db.demographicId, lr.laptopId);
-      lossReasonsByModelDem.set(`${lr.laptopId}:${db.demographicId}`, reasons);
-    }
-  }
-
-  // Aggregate loss reasons across player models per demographic (use worst model's reasons)
-  const lossReasonsByDem = new Map<string, LossReason[]>();
-  for (const dem of activeDemographics) {
-    let worstReasons: LossReason[] = [];
-    for (const lr of playerResults) {
-      const key = `${lr.laptopId}:${dem.id}`;
-      const reasons = lossReasonsByModelDem.get(key) ?? [];
-      if (reasons.length > worstReasons.length) {
-        worstReasons = reasons;
-      }
-    }
-    lossReasonsByDem.set(dem.id, worstReasons);
-  }
 
   return (
     <>
-      {/* Demographic Breakdown */}
+      {/* Per-Demographic Comparison Tables */}
       <div style={sectionStyle}>
-        <h3 style={sectionHeadingStyle}>Demographic Breakdown</h3>
-        <table style={tableStyle}>
-          <thead>
-            <tr>
-              <th style={thStyle}>Demographic</th>
-              <th style={{ ...thStyle, textAlign: "right" }}>Total Pool</th>
-              <th style={{ ...thStyle, textAlign: "right" }}>Addressable</th>
-              <th style={{ ...thStyle, textAlign: "right" }}>Units Sold</th>
-              <th style={{ ...thStyle, textAlign: "right" }}>Share</th>
-              <th style={thStyle}>Loss Reasons</th>
-            </tr>
-          </thead>
-          <tbody>
-            {activeDemographics.map((dem) => {
-              const agg = aggregatePlayerDemographic(playerResults, dem.id);
-              const totalDemUnits = getTotalDemographicUnits(allLaptopResults, dem.id);
-              const share = totalDemUnits > 0 ? agg.unitsSold / totalDemUnits : 0;
-              const reasons = lossReasonsByDem.get(dem.id) ?? [];
+        <h3 style={sectionHeadingStyle}>Demographic Comparison</h3>
+        <p style={{ margin: 0, marginBottom: tokens.spacing.sm, color: tokens.colors.textMuted, fontSize: tokens.font.sizeSmall }}>
+          Scores are market-relative (1–100). Click a demographic to expand.
+        </p>
+        {activeDemographics.map((dem) => {
+          const isExpanded = expandedDem === dem.id;
+          const playerUnits = playerResults.reduce((sum, lr) => {
+            const db = lr.demographicBreakdown.find((b) => b.demographicId === dem.id);
+            return sum + (db?.unitsDemanded ?? 0);
+          }, 0);
+          const totalUnits = allLaptopResults.reduce((sum, lr) => {
+            const db = lr.demographicBreakdown.find((b) => b.demographicId === dem.id);
+            return sum + (db?.unitsDemanded ?? 0);
+          }, 0);
+          const share = totalUnits > 0 ? (playerUnits / totalUnits * 100).toFixed(1) : "0.0";
 
-              return (
-                <tr key={dem.id}>
-                  <td style={tdStyle}>{dem.name}</td>
-                  <td style={tdRight}>{formatNumber(agg.totalPool)}</td>
-                  <td style={tdRight}>{formatNumber(agg.addressablePool)}</td>
-                  <td style={tdRight}>{formatNumber(agg.unitsSold)}</td>
-                  <td style={tdRight}>{(share * 100).toFixed(1)}%</td>
-                  <td style={{ ...tdStyle, fontSize: tokens.font.sizeSmall }}>
-                    {reasons.length === 0 ? (
-                      <span style={{ color: tokens.colors.success }}>--</span>
-                    ) : (
-                      reasons.map((r, i) => (
-                        <span key={r.type} style={{ color: lossReasonColor(r) }}>
-                          {LOSS_REASON_LABELS[r.type]}{i < reasons.length - 1 ? ", " : ""}
-                        </span>
-                      ))
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+          return (
+            <div key={dem.id}>
+              <button
+                onClick={() => setExpandedDem(isExpanded ? null : dem.id)}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  width: "100%",
+                  padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+                  background: isExpanded ? tokens.colors.surface : "transparent",
+                  color: tokens.colors.text,
+                  border: `1px solid ${tokens.colors.panelBorder}`,
+                  borderRadius: tokens.borderRadius.sm,
+                  cursor: "pointer",
+                  marginBottom: 2,
+                  fontSize: tokens.font.sizeBase,
+                  fontWeight: 600,
+                  textAlign: "left",
+                }}
+              >
+                <span>{isExpanded ? "▾" : "▸"} {dem.name}</span>
+                <span style={{ color: tokens.colors.textMuted, fontWeight: 400, fontSize: tokens.font.sizeSmall }}>
+                  {formatNumber(playerUnits)} sold · {share}% share
+                </span>
+              </button>
+              {isExpanded && (
+                <div style={{ padding: `${tokens.spacing.xs}px 0`, paddingLeft: tokens.spacing.sm }}>
+                  <DemographicComparisonTable
+                    demographic={dem}
+                    allResults={allLaptopResults}
+                    companies={state.companies}
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Perception Changes */}
