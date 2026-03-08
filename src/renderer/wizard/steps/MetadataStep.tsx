@@ -10,7 +10,7 @@ const MODEL_TYPE_OPTIONS: { value: ModelType; label: string; description: string
 ];
 
 export function MetadataStep() {
-  const { state, dispatch } = useWizard();
+  const { state, dispatch, gameYear } = useWizard();
   const { state: gameState } = useGame();
 
   const showPredecessor = state.modelType !== "brandNew";
@@ -100,7 +100,7 @@ export function MetadataStep() {
               onChange={(e) => {
                 const id = e.target.value || null;
                 const model = gameState.models.find((m) => m.design.id === id);
-                dispatch({ type: "SET_PREDECESSOR", predecessorId: id, predecessorDesign: model?.design });
+                dispatch({ type: "SET_PREDECESSOR", predecessorId: id, predecessorDesign: model?.design, gameYear });
               }}
               style={{
                 width: "100%",

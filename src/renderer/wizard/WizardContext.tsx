@@ -22,7 +22,7 @@ import { COLOUR_OPTIONS } from "../../data/colourOptions";
 type WizardAction =
   | { type: "SET_NAME"; name: string }
   | { type: "SET_MODEL_TYPE"; modelType: ModelType }
-  | { type: "SET_PREDECESSOR"; predecessorId: string | null; predecessorDesign?: LaptopDesign }
+  | { type: "SET_PREDECESSOR"; predecessorId: string | null; predecessorDesign?: LaptopDesign; gameYear?: number }
   | { type: "SET_SCREEN_SIZE"; size: ScreenSizeInches }
   | { type: "SET_COMPONENT"; slot: ComponentSlot; component: Component }
   | { type: "REMOVE_COMPONENT"; slot: ComponentSlot }
@@ -57,11 +57,23 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       };
     case "SET_PREDECESSOR": {
       const base = { ...state, predecessorId: action.predecessorId };
-      // For spec bumps, lock screen size and body to predecessor values
-      if (state.modelType === "specBump" && action.predecessorDesign) {
-        const d = action.predecessorDesign;
+      if (!action.predecessorDesign) return base;
+      const d = action.predecessorDesign;
+      const year = action.gameYear ?? 9999;
+
+      // Prefill components from predecessor, skipping discontinued ones
+      const prefillComponents: typeof state.components = {};
+      for (const [slot, component] of Object.entries(d.components)) {
+        if (component && component.yearDiscontinued >= year) {
+          prefillComponents[slot as ComponentSlot] = component;
+        }
+      }
+
+      if (state.modelType === "specBump") {
+        // Spec bump: lock screen size, body, ports + prefill components
         return {
           ...base,
+          components: prefillComponents,
           screenSize: d.screenSize,
           thicknessCm: d.thicknessCm,
           bezelMm: d.bezelMm,
@@ -70,7 +82,14 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
           ports: { ...d.ports },
         };
       }
-      return base;
+
+      // Successor: prefill components only (body/screen can be changed)
+      return {
+        ...base,
+        components: prefillComponents,
+        batteryCapacityWh: d.batteryCapacityWh,
+        ports: { ...d.ports },
+      };
     }
     case "SET_SCREEN_SIZE":
       return { ...state, screenSize: action.size };
