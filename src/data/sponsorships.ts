@@ -1,4 +1,5 @@
 import { DemographicId } from "./types";
+import { getInflatedCost } from "../simulation/costInflation";
 
 export interface Sponsorship {
   id: string;
@@ -91,3 +92,8 @@ export const SPONSORSHIPS: Sponsorship[] = [
     },
   },
 ];
+
+/** Get the inflation-adjusted cost of a sponsorship for a given year. */
+export function getSponsorshipCost(sponsorship: Sponsorship, year: number): number {
+  return getInflatedCost(sponsorship.baseCost, year);
+}
