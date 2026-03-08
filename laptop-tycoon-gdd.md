@@ -12,11 +12,15 @@ A text-driven tycoon game where the player runs a laptop company from 2000 onwar
 
 ## Core Loop
 
-1. **Design a laptop** (metadata → screen size → components → body → review)
-2. **Set price and order manufacturing quantity**
-3. **Year passes** — sales simulation runs, reviews and awards are generated
-4. **Collect revenue**, review results, read demographic breakdowns
-5. **Repeat** with new components available and market conditions shifted
+1. **Start of year:** Design laptop(s) via design wizard (only available at year start)
+2. **Each quarter (Q1–Q4):**
+   a. Manufacturing wizard available — set/adjust price, order units, run campaigns
+   b. Purchase sponsorships, set awareness budget
+   c. Sales simulation runs for that quarter's buyer pool
+   d. Revenue collected, cash balance updated
+   e. After Q1: laptop reviews are published
+   f. After Q4: year-end awards, annual perception/reach update, advance to next year
+3. **Repeat** — new components unlock, new year begins, design wizard available again
 
 ---
 
@@ -26,9 +30,9 @@ A text-driven tycoon game where the player runs a laptop company from 2000 onwar
 
 The player may have up to **2 models** on sale simultaneously. When creating a model, they choose one of:
 
-- **Brand New:** Fresh design. No loyalty base. Full body + component design from scratch. Highest cost.
-- **Successor:** Inherits the loyalty base and niche reputation of a previous model. Market expects the niche to carry over — if it doesn't, loyalty erodes. New body + new components.
-- **Spec Bump:** Reuses the previous model's body and screen size. Only component slots (Processing, Display & Media, Connectivity & Power) can be changed — Screen Size and Body steps are locked to the predecessor's choices. No body R&D cost, lower overall R&D cost. Retains loyalty base. Improvement may be limited by carrying over an older chassis design.
+- **Brand New:** Fresh design. Full body + component design from scratch. Highest cost.
+- **Successor:** Builds on a previous model. New body + new components.
+- **Spec Bump:** Reuses the previous model's body and screen size. Only component slots (Processing, Display & Media, Connectivity & Power) can be changed — Screen Size and Body steps are locked to the predecessor's choices. No body R&D cost, lower overall R&D cost. Improvement may be limited by carrying over an older chassis design.
 
 ### Design Wizard Flow
 
@@ -62,7 +66,7 @@ Pick era-appropriate parts for each slot. The wizard displays cost, power draw, 
 **Component availability:**
 
 - Each component has an "available from" year and a cost curve that decreases over time as the tech matures.
-- Cutting-edge components exist early at high cost (e.g., SSDs in 2006). Being first is expensive but builds niche reputation fast.
+- Cutting-edge components exist early at high cost (e.g., SSDs in 2006). Being first with cutting-edge components is expensive but your laptop may score higher against the competition while the technology remains exclusive.
 - Outdated components disappear from the list after a few years (manufacturer discontinuation).
 - The number of choices per slot grows in later eras.
 
@@ -146,7 +150,7 @@ unit_cost = base_cost × (1 / (1 + 0.4 × log10(units_ordered / reference_quanti
 
 ### Demand Projection
 
-After design is finalised but before committing to a quantity, the player sees a projected demand range (e.g., "25,000–40,000 units"). The range tightens as brand recognition grows. This is derived from the same sales simulation that determines actual results.
+After design is finalised but before committing to a quantity, the player sees a projected demand range (e.g., "25,000–40,000 units"). The range tightens as brand reach grows. This is derived from the same sales simulation that determines actual results.
 
 ### Unsold Inventory
 
@@ -154,7 +158,11 @@ Unsold units are written off. If you order 50,000 and sell 30,000, you eat the c
 
 ### Cash Flow
 
-Simple model: costs are deducted when the manufacturing order is placed (player can go negative at this point). Revenue is added at end of year. If the player is still negative after year-end revenue, **game over**.
+Costs are deducted when a manufacturing order is placed (at any quarter). The player can go negative at this point. Revenue is collected quarterly as units sell.
+
+Game over check occurs at the end of Q4 only. The player has the full year to recover from a bad quarter. If cash balance is negative after Q4 revenue is collected, the game is over.
+
+Mid-year manufacturing orders (Q2–Q4) are costed independently — they do not benefit from the economies-of-scale discount of the original Q1 order.
 
 ---
 
@@ -177,8 +185,29 @@ Each buyer type has:
 | Creative Professional | Display, performance, build quality, design | Low | Small but high margin. Grows significantly post-2010. |
 | Gamer | Gaming perf, display, thermals | Moderate | Tiny pre-2005, explodes after. |
 | Tech Enthusiast | Performance, value-for-money, connectivity, repairability | Moderate | Small but outsized effect on brand reputation. Tastemakers. |
-| General Consumer | Price, brand recognition, design | High | Largest group. Heavily influenced by marketing and brand. |
+| General Consumer | Price, design | High | Largest group. High brand reach dependency — unlikely to consider low-reach brands. Heavily influenced by marketing and brand. |
 | Budget Buyer | Price above all else | Extreme | Tolerates bad everything if cheap. No brand loyalty. |
+
+### Quarterly Structure
+
+The game year is divided into 4 quarters. The annual pool of active buyers is split across quarters using a front-loaded distribution:
+
+```
+Q1: 8/15 of annual active buyers (~53%)
+Q2: 4/15 (~27%)
+Q3: 2/15 (~13%)
+Q4: 1/15 (~7%)
+```
+
+This rewards getting the launch right — the majority of sales happen in Q1. The player can react to poor Q1 results by adjusting price, ordering more units, or running new campaigns in Q2–Q4, but most of the opportunity has already passed.
+
+Each quarter, the player may:
+- Reopen the manufacturing wizard for existing designs (adjust price, order additional manufacturing runs, select new ad campaigns)
+- Purchase sponsorships
+- Adjust the general awareness budget
+- NOT design new laptops (locked until next year's start)
+
+Additional manufacturing orders placed in Q2+ are calculated with their own independent economies-of-scale discount. They do not pool with the Q1 order. This creates a natural cost penalty for not forecasting correctly at launch.
 
 ### Step 1: Raw Value Proposition
 
@@ -203,17 +232,38 @@ biased_vp = raw_vp × (1 + brand_perception_mod / 100) × (1 + laptop_perception
 
 ### Step 3: Demand Resolution
 
-```
-addressable_pool = demographic_population × (brand_reach[this_demographic] / 100)
+Active buyer pool calculation:
 
-For each company's laptop(s) + a "don't buy" option:
-  purchase_probability = biased_vp / (sum of all biased_vps + dont_buy_threshold)
+```
+annual_active_buyers = demographic_population / replacement_cycle_years
+quarterly_active_buyers = annual_active_buyers × (quarter_share / 15)
+```
+
+Where quarter_share is: Q1=8, Q2=4, Q3=2, Q4=1.
+
+Replacement cycle varies by demographic:
+- Tech Enthusiast: 2 years
+- Business Professional: 3 years
+- Student: 3 years
+- Creative Professional: 3 years
+- Gamer: 3 years
+- General Consumer: 3 years
+- Corporate / Enterprise: 4 years
+- Budget Buyer: 5 years
+
+(These are starting values — tune during playtesting.)
+
+Everyone in the active buyer pool WILL buy a laptop. There is no "don't buy" option in the probability distribution. The replacement cycle already filters out people who aren't in the market this year.
+
+```
+addressable_pool = quarterly_active_buyers × (brand_reach[demographic] / 100)
+
+For each company's laptop(s) in this demographic's addressable pool:
+  purchase_probability = biased_vp / sum(all biased_vps)
 
 units_demanded = addressable_pool × purchase_probability
 units_sold = min(units_demanded, units_remaining_in_manufacturing_order)
 ```
-
-The **"don't buy" threshold** represents the option of not purchasing any laptop this year. Higher in early years (laptops are optional, desktops dominate), lower in later years (everyone needs a laptop). This prevents unrealistic 100% conversion.
 
 ### Step 4: Sales Noise
 
@@ -229,6 +279,8 @@ Before the player commits to an order quantity, they see a projected demand rang
 - Additional ±5-10% noise margin applied independently to both ends
 - The prospective campaign's reach contribution included (even though not yet committed to state)
 - Range tightens as brand reach grows (more established brands have more predictable sales)
+
+Demand projection shows the full-year estimated range (sum of all 4 quarters). The quarterly split is not shown — the player sees total projected annual demand for the purpose of setting their initial manufacturing order.
 
 ### Market Weight Shifts
 
@@ -349,8 +401,8 @@ Part of the manufacturing wizard. The player selects one ad campaign per model b
 
 Five campaign tiers with increasing risk/reward:
 
-| Campaign | Base Cost | Risk | Sales Impact Range |
-|----------|-----------|------|-------------------|
+| Campaign | Base Cost | Risk | Perception Modifier Range |
+|----------|-----------|------|--------------------------|
 | No Campaign | Free | None | 0% (guaranteed) |
 | Product Showcase | $2,000,000 | Low | +1% to +10% |
 | Lifestyle Campaign | $1,200,000 | Medium | -3% to +20% |
@@ -416,36 +468,47 @@ Press release responses feed into the **review generation system**. Reviewer tem
 
 ### Perception Update
 
-After sales resolve, for each demographic, for each company that sold laptops to that demographic:
+Perception updates run quarterly, applying 1/4 of the annual effect each quarter. The formula per quarter is:
 
 ```
-experience = company_laptop_raw_vp - mean(raw_vp of all purchased laptops in this demographic)
+experience = company_laptop_raw_vp - mean(raw_vp of all purchased laptops
+             in this demographic this quarter)
 perception_contribution = experience × volume_weight × negativity_multiplier
-new_perception = old_perception × DECAY + perception_contribution
+new_perception = old_perception × (DECAY ^ 0.25) + perception_contribution
 ```
+
+Using DECAY^0.25 per quarter produces the same annual decay as DECAY over 4 quarters. E.g., if DECAY = 0.5, quarterly decay factor = 0.5^0.25 ≈ 0.84.
 
 Clamp to [-50, +50].
 
 ### Reach Update
 
-After sales resolve, all reach growth sources are summed and fed through the S-curve per demographic:
+Reach growth sources accumulate quarterly. Each quarter:
 
 ```
-For each demographic:
-  raw_growth = word_of_mouth + campaign_reach + sponsorship_reach + awareness_budget_reach
-  new_reach = old_reach + S_curve(raw_growth, current_reach)
+raw_growth = word_of_mouth_this_quarter + (campaign_reach / 4)
+             + (sponsorship_reach if purchased this quarter)
+             + (awareness_budget_reach / 4)
+new_reach = old_reach + S_curve(raw_growth, current_reach)
 ```
 
 Clamp to [0, 100].
 
-### Player Feedback (Year-End Results Screen)
+### Player Feedback
 
-For each demographic, show:
-- Total pool size
-- Addressable pool (after reach gating)
-- Units sold, market share
-- Top 2-3 loss reasons ranked by impact (stat gap, price, perception, screen size)
-- Perception change for the year with explanation ("Creative Professional perception +3: your display and build quality scored above market average")
+After each quarter, show a brief summary:
+- Units sold this quarter (per model)
+- Cumulative units sold year-to-date
+- Revenue this quarter
+- Cash balance
+
+After Q4, show the full year-end results screen:
+- Annual totals: units ordered vs sold, revenue, costs, profit/loss
+- Per-model breakdown
+- Per-demographic breakdown with loss reasons (top 2-3 ranked by impact)
+- Perception changes with explanations
+- Cash balance after year-end resolution
+- Quarterly trend (Q1–Q4 sales graph/table)
 
 ---
 
@@ -506,12 +569,20 @@ Both player and AI competitors use this interface. The simulation iterates over 
 | AWARENESS_DIVISOR | 500,000 | Awareness budget spend per 1 raw reach point |
 | PERCEPTION_DECAY | 0.5–0.6 | Yearly decay on brand perception |
 | NEGATIVITY_MULTIPLIER | 1.5 | Bad experiences hit 1.5× harder |
-| DONT_BUY_BASE_THRESHOLD | TBD | Base "don't buy" value, decreases over years |
-| SCREEN_PENALTY_ONE_OFF | 0.5 | Penalty for screen size one class away from preferred |
-| SCREEN_PENALTY_TWO_OFF | 0.1 | Penalty for screen size two+ classes away |
 | S_CURVE_L | TBD | Max reach growth per year |
 | S_CURVE_K | TBD | S-curve steepness |
 | CAMPAIGN_COST_INFLATION | 1.03 | Annual scaling for campaign and sponsorship costs |
+| REPLACEMENT_CYCLE_TECH_ENTHUSIAST | 2 | Years between upgrades |
+| REPLACEMENT_CYCLE_BUSINESS_PRO | 3 | |
+| REPLACEMENT_CYCLE_STUDENT | 3 | |
+| REPLACEMENT_CYCLE_CREATIVE_PRO | 3 | |
+| REPLACEMENT_CYCLE_GAMER | 3 | |
+| REPLACEMENT_CYCLE_GENERAL_CONSUMER | 3 | |
+| REPLACEMENT_CYCLE_CORPORATE | 4 | |
+| REPLACEMENT_CYCLE_BUDGET_BUYER | 5 | |
+| QUARTER_SHARES | [8, 4, 2, 1] | Out of 15. Buyer distribution across Q1–Q4 |
+| AWARD_PERCEPTION_BONUS | 2 | Global perception boost from winning an award |
+| AWARD_REACH_BONUS | 1 | Global reach % boost from winning an award |
 
 ---
 
@@ -519,7 +590,9 @@ Both player and AI competitors use this interface. The simulation iterates over 
 
 ### Laptop Reviews
 
-When a laptop launches, 2 generated reviews appear:
+Reviews are published after Q1 sales resolve (not at launch). This means the reviewer has had time with the product and early sales data exists.
+
+Two reviews per laptop:
 
 - **Tech Enthusiast outlet:** Evaluates through the lens of performance, value, repairability, connectivity.
 - **Mainstream outlet:** Evaluates through the lens of design, price, ease of use, brand.
@@ -534,7 +607,7 @@ Each review touches ~8–10 template slots (intro, 5–6 stat commentaries, comp
 
 ### Year-End Awards
 
-A magazine-style summary at the end of each year. Award categories:
+Awards are published after Q4 — the full year's data determines winners. A magazine-style summary at the end of each year. Award categories:
 
 - Best Overall
 - Best Value
@@ -545,7 +618,7 @@ A magazine-style summary at the end of each year. Award categories:
 
 Determined by highest scorer in each relevant stat/segment combination. Player and AI competitors are all eligible.
 
-**Winning an award = small brand reputation boost** in the corresponding niche.
+**Winning an award grants +2 brand perception across all demographics and +1% brand reach across all demographics.** Everyone sees the award coverage.
 
 ### Template Budget
 
@@ -578,7 +651,7 @@ Post-year, the player can pay for a detailed demographic breakdown: which buyer 
 
 **Timeline:** 2000–2026. After 2026, no new components are introduced — the game continues but the market is frozen in terms of available technology.
 
-**Game over:** If the player's cash balance is negative after year-end revenue is collected.
+**Game over:** If the player's cash balance is negative after Q4 revenue is collected.
 
 ---
 
@@ -594,16 +667,23 @@ Post-year, the player can pay for a detailed demographic breakdown: which buyer 
 - [ ] Pricing per model
 - [ ] Demand projection with confidence interval
 - [ ] Sales simulation with 8 buyer demographics
-- [ ] Momentum-based market weight shifting
+- [ ] Quarterly game loop (Q1–Q4 per year, front-loaded buyer distribution)
+- [ ] Mid-year manufacturing wizard access (price adjustment, additional orders, new campaigns)
+- [ ] Quarterly sales summaries
+- [ ] Independent EoS for mid-year manufacturing orders
+- [ ] Replacement cycle per demographic (active buyer pool sizing)
+- [ ] Momentum-based market weight shifting (annual, runs after Q4)
 - [ ] 3 AI competitors (budget, premium, generalist), 1 model each, full stats visible
 - [ ] Brand reach (per demographic) + brand perception (per demographic) + laptop perception (from campaigns)
-- [ ] Laptop reviews (2 per model, template-driven)
-- [ ] Year-end awards
+- [ ] Sponsorship/partnership system (7 options, targeted reach per demographic)
+- [ ] General awareness budget slider
+- [ ] Laptop reviews (2 per model, template-driven, published after Q1)
+- [ ] Year-end awards (after Q4)
 - [ ] ~550 sentence templates for reviews and awards
 - [ ] Marketing campaigns (5 tiers, skew-normal distributions, cost inflation)
 - [ ] Press release prompts (3 per model from pool of 12, feeds into reviews)
 - [ ] Unsold inventory written off
-- [ ] Game over on negative cash after year-end
+- [ ] Game over on negative cash after Q4
 - [ ] Thermals as single collapsed stat (noise + temperature)
 
 ### Deferred to Post-Prototype
