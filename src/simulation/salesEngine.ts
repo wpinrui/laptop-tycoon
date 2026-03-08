@@ -145,7 +145,7 @@ function calculateWeightedStatScore(
 
 /**
  * Sample campaign perception modifier from distribution.
- * Returns a perception value (added to brand perception), NOT a multiplier.
+ * Returns a percentage modifier to laptop perceived value (laptop_perception_mod).
  */
 function sampleCampaignPerception(campaignId: string | null): number {
   if (!campaignId || campaignId === "no_campaign") return 0;
@@ -331,6 +331,7 @@ export function simulateYear(state: GameState): YearSimulationResult {
       revenue,
       manufacturingCost: laptop.totalManufacturingCost,
       profit,
+      campaignPerceptionMod: campaignPerceptions.get(laptop.id) ?? 0,
       demographicBreakdown: demand.breakdown,
     };
     laptopResults.push(result);

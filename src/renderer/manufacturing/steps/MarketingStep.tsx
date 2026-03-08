@@ -52,7 +52,7 @@ export function MarketingStep() {
         Ad Campaign
       </h2>
       <p style={{ color: tokens.colors.textMuted, margin: 0, marginBottom: tokens.spacing.lg }}>
-        Choose a marketing campaign. Riskier campaigns cost less but have unpredictable outcomes.
+        Choose a marketing campaign to boost this laptop's perceived value. Riskier campaigns cost less but have unpredictable outcomes.
       </p>
 
       <div style={gridStyle}>
@@ -111,11 +111,11 @@ export function MarketingStep() {
                   <div style={{ borderTop: `1px solid ${tokens.colors.panelBorder}`, paddingTop: tokens.spacing.sm }}>
                     <div style={statRowStyle}>
                       <span style={{ color: tokens.colors.textMuted }}>Best case</span>
-                      <span style={{ fontWeight: 600, color: tokens.colors.success }}>+{dist.max}% sales</span>
+                      <span style={{ fontWeight: 600, color: tokens.colors.success }}>+{dist.max}% perceived value</span>
                     </div>
                     <div style={statRowStyle}>
                       <span style={{ color: tokens.colors.textMuted }}>Expected</span>
-                      <span style={{ fontWeight: 600, color: tokens.colors.accent }}>+{dist.mean}% sales</span>
+                      <span style={{ fontWeight: 600, color: tokens.colors.accent }}>+{dist.mean}% perceived value</span>
                     </div>
                     <div style={statRowStyle}>
                       <span style={{ color: tokens.colors.textMuted }}>Worst case</span>
@@ -123,7 +123,7 @@ export function MarketingStep() {
                         fontWeight: 600,
                         color: dist.min < 0 ? tokens.colors.danger : tokens.colors.text,
                       }}>
-                        {dist.min > 0 ? "+" : ""}{dist.min}% sales
+                        {dist.min > 0 ? "+" : ""}{dist.min}% perceived value
                       </span>
                     </div>
                   </div>
@@ -137,7 +137,7 @@ export function MarketingStep() {
                   fontStyle: "italic",
                   padding: `${tokens.spacing.md}px 0`,
                 }}>
-                  No sales impact — 0% bonus guaranteed.
+                  No perception impact — 0% modifier guaranteed.
                 </div>
               )}
             </button>
