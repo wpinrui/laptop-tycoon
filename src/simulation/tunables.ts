@@ -37,8 +37,6 @@ export const NEGATIVITY_MULTIPLIER = 1.5;
 
 // ==================== Sales Engine ====================
 
-/** Exponential decay rate for price overshoot above ceiling */
-export const PRICE_OVERSHOOT_DECAY = 3;
 /** Base demand variance for projections */
 export const BASE_DEMAND_VARIANCE = 0.15;
 /** Additional variance scaled by average reach */
