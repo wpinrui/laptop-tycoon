@@ -54,7 +54,14 @@ export function AdvanceYearCard() {
           }));
           dispatch({ type: "ADD_COMPETITOR_MODELS", models: competitorModels });
 
-          // 2. Calculate post-manufacturing cash for simulation input
+          // 2. Transition active models with plans to "manufacturing"
+          for (const model of activeModels) {
+            if (model.manufacturingPlan) {
+              dispatch({ type: "UPDATE_MODEL_STATUS", modelId: model.design.id, status: "manufacturing" });
+            }
+          }
+
+          // 3. Calculate post-manufacturing cash for simulation input
           let totalMfgSpend = 0;
           for (const model of activeModels) {
             if (model.manufacturingPlan) {
@@ -63,10 +70,15 @@ export function AdvanceYearCard() {
             }
           }
           const cashAfterManufacturing = state.cash - totalMfgSpend;
-          // 3. Run sales simulation with projected state (competitors + adjusted cash)
+          // 4. Run sales simulation with projected state (competitors + adjusted cash + updated statuses)
           const stateForSim = {
             ...state,
             cash: cashAfterManufacturing,
+            models: state.models.map((m) =>
+              activeModels.some((am) => am.design.id === m.design.id && am.manufacturingPlan)
+                ? { ...m, status: "manufacturing" as const }
+                : m,
+            ),
             competitors: state.competitors.map((comp) => {
               const newModel = competitorModels.find((cm) => cm.competitorId === comp.id);
               return newModel ? { ...comp, models: [...comp.models, newModel.model] } : comp;
@@ -74,7 +86,7 @@ export function AdvanceYearCard() {
           };
           const result = simulateYear(stateForSim);
 
-          // 4. Apply simulation results (sets cash to revenue + post-manufacturing balance)
+          // 5. Apply simulation results (sets cash to revenue + post-manufacturing balance)
           dispatch({ type: "APPLY_SIMULATION_RESULT", result });
 
           // 5. Navigate to appropriate screen
