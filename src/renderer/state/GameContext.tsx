@@ -3,6 +3,7 @@ import { GameState, LaptopDesign, LaptopModel, ModelStatus, createInitialGameSta
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { YearSimulationResult } from "../../simulation/salesTypes";
 import { clearProjectionCache } from "../../simulation/salesEngine";
+import { updateBrandRecognition, updateNicheReputation } from "../../simulation/brandProgression";
 
 export interface CompetitorModelEntry {
   competitorId: string;
@@ -124,6 +125,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         cash: result.cashAfterResolution,
+        brandRecognition: updateBrandRecognition(state, result),
+        nicheReputation: updateNicheReputation(state, result),
         yearSimulated: true,
         yearHistory: [...state.yearHistory, result],
         lastSimulationResult: result,
