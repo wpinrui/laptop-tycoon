@@ -355,6 +355,52 @@ interface MarketEntry {
   isPlayer: boolean;
 }
 
+interface VPComputeContext {
+  maxStats: Record<LaptopStat, number>;
+  demographic: (typeof DEMOGRAPHICS)[number];
+  selectedDemo: DemographicId;
+  companies: CompanyState[];
+}
+
+function computeVPForLaptop(laptop: MarketEntry, ctx: VPComputeContext) {
+  const { maxStats, demographic, selectedDemo, companies } = ctx;
+
+  const normalised = {} as Record<LaptopStat, number>;
+  for (const stat of ALL_STATS) {
+    normalised[stat] = maxStats[stat] > 0 ? (laptop.stats[stat] ?? 0) / maxStats[stat] : 0;
+  }
+
+  let weightedStatScore = 0;
+  const weightedPerStat = {} as Record<LaptopStat, number>;
+  for (const stat of ALL_STATS) {
+    const w = normalised[stat] * (demographic.statWeights[stat] ?? 0);
+    weightedPerStat[stat] = w;
+    weightedStatScore += w;
+  }
+
+  const pref = demographic.screenSizePreference;
+  const screenPenalty = getScreenSizeFit(laptop.screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);
+  const exponent = PRICE_SENSITIVITY_EXPONENT[demographic.priceSensitivity];
+  const priceComponent = Math.pow(laptop.retailPrice, exponent);
+  const rawVP = (weightedStatScore * screenPenalty) / priceComponent;
+
+  const company = companies.find((c) => c.id === laptop.owner);
+  const brandPerception = company ? (company.brandPerception[selectedDemo] ?? 0) : 0;
+  const campaignPerception = 0; // Can't know sampled value; show 0 as baseline
+  const perceptionMod = ((1 + brandPerception / 100) * (1 + campaignPerception / 100) - 1) * 100;
+  const biasedVP = rawVP * (1 + perceptionMod / 100);
+
+  const reach = company ? Math.min(company.brandReach[selectedDemo] ?? 0, 100) : 0;
+  const effectiveVP = biasedVP * (reach / 100);
+
+  return {
+    laptop, normalised, weightedPerStat, weightedStatScore,
+    screenPenalty, exponent, priceComponent, rawVP,
+    brandPerception, campaignPerception, perceptionMod,
+    biasedVP, reach, effectiveVP,
+  };
+}
+
 const STEPS = [
   "1. Raw Stats",
   "2. Normalised Stats (0-1)",
@@ -415,100 +461,34 @@ function SimulationTab() {
 
   const demographic = DEMOGRAPHICS.find((d) => d.id === selectedDemo)!;
 
-  // --- Compute all intermediate values ---
-  const computed = useMemo(() => {
-    // Normalise stats across ALL market laptops (not just selected)
-    const maxStats: Record<LaptopStat, number> = {} as Record<LaptopStat, number>;
+  // Shared normalisation base: max stats across ALL market laptops
+  const maxStats = useMemo(() => {
+    const result = {} as Record<LaptopStat, number>;
     for (const stat of ALL_STATS) {
-      maxStats[stat] = Math.max(...marketEntries.map((e) => e.stats[stat] ?? 0));
+      result[stat] = Math.max(...marketEntries.map((e) => e.stats[stat] ?? 0));
     }
+    return result;
+  }, [marketEntries]);
 
-    return activeLaptops.map((laptop) => {
-      // Step 2: Normalised stats
-      const normalised: Record<LaptopStat, number> = {} as Record<LaptopStat, number>;
-      for (const stat of ALL_STATS) {
-        const raw = laptop.stats[stat] ?? 0;
-        normalised[stat] = maxStats[stat] > 0 ? raw / maxStats[stat] : 0;
-      }
+  const vpContext: VPComputeContext = useMemo(
+    () => ({ maxStats, demographic, selectedDemo, companies: state.companies }),
+    [maxStats, demographic, selectedDemo, state.companies],
+  );
 
-      // Step 4: Weighted stat score
-      let weightedStatScore = 0;
-      const weightedPerStat: Record<LaptopStat, number> = {} as Record<LaptopStat, number>;
-      for (const stat of ALL_STATS) {
-        const w = normalised[stat] * (demographic.statWeights[stat] ?? 0);
-        weightedPerStat[stat] = w;
-        weightedStatScore += w;
-      }
-
-      // Step 5: Screen size penalty
-      const pref = demographic.screenSizePreference;
-      const screenPenalty = getScreenSizeFit(laptop.screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);
-
-      // Step 6: Raw VP
-      const exponent = PRICE_SENSITIVITY_EXPONENT[demographic.priceSensitivity];
-      const priceComponent = Math.pow(laptop.retailPrice, exponent);
-      const rawVP = (weightedStatScore * screenPenalty) / priceComponent;
-
-      // Step 7: Brand perception
-      const company = state.companies.find((c) => c.id === laptop.owner);
-      const brandPerception = company ? (company.brandPerception[selectedDemo] ?? 0) : 0;
-      const campaignPerception = 0; // Can't know sampled value; show 0 as baseline
-
-      // Step 8: Biased VP
-      const perceptionMod = ((1 + brandPerception / 100) * (1 + campaignPerception / 100) - 1) * 100;
-      const biasedVP = rawVP * (1 + perceptionMod / 100);
-
-      // Step 9: Brand reach
-      const reach = company ? Math.min(company.brandReach[selectedDemo] ?? 0, 100) : 0;
-
-      // Step 10: Effective VP
-      const effectiveVP = biasedVP * (reach / 100);
-
-      return {
-        laptop,
-        normalised,
-        weightedPerStat,
-        weightedStatScore,
-        screenPenalty,
-        exponent,
-        priceComponent,
-        rawVP,
-        brandPerception,
-        campaignPerception,
-        perceptionMod,
-        biasedVP,
-        reach,
-        effectiveVP,
-      };
-    });
-  }, [activeLaptops, marketEntries, demographic, selectedDemo, state.companies]);
+  // --- Compute all intermediate values ---
+  const computed = useMemo(
+    () => activeLaptops.map((l) => computeVPForLaptop(l, vpContext)),
+    [activeLaptops, vpContext],
+  );
 
   // Step 11: Market share (needs sum of ALL market laptops, not just selected)
-  const allComputed = useMemo(() => {
-    const maxStats: Record<LaptopStat, number> = {} as Record<LaptopStat, number>;
-    for (const stat of ALL_STATS) {
-      maxStats[stat] = Math.max(...marketEntries.map((e) => e.stats[stat] ?? 0));
-    }
-    return marketEntries.map((laptop) => {
-      const normalised: Record<LaptopStat, number> = {} as Record<LaptopStat, number>;
-      for (const stat of ALL_STATS) {
-        normalised[stat] = maxStats[stat] > 0 ? (laptop.stats[stat] ?? 0) / maxStats[stat] : 0;
-      }
-      let weightedStatScore = 0;
-      for (const stat of ALL_STATS) weightedStatScore += normalised[stat] * (demographic.statWeights[stat] ?? 0);
-      const pref = demographic.screenSizePreference;
-      const screenPenalty = getScreenSizeFit(laptop.screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);
-      const exponent = PRICE_SENSITIVITY_EXPONENT[demographic.priceSensitivity];
-      const rawVP = (weightedStatScore * screenPenalty) / Math.pow(laptop.retailPrice, exponent);
-      const company = state.companies.find((c) => c.id === laptop.owner);
-      const bp = company ? (company.brandPerception[selectedDemo] ?? 0) : 0;
-      const percMod = bp / 100;
-      const biasedVP = rawVP * (1 + percMod);
-      const reach = company ? Math.min(company.brandReach[selectedDemo] ?? 0, 100) : 0;
-      const effectiveVP = biasedVP * (reach / 100);
+  const allComputed = useMemo(
+    () => marketEntries.map((laptop) => {
+      const { effectiveVP } = computeVPForLaptop(laptop, vpContext);
       return { id: laptop.id, effectiveVP };
-    });
-  }, [marketEntries, demographic, selectedDemo, state.companies]);
+    }),
+    [marketEntries, vpContext],
+  );
 
   const totalEffectiveVP = allComputed.reduce((s, c) => s + c.effectiveVP, 0);
 

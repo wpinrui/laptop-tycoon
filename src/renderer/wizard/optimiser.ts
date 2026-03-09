@@ -41,6 +41,18 @@ interface OptimisedResult {
   selectedColours: string[];
 }
 
+interface BuildConfig {
+  screenSize: ScreenSizeInches;
+  components: Partial<Record<ComponentSlot, Component>>;
+  chassis: WizardState["chassis"];
+  batteryCapacityWh: number;
+  selectedColours: string[];
+  displayMult: number;
+}
+
+const COOLING_CAPACITY_THRESHOLD = 0.7;
+const COOLING_ADEQUATE_BONUS = 0.5;
+
 /**
  * Score a component for a demographic by computing its weighted stat contribution
  * divided by its decayed cost. Higher = better value.
@@ -76,6 +88,98 @@ function scoreChassisOption(
     weightedStats += (value as number) * weight;
   }
   return weightedStats / cost;
+}
+
+function computeScreenPenalty(
+  screenSize: number,
+  pref: Demographic["screenSizePreference"],
+): number {
+  if (screenSize < pref.preferredMin) {
+    return Math.max(0.05, 1.0 - (pref.preferredMin - screenSize) * pref.penaltyPerInch);
+  }
+  if (screenSize > pref.preferredMax) {
+    return Math.max(0.05, 1.0 - (screenSize - pref.preferredMax) * pref.penaltyPerInch);
+  }
+  return 1.0;
+}
+
+function computeWeightedScore(
+  stats: Record<string, number>,
+  demographic: Demographic,
+): number {
+  let score = 0;
+  for (const [stat, weight] of Object.entries(demographic.statWeights)) {
+    score += (stats[stat as LaptopStat] ?? 0) * weight;
+  }
+  return score;
+}
+
+function computeBuildCost(
+  config: BuildConfig,
+  year: number,
+): number {
+  const { components, chassis, batteryCapacityWh, selectedColours, displayMult } = config;
+  const chassisOptions = [chassis.material, chassis.coolingSolution, chassis.keyboardFeature, chassis.trackpadFeature];
+  const era = getBatteryEra(year);
+
+  let cost = 0;
+  for (const [slot, comp] of Object.entries(components)) {
+    if (comp) cost += applyDisplayMultiplier(componentCostDecayed(comp, year), slot, displayMult);
+  }
+  for (const opt of chassisOptions) {
+    if (opt) cost += chassisCost(opt, year);
+  }
+  cost += Math.round(batteryCapacityWh * era.costPerWh);
+  cost += COLOUR_OPTIONS.find(c => c.id === selectedColours[0])?.costPerUnit ?? 0;
+  return cost;
+}
+
+function findMinThickness(
+  screenSize: ScreenSizeInches,
+  components: Partial<Record<ComponentSlot, Component>>,
+  batteryWh: number,
+  chassisOptions: (ChassisOption | null)[],
+  year: number,
+): number {
+  const consumedVol = totalConsumedVolumeCm3(components, batteryWh, {}, chassisOptions);
+  const minHeight = maxHeightConstraintCm(components, {}, chassisOptions);
+
+  for (let t = THICKNESS_MIN_CM; t <= THICKNESS_MAX_CM; t = Math.round((t + THICKNESS_STEP_CM) * 10) / 10) {
+    const avail = availableVolumeCm3(screenSize, BEZEL_MIN_MM, t, year);
+    if (avail >= consumedVol && t >= minHeight) {
+      return t;
+    }
+  }
+  return THICKNESS_MAX_CM;
+}
+
+function scoreBuild(
+  config: BuildConfig,
+  demographic: Demographic,
+  year: number,
+  sensitivityExp: number,
+): number {
+  const { screenSize, components, chassis, batteryCapacityWh, selectedColours } = config;
+  const chassisOptions = [chassis.material, chassis.coolingSolution, chassis.keyboardFeature, chassis.trackpadFeature];
+  const thickness = findMinThickness(screenSize, components, batteryCapacityWh, chassisOptions, year);
+
+  const stats = computeRawStatTotals({
+    screenSize,
+    components,
+    ports: {},
+    chassis,
+    batteryCapacityWh,
+    thicknessCm: thickness,
+    bezelMm: BEZEL_MIN_MM,
+    selectedColours,
+    gameYear: year,
+  });
+
+  const weightedScore = computeWeightedScore(stats, demographic);
+  const screenPenalty = computeScreenPenalty(screenSize, demographic.screenSizePreference);
+  const totalCost = computeBuildCost(config, year);
+
+  return (weightedScore * screenPenalty) / Math.pow(Math.max(1, totalCost), sensitivityExp);
 }
 
 /**
@@ -141,20 +245,16 @@ export function optimiseForDemographic(demographic: Demographic, year: number): 
 
       // For cooling solutions, also factor in whether we need cooling capacity
       if (def.slot === "coolingSolution") {
-        // Calculate total power draw
         let totalPower = 0;
         for (const [slot, comp] of Object.entries(components)) {
           if (comp) totalPower += applyDisplayMultiplier(comp.powerDrawW, slot, displayMult);
         }
-        // Pick cooling solution that provides enough cooling at best value
         let bestOpt = available[0];
         let bestOptScore = scoreChassisOption(bestOpt, demographic, year);
-        // Bonus for actually providing enough cooling
         for (const opt of available) {
           let s = scoreChassisOption(opt, demographic, year);
-          // Add bonus if cooling capacity meets power needs
-          if (opt.coolingCapacityW >= totalPower * 0.7) {
-            s += 0.5; // significant bonus for adequate cooling
+          if (opt.coolingCapacityW >= totalPower * COOLING_CAPACITY_THRESHOLD) {
+            s += COOLING_ADEQUATE_BONUS;
           }
           if (s > bestOptScore) {
             bestOptScore = s;
@@ -176,128 +276,26 @@ export function optimiseForDemographic(demographic: Demographic, year: number): 
       }
     }
 
-    // Use cheapest colour
     const selectedColours = [COLOUR_OPTIONS[0].id];
+    const chassisOptions = [chassis.material, chassis.coolingSolution, chassis.keyboardFeature, chassis.trackpadFeature];
 
     // Try different battery capacities
     let bestBattery = MIN_BATTERY_WH;
     let bestBatteryScore = -Infinity;
 
-    const chassisOptions = [chassis.material, chassis.coolingSolution, chassis.keyboardFeature, chassis.trackpadFeature];
-
     for (let batt = MIN_BATTERY_WH; batt <= MAX_BATTERY_WH; batt += BATTERY_STEP_WH) {
-      // Find minimum viable thickness for this battery
-      const consumedVol = totalConsumedVolumeCm3(components, batt, {}, chassisOptions);
-      const minHeightForComponents = maxHeightConstraintCm(components, {}, chassisOptions);
-
-      // Binary search for minimum thickness that fits
-      let thickness = THICKNESS_MIN_CM;
-      for (let t = THICKNESS_MIN_CM; t <= THICKNESS_MAX_CM; t = Math.round((t + THICKNESS_STEP_CM) * 10) / 10) {
-        const avail = availableVolumeCm3(screenSize, BEZEL_MIN_MM, t, year);
-        if (avail >= consumedVol && t >= minHeightForComponents) {
-          thickness = t;
-          break;
-        }
-        thickness = t;
-      }
-
-      // Compute stats for this configuration
-      const stats = computeRawStatTotals({
-        screenSize,
-        components,
-        ports: {},
-        chassis,
-        batteryCapacityWh: batt,
-        thicknessCm: thickness,
-        bezelMm: BEZEL_MIN_MM,
-        selectedColours,
-        gameYear: year,
-      });
-
-      // Weighted stat score
-      let weightedScore = 0;
-      for (const [stat, weight] of Object.entries(demographic.statWeights)) {
-        weightedScore += (stats[stat as LaptopStat] ?? 0) * weight;
-      }
-
-      // Screen size penalty
-      let screenPenalty = 1.0;
-      if (screenSize < pref.preferredMin) {
-        screenPenalty = Math.max(0.05, 1.0 - (pref.preferredMin - screenSize) * pref.penaltyPerInch);
-      } else if (screenSize > pref.preferredMax) {
-        screenPenalty = Math.max(0.05, 1.0 - (screenSize - pref.preferredMax) * pref.penaltyPerInch);
-      }
-
-      // Estimate total cost
-      const era = getBatteryEra(year);
-      let totalCost = 0;
-      for (const [slot, comp] of Object.entries(components)) {
-        if (comp) totalCost += applyDisplayMultiplier(componentCostDecayed(comp, year), slot, displayMult);
-      }
-      for (const opt of chassisOptions) {
-        if (opt) totalCost += chassisCost(opt, year);
-      }
-      totalCost += Math.round(batt * era.costPerWh);
-      totalCost += COLOUR_OPTIONS.find(c => c.id === selectedColours[0])?.costPerUnit ?? 0;
-
-      // Value proposition: score / price^sensitivity
-      const vp = (weightedScore * screenPenalty) / Math.pow(Math.max(1, totalCost), sensitivityExp);
-
+      const config: BuildConfig = { screenSize, components, chassis, batteryCapacityWh: batt, selectedColours, displayMult };
+      const vp = scoreBuild(config, demographic, year, sensitivityExp);
       if (vp > bestBatteryScore) {
         bestBatteryScore = vp;
         bestBattery = batt;
       }
     }
 
-    // Now compute final thickness for the best battery
-    const finalConsumedVol = totalConsumedVolumeCm3(components, bestBattery, {}, chassisOptions);
-    const finalMinHeight = maxHeightConstraintCm(components, {}, chassisOptions);
-    let finalThickness = THICKNESS_MAX_CM;
-    for (let t = THICKNESS_MIN_CM; t <= THICKNESS_MAX_CM; t = Math.round((t + THICKNESS_STEP_CM) * 10) / 10) {
-      const avail = availableVolumeCm3(screenSize, BEZEL_MIN_MM, t, year);
-      if (avail >= finalConsumedVol && t >= finalMinHeight) {
-        finalThickness = t;
-        break;
-      }
-    }
-
-    // Final score
-    const finalStats = computeRawStatTotals({
-      screenSize,
-      components,
-      ports: {},
-      chassis,
-      batteryCapacityWh: bestBattery,
-      thicknessCm: finalThickness,
-      bezelMm: BEZEL_MIN_MM,
-      selectedColours,
-      gameYear: year,
-    });
-
-    let finalWeighted = 0;
-    for (const [stat, weight] of Object.entries(demographic.statWeights)) {
-      finalWeighted += (finalStats[stat as LaptopStat] ?? 0) * weight;
-    }
-
-    let finalScreenPenalty = 1.0;
-    if (screenSize < pref.preferredMin) {
-      finalScreenPenalty = Math.max(0.05, 1.0 - (pref.preferredMin - screenSize) * pref.penaltyPerInch);
-    } else if (screenSize > pref.preferredMax) {
-      finalScreenPenalty = Math.max(0.05, 1.0 - (screenSize - pref.preferredMax) * pref.penaltyPerInch);
-    }
-
-    const era = getBatteryEra(year);
-    let finalCost = 0;
-    for (const [slot, comp] of Object.entries(components)) {
-      if (comp) finalCost += applyDisplayMultiplier(componentCostDecayed(comp, year), slot, displayMult);
-    }
-    for (const opt of chassisOptions) {
-      if (opt) finalCost += chassisCost(opt, year);
-    }
-    finalCost += Math.round(bestBattery * era.costPerWh);
-    finalCost += COLOUR_OPTIONS.find(c => c.id === selectedColours[0])?.costPerUnit ?? 0;
-
-    const finalVP = (finalWeighted * finalScreenPenalty) / Math.pow(Math.max(1, finalCost), sensitivityExp);
+    // Final score with best battery
+    const finalConfig: BuildConfig = { screenSize, components, chassis, batteryCapacityWh: bestBattery, selectedColours, displayMult };
+    const finalThickness = findMinThickness(screenSize, components, bestBattery, chassisOptions, year);
+    const finalVP = scoreBuild(finalConfig, demographic, year, sensitivityExp);
 
     if (finalVP > bestScore) {
       bestScore = finalVP;
@@ -320,7 +318,7 @@ export function optimiseForDemographic(demographic: Demographic, year: number): 
       components: {},
       chassis: { material: null, coolingSolution: null, keyboardFeature: null, trackpadFeature: null },
       batteryCapacityWh: MIN_BATTERY_WH,
-      thicknessCm: 3.5,
+      thicknessCm: THICKNESS_MAX_CM,
       bezelMm: BEZEL_MIN_MM,
       selectedColours: [COLOUR_OPTIONS[0].id],
     };

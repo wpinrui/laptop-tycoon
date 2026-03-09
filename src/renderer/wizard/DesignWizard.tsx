@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useWizard, isStepLockedBySpecBump } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
 import { WizardStep, WizardState, WIZARD_STEPS, COMPONENT_STEP_SLOTS, getAllChassisOptions } from "./types";
@@ -158,6 +158,32 @@ function wizardStateToDesign(state: WizardState, year: number): LaptopDesign {
 }
 
 
+const toolbarBtnStyle: React.CSSProperties = {
+  background: "none",
+  border: `1px solid ${tokens.colors.panelBorder}`,
+  borderRadius: tokens.borderRadius.sm,
+  color: tokens.colors.accent,
+  fontSize: tokens.font.sizeSmall,
+  padding: `${tokens.spacing.xs + 2}px ${tokens.spacing.sm + 4}px`,
+  cursor: "pointer",
+  fontFamily: "inherit",
+  lineHeight: "1",
+  transition: "border-color 0.15s, color 0.15s",
+};
+
+function ToolbarButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      style={toolbarBtnStyle}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = tokens.colors.accent; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = tokens.colors.panelBorder; }}
+    >
+      {children}
+    </button>
+  );
+}
+
 function WizardContent() {
   const { state, dispatch } = useWizard();
   const { state: gameState, dispatch: gameDispatch } = useGame();
@@ -238,44 +264,8 @@ function WizardContent() {
           </p>
         </div>
         <div style={{ display: "flex", gap: tokens.spacing.sm, flexShrink: 0 }}>
-        <button
-          onClick={() => dispatch({ type: "DEBUG_AUTOFILL", year: gameState.year })}
-          style={{
-            background: "none",
-            border: `1px solid ${tokens.colors.panelBorder}`,
-            borderRadius: tokens.borderRadius.sm,
-            color: tokens.colors.accent,
-            fontSize: tokens.font.sizeSmall,
-            padding: `${tokens.spacing.xs + 2}px ${tokens.spacing.sm + 4}px`,
-            cursor: "pointer",
-            fontFamily: "inherit",
-            lineHeight: "1",
-            transition: "border-color 0.15s, color 0.15s",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = tokens.colors.accent; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = tokens.colors.panelBorder; }}
-        >
-          Auto-fill
-        </button>
-        <button
-          onClick={() => setShowOptimisePicker(true)}
-          style={{
-            background: "none",
-            border: `1px solid ${tokens.colors.panelBorder}`,
-            borderRadius: tokens.borderRadius.sm,
-            color: tokens.colors.accent,
-            fontSize: tokens.font.sizeSmall,
-            padding: `${tokens.spacing.xs + 2}px ${tokens.spacing.sm + 4}px`,
-            cursor: "pointer",
-            fontFamily: "inherit",
-            lineHeight: "1",
-            transition: "border-color 0.15s, color 0.15s",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = tokens.colors.accent; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = tokens.colors.panelBorder; }}
-        >
-          Optimise
-        </button>
+        <ToolbarButton onClick={() => dispatch({ type: "DEBUG_AUTOFILL", year: gameState.year })}>Auto-fill</ToolbarButton>
+        <ToolbarButton onClick={() => setShowOptimisePicker(true)}>Optimise</ToolbarButton>
         <button
           onClick={() => setShowCloseConfirm(true)}
           style={{
