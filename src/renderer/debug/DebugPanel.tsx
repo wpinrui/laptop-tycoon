@@ -378,22 +378,13 @@ function SimulationTab() {
   const [selectedLaptops, setSelectedLaptops] = useState<Set<string>>(new Set());
   const [currentStep, setCurrentStep] = useState<StepIndex>(0);
 
-  // Build market entries from all companies
+  // Build market entries from all companies (debug: show all active models, not just current-year)
   const marketEntries = useMemo(() => {
     const entries: MarketEntry[] = [];
     for (const company of state.companies) {
       for (const model of company.models) {
         if (model.status !== "manufacturing" && model.status !== "onSale") continue;
         if (!model.retailPrice) continue;
-        // Competitors: only current year models
-        if (!company.isPlayer && model.yearDesigned !== state.year) continue;
-        // Player: need inventory or new batch
-        if (company.isPlayer) {
-          const plan = model.manufacturingPlan;
-          const isCurrentQuarterPlan = plan && plan.year === state.year && plan.quarter === state.quarter;
-          const newBatch = isCurrentQuarterPlan ? (model.manufacturingQuantity ?? 0) : 0;
-          if (newBatch + model.unitsInStock <= 0) continue;
-        }
         entries.push({
           id: model.design.id,
           owner: company.id,
