@@ -27,6 +27,7 @@ import {
 import { COLOUR_OPTIONS } from "../../data/colourOptions";
 import { computeRawStatTotals } from "../../simulation/statCalculation";
 import { PRICE_SENSITIVITY_EXPONENT } from "../../simulation/tunables";
+import { getScreenSizeFit } from "../../simulation/demographicData";
 import { WizardState } from "./types";
 import { COMPONENT_STEP_SLOTS } from "./types";
 import { getBatteryEra } from "../../data/batteryEras";
@@ -88,19 +89,6 @@ function scoreChassisOption(
     weightedStats += (value as number) * weight;
   }
   return weightedStats / cost;
-}
-
-function computeScreenPenalty(
-  screenSize: number,
-  pref: Demographic["screenSizePreference"],
-): number {
-  if (screenSize < pref.preferredMin) {
-    return Math.max(0.05, 1.0 - (pref.preferredMin - screenSize) * pref.penaltyPerInch);
-  }
-  if (screenSize > pref.preferredMax) {
-    return Math.max(0.05, 1.0 - (screenSize - pref.preferredMax) * pref.penaltyPerInch);
-  }
-  return 1.0;
 }
 
 function computeWeightedScore(
@@ -176,7 +164,8 @@ function scoreBuild(
   });
 
   const weightedScore = computeWeightedScore(stats, demographic);
-  const screenPenalty = computeScreenPenalty(screenSize, demographic.screenSizePreference);
+  const pref = demographic.screenSizePreference;
+  const screenPenalty = getScreenSizeFit(screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);
   const totalCost = computeBuildCost(config, year);
 
   return (weightedScore * screenPenalty) / Math.pow(Math.max(1, totalCost), sensitivityExp);
