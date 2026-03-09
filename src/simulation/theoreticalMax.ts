@@ -204,8 +204,8 @@ function computeTheoreticalMaxForStat(targetStat: LaptopStat, year: number): num
     // Set thickness
     build.thicknessCm = wantThick ? THICKNESS_MAX_CM : findMinViableThickness(build, year);
 
-    // --- Iterative refinement (2 passes) ---
-    for (let pass = 0; pass < 2; pass++) {
+    // --- Iterative refinement (3 passes to settle cross-slot interactions) ---
+    for (let pass = 0; pass < 3; pass++) {
       // Refine components
       for (const slot of ALL_COMPONENT_SLOTS) {
         const available = getAvailableComponents(slot, year);
