@@ -9,10 +9,7 @@ import { getDemandPoolSize, getScreenSizeFit } from "../../simulation/demographi
 import { PRICE_SENSITIVITY_EXPONENT, REPLACEMENT_CYCLE, QUARTER_SHARES, QUARTER_SHARES_SUM } from "../../simulation/tunables";
 import { tokens } from "../shell/tokens";
 
-const DEMOGRAPHIC_IDS: DemographicId[] = [
-  "corporate", "businessProfessional", "student", "creativeProfessional",
-  "gamer", "techEnthusiast", "generalConsumer", "budgetBuyer",
-];
+const DEMOGRAPHIC_IDS = DEMOGRAPHICS.map((d) => d.id);
 
 const DEMO_SHORT: Record<DemographicId, string> = {
   corporate: "Corp",
@@ -274,70 +271,67 @@ function LaptopStatsRow({ model, year, companyName }: { model: LaptopModel; year
   );
 }
 
-function CompaniesTab({ player, competitors }: { player: CompanyState; competitors: CompanyState[] }) {
-  const allCompanies = [player, ...competitors];
-
+function BrandTable({ title, companies, getValue, colorFn }: {
+  title: string;
+  companies: CompanyState[];
+  getValue: (company: CompanyState, demo: DemographicId) => number;
+  colorFn: (value: number) => string;
+}) {
   const tableStyle: CSSProperties = { width: "100%", borderCollapse: "collapse", fontSize: 10 };
   const thStyle: CSSProperties = { padding: "2px 4px", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.1)", color: "#aaa", fontSize: 9, fontWeight: "normal" };
   const tdStyle: CSSProperties = { padding: "2px 4px", textAlign: "right", borderBottom: "1px solid rgba(255,255,255,0.03)" };
 
   return (
-    <div>
-      <div style={{ marginBottom: 8 }}>
-        <div style={{ color: "#ffc800", fontWeight: "bold", marginBottom: 4 }}>Brand Reach (%)</div>
-        <div style={{ overflowX: "auto" }}>
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Company</th>
-                {DEMOGRAPHIC_IDS.map((d) => <th key={d} style={{ ...thStyle, textAlign: "right" }}>{DEMO_SHORT[d]}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {allCompanies.map((c) => (
-                <tr key={c.id}>
-                  <td style={{ ...tdStyle, textAlign: "left", color: c.isPlayer ? tokens.colors.accent : "#ccc", fontWeight: c.isPlayer ? "bold" : "normal" }}>
-                    {c.name}
-                  </td>
-                  {DEMOGRAPHIC_IDS.map((d) => (
-                    <td key={d} style={{ ...tdStyle, color: reachColor(c.brandReach[d]) }}>
-                      {c.brandReach[d].toFixed(1)}
+    <div style={{ marginBottom: 8 }}>
+      <div style={{ color: "#ffc800", fontWeight: "bold", marginBottom: 4 }}>{title}</div>
+      <div style={{ overflowX: "auto" }}>
+        <table style={tableStyle}>
+          <thead>
+            <tr>
+              <th style={thStyle}>Company</th>
+              {DEMOGRAPHIC_IDS.map((d) => <th key={d} style={{ ...thStyle, textAlign: "right" }}>{DEMO_SHORT[d]}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {companies.map((c) => (
+              <tr key={c.id}>
+                <td style={{ ...tdStyle, textAlign: "left", color: c.isPlayer ? tokens.colors.accent : "#ccc", fontWeight: c.isPlayer ? "bold" : "normal" }}>
+                  {c.name}
+                </td>
+                {DEMOGRAPHIC_IDS.map((d) => {
+                  const val = getValue(c, d);
+                  return (
+                    <td key={d} style={{ ...tdStyle, color: colorFn(val) }}>
+                      {val.toFixed(1)}
                     </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+    </div>
+  );
+}
 
-      <div>
-        <div style={{ color: "#ffc800", fontWeight: "bold", marginBottom: 4 }}>Brand Perception (-50 to +50)</div>
-        <div style={{ overflowX: "auto" }}>
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Company</th>
-                {DEMOGRAPHIC_IDS.map((d) => <th key={d} style={{ ...thStyle, textAlign: "right" }}>{DEMO_SHORT[d]}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {allCompanies.map((c) => (
-                <tr key={c.id}>
-                  <td style={{ ...tdStyle, textAlign: "left", color: c.isPlayer ? tokens.colors.accent : "#ccc", fontWeight: c.isPlayer ? "bold" : "normal" }}>
-                    {c.name}
-                  </td>
-                  {DEMOGRAPHIC_IDS.map((d) => (
-                    <td key={d} style={{ ...tdStyle, color: perceptionColor(c.brandPerception[d]) }}>
-                      {c.brandPerception[d].toFixed(1)}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+function CompaniesTab({ player, competitors }: { player: CompanyState; competitors: CompanyState[] }) {
+  const allCompanies = [player, ...competitors];
+
+  return (
+    <div>
+      <BrandTable
+        title="Brand Reach (%)"
+        companies={allCompanies}
+        getValue={(c, d) => c.brandReach[d]}
+        colorFn={reachColor}
+      />
+      <BrandTable
+        title="Brand Perception (-50 to +50)"
+        companies={allCompanies}
+        getValue={(c, d) => c.brandPerception[d]}
+        colorFn={perceptionColor}
+      />
     </div>
   );
 }
@@ -416,13 +410,11 @@ const STEPS = [
   "12. Demand Allocation",
 ] as const;
 
-type StepIndex = number;
-
 function SimulationTab() {
   const { state } = useGame();
   const [selectedDemo, setSelectedDemo] = useState<DemographicId>("generalConsumer");
   const [selectedLaptops, setSelectedLaptops] = useState<Set<string>>(new Set());
-  const [currentStep, setCurrentStep] = useState<StepIndex>(0);
+  const [currentStep, setCurrentStep] = useState(0);
 
   // Build market entries from all companies (debug: show all active models, not just current-year)
   const marketEntries = useMemo(() => {
