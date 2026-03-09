@@ -444,12 +444,14 @@ export function ManufacturingStep() {
               color={tokens.colors.text}
               bgColor={tokens.colors.surface}
             />
-            <MetricCard
-              label="Projected profit"
-              value={`${fmt(pessimisticProfit)} to ${fmt(optimisticProfit)}`}
-              color={pessimisticProfit < 0 ? tokens.colors.danger : tokens.colors.success}
-              bgColor={pessimisticProfit < 0 ? tokens.colors.dangerBg : tokens.colors.successBg}
-            />
+            <div style={{ gridColumn: "1 / -1" }}>
+              <MetricCard
+                label="Projected profit"
+                value={`${fmt(pessimisticProfit)} to ${fmt(optimisticProfit)}`}
+                color={pessimisticProfit < 0 ? tokens.colors.danger : tokens.colors.success}
+                bgColor={pessimisticProfit < 0 ? tokens.colors.dangerBg : tokens.colors.successBg}
+              />
+            </div>
           </div>
 
           {/* Cash after - full width, prominent */}
