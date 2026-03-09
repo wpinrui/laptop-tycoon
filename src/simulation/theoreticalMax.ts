@@ -204,8 +204,10 @@ function computeTheoreticalMaxForStat(targetStat: LaptopStat, year: number): num
     // Set thickness
     build.thicknessCm = wantThick ? THICKNESS_MAX_CM : findMinViableThickness(build, year);
 
-    // --- Iterative refinement (3 passes to settle cross-slot interactions) ---
-    for (let pass = 0; pass < 3; pass++) {
+    // --- Iterative refinement until convergence (cap at 10 passes) ---
+    for (let pass = 0; pass < 10; pass++) {
+      const prevScore = evaluate(build, targetStat, year);
+
       // Refine components
       for (const slot of ALL_COMPONENT_SLOTS) {
         const available = getAvailableComponents(slot, year);
@@ -245,6 +247,9 @@ function computeTheoreticalMaxForStat(targetStat: LaptopStat, year: number): num
         build.chassis[def.slot] = bestOpt;
         build.thicknessCm = wantThick ? THICKNESS_MAX_CM : findMinViableThickness(build, year);
       }
+
+      // Converged: no improvement this pass
+      if (evaluate(build, targetStat, year) === prevScore) break;
     }
 
     // --- Sweep battery for battery-sensitive stats ---
