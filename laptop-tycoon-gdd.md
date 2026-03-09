@@ -80,6 +80,8 @@ Given screen size and chosen components, configure the physical shell:
 - **Keyboard features:** Per-era options such as key travel depth, backlit keys (later eras), layout quality. Specific features rather than abstract quality tiers.
 - **Trackpad features:** Per-era options such as trackpoint, buttonless trackpad, haptic feedback, invisible trackpad (later eras).
 
+**Volume & weight physics:** Battery technology improves across eras — both weight per Wh (14→4 g/Wh from 2000 to 2025) and volume per Wh (10→2.8 cm³/Wh) decrease as Li-Ion cylindrical cells give way to Li-Polymer pouches. Only 65% of gross chassis volume is usable for components (the rest is structural ribs, keyboard well, cable routing, hinge mechanisms, etc.). This means a 100 Wh battery in 2005 (800 cm³, 1.2 kg) physically cannot fit in a thin laptop, naturally constraining battery choices by era without artificial caps.
+
 The wizard flags issues during this phase: "This chassis can only dissipate 45W — your components draw 65W. Expect thermal throttling and high noise." or "This battery + these components = ~3hr battery life."
 
 #### Step 5 — Review
@@ -227,12 +229,24 @@ For each laptop in the market (player + AI), for each demographic:
 ```
 For each stat:
   normalized_stat = raw_stat / theoretical_max(stat, year)
+  transformed_stat = viability_transform(normalized_stat, stat)
 
-weighted_score = dot_product(normalized_stats, demographic_weight_vector)
-screen_penalty = screen size fit penalty (1.0 if preferred, 0.5 if one class off, 0.1 if two+ off)
-sensitivity_factor = PRICE_SENSITIVITY_EXPONENT[demographic.priceSensitivity]
-raw_vp = (weighted_score × screen_penalty) / price ^ sensitivity_factor
+weighted_score = dot_product(transformed_stats, demographic_weight_vector)
+price_score = 1 - (total_cost / theoretical_max_cost)
+raw_vp = (weighted_score + price_score × price_weight) × screen_penalty
 ```
+
+**Stat viability transform**: A non-linear curve `(1 - e^(-k·x)) / (1 - e^(-k))` applied to each normalized stat before weighting. This models the fact that near-zero values for critical stats (e.g. 1-hour battery, no WiFi) make a laptop nearly unsellable, while pushing already-good stats higher has diminishing returns. Each stat has its own steepness constant `k`:
+
+| k value | Effect | Stats |
+|---------|--------|-------|
+| 5 | Very steep floor | connectivity |
+| 4 | Strong floor + diminishing returns | batteryLife, performance |
+| 3 | Moderate floor | thermals, display, weight, gamingPerformance |
+| 2–2.5 | Mild curve | buildQuality, keyboard, trackpad, design, thinness |
+| 1.5 | Nearly linear | speakers, webcam |
+
+This ensures the optimiser (and sales engine) naturally land in sensible ranges rather than min-maxing binary outcomes.
 
 **Theoretical max**: For each stat independently, the highest value that stat could reach in a valid laptop build this year — a virtual laptop optimised exclusively for that one stat. Computed once per year from the component/chassis database (no dependency on actual laptops built). This means a laptop's score is intrinsic and does not change based on competitor builds.
 
