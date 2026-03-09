@@ -134,7 +134,7 @@ function findMinViableThickness(
  * Strategy per screen size:
  * 1. Seed with heuristic picks for components/chassis.
  * 2. Iteratively refine each slot by trying every available option and keeping
- *    the one that maximises the target stat (2 passes to settle interactions).
+ *    the one that maximises the target stat (until convergence, capped at 10 passes).
  * 3. Sweep battery capacity for battery-sensitive stats.
  * 4. Set thickness/bezel optimally for the stat.
  */
@@ -184,11 +184,8 @@ function computeTheoreticalMaxForStat(targetStat: LaptopStat, year: number): num
       : (targetStat === "performance" || targetStat === "gamingPerformance") ? BEZEL_MAX_MM
       : BEZEL_MIN_MM;
 
-    // Battery: initial guess
-    const initBattery = (targetStat === "batteryLife") ? MAX_BATTERY_WH
-      : (targetStat === "weight" || targetStat === "thinness") ? MIN_BATTERY_WH
-      : (targetStat === "performance" || targetStat === "gamingPerformance") ? MIN_BATTERY_WH
-      : MIN_BATTERY_WH;
+    // Battery: initial guess (only batteryLife wants max; everything else starts minimal)
+    const initBattery = targetStat === "batteryLife" ? MAX_BATTERY_WH : MIN_BATTERY_WH;
 
     // Thickness strategy
     const wantThick = targetStat === "performance" || targetStat === "gamingPerformance";
