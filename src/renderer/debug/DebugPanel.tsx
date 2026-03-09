@@ -157,9 +157,9 @@ export function DebugPanel({ onClose }: { onClose: () => void }) {
             </>
           )}
           <button style={btnStyle} onClick={() => setCollapsed(!collapsed)} title={collapsed ? "Expand" : "Collapse"}>
-            {collapsed ? "\u25b6" : "\u25bc"}
+            {collapsed ? ">" : "v"}
           </button>
-          <button style={btnStyle} onClick={onClose} title="Close">\u2715</button>
+          <button style={btnStyle} onClick={onClose} title="Close">x</button>
         </div>
       </div>
       {!collapsed && (
@@ -177,7 +177,7 @@ export function DebugPanel({ onClose }: { onClose: () => void }) {
               color: "#555", fontSize: 10, userSelect: "none",
             }}
           >
-            \u25e2
+            //
           </div>
         </>
       )}
@@ -211,7 +211,7 @@ function LaptopsTab({ player, competitors, year }: { player: CompanyState; compe
               <span style={{ color: company.isPlayer ? tokens.colors.accent : "#ccc", fontWeight: company.isPlayer ? "bold" : "normal" }}>
                 {company.name} ({activeModels.length} active)
               </span>
-              <span style={{ color: "#666", fontSize: 10 }}>{isExpanded ? "\u25bc" : "\u25b6"}</span>
+              <span style={{ color: "#666", fontSize: 10 }}>{isExpanded ? "v" : ">"}</span>
             </div>
             {isExpanded && activeModels.map((model) => (
               <LaptopStatsRow key={model.design.id} model={model} year={year} companyName={company.name} />
@@ -417,7 +417,7 @@ function LaptopResultRow({ result }: { result: { laptopId: string; owner: string
           Sold: {result.unitsSold.toLocaleString()} / {result.unitsDemanded.toLocaleString()} |
           ${result.retailPrice.toLocaleString()} |
           Profit: ${(result.profit / 1e6).toFixed(2)}M
-          {expanded ? " \u25bc" : " \u25b6"}
+          {expanded ? " v" : " >"}
         </span>
       </div>
       {expanded && (
