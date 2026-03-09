@@ -31,7 +31,7 @@ export interface DemographicSalesBreakdown {
   screenPenalty: number;
   /** Combined perception modifier % (brand + campaign) */
   perceptionMod: number;
-  /** Market-relative normalised stats (0–1 per stat, 1 = best in market) */
+  /** Normalised stats (0–1 per stat, 1 = theoretical max for this year) */
   normalizedStats: Record<LaptopStat, number>;
 }
 

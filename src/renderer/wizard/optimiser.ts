@@ -28,6 +28,7 @@ import { COLOUR_OPTIONS } from "../../data/colourOptions";
 import { computeRawStatTotals } from "../../simulation/statCalculation";
 import { PRICE_SENSITIVITY_EXPONENT } from "../../simulation/tunables";
 import { getScreenSizeFit } from "../../simulation/demographicData";
+import { getTheoreticalMaxima } from "../../simulation/theoreticalMax";
 import { WizardState } from "./types";
 import { COMPONENT_STEP_SLOTS } from "./types";
 import { getBatteryEra } from "../../data/batteryEras";
@@ -163,7 +164,15 @@ function scoreBuild(
     gameYear: year,
   });
 
-  const weightedScore = computeWeightedScore(stats, demographic);
+  // Normalise raw stats against theoretical maxima (matches sales engine formula)
+  const maxima = getTheoreticalMaxima(year);
+  const normalisedStats: Record<string, number> = {};
+  for (const [stat, value] of Object.entries(stats)) {
+    const max = maxima[stat as LaptopStat] ?? 1;
+    normalisedStats[stat] = max > 0 ? (value as number) / max : 0;
+  }
+
+  const weightedScore = computeWeightedScore(normalisedStats, demographic);
   const pref = demographic.screenSizePreference;
   const screenPenalty = getScreenSizeFit(screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);
   const totalCost = computeBuildCost(config, year);
