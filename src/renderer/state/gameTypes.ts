@@ -93,6 +93,11 @@ export function getPlayerCompany(state: GameState): CompanyState {
   return state.companies.find((c) => c.isPlayer)!;
 }
 
+/** Format a laptop's display name as "CompanyName ModelName". */
+export function modelDisplayName(companyName: string, designName: string): string {
+  return `${companyName} ${designName}`;
+}
+
 export const STARTING_CASH = 50_000_000;
 export const STARTING_YEAR = 2000;
 

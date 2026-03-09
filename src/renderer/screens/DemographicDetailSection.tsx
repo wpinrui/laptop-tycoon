@@ -6,7 +6,7 @@ import { tokens } from "../shell/tokens";
 import { formatNumber } from "../utils/formatCash";
 import { sectionStyle, tableStyle, thStyle, tdStyle, tdRight, sectionHeadingStyle } from "./summaryStyles";
 import { useGame } from "../state/GameContext";
-import { CompanyState } from "../state/gameTypes";
+import { CompanyState, modelDisplayName } from "../state/gameTypes";
 
 /** Human-readable stat labels */
 const STAT_LABELS: Record<LaptopStat, string> = {
@@ -46,7 +46,7 @@ function resolveLaptopName(
   const company = companies.find((c) => c.id === owner);
   if (!company) return laptopId;
   const model = company.models.find((m) => m.design.id === laptopId);
-  return model ? `${company.name} ${model.design.name}` : `${company.name} (${laptopId.slice(0, 6)})`;
+  return model ? modelDisplayName(company.name, model.design.name) : `${company.name} (${laptopId.slice(0, 6)})`;
 }
 
 interface ComparisonEntry {

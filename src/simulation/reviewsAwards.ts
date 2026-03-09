@@ -7,7 +7,7 @@
  */
 
 import { DemographicId, LaptopStat, ALL_STATS } from "../data/types";
-import { GameState, CompanyState } from "../renderer/state/gameTypes";
+import { GameState, CompanyState, modelDisplayName } from "../renderer/state/gameTypes";
 import { computeStatsForDesign } from "./statCalculation";
 import { LaptopSalesResult, QuarterSimulationResult } from "./salesTypes";
 import { AWARD_PERCEPTION_BONUS, AWARD_REACH_BONUS } from "./tunables";
@@ -397,7 +397,7 @@ export function generateReviews(state: GameState, q1Result: QuarterSimulationRes
       const fullStats = {} as Record<LaptopStat, number>;
       for (const s of ALL_STATS) fullStats[s] = stats[s] ?? 0;
       statsByLaptop.set(model.design.id, fullStats);
-      laptopNames.set(model.design.id, `${company.name} ${model.design.name}`);
+      laptopNames.set(model.design.id, modelDisplayName(company.name, model.design.name));
       laptopOwners.set(model.design.id, company.id);
     }
   }
