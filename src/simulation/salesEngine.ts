@@ -35,6 +35,7 @@ import { sampleCampaignOutcome } from "../renderer/manufacturing/utils/skewNorma
 import { generateCompetitorModels } from "./competitorAI";
 import { COMPETITORS } from "../data/competitors";
 import { averageReach, getCampaignReachBoost, applySingleQuarterPerception } from "./brandProgression";
+import { getTheoreticalMaxima, clearTheoreticalMaxCache } from "./theoreticalMax";
 
 // Cache synthetic competitor models per year for stable demand projections
 let cachedProjectionYear: number | null = null;
@@ -44,6 +45,7 @@ let cachedProjectionModels: LaptopModel[] = [];
 export function clearProjectionCache(): void {
   cachedProjectionYear = null;
   cachedProjectionModels = [];
+  clearTheoreticalMaxCache();
 }
 
 // --- Market Entry: all laptops competing this year ---
@@ -121,24 +123,23 @@ function buildMarketLaptops(state: GameState): MarketLaptop[] {
 // --- Appeal Calculation ---
 
 /**
- * Compute market-relative stat scores by normalising each stat against all laptops in the market.
- * normalized_stat = this_laptop_stat / max(that stat across all laptops this year)
- * Returns a 0-1 score per stat where 1.0 = best in market.
+ * Normalise stats against the theoretical maximum for the current year.
+ * normalized_stat = raw_stat / theoretical_max(stat, year)
+ * Returns a 0-1 score per stat where 1.0 = theoretical best possible.
  */
-function normaliseStats(laptop: MarketLaptop, allLaptops: MarketLaptop[]): Record<LaptopStat, number> {
+function normaliseStats(laptop: MarketLaptop, year: number): Record<LaptopStat, number> {
+  const maxima = getTheoreticalMaxima(year);
   const result = {} as Record<LaptopStat, number>;
 
   for (const stat of ALL_STATS) {
-    const values = allLaptops.map((l) => l.stats[stat] ?? 0);
-    const max = Math.max(...values);
     const raw = laptop.stats[stat] ?? 0;
-    result[stat] = max > 0 ? raw / max : 0;
+    result[stat] = maxima[stat] > 0 ? raw / maxima[stat] : 0;
   }
 
   return result;
 }
 
-/** Dot product of normalised stats against demographic weights */
+/** Dot product of normalised stats (raw / theoretical max) against demographic weights */
 function calculateWeightedStatScore(
   normalisedStats: Record<LaptopStat, number>,
   demographic: Demographic,
@@ -254,7 +255,7 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
   // Pre-compute normalised stats for all laptops
   const normalisedStatsMap = new Map<string, Record<LaptopStat, number>>();
   for (const laptop of allLaptops) {
-    normalisedStatsMap.set(laptop.id, normaliseStats(laptop, allLaptops));
+    normalisedStatsMap.set(laptop.id, normaliseStats(laptop, year));
   }
 
   // Pre-sample campaign perception modifiers (once per laptop, consistent across demographics)
@@ -475,7 +476,7 @@ export function projectDemandRange(
   // Compute normalised stats
   const normalisedStatsMap = new Map<string, Record<LaptopStat, number>>();
   for (const laptop of allLaptops) {
-    normalisedStatsMap.set(laptop.id, normaliseStats(laptop, allLaptops));
+    normalisedStatsMap.set(laptop.id, normaliseStats(laptop, year));
   }
 
   // Immediate reach boost from marketing campaign spend (committed + uncommitted from wizard)

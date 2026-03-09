@@ -7,6 +7,7 @@ import { DEMOGRAPHICS } from "../../data/demographics";
 import { STARTING_DEMAND_POOL } from "../../data/startingDemand";
 import { getDemandPoolSize, getScreenSizeFit } from "../../simulation/demographicData";
 import { PRICE_SENSITIVITY_EXPONENT, REPLACEMENT_CYCLE, QUARTER_SHARES, QUARTER_SHARES_SUM, DEMAND_NOISE_MIN, DEMAND_NOISE_MAX } from "../../simulation/tunables";
+import { getTheoreticalMaxima } from "../../simulation/theoreticalMax";
 import { tokens } from "../shell/tokens";
 
 const DEMOGRAPHIC_IDS = DEMOGRAPHICS.map((d) => d.id);
@@ -453,14 +454,10 @@ function SimulationTab() {
 
   const demographic = DEMOGRAPHICS.find((d) => d.id === selectedDemo)!;
 
-  // Shared normalisation base: max stats across ALL market laptops
+  // Shared normalisation base: theoretical max for each stat in the current year
   const maxStats = useMemo(() => {
-    const result = {} as Record<LaptopStat, number>;
-    for (const stat of ALL_STATS) {
-      result[stat] = Math.max(...marketEntries.map((e) => e.stats[stat] ?? 0));
-    }
-    return result;
-  }, [marketEntries]);
+    return getTheoreticalMaxima(state.year);
+  }, [state.year]);
 
   const vpContext: VPComputeContext = useMemo(
     () => ({ maxStats, demographic, selectedDemo, companies: state.companies }),
@@ -566,7 +563,7 @@ function SimulationTab() {
 
         {currentStep === 1 && (
           <StepTable
-            title="Normalised Stats = raw / max(raw across all market laptops)"
+            title="Normalised Stats = raw / theoretical_max(stat, year)"
             columns={ALL_STATS.map((s) => STAT_SHORT[s])}
             rows={computed.map((c) => ({
               label: `${c.laptop.companyName.slice(0, 10)} ${c.laptop.modelName}`,

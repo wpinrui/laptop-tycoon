@@ -226,13 +226,15 @@ For each laptop in the market (player + AI), for each demographic:
 
 ```
 For each stat:
-  normalized_stat = this_laptop_stat / max(that stat across all laptops this year)
+  normalized_stat = raw_stat / theoretical_max(stat, year)
 
 weighted_score = dot_product(normalized_stats, demographic_weight_vector)
 screen_penalty = screen size fit penalty (1.0 if preferred, 0.5 if one class off, 0.1 if two+ off)
 sensitivity_factor = PRICE_SENSITIVITY_EXPONENT[demographic.priceSensitivity]
 raw_vp = (weighted_score × screen_penalty) / price ^ sensitivity_factor
 ```
+
+**Theoretical max**: For each stat independently, the highest value that stat could reach in a valid laptop build this year — a virtual laptop optimised exclusively for that one stat. Computed once per year from the component/chassis database (no dependency on actual laptops built). This means a laptop's score is intrinsic and does not change based on competitor builds.
 
 **Price sensitivity exponent** varies by demographic. At `moderate` (1.0) the formula behaves as a simple inverse. Lower exponents (Corporate, Creative Professional) make the demographic more tolerant of high prices — enabling high-margin niche strategies. Higher exponents (Student, Budget Buyer) punish price increases more steeply — these segments flock to whoever is cheapest.
 
