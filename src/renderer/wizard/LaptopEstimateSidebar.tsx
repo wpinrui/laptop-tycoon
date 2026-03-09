@@ -72,7 +72,7 @@ export function WizardSidebar({
   // --- Estimate (conditionally rendered) ---
   let estimateSection = null;
   if (showEstimate) {
-    const totalVolume = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, allChassisOptions);
+    const totalVolume = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, allChassisOptions, gameYear);
     const totalAvailable = availableVolumeCm3(state.screenSize, bezel, thickness, gameYear);
     const volumeOverflow = totalVolume > totalAvailable;
     const volumePercent = totalAvailable > 0 ? Math.min(100, (totalVolume / totalAvailable) * 100) : 100;

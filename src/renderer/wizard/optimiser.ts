@@ -27,11 +27,12 @@ import {
   MIN_BATTERY_WH,
   MAX_BATTERY_WH,
   BATTERY_STEP_WH,
+  applyViabilityTransform,
 } from "../../data/designConstants";
 import { COLOUR_OPTIONS } from "../../data/colourOptions";
 import { computeRawStatTotals } from "../../simulation/statCalculation";
 import { getScreenSizeFit } from "../../simulation/demographicData";
-import { getTheoreticalMaxima, getTheoreticalMaxCost } from "../../simulation/theoreticalMax";
+import { getTheoreticalMaxima, getPriceScaleFactor } from "../../simulation/theoreticalMax";
 import { WizardState } from "./types";
 import { COMPONENT_STEP_SLOTS } from "./types";
 import { getBatteryEra } from "../../data/batteryEras";
@@ -81,7 +82,7 @@ function findMinThickness(
   chassisOptions: (ChassisOption | null)[],
   year: number,
 ): number {
-  const consumedVol = totalConsumedVolumeCm3(components, batteryWh, {}, chassisOptions);
+  const consumedVol = totalConsumedVolumeCm3(components, batteryWh, {}, chassisOptions, year);
   const minHeight = maxHeightConstraintCm(components, {}, chassisOptions);
 
   for (let t = THICKNESS_MIN_CM; t <= THICKNESS_MAX_CM; t = Math.round((t + THICKNESS_STEP_CM) * 10) / 10) {
@@ -124,12 +125,13 @@ function scoreBuild(
     const raw = stats[stat as LaptopStat] ?? 0;
     const max = maxima[stat as LaptopStat] ?? 1;
     const norm = max > 0 ? raw / max : 0;
-    weightedStatScore += norm * weight;
+    const transformed = applyViabilityTransform(norm, stat as LaptopStat);
+    weightedStatScore += transformed * weight;
   }
 
   const totalCost = computeBuildCost(config, year);
-  const maxCost = getTheoreticalMaxCost(year);
-  const priceScore = Math.max(0, Math.min(1, 1 - totalCost / maxCost));
+  const scaleFactor = getPriceScaleFactor(year);
+  const priceScore = Math.exp(-totalCost / scaleFactor);
 
   const pref = demographic.screenSizePreference;
   const screenPenalty = getScreenSizeFit(screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);

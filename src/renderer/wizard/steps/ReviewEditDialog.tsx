@@ -395,7 +395,7 @@ function ThicknessEditor() {
   const thickness = state.thicknessCm;
 
   const allChassisOpts = getAllChassisOptions(state.chassis);
-  const totalVolume = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, allChassisOpts);
+  const totalVolume = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, allChassisOpts, gameYear);
   const minFromVolume = minThicknessForVolumeCm(totalVolume, state.screenSize, state.bezelMm, gameYear);
   const minFromHeight = maxHeightConstraintCm(state.components, state.ports, allChassisOpts);
   const minThickness = Math.max(minFromVolume, minFromHeight);

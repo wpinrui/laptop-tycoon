@@ -122,7 +122,7 @@ function isStepComplete(step: WizardStep, state: WizardState, year: number): boo
       const chassisOptions = getAllChassisOptions(state.chassis);
 
       // Volume check
-      const totalVol = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, chassisOptions);
+      const totalVol = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, chassisOptions, year);
       const available = availableVolumeCm3(state.screenSize, state.bezelMm, state.thicknessCm, year);
       if (totalVol > available) return false;
 

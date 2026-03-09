@@ -7,7 +7,8 @@ import { DEMOGRAPHICS } from "../../data/demographics";
 import { STARTING_DEMAND_POOL } from "../../data/startingDemand";
 import { getDemandPoolSize, getScreenSizeFit } from "../../simulation/demographicData";
 import { REPLACEMENT_CYCLE, QUARTER_SHARES, QUARTER_SHARES_SUM, DEMAND_NOISE_MIN, DEMAND_NOISE_MAX } from "../../simulation/tunables";
-import { getTheoreticalMaxima, getTheoreticalMaxCost } from "../../simulation/theoreticalMax";
+import { getTheoreticalMaxima, getPriceScaleFactor } from "../../simulation/theoreticalMax";
+import { applyViabilityTransform } from "../../data/designConstants";
 import { tokens } from "../shell/tokens";
 
 const DEMOGRAPHIC_IDS = DEMOGRAPHICS.map((d) => d.id);
@@ -369,13 +370,14 @@ function computeVPForLaptop(laptop: MarketEntry, ctx: VPComputeContext) {
   let weightedStatScore = 0;
   const weightedPerStat = {} as Record<LaptopStat, number>;
   for (const stat of ALL_STATS) {
-    const w = normalised[stat] * (demographic.statWeights[stat] ?? 0);
+    const transformed = applyViabilityTransform(normalised[stat], stat);
+    const w = transformed * (demographic.statWeights[stat] ?? 0);
     weightedPerStat[stat] = w;
     weightedStatScore += w;
   }
 
-  const maxCost = getTheoreticalMaxCost(year);
-  const priceScore = Math.max(0, Math.min(1, 1 - laptop.retailPrice / maxCost));
+  const scaleFactor = getPriceScaleFactor(year);
+  const priceScore = Math.exp(-laptop.retailPrice / scaleFactor);
 
   const pref = demographic.screenSizePreference;
   const screenPenalty = getScreenSizeFit(laptop.screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);

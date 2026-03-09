@@ -37,6 +37,7 @@ export function BodyStep() {
     state.batteryCapacityWh,
     state.ports,
     allChassisOptions,
+    gameYear,
   );
   const totalAvailable = availableVolumeCm3(state.screenSize, bezel, thickness, gameYear);
   const volumeOverflow = totalVolume > totalAvailable;
