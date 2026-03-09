@@ -2,7 +2,11 @@ import { useState, useRef, useCallback, CSSProperties, useMemo } from "react";
 import { useGame } from "../state/GameContext";
 import { getPlayerCompany, CompanyState, LaptopModel } from "../state/gameTypes";
 import { computeStatsForDesign } from "../../simulation/statCalculation";
-import { ALL_STATS, LaptopStat, DemographicId } from "../../data/types";
+import { ALL_STATS, LaptopStat, DemographicId, StatVector } from "../../data/types";
+import { DEMOGRAPHICS } from "../../data/demographics";
+import { STARTING_DEMAND_POOL } from "../../data/startingDemand";
+import { getDemandPoolSize, getScreenSizeFit } from "../../simulation/demographicData";
+import { PRICE_SENSITIVITY_EXPONENT, REPLACEMENT_CYCLE, QUARTER_SHARES, QUARTER_SHARES_SUM } from "../../simulation/tunables";
 import { tokens } from "../shell/tokens";
 
 const DEMOGRAPHIC_IDS: DemographicId[] = [
@@ -338,122 +342,520 @@ function CompaniesTab({ player, competitors }: { player: CompanyState; competito
   );
 }
 
+// --- Step-by-step formula types ---
+
+interface MarketEntry {
+  id: string;
+  owner: string;
+  companyName: string;
+  modelName: string;
+  stats: StatVector;
+  retailPrice: number;
+  screenSize: number;
+  isPlayer: boolean;
+}
+
+const STEPS = [
+  "1. Raw Stats",
+  "2. Normalised Stats (0-1)",
+  "3. Demographic Weights",
+  "4. Weighted Stat Score",
+  "5. Screen Size Penalty",
+  "6. Raw Value Proposition",
+  "7. Brand Perception",
+  "8. Biased VP",
+  "9. Brand Reach",
+  "10. Effective VP",
+  "11. Market Share",
+  "12. Demand Allocation",
+] as const;
+
+type StepIndex = number;
+
 function SimulationTab() {
   const { state } = useGame();
-  const lastSim = state.lastSimulationResult;
+  const [selectedDemo, setSelectedDemo] = useState<DemographicId>("generalConsumer");
+  const [selectedLaptops, setSelectedLaptops] = useState<Set<string>>(new Set());
+  const [currentStep, setCurrentStep] = useState<StepIndex>(0);
 
-  if (!lastSim) {
-    return <div style={{ color: "#888", padding: 8 }}>No simulation results yet. Advance a quarter to see data.</div>;
+  // Build market entries from all companies
+  const marketEntries = useMemo(() => {
+    const entries: MarketEntry[] = [];
+    for (const company of state.companies) {
+      for (const model of company.models) {
+        if (model.status !== "manufacturing" && model.status !== "onSale") continue;
+        if (!model.retailPrice) continue;
+        // Competitors: only current year models
+        if (!company.isPlayer && model.yearDesigned !== state.year) continue;
+        // Player: need inventory or new batch
+        if (company.isPlayer) {
+          const plan = model.manufacturingPlan;
+          const isCurrentQuarterPlan = plan && plan.year === state.year && plan.quarter === state.quarter;
+          const newBatch = isCurrentQuarterPlan ? (model.manufacturingQuantity ?? 0) : 0;
+          if (newBatch + model.unitsInStock <= 0) continue;
+        }
+        entries.push({
+          id: model.design.id,
+          owner: company.id,
+          companyName: company.name,
+          modelName: model.design.name,
+          stats: computeStatsForDesign(model.design, state.year),
+          retailPrice: model.retailPrice,
+          screenSize: model.design.screenSize,
+          isPlayer: company.isPlayer,
+        });
+      }
+    }
+    return entries;
+  }, [state]);
+
+  // Auto-select all laptops if none selected
+  const activeLaptops = selectedLaptops.size > 0
+    ? marketEntries.filter((e) => selectedLaptops.has(e.id))
+    : marketEntries;
+
+  const toggleLaptop = (id: string) => {
+    setSelectedLaptops((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const demographic = DEMOGRAPHICS.find((d) => d.id === selectedDemo)!;
+
+  // --- Compute all intermediate values ---
+  const computed = useMemo(() => {
+    // Normalise stats across ALL market laptops (not just selected)
+    const maxStats: Record<LaptopStat, number> = {} as Record<LaptopStat, number>;
+    for (const stat of ALL_STATS) {
+      maxStats[stat] = Math.max(...marketEntries.map((e) => e.stats[stat] ?? 0));
+    }
+
+    return activeLaptops.map((laptop) => {
+      // Step 2: Normalised stats
+      const normalised: Record<LaptopStat, number> = {} as Record<LaptopStat, number>;
+      for (const stat of ALL_STATS) {
+        const raw = laptop.stats[stat] ?? 0;
+        normalised[stat] = maxStats[stat] > 0 ? raw / maxStats[stat] : 0;
+      }
+
+      // Step 4: Weighted stat score
+      let weightedStatScore = 0;
+      const weightedPerStat: Record<LaptopStat, number> = {} as Record<LaptopStat, number>;
+      for (const stat of ALL_STATS) {
+        const w = normalised[stat] * (demographic.statWeights[stat] ?? 0);
+        weightedPerStat[stat] = w;
+        weightedStatScore += w;
+      }
+
+      // Step 5: Screen size penalty
+      const pref = demographic.screenSizePreference;
+      const screenPenalty = getScreenSizeFit(laptop.screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);
+
+      // Step 6: Raw VP
+      const exponent = PRICE_SENSITIVITY_EXPONENT[demographic.priceSensitivity];
+      const priceComponent = Math.pow(laptop.retailPrice, exponent);
+      const rawVP = (weightedStatScore * screenPenalty) / priceComponent;
+
+      // Step 7: Brand perception
+      const company = state.companies.find((c) => c.id === laptop.owner);
+      const brandPerception = company ? (company.brandPerception[selectedDemo] ?? 0) : 0;
+      const campaignPerception = 0; // Can't know sampled value; show 0 as baseline
+
+      // Step 8: Biased VP
+      const perceptionMod = ((1 + brandPerception / 100) * (1 + campaignPerception / 100) - 1) * 100;
+      const biasedVP = rawVP * (1 + perceptionMod / 100);
+
+      // Step 9: Brand reach
+      const reach = company ? Math.min(company.brandReach[selectedDemo] ?? 0, 100) : 0;
+
+      // Step 10: Effective VP
+      const effectiveVP = biasedVP * (reach / 100);
+
+      return {
+        laptop,
+        normalised,
+        weightedPerStat,
+        weightedStatScore,
+        screenPenalty,
+        exponent,
+        priceComponent,
+        rawVP,
+        brandPerception,
+        campaignPerception,
+        perceptionMod,
+        biasedVP,
+        reach,
+        effectiveVP,
+      };
+    });
+  }, [activeLaptops, marketEntries, demographic, selectedDemo, state.companies]);
+
+  // Step 11: Market share (needs sum of ALL market laptops, not just selected)
+  const allComputed = useMemo(() => {
+    const maxStats: Record<LaptopStat, number> = {} as Record<LaptopStat, number>;
+    for (const stat of ALL_STATS) {
+      maxStats[stat] = Math.max(...marketEntries.map((e) => e.stats[stat] ?? 0));
+    }
+    return marketEntries.map((laptop) => {
+      const normalised: Record<LaptopStat, number> = {} as Record<LaptopStat, number>;
+      for (const stat of ALL_STATS) {
+        normalised[stat] = maxStats[stat] > 0 ? (laptop.stats[stat] ?? 0) / maxStats[stat] : 0;
+      }
+      let weightedStatScore = 0;
+      for (const stat of ALL_STATS) weightedStatScore += normalised[stat] * (demographic.statWeights[stat] ?? 0);
+      const pref = demographic.screenSizePreference;
+      const screenPenalty = getScreenSizeFit(laptop.screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);
+      const exponent = PRICE_SENSITIVITY_EXPONENT[demographic.priceSensitivity];
+      const rawVP = (weightedStatScore * screenPenalty) / Math.pow(laptop.retailPrice, exponent);
+      const company = state.companies.find((c) => c.id === laptop.owner);
+      const bp = company ? (company.brandPerception[selectedDemo] ?? 0) : 0;
+      const percMod = bp / 100;
+      const biasedVP = rawVP * (1 + percMod);
+      const reach = company ? Math.min(company.brandReach[selectedDemo] ?? 0, 100) : 0;
+      const effectiveVP = biasedVP * (reach / 100);
+      return { id: laptop.id, effectiveVP };
+    });
+  }, [marketEntries, demographic, selectedDemo, state.companies]);
+
+  const totalEffectiveVP = allComputed.reduce((s, c) => s + c.effectiveVP, 0);
+
+  // Step 12: Demand pool
+  const basePool = STARTING_DEMAND_POOL[selectedDemo];
+  const demPopulation = getDemandPoolSize(selectedDemo, state.year, basePool);
+  const annualBuyers = demPopulation / REPLACEMENT_CYCLE[selectedDemo];
+  const quarterShare = QUARTER_SHARES[state.quarter - 1] / QUARTER_SHARES_SUM;
+  const quarterlyBuyers = annualBuyers * quarterShare;
+
+  const selectStyle: CSSProperties = {
+    background: "#222", color: "#ddd", border: "1px solid #555", borderRadius: 4,
+    padding: "2px 6px", fontSize: 11,
+  };
+  const stepBtnStyle = (active: boolean): CSSProperties => ({
+    padding: "2px 6px", fontSize: 10, cursor: "pointer",
+    background: active ? "rgba(255, 200, 0, 0.2)" : "rgba(255,255,255,0.03)",
+    border: active ? "1px solid rgba(255, 200, 0, 0.4)" : "1px solid #333",
+    borderRadius: 3, color: active ? "#ffc800" : "#aaa", whiteSpace: "nowrap",
+  });
+  const labelS: CSSProperties = { color: "#888", fontSize: 10 };
+  const valS: CSSProperties = { color: "#eee", fontSize: 10, fontFamily: "monospace" };
+
+  if (marketEntries.length === 0) {
+    return <div style={{ color: "#888", padding: 8 }}>No laptops on the market. Design and manufacture a laptop first.</div>;
   }
-
-  const cellStyle: CSSProperties = { padding: "2px 4px", textAlign: "right", borderBottom: "1px solid rgba(255,255,255,0.03)", fontSize: 10 };
-  const thStyle: CSSProperties = { padding: "2px 4px", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.1)", color: "#aaa", fontSize: 9, fontWeight: "normal" };
 
   return (
     <div>
-      <div style={{ color: "#ffc800", fontWeight: "bold", marginBottom: 4 }}>
-        Last Simulation: Y{lastSim.year} Q{lastSim.quarter}
+      {/* Selectors */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 6, flexWrap: "wrap", alignItems: "center" }}>
+        <label style={{ color: "#aaa", fontSize: 10 }}>Demographic:</label>
+        <select style={selectStyle} value={selectedDemo} onChange={(e) => setSelectedDemo(e.target.value as DemographicId)}>
+          {DEMOGRAPHIC_IDS.map((d) => <option key={d} value={d}>{DEMO_SHORT[d]}</option>)}
+        </select>
+        <label style={{ color: "#aaa", fontSize: 10, marginLeft: 8 }}>Laptops (click to toggle):</label>
       </div>
-      <div style={{ color: "#aaa", marginBottom: 8, fontSize: 10 }}>
-        Revenue: ${(lastSim.totalRevenue / 1e6).toFixed(2)}M |
-        Profit: ${(lastSim.totalProfit / 1e6).toFixed(2)}M |
-        Cash: ${(lastSim.cashAfterResolution / 1e6).toFixed(2)}M
-      </div>
-
-      {lastSim.perceptionChanges.length > 0 && (
-        <div style={{ marginBottom: 8 }}>
-          <div style={{ color: "#ccc", fontWeight: "bold", marginBottom: 2, fontSize: 10 }}>Perception Changes</div>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Demo</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>Old</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>New</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>Delta</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lastSim.perceptionChanges.map((pc) => (
-                <tr key={pc.demographicId}>
-                  <td style={{ ...cellStyle, textAlign: "left" }}>{DEMO_SHORT[pc.demographicId]}</td>
-                  <td style={cellStyle}>{pc.oldPerception.toFixed(2)}</td>
-                  <td style={cellStyle}>{pc.newPerception.toFixed(2)}</td>
-                  <td style={{ ...cellStyle, color: pc.delta >= 0 ? "#6b6" : "#f66" }}>
-                    {pc.delta >= 0 ? "+" : ""}{pc.delta.toFixed(2)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <div style={{ marginBottom: 8 }}>
-        <div style={{ color: "#ccc", fontWeight: "bold", marginBottom: 2, fontSize: 10 }}>All Laptop Results (this quarter)</div>
-        {lastSim.laptopResults.map((lr) => (
-          <LaptopResultRow key={lr.laptopId} result={lr} companies={[]} />
+      <div style={{ display: "flex", gap: 4, marginBottom: 6, flexWrap: "wrap" }}>
+        <button
+          style={{ ...stepBtnStyle(selectedLaptops.size === 0), fontSize: 9 }}
+          onClick={() => setSelectedLaptops(new Set())}
+        >
+          All ({marketEntries.length})
+        </button>
+        {marketEntries.map((e) => (
+          <button
+            key={e.id}
+            style={{
+              ...stepBtnStyle(selectedLaptops.has(e.id)),
+              color: selectedLaptops.has(e.id) ? (e.isPlayer ? tokens.colors.accent : "#ffc800") : "#777",
+              borderColor: selectedLaptops.has(e.id) ? (e.isPlayer ? tokens.colors.accent : "rgba(255,200,0,0.4)") : "#333",
+              fontSize: 9,
+            }}
+            onClick={() => toggleLaptop(e.id)}
+          >
+            {e.companyName.slice(0, 8)} {e.modelName}
+          </button>
         ))}
+      </div>
+
+      {/* Step selector */}
+      <div style={{ display: "flex", gap: 3, marginBottom: 8, flexWrap: "wrap" }}>
+        {STEPS.map((step, i) => (
+          <button key={i} style={stepBtnStyle(currentStep === i)} onClick={() => setCurrentStep(i)}>
+            {step}
+          </button>
+        ))}
+      </div>
+
+      {/* Step content */}
+      <div style={{ overflowX: "auto" }}>
+        {currentStep === 0 && (
+          <StepTable
+            title="Raw Stats (from components + chassis + design bonuses)"
+            columns={ALL_STATS.map((s) => STAT_SHORT[s])}
+            rows={computed.map((c) => ({
+              label: `${c.laptop.companyName.slice(0, 10)} ${c.laptop.modelName}`,
+              isPlayer: c.laptop.isPlayer,
+              cells: ALL_STATS.map((s) => String(c.laptop.stats[s] ?? 0)),
+            }))}
+          />
+        )}
+
+        {currentStep === 1 && (
+          <StepTable
+            title="Normalised Stats = raw / max(raw across all market laptops)"
+            columns={ALL_STATS.map((s) => STAT_SHORT[s])}
+            rows={computed.map((c) => ({
+              label: `${c.laptop.companyName.slice(0, 10)} ${c.laptop.modelName}`,
+              isPlayer: c.laptop.isPlayer,
+              cells: ALL_STATS.map((s) => c.normalised[s].toFixed(3)),
+            }))}
+          />
+        )}
+
+        {currentStep === 2 && (
+          <StepTable
+            title={`Demographic Weights: ${demographic.name} (sum = 1.0)`}
+            columns={ALL_STATS.map((s) => STAT_SHORT[s])}
+            rows={[{
+              label: "Weight",
+              isPlayer: false,
+              cells: ALL_STATS.map((s) => demographic.statWeights[s].toFixed(2)),
+            }]}
+          />
+        )}
+
+        {currentStep === 3 && (
+          <div>
+            <div style={{ color: "#ffc800", fontWeight: "bold", marginBottom: 4, fontSize: 10 }}>
+              Weighted = normalised[stat] x weight[stat] ; Score = sum(weighted)
+            </div>
+            <StepTable
+              columns={[...ALL_STATS.map((s) => STAT_SHORT[s]), "SCORE"]}
+              rows={computed.map((c) => ({
+                label: `${c.laptop.companyName.slice(0, 10)} ${c.laptop.modelName}`,
+                isPlayer: c.laptop.isPlayer,
+                cells: [...ALL_STATS.map((s) => c.weightedPerStat[s].toFixed(4)), c.weightedStatScore.toFixed(4)],
+              }))}
+            />
+          </div>
+        )}
+
+        {currentStep === 4 && (
+          <div>
+            <div style={{ color: "#ffc800", fontWeight: "bold", marginBottom: 4, fontSize: 10 }}>
+              Screen Size Penalty: 1.0 if in [{demographic.screenSizePreference.preferredMin}-{demographic.screenSizePreference.preferredMax}"], else -(distance x {demographic.screenSizePreference.penaltyPerInch}/inch), floor 0.05
+            </div>
+            <StepTable
+              columns={["Screen Size", "Preferred", "Penalty"]}
+              rows={computed.map((c) => ({
+                label: `${c.laptop.companyName.slice(0, 10)} ${c.laptop.modelName}`,
+                isPlayer: c.laptop.isPlayer,
+                cells: [
+                  `${c.laptop.screenSize}"`,
+                  `${demographic.screenSizePreference.preferredMin}-${demographic.screenSizePreference.preferredMax}"`,
+                  c.screenPenalty.toFixed(3),
+                ],
+              }))}
+            />
+          </div>
+        )}
+
+        {currentStep === 5 && (
+          <div>
+            <div style={{ color: "#ffc800", fontWeight: "bold", marginBottom: 4, fontSize: 10 }}>
+              Raw VP = (weighted_score x screen_penalty) / price ^ {demographic.priceSensitivity} ({PRICE_SENSITIVITY_EXPONENT[demographic.priceSensitivity]})
+            </div>
+            <StepTable
+              columns={["StatScore", "ScrPen", "Price", "Exponent", "Price^Exp", "Raw VP"]}
+              rows={computed.map((c) => ({
+                label: `${c.laptop.companyName.slice(0, 10)} ${c.laptop.modelName}`,
+                isPlayer: c.laptop.isPlayer,
+                cells: [
+                  c.weightedStatScore.toFixed(4),
+                  c.screenPenalty.toFixed(3),
+                  `$${c.laptop.retailPrice.toLocaleString()}`,
+                  c.exponent.toFixed(1),
+                  c.priceComponent.toFixed(1),
+                  c.rawVP.toExponential(4),
+                ],
+              }))}
+            />
+          </div>
+        )}
+
+        {currentStep === 6 && (
+          <div>
+            <div style={{ color: "#ffc800", fontWeight: "bold", marginBottom: 4, fontSize: 10 }}>
+              Brand Perception in "{DEMO_SHORT[selectedDemo]}" (range: -50 to +50)
+            </div>
+            <StepTable
+              columns={["Perception", "Modifier %"]}
+              rows={computed.map((c) => ({
+                label: `${c.laptop.companyName.slice(0, 10)} ${c.laptop.modelName}`,
+                isPlayer: c.laptop.isPlayer,
+                cells: [
+                  c.brandPerception.toFixed(2),
+                  `${c.perceptionMod >= 0 ? "+" : ""}${c.perceptionMod.toFixed(2)}%`,
+                ],
+              }))}
+            />
+            <div style={{ ...labelS, marginTop: 4 }}>
+              Note: Campaign perception is sampled at simulation time. Shown as 0 here (baseline).
+            </div>
+          </div>
+        )}
+
+        {currentStep === 7 && (
+          <div>
+            <div style={{ color: "#ffc800", fontWeight: "bold", marginBottom: 4, fontSize: 10 }}>
+              Biased VP = Raw VP x (1 + perception_mod / 100)
+            </div>
+            <StepTable
+              columns={["Raw VP", "Perc Mod %", "Biased VP"]}
+              rows={computed.map((c) => ({
+                label: `${c.laptop.companyName.slice(0, 10)} ${c.laptop.modelName}`,
+                isPlayer: c.laptop.isPlayer,
+                cells: [
+                  c.rawVP.toExponential(4),
+                  `${c.perceptionMod >= 0 ? "+" : ""}${c.perceptionMod.toFixed(2)}%`,
+                  c.biasedVP.toExponential(4),
+                ],
+              }))}
+            />
+          </div>
+        )}
+
+        {currentStep === 8 && (
+          <div>
+            <div style={{ color: "#ffc800", fontWeight: "bold", marginBottom: 4, fontSize: 10 }}>
+              Brand Reach in "{DEMO_SHORT[selectedDemo]}" (0-100%)
+            </div>
+            <StepTable
+              columns={["Reach %"]}
+              rows={computed.map((c) => ({
+                label: `${c.laptop.companyName.slice(0, 10)} ${c.laptop.modelName}`,
+                isPlayer: c.laptop.isPlayer,
+                cells: [c.reach.toFixed(2) + "%"],
+              }))}
+            />
+          </div>
+        )}
+
+        {currentStep === 9 && (
+          <div>
+            <div style={{ color: "#ffc800", fontWeight: "bold", marginBottom: 4, fontSize: 10 }}>
+              Effective VP = Biased VP x (reach / 100)
+            </div>
+            <StepTable
+              columns={["Biased VP", "Reach %", "Effective VP"]}
+              rows={computed.map((c) => ({
+                label: `${c.laptop.companyName.slice(0, 10)} ${c.laptop.modelName}`,
+                isPlayer: c.laptop.isPlayer,
+                cells: [
+                  c.biasedVP.toExponential(4),
+                  c.reach.toFixed(2) + "%",
+                  c.effectiveVP.toExponential(4),
+                ],
+              }))}
+            />
+            <div style={{ ...labelS, marginTop: 4 }}>
+              Sum of ALL effective VPs (full market): <span style={valS}>{totalEffectiveVP.toExponential(4)}</span>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 10 && (
+          <div>
+            <div style={{ color: "#ffc800", fontWeight: "bold", marginBottom: 4, fontSize: 10 }}>
+              Market Share = effective_vp / sum(all effective_vps)
+            </div>
+            <StepTable
+              columns={["Effective VP", "Sum All VPs", "Market Share %"]}
+              rows={computed.map((c) => {
+                const share = totalEffectiveVP > 0 ? c.effectiveVP / totalEffectiveVP : 0;
+                return {
+                  label: `${c.laptop.companyName.slice(0, 10)} ${c.laptop.modelName}`,
+                  isPlayer: c.laptop.isPlayer,
+                  cells: [
+                    c.effectiveVP.toExponential(4),
+                    totalEffectiveVP.toExponential(4),
+                    (share * 100).toFixed(2) + "%",
+                  ],
+                };
+              })}
+            />
+          </div>
+        )}
+
+        {currentStep === 11 && (
+          <div>
+            <div style={{ color: "#ffc800", fontWeight: "bold", marginBottom: 4, fontSize: 10 }}>
+              Demand Allocation for "{DEMO_SHORT[selectedDemo]}" in Y{state.year} Q{state.quarter}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, marginBottom: 6 }}>
+              <div><span style={labelS}>Base pool: </span><span style={valS}>{basePool.toLocaleString()}</span></div>
+              <div><span style={labelS}>Growth-adjusted: </span><span style={valS}>{demPopulation.toLocaleString()}</span></div>
+              <div><span style={labelS}>Replacement cycle: </span><span style={valS}>{REPLACEMENT_CYCLE[selectedDemo]} yrs</span></div>
+              <div><span style={labelS}>Annual buyers: </span><span style={valS}>{Math.round(annualBuyers).toLocaleString()}</span></div>
+              <div><span style={labelS}>Q{state.quarter} share: </span><span style={valS}>{(quarterShare * 100).toFixed(1)}%</span></div>
+              <div><span style={labelS}>Quarterly buyers: </span><span style={valS}>{Math.round(quarterlyBuyers).toLocaleString()}</span></div>
+            </div>
+            <StepTable
+              columns={["Market Share %", "Units Demanded"]}
+              rows={computed.map((c) => {
+                const share = totalEffectiveVP > 0 ? c.effectiveVP / totalEffectiveVP : 0;
+                const units = Math.round(quarterlyBuyers * share);
+                return {
+                  label: `${c.laptop.companyName.slice(0, 10)} ${c.laptop.modelName}`,
+                  isPlayer: c.laptop.isPlayer,
+                  cells: [
+                    (share * 100).toFixed(2) + "%",
+                    units.toLocaleString(),
+                  ],
+                };
+              })}
+            />
+            <div style={{ ...labelS, marginTop: 4 }}>
+              Note: Actual simulation adds +/-{`${10}-${15}`}% sales noise on top.
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function LaptopResultRow({ result }: { result: { laptopId: string; owner: string; retailPrice: number; unitsDemanded: number; unitsSold: number; unsoldUnits: number; revenue: number; profit: number; campaignPerceptionMod: number; demographicBreakdown: { demographicId: DemographicId; marketShare: number; unitsDemanded: number; rawVP: number; totalPool: number; weightedStatScore: number; screenPenalty: number; perceptionMod: number }[] }; companies: CompanyState[] }) {
-  const [expanded, setExpanded] = useState(false);
-
-  const cellStyle: CSSProperties = { padding: "1px 4px", textAlign: "right", borderBottom: "1px solid rgba(255,255,255,0.03)", fontSize: 10 };
-  const thStyle: CSSProperties = { padding: "1px 4px", textAlign: "right", borderBottom: "1px solid rgba(255,255,255,0.1)", color: "#aaa", fontSize: 9, fontWeight: "normal" };
+// Reusable table for step display
+function StepTable({ title, columns, rows }: {
+  title?: string;
+  columns: string[];
+  rows: { label: string; isPlayer: boolean; cells: string[] }[];
+}) {
+  const thS: CSSProperties = { padding: "2px 5px", textAlign: "right", borderBottom: "1px solid rgba(255,255,255,0.1)", color: "#aaa", fontSize: 9, fontWeight: "normal" };
+  const cellS: CSSProperties = { padding: "2px 5px", textAlign: "right", borderBottom: "1px solid rgba(255,255,255,0.05)", fontSize: 10, fontFamily: "monospace" };
 
   return (
-    <div style={{ marginBottom: 4, background: "rgba(255,255,255,0.02)", borderRadius: 4, padding: 4 }}>
-      <div
-        onClick={() => setExpanded(!expanded)}
-        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-      >
-        <span style={{ color: result.owner === "player" ? tokens.colors.accent : "#ccc" }}>
-          {result.owner} / {result.laptopId.slice(0, 8)}
-        </span>
-        <span style={{ color: "#888", fontSize: 10 }}>
-          Sold: {result.unitsSold.toLocaleString()} / {result.unitsDemanded.toLocaleString()} |
-          ${result.retailPrice.toLocaleString()} |
-          Profit: ${(result.profit / 1e6).toFixed(2)}M
-          {expanded ? " v" : " >"}
-        </span>
-      </div>
-      {expanded && (
-        <div style={{ marginTop: 4, overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={{ ...thStyle, textAlign: "left" }}>Demo</th>
-                <th style={thStyle}>Pool</th>
-                <th style={thStyle}>Demand</th>
-                <th style={thStyle}>Share%</th>
-                <th style={thStyle}>StatScore</th>
-                <th style={thStyle}>ScrPen</th>
-                <th style={thStyle}>RawVP</th>
-                <th style={thStyle}>PercMod%</th>
-              </tr>
-            </thead>
-            <tbody>
-              {result.demographicBreakdown.map((db) => (
-                <tr key={db.demographicId}>
-                  <td style={{ ...cellStyle, textAlign: "left" }}>{DEMO_SHORT[db.demographicId]}</td>
-                  <td style={cellStyle}>{db.totalPool.toLocaleString()}</td>
-                  <td style={cellStyle}>{Math.round(db.unitsDemanded).toLocaleString()}</td>
-                  <td style={cellStyle}>{(db.marketShare * 100).toFixed(1)}</td>
-                  <td style={cellStyle}>{db.weightedStatScore.toFixed(3)}</td>
-                  <td style={cellStyle}>{db.screenPenalty.toFixed(2)}</td>
-                  <td style={cellStyle}>{db.rawVP.toFixed(6)}</td>
-                  <td style={{ ...cellStyle, color: db.perceptionMod >= 0 ? "#6b6" : "#f66" }}>
-                    {(db.perceptionMod * 100).toFixed(1)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+    <div>
+      {title && <div style={{ color: "#ffc800", fontWeight: "bold", marginBottom: 4, fontSize: 10 }}>{title}</div>}
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead>
+          <tr>
+            <th style={{ ...thS, textAlign: "left" }}>Laptop</th>
+            {columns.map((c, i) => <th key={i} style={thS}>{c}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, i) => (
+            <tr key={i}>
+              <td style={{ ...cellS, textAlign: "left", color: row.isPlayer ? tokens.colors.accent : "#ccc", fontFamily: tokens.font.family }}>
+                {row.label}
+              </td>
+              {row.cells.map((val, j) => <td key={j} style={cellS}>{val}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
