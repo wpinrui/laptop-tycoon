@@ -14,6 +14,7 @@ const panelStyle: CSSProperties = {
   border: `2px solid ${tokens.colors.panelBorder}`,
   borderRadius: tokens.borderRadius.lg,
   padding: tokens.spacing.xl,
+  paddingBottom: tokens.spacing.xl + tokens.spacing.lg,
   color: tokens.colors.text,
   fontFamily: tokens.font.family,
   fontSize: tokens.font.sizeBase,
