@@ -12,6 +12,7 @@ import {
   getDemandPoolSize,
   getScreenSizeFit,
 } from "./demographicData";
+import { applyViabilityTransform } from "../data/designConstants";
 import {
   DemographicSalesBreakdown,
   LaptopSalesResult,
@@ -34,7 +35,7 @@ import { sampleCampaignOutcome } from "../renderer/manufacturing/utils/skewNorma
 import { generateCompetitorModels } from "./competitorAI";
 import { COMPETITORS } from "../data/competitors";
 import { averageReach, getCampaignReachBoost, applySingleQuarterPerception } from "./brandProgression";
-import { getTheoreticalMaxima, getTheoreticalMaxCost, clearTheoreticalMaxCache } from "./theoreticalMax";
+import { getTheoreticalMaxima, getPriceScaleFactor, clearTheoreticalMaxCache } from "./theoreticalMax";
 
 // Cache synthetic competitor models per year for stable demand projections
 let cachedProjectionYear: number | null = null;
@@ -138,25 +139,30 @@ function normaliseStats(laptop: MarketLaptop, year: number): Record<LaptopStat, 
   return result;
 }
 
-/** Dot product of normalised stats against demographic weights (stat weights only, no price). */
+/** Dot product of normalised stats (with viability transform) against demographic weights. */
 function calculateWeightedStatScore(
   normalisedStats: Record<LaptopStat, number>,
   demographic: Demographic,
 ): number {
   let score = 0;
   for (const stat of ALL_STATS) {
-    score += (normalisedStats[stat] ?? 0) * (demographic.statWeights[stat] ?? 0);
+    const transformed = applyViabilityTransform(normalisedStats[stat] ?? 0, stat);
+    score += transformed * (demographic.statWeights[stat] ?? 0);
   }
   return score;
 }
 
 /**
- * Compute price score: cheaper laptops score higher.
- * price_score = 1 - (retailPrice / theoreticalMaxCost), clamped to [0, 1].
+ * Compute price score using exponential decay: cheaper laptops score higher.
+ * price_score = e^(-price / scaleFactor)
+ *
+ * scaleFactor is the median build cost for the year, concentrating sensitivity
+ * in the price range where most laptops actually live. Saving $30 on a $700
+ * build matters more than saving $30 on a $2500 build.
  */
 function calculatePriceScore(retailPrice: number, year: number): number {
-  const maxCost = getTheoreticalMaxCost(year);
-  return Math.max(0, Math.min(1, 1 - retailPrice / maxCost));
+  const scaleFactor = getPriceScaleFactor(year);
+  return Math.exp(-retailPrice / scaleFactor);
 }
 
 /**

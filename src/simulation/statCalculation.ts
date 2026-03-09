@@ -27,6 +27,9 @@ import {
   DERIVED_STAT_MAX,
   WEIGHT_STAT_ZERO_G,
   WEIGHT_STAT_DIVISOR,
+  THERMALS_MAX_SCORE,
+  THERMALS_HEADROOM_FULL,
+  THERMALS_HEADROOM_CAP,
   applyDisplayMultiplier,
   coolingMultiplier,
   availableVolumeCm3,
@@ -106,7 +109,7 @@ export function computeRawStatTotals(params: RawStatTotalsParams): StatVector {
   const colourBonus = Math.round((countBonus * premiumMultiplier) / DESIGN_COLOUR_BONUS_DIVISOR);
   totals.design = (totals.design ?? 0) + thicknessBonus + bezelBonus + colourBonus;
 
-  // Performance penalty when cooling is insufficient
+  // Cooling: compute effective cooling and headroom ratio
   let totalPower = 0;
   for (const [slot, comp] of Object.entries(components)) {
     if (!comp) continue;
@@ -114,19 +117,25 @@ export function computeRawStatTotals(params: RawStatTotalsParams): StatVector {
   }
   if (totalPower > 0) {
     const coolingFromSolution = chassis.coolingSolution?.coolingCapacityW ?? 0;
-    const totalVolume = totalConsumedVolumeCm3(components, batteryCapacityWh, ports, allChassisOptions);
+    const totalVolume = totalConsumedVolumeCm3(components, batteryCapacityWh, ports, allChassisOptions, gameYear);
     const totalAvailable = availableVolumeCm3(screenSize, bezelMm, thicknessCm, gameYear);
     const spaceUtil = totalAvailable > 0 ? totalVolume / totalAvailable : 1;
     const coolMult = coolingMultiplier(thicknessCm, bezelMm, spaceUtil);
     const effectiveCooling = coolingFromSolution * coolMult;
+    const headroom = Math.min(effectiveCooling / totalPower, THERMALS_HEADROOM_CAP);
+
+    // Derived thermals stat: scales linearly with headroom up to THERMALS_HEADROOM_FULL
+    totals.thermals = Math.round(THERMALS_MAX_SCORE * Math.min(1, headroom / THERMALS_HEADROOM_FULL));
+
+    // Proportional throttle: a 40W CPU cooled to 20W runs at 50% performance
     if (totalPower > effectiveCooling) {
-      const deficit = 1 - effectiveCooling / totalPower;
-      const penalty = 0.1 + 0.9 * deficit * deficit * (1 + deficit);
-      const perfLoss = Math.round((totals.performance ?? 0) * Math.min(1, penalty));
-      const gamingLoss = Math.round((totals.gamingPerformance ?? 0) * Math.min(1, penalty));
-      totals.performance = Math.max(0, (totals.performance ?? 0) - perfLoss);
-      totals.gamingPerformance = Math.max(0, (totals.gamingPerformance ?? 0) - gamingLoss);
+      const throttleRatio = effectiveCooling / totalPower;
+      totals.performance = Math.round((totals.performance ?? 0) * throttleRatio);
+      totals.gamingPerformance = Math.round((totals.gamingPerformance ?? 0) * throttleRatio);
     }
+  } else {
+    // No power draw = perfect thermals (passive build)
+    totals.thermals = THERMALS_MAX_SCORE;
   }
 
   // --- Derived stats: batteryLife, weight, thinness ---
