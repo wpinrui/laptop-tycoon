@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useWizard, isStepLockedBySpecBump } from "./WizardContext";
 import { StepIndicator } from "./StepIndicator";
 import { WizardStep, WizardState, WIZARD_STEPS, COMPONENT_STEP_SLOTS, getAllChassisOptions } from "./types";
@@ -24,6 +24,69 @@ import { BodyStep } from "./steps/BodyStep";
 import { ReviewStep } from "./steps/ReviewStep";
 import { WizardSidebar } from "./LaptopEstimateSidebar";
 import { StatusBar } from "../shell/StatusBar";
+import { DEMOGRAPHICS } from "../../data/demographics";
+import { Demographic } from "../../data/types";
+import { overlayStyle } from "../shell/tokens";
+import { ContentPanel } from "../shell/ContentPanel";
+import { getDemandPoolSize } from "../../simulation/demographicData";
+import { STARTING_DEMAND_POOL } from "../../data/startingDemand";
+
+
+function DemographicPickerDialog({ onPick, onCancel, year }: { onPick: (d: Demographic) => void; onCancel: () => void; year: number }) {
+  return (
+    <div
+      style={overlayStyle}
+      onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
+    >
+      <ContentPanel maxWidth={420}>
+        <h2 style={{ margin: 0, fontSize: tokens.font.sizeTitle, fontWeight: 700, textAlign: "center" }}>
+          Optimise for Demographic
+        </h2>
+        <p style={{ margin: 0, marginTop: tokens.spacing.xs, fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, textAlign: "center", marginBottom: tokens.spacing.md }}>
+          Pick a demographic to optimise weighted stats per unit cost
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: tokens.spacing.xs }}>
+          {DEMOGRAPHICS.map((d) => (
+            <button
+              key={d.id}
+              onClick={() => onPick(d)}
+              style={{
+                background: tokens.colors.surface,
+                border: `1px solid ${tokens.colors.panelBorder}`,
+                borderRadius: tokens.borderRadius.sm,
+                color: tokens.colors.text,
+                fontSize: tokens.font.sizeBase,
+                padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
+                cursor: "pointer",
+                fontFamily: "inherit",
+                textAlign: "left",
+                transition: "border-color 0.15s, background 0.15s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = tokens.colors.accent;
+                e.currentTarget.style.background = tokens.colors.background;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = tokens.colors.panelBorder;
+                e.currentTarget.style.background = tokens.colors.surface;
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontWeight: 600 }}>{d.name}</span>
+                <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
+                  {getDemandPoolSize(d.id, year, STARTING_DEMAND_POOL[d.id]).toLocaleString()} buyers
+                </span>
+              </div>
+              <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, marginTop: 2 }}>
+                {d.description}
+              </div>
+            </button>
+          ))}
+        </div>
+      </ContentPanel>
+    </div>
+  );
+}
 
 
 function isStepComplete(step: WizardStep, state: WizardState, year: number): boolean {
@@ -95,11 +158,38 @@ function wizardStateToDesign(state: WizardState, year: number): LaptopDesign {
 }
 
 
+const toolbarBtnStyle: React.CSSProperties = {
+  background: "none",
+  border: `1px solid ${tokens.colors.panelBorder}`,
+  borderRadius: tokens.borderRadius.sm,
+  color: tokens.colors.accent,
+  fontSize: tokens.font.sizeSmall,
+  padding: `${tokens.spacing.xs + 2}px ${tokens.spacing.sm + 4}px`,
+  cursor: "pointer",
+  fontFamily: "inherit",
+  lineHeight: "1",
+  transition: "border-color 0.15s, color 0.15s",
+};
+
+function ToolbarButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      style={toolbarBtnStyle}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = tokens.colors.accent; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = tokens.colors.panelBorder; }}
+    >
+      {children}
+    </button>
+  );
+}
+
 function WizardContent() {
   const { state, dispatch } = useWizard();
   const { state: gameState, dispatch: gameDispatch } = useGame();
   const { navigateTo } = useNavigation();
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [showOptimisePicker, setShowOptimisePicker] = useState(false);
   const currentIdx = WIZARD_STEPS.indexOf(state.currentStep);
   const isFirst = currentIdx === 0;
   const isLast = currentIdx === WIZARD_STEPS.length - 1;
@@ -174,25 +264,8 @@ function WizardContent() {
           </p>
         </div>
         <div style={{ display: "flex", gap: tokens.spacing.sm, flexShrink: 0 }}>
-        <button
-          onClick={() => dispatch({ type: "DEBUG_AUTOFILL", year: gameState.year })}
-          style={{
-            background: "none",
-            border: `1px solid ${tokens.colors.panelBorder}`,
-            borderRadius: tokens.borderRadius.sm,
-            color: tokens.colors.accent,
-            fontSize: tokens.font.sizeSmall,
-            padding: `${tokens.spacing.xs + 2}px ${tokens.spacing.sm + 4}px`,
-            cursor: "pointer",
-            fontFamily: "inherit",
-            lineHeight: "1",
-            transition: "border-color 0.15s, color 0.15s",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = tokens.colors.accent; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = tokens.colors.panelBorder; }}
-        >
-          Auto-fill
-        </button>
+        <ToolbarButton onClick={() => dispatch({ type: "DEBUG_AUTOFILL", year: gameState.year })}>Auto-fill</ToolbarButton>
+        <ToolbarButton onClick={() => setShowOptimisePicker(true)}>Optimise</ToolbarButton>
         <button
           onClick={() => setShowCloseConfirm(true)}
           style={{
@@ -310,6 +383,16 @@ function WizardContent() {
             navigateTo(state.editingModelId ? "modelManagement" : "dashboard");
           }}
           onCancel={() => setShowCloseConfirm(false)}
+        />
+      )}
+      {showOptimisePicker && (
+        <DemographicPickerDialog
+          year={gameState.year}
+          onPick={(d) => {
+            dispatch({ type: "DEBUG_OPTIMISE", demographic: d, year: gameState.year });
+            setShowOptimisePicker(false);
+          }}
+          onCancel={() => setShowOptimisePicker(false)}
         />
       )}
       <StatusBar variant="fixed" />

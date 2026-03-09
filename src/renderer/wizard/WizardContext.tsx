@@ -18,6 +18,8 @@ import { LaptopDesign } from "../state/gameTypes";
 import { useGame } from "../state/GameContext";
 import { getAvailableComponents, getAvailableChassisOptions, CHASSIS_SLOTS } from "../../data/designConstants";
 import { COLOUR_OPTIONS } from "../../data/colourOptions";
+import { Demographic } from "../../data/types";
+import { optimiseForDemographic } from "./optimiser";
 
 type WizardAction =
   | { type: "SET_NAME"; name: string }
@@ -37,7 +39,8 @@ type WizardAction =
   | { type: "PREV_STEP" }
   | { type: "RESET" }
   | { type: "LOAD_DESIGN"; design: LaptopDesign }
-  | { type: "DEBUG_AUTOFILL"; year: number };
+  | { type: "DEBUG_AUTOFILL"; year: number }
+  | { type: "DEBUG_OPTIMISE"; demographic: Demographic; year: number };
 
 /** Steps locked by spec bump — screen size and body are inherited from predecessor. */
 export function isStepLockedBySpecBump(step: WizardStep, state: WizardState): boolean {
@@ -179,6 +182,23 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         components,
         chassis,
         selectedColours: [COLOUR_OPTIONS[0].id],
+        visitedSteps: new Set<WizardStep>(WIZARD_STEPS),
+        currentStep: "review",
+      };
+    }
+    case "DEBUG_OPTIMISE": {
+      const result = optimiseForDemographic(action.demographic, action.year);
+      return {
+        ...state,
+        name: state.name || `Optimised (${action.demographic.name})`,
+        modelType: "brandNew",
+        screenSize: result.screenSize,
+        components: result.components,
+        chassis: result.chassis,
+        batteryCapacityWh: result.batteryCapacityWh,
+        thicknessCm: result.thicknessCm,
+        bezelMm: result.bezelMm,
+        selectedColours: result.selectedColours,
         visitedSteps: new Set<WizardStep>(WIZARD_STEPS),
         currentStep: "review",
       };

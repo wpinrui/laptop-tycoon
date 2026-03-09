@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigation } from "./NavigationContext";
 import { GameLayout } from "../shell/GameLayout";
 import { ContentPanel } from "../shell/ContentPanel";
@@ -17,6 +17,7 @@ import { QuarterlySummaryScreen } from "../screens/QuarterlySummaryScreen";
 import { GameOverScreen } from "../screens/GameOverScreen";
 import { BrandDetailScreen } from "../screens/BrandDetailScreen";
 import { ReviewsAwardsScreen } from "../screens/ReviewsAwardsScreen";
+import { DebugPanel } from "../debug/DebugPanel";
 
 function PlaceholderScreen({ title }: { title: string }) {
   const { navigateTo } = useNavigation();
@@ -79,9 +80,14 @@ const NO_PAUSE_SCREENS = new Set(["mainMenu", "newGame", "designWizard", "manufa
 
 export function ScreenRouter() {
   const { screen, overlay, setOverlay } = useNavigation();
+  const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "F9") {
+        setShowDebug((prev) => !prev);
+        return;
+      }
       if (e.key !== "Escape") return;
       if (NO_PAUSE_SCREENS.has(screen)) return;
       setOverlay(overlay === "pauseMenu" ? null : "pauseMenu");
@@ -94,6 +100,7 @@ export function ScreenRouter() {
     <GameLayout>
       <ScreenContent />
       {overlay === "pauseMenu" && <PauseMenu />}
+      {showDebug && <DebugPanel onClose={() => setShowDebug(false)} />}
     </GameLayout>
   );
 }
