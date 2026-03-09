@@ -23,6 +23,10 @@ import {
   DESIGN_BEZEL_EXPONENT,
   DESIGN_COLOUR_BASE_COST,
   DESIGN_COLOUR_BONUS_DIVISOR,
+  BATTERY_LIFE_POINTS_PER_HOUR,
+  DERIVED_STAT_MAX,
+  WEIGHT_STAT_ZERO_G,
+  WEIGHT_STAT_DIVISOR,
   applyDisplayMultiplier,
   coolingMultiplier,
   availableVolumeCm3,
@@ -128,14 +132,12 @@ export function computeRawStatTotals(params: RawStatTotalsParams): StatVector {
   // --- Derived stats: batteryLife, weight, thinness ---
 
   // batteryLife: hours of use = batteryWh / (totalPower * avgUsageMultiplier)
-  // Score: ~10 points per hour, capped at 100
   if (totalPower > 0) {
     const usageMult = avgUsageMultiplier(gameYear);
     const batteryHours = batteryCapacityWh / (totalPower * usageMult);
-    totals.batteryLife = (totals.batteryLife ?? 0) + Math.round(Math.min(100, batteryHours * 10));
+    totals.batteryLife = (totals.batteryLife ?? 0) + Math.round(Math.min(DERIVED_STAT_MAX, batteryHours * BATTERY_LIFE_POINTS_PER_HOUR));
   } else {
-    // No power draw = infinite battery life
-    totals.batteryLife = (totals.batteryLife ?? 0) + 100;
+    totals.batteryLife = (totals.batteryLife ?? 0) + DERIVED_STAT_MAX;
   }
 
   // weight: lighter = higher score
@@ -155,12 +157,11 @@ export function computeRawStatTotals(params: RawStatTotalsParams): StatVector {
   const materialDensity = chassis.material?.shellDensityMultiplier ?? 1.0;
   const shellWeight = chassisShellWeightG(screenSize, bezelMm, thicknessCm, materialDensity);
   const totalWeight = screenSizeDef.baseWeightG + componentWeight + portWeight + chassisOptionWeight + batteryWeight + shellWeight;
-  // Map: 500g → 90, 1500g → 70, 2500g → 50, 3500g → 30, 4500g → 10
-  totals.weight = (totals.weight ?? 0) + Math.round(Math.max(0, Math.min(100, (5000 - totalWeight) / 50)));
+  totals.weight = (totals.weight ?? 0) + Math.round(Math.max(0, Math.min(DERIVED_STAT_MAX, (WEIGHT_STAT_ZERO_G - totalWeight) / WEIGHT_STAT_DIVISOR)));
 
   // thinness: thinner = higher score (linear mapping)
   const thinRaw = 1 - (thicknessCm - THICKNESS_MIN_CM) / (THICKNESS_MAX_CM - THICKNESS_MIN_CM);
-  totals.thinness = (totals.thinness ?? 0) + Math.round(Math.max(0, Math.min(100, thinRaw * 100)));
+  totals.thinness = (totals.thinness ?? 0) + Math.round(Math.max(0, Math.min(DERIVED_STAT_MAX, thinRaw * DERIVED_STAT_MAX)));
 
   // Clamp all stats to 0 minimum
   for (const key of Object.keys(totals) as LaptopStat[]) {
