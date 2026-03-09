@@ -1,8 +1,7 @@
-import { CSSProperties, useState, useRef, useEffect, useMemo } from "react";
+import { CSSProperties, useState, useRef, useEffect } from "react";
 import { DemographicId } from "../../../data/types";
 import { DEMOGRAPHICS } from "../../../data/demographics";
 import { getQuarterlyBuyers } from "../../../simulation/demographicData";
-import { DEMAND_NOISE_MIN, DEMAND_NOISE_MAX } from "../../../simulation/tunables";
 import { averageReach } from "../../../simulation/brandProgression";
 import { tokens } from "../../shell/tokens";
 import { Quarter, getPlayerCompany } from "../../state/gameTypes";
@@ -162,22 +161,6 @@ function ArrowButton({ direction, onClick }: { direction: "left" | "right"; onCl
   );
 }
 
-/** Simple seeded PRNG (mulberry32) for stable noise per demographic/quarter */
-function seededRandom(seed: number): number {
-  let t = (seed + 0x6d2b79f5) | 0;
-  t = Math.imul(t ^ (t >>> 15), t | 1);
-  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-}
-
-function applyReachNoise(trueReach: number, seed: number): number {
-  const rng = seededRandom(seed);
-  const noisePercent = DEMAND_NOISE_MIN + rng * (DEMAND_NOISE_MAX - DEMAND_NOISE_MIN);
-  const direction = seededRandom(seed + 1) < 0.5 ? -1 : 1;
-  const noisy = trueReach * (1 + (direction * noisePercent) / 100);
-  return Math.max(0, Math.min(100, noisy));
-}
-
 export function MarketSizeCard({ year, quarter }: { year: number; quarter: Quarter }) {
   const [selectedDemographic, setSelectedDemographic] = useState<DemoValue>("all");
   const { state: gameState } = useGame();
@@ -188,22 +171,11 @@ export function MarketSizeCard({ year, quarter }: { year: number; quarter: Quart
       ? getTotalQuarterlyBuyers(year, quarter)
       : getQuarterlyBuyers(selectedDemographic, year, quarter);
 
-  // Stable noisy reach estimate — noise is seeded so it doesn't flicker on re-render
-  const noisyReach = useMemo(() => {
-    const baseSeed = year * 100 + quarter;
-    if (selectedDemographic === "all") {
-      const avg = averageReach(player.brandReach);
-      return applyReachNoise(avg, baseSeed);
-    }
-    const trueReach = player.brandReach[selectedDemographic] ?? 0;
-    // Per-demographic seed uses charCode sum for variety
-    const demSeed = baseSeed + selectedDemographic.split("").reduce((s, c) => s + c.charCodeAt(0), 0);
-    return applyReachNoise(trueReach, demSeed);
-  }, [year, quarter, selectedDemographic, player.brandReach]);
-
-  const reachDisplay = noisyReach < 1
-    ? "<1%"
-    : `~${Math.round(noisyReach)}%`;
+  // Brand reach as a fraction (0–1): how much of this market the player can access
+  const reachFraction = selectedDemographic === "all"
+    ? averageReach(player.brandReach) / 100
+    : (player.brandReach[selectedDemographic] ?? 0) / 100;
+  const reachableBuyers = Math.round(marketSize * reachFraction);
 
   return (
     <div style={cardStyle}>
@@ -223,7 +195,7 @@ export function MarketSizeCard({ year, quarter }: { year: number; quarter: Quart
         color: tokens.colors.textMuted,
         marginBottom: tokens.spacing.sm,
       }}>
-        Est. brand reach: <span style={{ color: tokens.colors.text, fontWeight: 600 }}>{reachDisplay}</span>
+        Est. brand reach: <span style={{ color: tokens.colors.text, fontWeight: 600 }}>{reachableBuyers.toLocaleString()}</span>
       </div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: tokens.spacing.xs }}>
         <ArrowButton direction="left" onClick={() => {
