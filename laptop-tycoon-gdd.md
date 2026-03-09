@@ -97,7 +97,7 @@ Full stat block with both raw specs and market-relative scores. Estimated cost p
 | Stat | Derived From |
 |------|-------------|
 | Performance | CPU + RAM + storage speed |
-| Gaming Performance | GPU + CPU + RAM + thermals (throttle penalty) |
+| Gaming Performance | GPU + CPU + RAM (proportionally throttled when cooling < power draw) |
 | Battery Life | Battery capacity + total component power draw + display power |
 | Display | Panel choice (resolution, colour accuracy, refresh rate, brightness) |
 | Connectivity | Ports, WiFi/Bluetooth generation |
@@ -115,7 +115,7 @@ Full stat block with both raw specs and market-relative scores. Estimated cost p
 | Maintenance / Repairability | Chassis design choices (screws vs glue, modular vs soldered) |
 | Weight | Chassis + all component weights + material density |
 | Thinness | Thickness target setting |
-| Thermals | Component TDP vs chassis cooling capacity (single combined stat for noise + temperature) |
+| Thermals | Derived from cooling headroom ratio (effectiveCooling / totalPower). Scales linearly up to 1.5× headroom = max score, capped at 2×. When cooling < power, performance and gaming performance are proportionally throttled. |
 
 ### Spending-Driven
 
@@ -128,7 +128,7 @@ Full stat block with both raw specs and market-relative scores. Estimated cost p
 Two layers shown to the player at all times:
 
 - **Spec sheet (raw values):** Real units — GHz, GB, kg, mm, mAh. Immersion and nostalgia.
-- **Market-relative scores (1–100):** Recalculated each year against the current competitive field. A 2.0kg laptop scores 70/100 in 2002, 30/100 in 2020 (just an example). This is what the sales simulation uses.
+- **Market-relative scores (0–100):** Normalised each year against the theoretical maximum for that stat (best possible single-stat build from available components). A 2.0kg laptop scores 70/100 in 2002, 30/100 in 2020 (just an example). Scores are intrinsic — they don't change based on what competitors build.
 
 ---
 
@@ -232,7 +232,7 @@ For each stat:
   transformed_stat = viability_transform(normalized_stat, stat)
 
 weighted_score = dot_product(transformed_stats, demographic_weight_vector)
-price_score = 1 - (total_cost / theoretical_max_cost)
+price_score = e^(-retail_price / median_build_cost)
 raw_vp = (weighted_score + price_score × price_weight) × screen_penalty
 ```
 
@@ -250,15 +250,7 @@ This ensures the optimiser (and sales engine) naturally land in sensible ranges 
 
 **Theoretical max**: For each stat independently, the highest value that stat could reach in a valid laptop build this year — a virtual laptop optimised exclusively for that one stat. Computed once per year from the component/chassis database (no dependency on actual laptops built). This means a laptop's score is intrinsic and does not change based on competitor builds.
 
-**Price sensitivity exponent** varies by demographic. At `moderate` (1.0) the formula behaves as a simple inverse. Lower exponents (Corporate, Creative Professional) make the demographic more tolerant of high prices — enabling high-margin niche strategies. Higher exponents (Student, Budget Buyer) punish price increases more steeply — these segments flock to whoever is cheapest.
-
-| Sensitivity Level | Exponent | Demographics |
-|-------------------|----------|-------------|
-| low | 0.8 | Corporate, Creative Professional |
-| moderate | 1.0 | Business Professional, Gamer, Tech Enthusiast |
-| high | 1.2 | General Consumer |
-| veryHigh | 1.4 | Student |
-| extreme | 1.6 | Budget Buyer |
+**Exponential price scoring**: `e^(-price / scaleFactor)` where scaleFactor is the median build cost for the year (median-tier component per slot, mid-range battery, one colour, 14" screen). This concentrates price sensitivity in the range where most laptops actually live — saving $30 on a $700 build matters more than saving $30 on a $2500 build. Price sensitivity per demographic is handled via the `price_weight` in each demographic's stat weight vector (higher weight = more price-sensitive).
 
 ### Step 2: Biased Value Proposition
 
@@ -607,7 +599,7 @@ Both player and AI competitors use this interface. The simulation iterates over 
 
 | Constant | Starting Value | Notes |
 |----------|---------------|-------|
-| PRICE_SENSITIVITY_EXPONENT | low=0.8, moderate=1.0, high=1.2, veryHigh=1.4, extreme=1.6 | Exponent on price in raw VP formula per demographic sensitivity level |
+| PRICE_WEIGHT | Varies per demographic stat weight vector | Weight on price_score in VP dot product; higher = more price-sensitive |
 | WOM_DIVISOR | TBD | Units sold per 1 raw reach point from word of mouth |
 | CAMPAIGN_DIVISOR | 2,000,000 | Campaign spend per 1 raw reach point |
 | AWARENESS_DIVISOR | 500,000 | Awareness budget spend per 1 raw reach point |
