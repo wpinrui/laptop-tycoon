@@ -6,7 +6,7 @@ import { ALL_STATS, LaptopStat, DemographicId, StatVector } from "../../data/typ
 import { DEMOGRAPHICS } from "../../data/demographics";
 import { STARTING_DEMAND_POOL } from "../../data/startingDemand";
 import { getDemandPoolSize, getScreenSizeFit } from "../../simulation/demographicData";
-import { PRICE_SENSITIVITY_EXPONENT, REPLACEMENT_CYCLE, QUARTER_SHARES, QUARTER_SHARES_SUM } from "../../simulation/tunables";
+import { PRICE_SENSITIVITY_EXPONENT, REPLACEMENT_CYCLE, QUARTER_SHARES, QUARTER_SHARES_SUM, DEMAND_NOISE_MIN, DEMAND_NOISE_MAX } from "../../simulation/tunables";
 import { tokens } from "../shell/tokens";
 
 const DEMOGRAPHIC_IDS = DEMOGRAPHICS.map((d) => d.id);
@@ -382,7 +382,7 @@ function computeVPForLaptop(laptop: MarketEntry, ctx: VPComputeContext) {
   const brandPerception = company ? (company.brandPerception[selectedDemo] ?? 0) : 0;
   const campaignPerception = 0; // Can't know sampled value; show 0 as baseline
   const perceptionMod = ((1 + brandPerception / 100) * (1 + campaignPerception / 100) - 1) * 100;
-  const biasedVP = rawVP * (1 + perceptionMod / 100);
+  const biasedVP = Math.max(0, rawVP * (1 + perceptionMod / 100));
 
   const reach = company ? Math.min(company.brandReach[selectedDemo] ?? 0, 100) : 0;
   const effectiveVP = biasedVP * (reach / 100);
@@ -780,7 +780,7 @@ function SimulationTab() {
               })}
             />
             <div style={{ ...labelS, marginTop: 4 }}>
-              Note: Actual simulation adds +/-{`${10}-${15}`}% sales noise on top.
+              Note: Actual simulation adds +/-{DEMAND_NOISE_MIN}-{DEMAND_NOISE_MAX}% sales noise on top.
             </div>
           </div>
         )}
