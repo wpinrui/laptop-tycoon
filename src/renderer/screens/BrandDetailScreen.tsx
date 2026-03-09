@@ -213,7 +213,7 @@ export function BrandDetailScreen() {
             );
           })}
           <p style={{ fontSize: "0.6875rem", color: tokens.colors.textMuted, marginTop: tokens.spacing.xs }}>
-            Sentiment from quality &amp; value. Decays 50%/yr.
+            Sentiment from quality &amp; value. Decays 25%/yr.
           </p>
         </div>
       </div>

@@ -317,6 +317,28 @@ function WizardContent() {
     && (state.currentStep !== "body" || state.selectedColours.length > 0)
     && (!isLast || allStepsComplete);
 
+  function handleFinalize() {
+    const design = wizardStateToDesign(state, gameState.year);
+    if (state.editingModelId) {
+      gameDispatch({ type: "UPDATE_MODEL_DESIGN", modelId: state.editingModelId, design });
+    } else {
+      gameDispatch({
+        type: "ADD_MODEL",
+        model: {
+          design,
+          status: "draft",
+          retailPrice: null,
+          manufacturingQuantity: null,
+          yearDesigned: gameState.year,
+          manufacturingPlan: null,
+          unitsInStock: 0,
+        },
+      });
+    }
+    dispatch({ type: "RESET" });
+    navigateTo("modelManagement");
+  }
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
@@ -477,27 +499,7 @@ function WizardContent() {
           {!isLast && allStepsComplete && state.visitedSteps.has("review") && (
             <MenuButton
               variant="accent"
-              onClick={() => {
-                const design = wizardStateToDesign(state, gameState.year);
-                if (state.editingModelId) {
-                  gameDispatch({ type: "UPDATE_MODEL_DESIGN", modelId: state.editingModelId, design });
-                } else {
-                  gameDispatch({
-                    type: "ADD_MODEL",
-                    model: {
-                      design,
-                      status: "draft",
-                      retailPrice: null,
-                      manufacturingQuantity: null,
-                      yearDesigned: gameState.year,
-                      manufacturingPlan: null,
-                      unitsInStock: 0,
-                    },
-                  });
-                }
-                dispatch({ type: "RESET" });
-                navigateTo("modelManagement");
-              }}
+              onClick={handleFinalize}
               style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}
             >
               {state.editingModelId ? "Save Changes" : "Finalize Design"}
@@ -507,25 +509,7 @@ function WizardContent() {
             variant={isLast ? "accent" : "surface"}
             onClick={() => {
               if (isLast) {
-                const design = wizardStateToDesign(state, gameState.year);
-                if (state.editingModelId) {
-                  gameDispatch({ type: "UPDATE_MODEL_DESIGN", modelId: state.editingModelId, design });
-                } else {
-                  gameDispatch({
-                    type: "ADD_MODEL",
-                    model: {
-                      design,
-                      status: "draft",
-                      retailPrice: null,
-                      manufacturingQuantity: null,
-                      yearDesigned: gameState.year,
-                      manufacturingPlan: null,
-                      unitsInStock: 0,
-                    },
-                  });
-                }
-                dispatch({ type: "RESET" });
-                navigateTo("modelManagement");
+                handleFinalize();
               } else {
                 dispatch({ type: "NEXT_STEP" });
               }
