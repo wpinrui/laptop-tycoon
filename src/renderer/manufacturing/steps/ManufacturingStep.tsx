@@ -1,7 +1,7 @@
 import { CSSProperties, useState, useRef, useEffect } from "react";
 import { useMfgWizard } from "../ManufacturingWizardContext";
 import { useGame } from "../../state/GameContext";
-import { getPlayerCompany } from "../../state/gameTypes";
+import { getPlayerCompany, modelDisplayName } from "../../state/gameTypes";
 import { tokens } from "../../shell/tokens";
 import { calculateBomUnitCost, buildCostBreakdown } from "../utils/economiesOfScale";
 import { AD_CAMPAIGNS, getCampaignCost } from "../data/campaigns";
@@ -287,7 +287,7 @@ export function ManufacturingStep() {
         Manufacturing & Pricing
       </h2>
       <p style={{ color: tokens.colors.textMuted, margin: 0, marginBottom: tokens.spacing.lg }}>
-        Set the retail price and order quantity for {model.design.name}.
+        Set the retail price and order quantity for {modelDisplayName(getPlayerCompany(gameState).name, model.design.name)}.
       </p>
 
       {inventory > 0 && (
@@ -415,7 +415,7 @@ export function ManufacturingStep() {
               <div style={{ fontWeight: 600, marginBottom: tokens.spacing.sm }}>Your Other Models</div>
               {otherPlayerModels.map((m) => (
                 <div key={m.design.id} style={detailRowStyle}>
-                  <span>{m.design.name}</span>
+                  <span>{modelDisplayName(getPlayerCompany(gameState).name, m.design.name)}</span>
                   <span style={{ fontWeight: 500, color: tokens.colors.text }}>{fmt(m.retailPrice ?? 0)}</span>
                 </div>
               ))}

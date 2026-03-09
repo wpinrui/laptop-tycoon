@@ -1,7 +1,7 @@
 import { CSSProperties } from "react";
 import { useMfgWizard } from "../ManufacturingWizardContext";
 import { useGame } from "../../state/GameContext";
-import { getPlayerCompany } from "../../state/gameTypes";
+import { getPlayerCompany, modelDisplayName } from "../../state/gameTypes";
 import { tokens } from "../../shell/tokens";
 import { AD_CAMPAIGNS } from "../data/campaigns";
 import { buildCostBreakdown } from "../utils/economiesOfScale";
@@ -38,7 +38,7 @@ export function ConfirmationStep() {
         Confirm Manufacturing Plan
       </h2>
       <p style={{ color: tokens.colors.textMuted, margin: 0, marginBottom: tokens.spacing.lg }}>
-        Review your plan for {model.design.name}. You can edit this plan until you advance the year.
+        Review your plan for {modelDisplayName(getPlayerCompany(gameState).name, model.design.name)}. You can edit this plan until you advance the year.
       </p>
 
       {/* Marketing */}

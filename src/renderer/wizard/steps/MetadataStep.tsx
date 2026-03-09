@@ -1,6 +1,6 @@
 import { useWizard } from "../WizardContext";
 import { useGame } from "../../state/GameContext";
-import { getPlayerCompany } from "../../state/gameTypes";
+import { getPlayerCompany, modelDisplayName } from "../../state/gameTypes";
 import { ModelType } from "../types";
 import { tokens } from "../../shell/tokens";
 
@@ -19,7 +19,7 @@ export function MetadataStep() {
   // Populate predecessor models from game state (exclude the model currently being edited)
   const predecessorModels = getPlayerCompany(gameState).models
     .filter((m) => m.design.id !== state.editingModelId)
-    .map((m) => ({ id: m.design.id, name: m.design.name, year: m.yearDesigned }));
+    .map((m) => ({ id: m.design.id, name: modelDisplayName(getPlayerCompany(gameState).name, m.design.name), year: m.yearDesigned }));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>

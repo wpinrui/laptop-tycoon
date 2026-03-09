@@ -511,7 +511,7 @@ export function determineAwards(
 
       entries.push({
         id: model.design.id,
-        name: model.design.name,
+        name: modelDisplayName(company.name, model.design.name),
         companyId: company.id,
         companyName: company.name,
         stats: fullStats,
