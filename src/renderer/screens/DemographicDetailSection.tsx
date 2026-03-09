@@ -21,11 +21,9 @@ const STAT_LABELS: Record<LaptopStat, string> = {
   buildQuality: "Build Quality",
   keyboard: "Keyboard",
   trackpad: "Trackpad",
-  repairability: "Repairability",
   weight: "Weight",
   thinness: "Thinness",
   thermals: "Thermals",
-  supportAndService: "Support & Service",
 };
 
 /** Get top N stats by weight for a demographic */

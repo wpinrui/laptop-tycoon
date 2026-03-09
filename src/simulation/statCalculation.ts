@@ -23,11 +23,18 @@ import {
   DESIGN_BEZEL_EXPONENT,
   DESIGN_COLOUR_BASE_COST,
   DESIGN_COLOUR_BONUS_DIVISOR,
+  BATTERY_LIFE_POINTS_PER_HOUR,
+  DERIVED_STAT_MAX,
+  WEIGHT_STAT_ZERO_G,
+  WEIGHT_STAT_DIVISOR,
   applyDisplayMultiplier,
   coolingMultiplier,
   availableVolumeCm3,
   totalConsumedVolumeCm3,
+  chassisShellWeightG,
+  avgUsageMultiplier,
 } from "../data/designConstants";
+import { getBatteryEra } from "../data/batteryEras";
 
 export interface RawStatTotalsParams {
   screenSize: ScreenSizeInches;
@@ -121,6 +128,40 @@ export function computeRawStatTotals(params: RawStatTotalsParams): StatVector {
       totals.gamingPerformance = Math.max(0, (totals.gamingPerformance ?? 0) - gamingLoss);
     }
   }
+
+  // --- Derived stats: batteryLife, weight, thinness ---
+
+  // batteryLife: hours of use = batteryWh / (totalPower * avgUsageMultiplier)
+  if (totalPower > 0) {
+    const usageMult = avgUsageMultiplier(gameYear);
+    const batteryHours = batteryCapacityWh / (totalPower * usageMult);
+    totals.batteryLife = (totals.batteryLife ?? 0) + Math.round(Math.min(DERIVED_STAT_MAX, batteryHours * BATTERY_LIFE_POINTS_PER_HOUR));
+  } else {
+    totals.batteryLife = (totals.batteryLife ?? 0) + DERIVED_STAT_MAX;
+  }
+
+  // weight: lighter = higher score
+  // Total weight = base chassis weight + components + ports + chassis options + battery + shell
+  const era = getBatteryEra(gameYear);
+  let componentWeight = 0;
+  for (const [slot, comp] of Object.entries(components)) {
+    if (!comp) continue;
+    componentWeight += applyDisplayMultiplier(comp.weightG, slot, displayMult);
+  }
+  let portWeight = 0;
+  for (const pt of PORT_TYPES) {
+    portWeight += (ports[pt.id] ?? 0) * pt.weightPerPortG;
+  }
+  const chassisOptionWeight = allChassisOptions.reduce((sum, o) => sum + (o?.weightG ?? 0), 0);
+  const batteryWeight = Math.round(batteryCapacityWh * era.weightPerWh);
+  const materialDensity = chassis.material?.shellDensityMultiplier ?? 1.0;
+  const shellWeight = chassisShellWeightG(screenSize, bezelMm, thicknessCm, materialDensity);
+  const totalWeight = screenSizeDef.baseWeightG + componentWeight + portWeight + chassisOptionWeight + batteryWeight + shellWeight;
+  totals.weight = (totals.weight ?? 0) + Math.round(Math.max(0, Math.min(DERIVED_STAT_MAX, (WEIGHT_STAT_ZERO_G - totalWeight) / WEIGHT_STAT_DIVISOR)));
+
+  // thinness: thinner = higher score (linear mapping)
+  const thinRaw = 1 - (thicknessCm - THICKNESS_MIN_CM) / (THICKNESS_MAX_CM - THICKNESS_MIN_CM);
+  totals.thinness = (totals.thinness ?? 0) + Math.round(Math.max(0, Math.min(DERIVED_STAT_MAX, thinRaw * DERIVED_STAT_MAX)));
 
   // Clamp all stats to 0 minimum
   for (const key of Object.keys(totals) as LaptopStat[]) {

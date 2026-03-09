@@ -51,6 +51,17 @@ export const DESIGN_COLOUR_BASE_COST = 2;
 /** Divisor applied to raw colour bonus (dampens the total) */
 export const DESIGN_COLOUR_BONUS_DIVISOR = 2;
 
+// --- Derived stat tuning constants ---
+
+/** Points per hour of battery life (batteryHours × this = stat score) */
+export const BATTERY_LIFE_POINTS_PER_HOUR = 10;
+/** Maximum score for any derived stat */
+export const DERIVED_STAT_MAX = 100;
+/** Weight (grams) at which the weight stat score = 0 */
+export const WEIGHT_STAT_ZERO_G = 5000;
+/** Divisor for weight-to-score mapping: score = (ZERO - weight) / this */
+export const WEIGHT_STAT_DIVISOR = 50;
+
 // --- Chassis shell weight ---
 
 /**
