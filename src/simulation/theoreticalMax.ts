@@ -46,7 +46,6 @@ import { getBatteryEra } from "../data/batteryEras";
 
 let cachedYear: number | null = null;
 let cachedMaxima: Record<LaptopStat, number> | null = null;
-let cachedMaxCost: number | null = null;
 let cachedPriceScale: number | null = null;
 
 /** Returns the theoretical max for every stat in the given year (cached). */
@@ -60,21 +59,8 @@ export function getTheoreticalMaxima(year: number): Record<LaptopStat, number> {
 
   cachedYear = year;
   cachedMaxima = result;
-  cachedMaxCost = null;
   cachedPriceScale = null;
   return result;
-}
-
-/**
- * Returns the theoretical maximum unit cost for a valid laptop in the given year.
- * Most expensive component in every slot, most expensive chassis, max battery,
- * all colours, all ports, largest screen.
- */
-export function getTheoreticalMaxCost(year: number): number {
-  getTheoreticalMaxima(year); // ensure cachedYear is set
-  if (cachedMaxCost !== null) return cachedMaxCost;
-  cachedMaxCost = computeTheoreticalMaxCost(year);
-  return cachedMaxCost;
 }
 
 /**
@@ -93,7 +79,6 @@ export function getPriceScaleFactor(year: number): number {
 export function clearTheoreticalMaxCache(): void {
   cachedYear = null;
   cachedMaxima = null;
-  cachedMaxCost = null;
   cachedPriceScale = null;
 }
 
@@ -361,65 +346,6 @@ function pickSeedChassis(available: ChassisOption[], targetStat: LaptopStat): Ch
   return available.reduce((best, o) =>
     (o.stats[targetStat] ?? 0) > (best.stats[targetStat] ?? 0) ? o : best,
   );
-}
-
-// ---- Theoretical max cost ----
-
-/**
- * Compute the most expensive valid laptop build for a year.
- * Pick the most expensive option in every slot, largest screen, max battery, all colours, all ports.
- */
-function computeTheoreticalMaxCost(year: number): number {
-  let maxCost = 0;
-
-  for (const screenSizeDef of SCREEN_SIZES) {
-    const displayMult = screenSizeDef.displayMultiplier;
-    let cost = 0;
-
-    // Most expensive component per slot
-    for (const slot of ALL_COMPONENT_SLOTS) {
-      const available = getAvailableComponents(slot, year);
-      if (available.length === 0) continue;
-      let highest = 0;
-      for (const comp of available) {
-        const c = applyDisplayMultiplier(componentCostDecayed(comp, year), comp.slot, displayMult);
-        if (c > highest) highest = c;
-      }
-      cost += highest;
-    }
-
-    // Most expensive chassis option per slot
-    for (const def of CHASSIS_SLOTS) {
-      const available = getAvailableChassisOptions(def.options, year);
-      if (available.length === 0) continue;
-      let highest = 0;
-      for (const opt of available) {
-        const c = chassisCost(opt, year);
-        if (c > highest) highest = c;
-      }
-      cost += highest;
-    }
-
-    // Max battery
-    const era = getBatteryEra(year);
-    cost += Math.round(MAX_BATTERY_WH * era.costPerWh);
-
-    // All colours
-    for (const colour of COLOUR_OPTIONS) {
-      cost += colour.costPerUnit;
-    }
-
-    // All ports at max count
-    for (const pt of PORT_TYPES) {
-      if (pt.yearIntroduced <= year && (pt.yearDiscontinued === null || pt.yearDiscontinued >= year)) {
-        cost += pt.maxCount * pt.costPerPort;
-      }
-    }
-
-    if (cost > maxCost) maxCost = cost;
-  }
-
-  return Math.max(1, maxCost);
 }
 
 // ---- Price scale factor (median build cost) ----
