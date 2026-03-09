@@ -28,9 +28,11 @@ import { DEMOGRAPHICS } from "../../data/demographics";
 import { Demographic } from "../../data/types";
 import { overlayStyle } from "../shell/tokens";
 import { ContentPanel } from "../shell/ContentPanel";
+import { getDemandPoolSize } from "../../simulation/demographicData";
+import { STARTING_DEMAND_POOL } from "../../data/startingDemand";
 
 
-function DemographicPickerDialog({ onPick, onCancel }: { onPick: (d: Demographic) => void; onCancel: () => void }) {
+function DemographicPickerDialog({ onPick, onCancel, year }: { onPick: (d: Demographic) => void; onCancel: () => void; year: number }) {
   return (
     <div
       style={overlayStyle}
@@ -69,7 +71,12 @@ function DemographicPickerDialog({ onPick, onCancel }: { onPick: (d: Demographic
                 e.currentTarget.style.background = tokens.colors.surface;
               }}
             >
-              <div style={{ fontWeight: 600 }}>{d.name}</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontWeight: 600 }}>{d.name}</span>
+                <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
+                  {getDemandPoolSize(d.id, year, STARTING_DEMAND_POOL[d.id]).toLocaleString()} buyers
+                </span>
+              </div>
               <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, marginTop: 2 }}>
                 {d.description}
               </div>
@@ -390,6 +397,7 @@ function WizardContent() {
       )}
       {showOptimisePicker && (
         <DemographicPickerDialog
+          year={gameState.year}
           onPick={(d) => {
             dispatch({ type: "DEBUG_OPTIMISE", demographic: d, year: gameState.year });
             setShowOptimisePicker(false);
