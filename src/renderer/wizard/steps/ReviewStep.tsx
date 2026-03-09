@@ -85,7 +85,7 @@ export function ReviewStep() {
   const totalWeight = screenSizeDef.baseWeightG + totals.subtotalWeight;
 
   // --- Volume & cooling ---
-  const totalVolume = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, allChassisOptions);
+  const totalVolume = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, allChassisOptions, gameYear);
   const totalAvailable = availableVolumeCm3(state.screenSize, state.bezelMm, state.thicknessCm, gameYear);
   const spaceUtilization = totalAvailable > 0 ? totalVolume / totalAvailable : 1;
   const spacePercent = Math.round(Math.min(100, spaceUtilization * 100));

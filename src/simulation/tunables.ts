@@ -39,21 +39,6 @@ export const PERCEPTION_MIN = -50;
 /** Perception ceiling (maximum per-demographic perception score) */
 export const PERCEPTION_MAX = 50;
 
-// ==================== Price Sensitivity ====================
-
-import { PriceSensitivity } from "../data/types";
-
-/** Exponent on price in the raw VP formula, per demographic price sensitivity level.
- *  raw_vp = (weighted_score × screen_penalty) / price ^ exponent
- *  moderate (1.0) = baseline (same as simple inverse). Lower = more price-tolerant, higher = more price-sensitive. */
-export const PRICE_SENSITIVITY_EXPONENT: Record<PriceSensitivity, number> = {
-  low: 0.8,
-  moderate: 1.0,
-  high: 1.2,
-  veryHigh: 1.4,
-  extreme: 1.6,
-};
-
 // ==================== Sales Engine ====================
 
 /** Base demand variance for projections */

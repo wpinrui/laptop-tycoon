@@ -139,6 +139,7 @@ export interface BatteryEraConfig {
   yearEnd: number;
   costPerWh: number;
   weightPerWh: number;
+  volumePerWh: number;
   techLabel: string;
 }
 
@@ -154,8 +155,6 @@ export type DemographicId =
   | "generalConsumer"
   | "budgetBuyer";
 
-export type PriceSensitivity = "low" | "moderate" | "high" | "veryHigh" | "extreme";
-
 export interface ScreenSizePreference {
   preferredMin: ScreenSizeInches;
   preferredMax: ScreenSizeInches;
@@ -165,10 +164,11 @@ export interface ScreenSizePreference {
 export interface Demographic {
   id: DemographicId;
   name: string;
-  priceSensitivity: PriceSensitivity;
   screenSizePreference: ScreenSizePreference;
-  /** Weights across all 14 stats. Must sum to 1.0. */
+  /** Weights across all 14 laptop stats. statWeights + priceWeight must sum to 1.0. */
   statWeights: Record<LaptopStat, number>;
+  /** Weight for price score (cheaper = higher score). statWeights + priceWeight must sum to 1.0. */
+  priceWeight: number;
   description: string;
 }
 

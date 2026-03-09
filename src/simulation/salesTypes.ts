@@ -21,12 +21,14 @@ export interface DemographicSalesBreakdown {
   appeal: number;
   marketShare: number;
   unitsDemanded: number;
-  /** Raw value proposition (weighted_score × screen_penalty / price) before perception mods */
+  /** Raw value proposition (total_score × screen_penalty) before perception mods */
   rawVP: number;
   /** Total demographic pool size this quarter */
   totalPool: number;
-  /** Weighted stat score (dot product of normalised stats × demographic weights) */
+  /** Weighted stat score (dot product of normalised stats × demographic stat weights, excludes price) */
   weightedStatScore: number;
+  /** Price score (1 = cheapest possible, 0 = most expensive possible) */
+  priceScore: number;
   /** Screen size fit penalty (0.05–1.0) */
   screenPenalty: number;
   /** Combined perception modifier % (brand + campaign) */

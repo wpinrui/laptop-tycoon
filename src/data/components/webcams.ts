@@ -50,4 +50,21 @@ export const WEBCAMS: Component[] = [
     specs: { resolution: "1280x1024", megapixels: "1.3 MP" },
     stats: { webcam: 55 },
   },
+
+  // --- 2005 (high-end) ---
+  {
+    id: "webcam_2mp",
+    name: "2.0 MP Webcam",
+    description: "Top-of-the-line webcam with sharp video and still image capture.",
+    slot: "webcam",
+    yearIntroduced: 2005,
+    yearDiscontinued: 2009,
+    costAtLaunch: 45,
+    powerDrawW: 1,
+    weightG: 5,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: { resolution: "1600x1200", megapixels: "2.0 MP" },
+    stats: { webcam: 75 },
+  },
 ];

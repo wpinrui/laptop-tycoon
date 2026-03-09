@@ -1,4 +1,4 @@
-import { ChassisOption, ChassisOptionSlot, Component, ComponentSlot, ScreenSizeInches } from "./types";
+import { ChassisOption, ChassisOptionSlot, Component, ComponentSlot, LaptopStat, ScreenSizeInches } from "./types";
 import { PORT_TYPES } from "./portTypes";
 import { ALL_COMPONENTS } from "./components";
 import { COLOUR_OPTIONS } from "./colourOptions";
@@ -51,6 +51,49 @@ export const DESIGN_COLOUR_BASE_COST = 2;
 /** Divisor applied to raw colour bonus (dampens the total) */
 export const DESIGN_COLOUR_BONUS_DIVISOR = 2;
 
+// --- Stat viability transform ---
+
+/**
+ * Non-linear transform applied to normalised stats (0–1) before VP weighting.
+ * Uses (1 - e^(-k·x)) / (1 - e^(-k)) so that x=0 → 0 and x=1 → 1.
+ *
+ * Higher k = steeper S-curve = harsher penalty for low values + stronger
+ * diminishing returns at high values. k around 1.5 is nearly linear.
+ *
+ * k=4: Near-zero is devastating, above 0.5 barely helps (battery, perf)
+ * k=3: Strong floor penalty, moderate diminishing returns
+ * k=2: Mild curve, low values still penalised but less dramatically
+ * k=1.5: Nearly linear, minimal distortion
+ */
+export const STAT_VIABILITY_K: Record<LaptopStat, number> = {
+  batteryLife: 4,
+  performance: 4,
+  thermals: 3,
+  connectivity: 5,
+  display: 3,
+  weight: 3,
+  buildQuality: 2.5,
+  gamingPerformance: 3,
+  keyboard: 2,
+  trackpad: 2,
+  design: 2,
+  thinness: 2,
+  speakers: 1.5,
+  webcam: 1.5,
+};
+
+/**
+ * Apply diminishing-returns transform to a normalised stat (0–1).
+ * Returns a value in [0, 1] where early gains are worth more and
+ * near-zero values are heavily penalised.
+ */
+export function applyViabilityTransform(normalisedValue: number, stat: LaptopStat): number {
+  const k = STAT_VIABILITY_K[stat] ?? 2;
+  if (k <= 0) return normalisedValue; // safety: linear fallback
+  const clamped = Math.max(0, Math.min(1, normalisedValue));
+  return (1 - Math.exp(-k * clamped)) / (1 - Math.exp(-k));
+}
+
 // --- Derived stat tuning constants ---
 
 /** Points per hour of battery life (batteryHours × this = stat score) */
@@ -58,9 +101,26 @@ export const BATTERY_LIFE_POINTS_PER_HOUR = 10;
 /** Maximum score for any derived stat */
 export const DERIVED_STAT_MAX = 100;
 /** Weight (grams) at which the weight stat score = 0 */
-export const WEIGHT_STAT_ZERO_G = 5000;
+export const WEIGHT_STAT_ZERO_G = 3500;
 /** Divisor for weight-to-score mapping: score = (ZERO - weight) / this */
-export const WEIGHT_STAT_DIVISOR = 50;
+export const WEIGHT_STAT_DIVISOR = 30;
+
+/** Maximum thermals score (when cooling headroom is ample) */
+export const THERMALS_MAX_SCORE = 80;
+/**
+ * Headroom ratio at which thermals reach max score.
+ * headroom = effectiveCooling / totalPower.
+ * At 1.5× headroom → max thermals. At 1.0× → 67% of max. Below 1.0× → drops fast.
+ */
+export const THERMALS_HEADROOM_FULL = 1.5;
+/**
+ * Cap on headroom ratio for thermals scoring.
+ * Once cooling headroom exceeds this, extra cooling provides no further thermals benefit.
+ * Prevents budget builds from overspending on cooling (a Celeron at 2× headroom with
+ * a single fan scores the same as with dual heatpipe at 4×) while ensuring gaming builds
+ * with high-power dGPUs actually need the expensive cooling to reach the cap.
+ */
+export const THERMALS_HEADROOM_CAP = 2.0;
 
 // --- Chassis shell weight ---
 
@@ -88,8 +148,7 @@ export function chassisShellWeightG(
 
 // --- Volume calculation ---
 
-// Li-Ion ~175 Wh/L in 2000 → ~5.7 cm³ per Wh
-export const CM3_PER_WH = 5.7;
+// Volume per Wh now varies by era — see batteryEras.ts volumePerWh
 
 /**
  * Minimum thickness overhead for structural elements (PCB, keyboard, case walls).
@@ -120,8 +179,16 @@ export function chassisFootprintCm2(screenSizeInches: number, bezelMm: number): 
 }
 
 /**
+ * Fraction of gross internal volume actually usable for components.
+ * The rest is consumed by structural ribs, keyboard well, trackpad cavity,
+ * speaker grilles, port cutouts, cable routing, hinge mechanisms, etc.
+ */
+export const VOLUME_UTILIZATION_FACTOR = 0.65;
+
+/**
  * Available internal volume (cm³) given chassis dimensions.
- * Subtracts era-dependent base thickness for PCB/keyboard/case walls from total height.
+ * Subtracts era-dependent base thickness for PCB/keyboard/case walls from total height,
+ * then applies utilization factor for structural overhead.
  */
 export function availableVolumeCm3(
   screenSizeInches: number,
@@ -131,14 +198,15 @@ export function availableVolumeCm3(
 ): number {
   const footprint = chassisFootprintCm2(screenSizeInches, bezelMm);
   const usableHeight = Math.max(0, thicknessCm - baseMinThicknessCm(year));
-  return footprint * usableHeight;
+  return footprint * usableHeight * VOLUME_UTILIZATION_FACTOR;
 }
 
 /**
- * Battery volume in cm³.
+ * Battery volume in cm³. Uses era-specific energy density.
  */
-function batteryVolumeCm3(batteryWh: number): number {
-  return batteryWh * CM3_PER_WH;
+function batteryVolumeCm3(batteryWh: number, year: number): number {
+  const era = getBatteryEra(year);
+  return batteryWh * era.volumePerWh;
 }
 
 /**
@@ -243,12 +311,13 @@ export function totalConsumedVolumeCm3(
   batteryWh: number,
   ports: Record<string, number>,
   chassisOptions: (ChassisOption | null)[],
+  year: number,
 ): number {
   let vol = 0;
   for (const comp of Object.values(components)) {
     if (comp) vol += comp.volumeCm3;
   }
-  vol += batteryVolumeCm3(batteryWh);
+  vol += batteryVolumeCm3(batteryWh, year);
   for (const pt of PORT_TYPES) {
     vol += (ports[pt.id] ?? 0) * pt.volumePerPortCm3;
   }

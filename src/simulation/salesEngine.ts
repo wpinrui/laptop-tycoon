@@ -12,6 +12,7 @@ import {
   getDemandPoolSize,
   getScreenSizeFit,
 } from "./demographicData";
+import { applyViabilityTransform } from "../data/designConstants";
 import {
   DemographicSalesBreakdown,
   LaptopSalesResult,
@@ -28,14 +29,13 @@ import {
   REPLACEMENT_CYCLE,
   QUARTER_SHARES,
   QUARTER_SHARES_SUM,
-  PRICE_SENSITIVITY_EXPONENT,
 } from "./tunables";
 import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
 import { sampleCampaignOutcome } from "../renderer/manufacturing/utils/skewNormal";
 import { generateCompetitorModels } from "./competitorAI";
 import { COMPETITORS } from "../data/competitors";
 import { averageReach, getCampaignReachBoost, applySingleQuarterPerception } from "./brandProgression";
-import { getTheoreticalMaxima, clearTheoreticalMaxCache } from "./theoreticalMax";
+import { getTheoreticalMaxima, getPriceScaleFactor, clearTheoreticalMaxCache } from "./theoreticalMax";
 
 // Cache synthetic competitor models per year for stable demand projections
 let cachedProjectionYear: number | null = null;
@@ -139,16 +139,30 @@ function normaliseStats(laptop: MarketLaptop, year: number): Record<LaptopStat, 
   return result;
 }
 
-/** Dot product of normalised stats (raw / theoretical max) against demographic weights */
+/** Dot product of normalised stats (with viability transform) against demographic weights. */
 function calculateWeightedStatScore(
   normalisedStats: Record<LaptopStat, number>,
   demographic: Demographic,
 ): number {
   let score = 0;
   for (const stat of ALL_STATS) {
-    score += (normalisedStats[stat] ?? 0) * (demographic.statWeights[stat] ?? 0);
+    const transformed = applyViabilityTransform(normalisedStats[stat] ?? 0, stat);
+    score += transformed * (demographic.statWeights[stat] ?? 0);
   }
   return score;
+}
+
+/**
+ * Compute price score using exponential decay: cheaper laptops score higher.
+ * price_score = e^(-price / scaleFactor)
+ *
+ * scaleFactor is the median build cost for the year, concentrating sensitivity
+ * in the price range where most laptops actually live. Saving $30 on a $700
+ * build matters more than saving $30 on a $2500 build.
+ */
+function calculatePriceScore(retailPrice: number, year: number): number {
+  const scaleFactor = getPriceScaleFactor(year);
+  return Math.exp(-retailPrice / scaleFactor);
 }
 
 /**
@@ -176,7 +190,7 @@ function getLaptopCampaignPerception(laptop: MarketLaptop, playerId: string): nu
  * Calculate biased value proposition for a laptop against a demographic.
  *
  * Step 1 – Raw VP:
- *   raw_vp = (weighted_score × screen_penalty) / price
+ *   raw_vp = (dot_product(normalised_stats, stat_weights) + price_score × price_weight) × screen_penalty
  *
  * Step 2 – Biased VP:
  *   biased_vp = raw_vp × (1 + brand_perception_mod / 100) × (1 + laptop_perception_mod / 100)
@@ -187,6 +201,7 @@ interface VPComponents {
   biasedVP: number;
   rawVP: number;
   weightedStatScore: number;
+  priceScore: number;
   screenPenalty: number;
   /** Combined brand + campaign perception modifier (%) */
   perceptionMod: number;
@@ -200,12 +215,13 @@ function calculateBiasedVP(
   campaignPerception: number,
 ): VPComponents {
   const weightedStatScore = calculateWeightedStatScore(normalisedStats, demographic);
+  const priceScore = calculatePriceScore(laptop.retailPrice, state.year);
   const pref = demographic.screenSizePreference;
   const screenPenalty = getScreenSizeFit(laptop.model.design.screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);
 
-  // Step 1: raw_vp = (weighted_score × screen_penalty) / price ^ sensitivity_factor
-  const sensitivityExponent = PRICE_SENSITIVITY_EXPONENT[demographic.priceSensitivity];
-  const rawVP = (weightedStatScore * screenPenalty) / Math.pow(laptop.retailPrice, sensitivityExponent);
+  // Step 1: raw_vp = (stat_score + price_score × price_weight) × screen_penalty
+  const totalScore = weightedStatScore + priceScore * demographic.priceWeight;
+  const rawVP = totalScore * screenPenalty;
 
   // Step 2: biased_vp = raw_vp × (1 + brand_perception_mod / 100) × (1 + laptop_perception_mod / 100)
   const company = state.companies.find((c) => c.id === laptop.owner);
@@ -215,7 +231,7 @@ function calculateBiasedVP(
   const perceptionMod = ((1 + brandPerceptionMod / 100) * (1 + laptopPerceptionMod / 100) - 1) * 100;
 
   const biasedVP = rawVP * (1 + perceptionMod / 100);
-  return { biasedVP: Math.max(0, biasedVP), rawVP, weightedStatScore, screenPenalty, perceptionMod };
+  return { biasedVP: Math.max(0, biasedVP), rawVP, weightedStatScore, priceScore, screenPenalty, perceptionMod };
 }
 
 // --- Market Share & Demand Resolution ---
@@ -319,6 +335,7 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
         rawVP: vp.rawVP,
         totalPool: Math.round(quarterlyActiveBuyers),
         weightedStatScore: vp.weightedStatScore,
+        priceScore: vp.priceScore,
         screenPenalty: vp.screenPenalty,
         perceptionMod: vp.perceptionMod,
         normalizedStats: normalisedStatsMap.get(laptopId)!,

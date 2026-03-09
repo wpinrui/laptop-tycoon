@@ -7,7 +7,14 @@ import {
   totalConsumedVolumeCm3,
   maxHeightConstraintCm,
   computeLaptopTotals,
+  componentCostDecayed,
+  applyDisplayMultiplier,
+  chassisCost,
 } from "../../data/designConstants";
+import { SCREEN_SIZES } from "../../data/screenSizes";
+import { computeRawStatTotals } from "../../simulation/statCalculation";
+import { getTheoreticalMaxima } from "../../simulation/theoreticalMax";
+import { ComponentSlot, LaptopStat, Demographic, ScreenSizeInches } from "../../data/types";
 import { useGame } from "../state/GameContext";
 import { useNavigation } from "../navigation/NavigationContext";
 import { LaptopDesign } from "../state/gameTypes";
@@ -25,7 +32,7 @@ import { ReviewStep } from "./steps/ReviewStep";
 import { WizardSidebar } from "./LaptopEstimateSidebar";
 import { StatusBar } from "../shell/StatusBar";
 import { DEMOGRAPHICS } from "../../data/demographics";
-import { Demographic } from "../../data/types";
+import { optimiseForDemographic } from "./optimiser";
 import { overlayStyle } from "../shell/tokens";
 import { ContentPanel } from "../shell/ContentPanel";
 import { getDemandPoolSize } from "../../simulation/demographicData";
@@ -115,7 +122,7 @@ function isStepComplete(step: WizardStep, state: WizardState, year: number): boo
       const chassisOptions = getAllChassisOptions(state.chassis);
 
       // Volume check
-      const totalVol = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, chassisOptions);
+      const totalVol = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, chassisOptions, year);
       const available = availableVolumeCm3(state.screenSize, state.bezelMm, state.thicknessCm, year);
       if (totalVol > available) return false;
 
@@ -184,12 +191,122 @@ function ToolbarButton({ onClick, children }: { onClick: () => void; children: R
   );
 }
 
+const SLOT_LABELS: Record<string, string> = {
+  cpu: "CPU", gpu: "GPU", ram: "RAM", storage: "Storage",
+  resolution: "Resolution", displayTech: "Display Tech", displaySurface: "Display Surface",
+  wifi: "WiFi", webcam: "Webcam", speakers: "Speakers",
+};
+const CHASSIS_LABELS: Record<string, string> = {
+  material: "Material", coolingSolution: "Cooling", keyboardFeature: "Keyboard", trackpadFeature: "Trackpad",
+};
+const STAT_LABELS: Record<string, string> = {
+  performance: "Performance", gamingPerformance: "Gaming", display: "Display",
+  connectivity: "Connectivity", webcam: "Webcam", wifi: "WiFi",
+  speakers: "Speakers", keyboard: "Keyboard", trackpad: "Trackpad",
+  design: "Design", buildQuality: "Build Quality", thinness: "Thinness",
+  weight: "Weight", thermals: "Thermals", batteryLife: "Battery Life",
+};
+
+function buildCopyTextForBuild(
+  name: string,
+  components: Partial<Record<ComponentSlot, import("../../data/types").Component>>,
+  chassis: WizardState["chassis"],
+  screenSize: ScreenSizeInches,
+  batteryCapacityWh: number,
+  thicknessCm: number,
+  bezelMm: number,
+  selectedColours: string[],
+  ports: Record<string, number>,
+  year: number,
+): string {
+  const lines: string[] = [];
+  lines.push(`## ${name}`);
+  lines.push(`Year: ${year}`);
+  lines.push(`Screen: ${screenSize}"`);
+  lines.push("");
+
+  const screenDef = SCREEN_SIZES.find(s => s.size === screenSize);
+  const displayMult = screenDef?.displayMultiplier ?? 1;
+
+  lines.push("### Components");
+  for (const [slot, comp] of Object.entries(components)) {
+    if (!comp) continue;
+    const cost = Math.round(applyDisplayMultiplier(componentCostDecayed(comp, year), slot, displayMult));
+    lines.push(`- ${SLOT_LABELS[slot] ?? slot}: ${comp.name} ($${cost})`);
+  }
+
+  lines.push("");
+  lines.push("### Chassis");
+  for (const [slot, opt] of Object.entries(chassis)) {
+    if (!opt) continue;
+    const cost = Math.round(chassisCost(opt, year));
+    lines.push(`- ${CHASSIS_LABELS[slot] ?? slot}: ${opt.name} ($${cost})`);
+  }
+
+  lines.push("");
+  lines.push(`Battery: ${batteryCapacityWh} Wh`);
+  lines.push(`Thickness: ${thicknessCm} cm`);
+
+  const totals = computeLaptopTotals(
+    components, ports, chassis,
+    batteryCapacityWh, selectedColours,
+    screenSize, bezelMm, thicknessCm, year,
+  );
+  lines.push(`Total cost: $${Math.round(totals.totalCost)}`);
+
+  const stats = computeRawStatTotals({
+    screenSize, components, ports,
+    chassis, batteryCapacityWh,
+    thicknessCm, bezelMm,
+    selectedColours, gameYear: year,
+  });
+  const maxima = getTheoreticalMaxima(year);
+
+  lines.push("");
+  lines.push("### Normalised Stats");
+  for (const [stat, raw] of Object.entries(stats)) {
+    const max = maxima[stat as LaptopStat] ?? 1;
+    const norm = max > 0 ? (raw as number) / max : 0;
+    const label = STAT_LABELS[stat] ?? stat;
+    lines.push(`- ${label}: ${norm.toFixed(3)} (raw: ${(raw as number).toFixed(1)}, max: ${max.toFixed(1)})`);
+  }
+
+  return lines.join("\n");
+}
+
+function buildCopyText(state: WizardState, year: number): string {
+  return buildCopyTextForBuild(
+    state.name, state.components, state.chassis, state.screenSize,
+    state.batteryCapacityWh, state.thicknessCm, state.bezelMm,
+    state.selectedColours, state.ports, year,
+  );
+}
+
+function buildAllDemographicsCopyText(year: number): string {
+  const sections: string[] = [`# Optimiser Results (Year ${year})`, ""];
+  for (const demo of DEMOGRAPHICS) {
+    const result = optimiseForDemographic(demo, year);
+    sections.push(buildCopyTextForBuild(
+      `Optimised (${demo.name})`,
+      result.components, result.chassis, result.screenSize,
+      result.batteryCapacityWh, result.thicknessCm, result.bezelMm,
+      result.selectedColours, {}, year,
+    ));
+    sections.push("");
+    sections.push("---");
+    sections.push("");
+  }
+  return sections.join("\n");
+}
+
 function WizardContent() {
   const { state, dispatch } = useWizard();
   const { state: gameState, dispatch: gameDispatch } = useGame();
   const { navigateTo } = useNavigation();
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [showOptimisePicker, setShowOptimisePicker] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [copiedAll, setCopiedAll] = useState(false);
   const currentIdx = WIZARD_STEPS.indexOf(state.currentStep);
   const isFirst = currentIdx === 0;
   const isLast = currentIdx === WIZARD_STEPS.length - 1;
@@ -266,6 +383,16 @@ function WizardContent() {
         <div style={{ display: "flex", gap: tokens.spacing.sm, flexShrink: 0 }}>
         <ToolbarButton onClick={() => dispatch({ type: "DEBUG_AUTOFILL", year: gameState.year })}>Auto-fill</ToolbarButton>
         <ToolbarButton onClick={() => setShowOptimisePicker(true)}>Optimise</ToolbarButton>
+        <ToolbarButton onClick={() => {
+          navigator.clipboard.writeText(buildCopyText(state, gameState.year));
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        }}>{copied ? "Copied!" : "Copy Build"}</ToolbarButton>
+        <ToolbarButton onClick={() => {
+          navigator.clipboard.writeText(buildAllDemographicsCopyText(gameState.year));
+          setCopiedAll(true);
+          setTimeout(() => setCopiedAll(false), 1500);
+        }}>{copiedAll ? "Copied!" : "Copy All Demographics"}</ToolbarButton>
         <button
           onClick={() => setShowCloseConfirm(true)}
           style={{

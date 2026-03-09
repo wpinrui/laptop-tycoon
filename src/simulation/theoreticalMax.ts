@@ -33,16 +33,20 @@ import {
   availableVolumeCm3,
   totalConsumedVolumeCm3,
   maxHeightConstraintCm,
+  componentCostDecayed,
+  chassisCost,
 } from "../data/designConstants";
 import { COLOUR_OPTIONS } from "../data/colourOptions";
 import { PORT_TYPES } from "../data/portTypes";
 import { computeRawStatTotals } from "./statCalculation";
 import { COMPONENT_STEP_SLOTS } from "../renderer/wizard/types";
+import { getBatteryEra } from "../data/batteryEras";
 
 // ---- Cache ----
 
 let cachedYear: number | null = null;
 let cachedMaxima: Record<LaptopStat, number> | null = null;
+let cachedPriceScale: number | null = null;
 
 /** Returns the theoretical max for every stat in the given year (cached). */
 export function getTheoreticalMaxima(year: number): Record<LaptopStat, number> {
@@ -55,13 +59,27 @@ export function getTheoreticalMaxima(year: number): Record<LaptopStat, number> {
 
   cachedYear = year;
   cachedMaxima = result;
+  cachedPriceScale = null;
   return result;
+}
+
+/**
+ * Returns the price scale factor for exponential price scoring.
+ * Derived from the median cost of a "reasonable" build (median-tier
+ * component in every slot, mid-range battery, one colour, 14" screen).
+ */
+export function getPriceScaleFactor(year: number): number {
+  getTheoreticalMaxima(year); // ensure cachedYear is set
+  if (cachedPriceScale !== null) return cachedPriceScale;
+  cachedPriceScale = computePriceScaleFactor(year);
+  return cachedPriceScale;
 }
 
 /** Clear cache (call when year advances or on new game). */
 export function clearTheoreticalMaxCache(): void {
   cachedYear = null;
   cachedMaxima = null;
+  cachedPriceScale = null;
 }
 
 // ---- Internal helpers ----
@@ -116,7 +134,7 @@ function findMinViableThickness(
     build.chassis.trackpadFeature,
   ];
   const consumedVol = totalConsumedVolumeCm3(
-    build.components, build.batteryCapacityWh, build.ports, chassisOptions,
+    build.components, build.batteryCapacityWh, build.ports, chassisOptions, year,
   );
   const minHeight = maxHeightConstraintCm(build.components, build.ports, chassisOptions);
 
@@ -316,8 +334,8 @@ function pickSeedComponent(
 
 /** Pick a seed chassis option: highest target stat value. */
 function pickSeedChassis(available: ChassisOption[], targetStat: LaptopStat): ChassisOption {
-  if (targetStat === "performance" || targetStat === "gamingPerformance") {
-    // Prefer highest cooling capacity (to avoid penalty)
+  if (targetStat === "performance" || targetStat === "gamingPerformance" || targetStat === "thermals") {
+    // Prefer highest cooling capacity (thermals is derived from headroom ratio)
     return available.reduce((best, o) =>
       (o.coolingCapacityW ?? 0) > (best.coolingCapacityW ?? 0) ? o : best,
     );
@@ -328,4 +346,46 @@ function pickSeedChassis(available: ChassisOption[], targetStat: LaptopStat): Ch
   return available.reduce((best, o) =>
     (o.stats[targetStat] ?? 0) > (best.stats[targetStat] ?? 0) ? o : best,
   );
+}
+
+// ---- Price scale factor (median build cost) ----
+
+/**
+ * Compute the cost of a median-tier build for a year.
+ * Picks the median-cost component in each slot, median chassis option per slot,
+ * mid-range battery, one colour, on a 14" screen.
+ */
+function computePriceScaleFactor(year: number): number {
+  const refScreenDef = SCREEN_SIZES.find(s => s.size === 14) ?? SCREEN_SIZES[0];
+  const displayMult = refScreenDef.displayMultiplier;
+
+  let cost = 0;
+
+  // Median component per slot
+  for (const slot of ALL_COMPONENT_SLOTS) {
+    const available = getAvailableComponents(slot, year);
+    if (available.length === 0) continue;
+    const costs = available
+      .map(c => applyDisplayMultiplier(componentCostDecayed(c, year), c.slot, displayMult))
+      .sort((a, b) => a - b);
+    cost += costs[Math.floor(costs.length / 2)];
+  }
+
+  // Median chassis option per slot
+  for (const def of CHASSIS_SLOTS) {
+    const available = getAvailableChassisOptions(def.options, year);
+    if (available.length === 0) continue;
+    const costs = available.map(o => chassisCost(o, year)).sort((a, b) => a - b);
+    cost += costs[Math.floor(costs.length / 2)];
+  }
+
+  // Mid-range battery
+  const era = getBatteryEra(year);
+  const midBattery = (MIN_BATTERY_WH + MAX_BATTERY_WH) / 2;
+  cost += Math.round(midBattery * era.costPerWh);
+
+  // One basic colour
+  cost += COLOUR_OPTIONS[0]?.costPerUnit ?? 0;
+
+  return Math.max(1, cost);
 }

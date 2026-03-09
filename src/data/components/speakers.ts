@@ -74,7 +74,7 @@ export const SPEAKERS: Component[] = [
     slot: "speakers",
     yearIntroduced: 2005,
     yearDiscontinued: 2008,
-    costAtLaunch: 25,
+    costAtLaunch: 40,
     powerDrawW: 2,
     weightG: 45,
     volumeCm3: 50,
