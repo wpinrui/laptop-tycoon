@@ -189,8 +189,9 @@ export function ManufacturingStep() {
   const { state, dispatch } = useMfgWizard();
   const { state: gameState } = useGame();
   const [showDetails, setShowDetails] = useState(true);
+  const player = getPlayerCompany(gameState);
 
-  const model = getPlayerCompany(gameState).models.find((m) => m.design.id === state.modelId);
+  const model = player.models.find((m) => m.design.id === state.modelId);
   const inventory = model?.unitsInStock ?? 0;
 
   const baseBom = model?.design.unitCost ?? 0;
@@ -253,7 +254,7 @@ export function ManufacturingStep() {
   };
 
   // Other player models for price reference
-  const otherPlayerModels = getPlayerCompany(gameState).models.filter(
+  const otherPlayerModels = player.models.filter(
     (m) => m.design.id !== state.modelId && m.retailPrice !== null && m.status !== "discontinued",
   );
 
@@ -287,7 +288,7 @@ export function ManufacturingStep() {
         Manufacturing & Pricing
       </h2>
       <p style={{ color: tokens.colors.textMuted, margin: 0, marginBottom: tokens.spacing.lg }}>
-        Set the retail price and order quantity for {modelDisplayName(getPlayerCompany(gameState).name, model.design.name)}.
+        Set the retail price and order quantity for {modelDisplayName(player.name, model.design.name)}.
       </p>
 
       {inventory > 0 && (
@@ -415,7 +416,7 @@ export function ManufacturingStep() {
               <div style={{ fontWeight: 600, marginBottom: tokens.spacing.sm }}>Your Other Models</div>
               {otherPlayerModels.map((m) => (
                 <div key={m.design.id} style={detailRowStyle}>
-                  <span>{modelDisplayName(getPlayerCompany(gameState).name, m.design.name)}</span>
+                  <span>{modelDisplayName(player.name, m.design.name)}</span>
                   <span style={{ fontWeight: 500, color: tokens.colors.text }}>{fmt(m.retailPrice ?? 0)}</span>
                 </div>
               ))}

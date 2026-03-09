@@ -86,7 +86,8 @@ function WizardContent() {
     navigateTo("modelManagement");
   }
 
-  const model = getPlayerCompany(gameState).models.find((m) => m.design.id === state.modelId);
+  const player = getPlayerCompany(gameState);
+  const model = player.models.find((m) => m.design.id === state.modelId);
 
   const stepContent = (() => {
     switch (state.currentStep) {
@@ -121,7 +122,7 @@ function WizardContent() {
             Manufacturing Plan
           </h1>
           <p style={{ color: tokens.colors.textMuted, marginBottom: tokens.spacing.lg }}>
-            {model ? `${modelDisplayName(getPlayerCompany(gameState).name, model.design.name)} · Year ${gameState.year}` : ""}
+            {model ? `${modelDisplayName(player.name, model.design.name)} · Year ${gameState.year}` : ""}
           </p>
         </div>
         <button
