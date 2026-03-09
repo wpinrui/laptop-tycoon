@@ -98,7 +98,7 @@ export function YearEndSummaryScreen() {
               const totalUnits = r.unitsSold + r.unsoldUnits;
               return (
                 <tr key={r.laptopId}>
-                  <td style={tdStyle}>{model?.design.name ?? "Unknown"}</td>
+                  <td style={tdStyle}>{model ? `${player.name} ${model.design.name}` : "Unknown"}</td>
                   <td style={tdRight}>{formatNumber(totalUnits)}</td>
                   <td style={tdRight}>{formatNumber(r.unitsSold)}</td>
                   <td style={{ ...tdRight, color: r.unsoldUnits > 0 ? tokens.colors.warning : undefined }}>

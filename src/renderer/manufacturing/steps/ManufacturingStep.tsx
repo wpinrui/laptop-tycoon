@@ -450,12 +450,6 @@ export function ManufacturingStep() {
               color={pessimisticProfit < 0 ? tokens.colors.danger : tokens.colors.success}
               bgColor={pessimisticProfit < 0 ? tokens.colors.dangerBg : tokens.colors.successBg}
             />
-            <MetricCard
-              label="Projected demand"
-              value={`${projections.displayLower.toLocaleString()} - ${projections.displayUpper.toLocaleString()}`}
-              color={tokens.colors.text}
-              bgColor={tokens.colors.surface}
-            />
           </div>
 
           {/* Cash after - full width, prominent */}

@@ -71,7 +71,7 @@ export function QuarterlySummaryScreen() {
               const ytd = ytdByModel.get(r.laptopId);
               return (
                 <tr key={r.laptopId}>
-                  <td style={tdStyle}>{model?.design.name ?? "Unknown"}</td>
+                  <td style={tdStyle}>{model ? `${player.name} ${model.design.name}` : "Unknown"}</td>
                   <td style={tdRight}>{formatNumber(r.unitsSold)}</td>
                   <td style={tdRight}>{formatNumber(ytd?.unitsSold ?? r.unitsSold)}</td>
                   <td style={tdRight}>{formatCurrency(r.revenue)}</td>

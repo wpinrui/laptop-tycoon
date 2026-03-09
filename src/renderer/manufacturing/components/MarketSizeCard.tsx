@@ -55,9 +55,9 @@ export function MarketSizeCard({ year, quarter }: { year: number; quarter: Quart
         onChange={(e) => setSelectedDemographic(e.target.value as DemographicId | "all")}
         style={selectStyle}
       >
-        <option value="all">All Demographics</option>
+        <option value="all" style={{ background: tokens.colors.surface, color: tokens.colors.text }}>All Demographics</option>
         {DEMOGRAPHICS.map((d) => (
-          <option key={d.id} value={d.id}>{d.name}</option>
+          <option key={d.id} value={d.id} style={{ background: tokens.colors.surface, color: tokens.colors.text }}>{d.name}</option>
         ))}
       </select>
     </div>
