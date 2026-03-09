@@ -1,5 +1,5 @@
 import { useGame } from "../state/GameContext";
-import { getPlayerCompany } from "../state/gameTypes";
+import { getPlayerCompany, modelDisplayName } from "../state/gameTypes";
 import { useNavigation } from "../navigation/NavigationContext";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
@@ -71,7 +71,7 @@ export function QuarterlySummaryScreen() {
               const ytd = ytdByModel.get(r.laptopId);
               return (
                 <tr key={r.laptopId}>
-                  <td style={tdStyle}>{model?.design.name ?? "Unknown"}</td>
+                  <td style={tdStyle}>{model ? modelDisplayName(player.name, model.design.name) : "Unknown"}</td>
                   <td style={tdRight}>{formatNumber(r.unitsSold)}</td>
                   <td style={tdRight}>{formatNumber(ytd?.unitsSold ?? r.unitsSold)}</td>
                   <td style={tdRight}>{formatCurrency(r.revenue)}</td>

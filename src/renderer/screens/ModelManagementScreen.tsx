@@ -4,7 +4,7 @@ import { useNavigation } from "../navigation/NavigationContext";
 import { useWizard } from "../wizard/WizardContext";
 import { useMfgWizard } from "../manufacturing/ManufacturingWizardContext";
 import { selectPrompts } from "../manufacturing/data/pressReleasePrompts";
-import { LaptopModel, hasDiscontinuedComponents, getPlayerCompany } from "../state/gameTypes";
+import { LaptopModel, hasDiscontinuedComponents, getPlayerCompany, modelDisplayName } from "../state/gameTypes";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { tokens } from "../shell/tokens";
@@ -139,6 +139,7 @@ export function ModelManagementScreen() {
           <ModelCard
             key={model.design.id}
             model={model}
+            companyName={player.name}
             confirmScrap={confirmScrapId === model.design.id}
             onEdit={canDesignNew ? () => handleEdit(model) : undefined}
             onAddManufacturing={() => handleManufacturing(model)}
@@ -177,6 +178,7 @@ export function ModelManagementScreen() {
                 <ModelCard
                   key={model.design.id}
                   model={model}
+                  companyName={player.name}
                   confirmScrap={false}
                   onScrapClick={() => {}}
                   onScrapConfirm={() => {}}
@@ -198,6 +200,7 @@ export function ModelManagementScreen() {
 
 function ModelCard({
   model,
+  companyName,
   confirmScrap,
   onEdit,
   onAddManufacturing,
@@ -209,6 +212,7 @@ function ModelCard({
   gameQuarter,
 }: {
   model: LaptopModel;
+  companyName: string;
   confirmScrap: boolean;
   onEdit?: () => void;
   onAddManufacturing?: () => void;
@@ -228,7 +232,7 @@ function ModelCard({
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
           <div style={{ fontSize: tokens.font.sizeLarge, fontWeight: 600 }}>
-            {design.name}
+            {modelDisplayName(companyName, design.name)}
           </div>
           <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, marginTop: tokens.spacing.xs }}>
             {design.screenSize}" &middot; {design.modelType === "brandNew" ? "Brand New" : design.modelType === "successor" ? "Successor" : "Spec Bump"} &middot; Designed {yearDesigned}

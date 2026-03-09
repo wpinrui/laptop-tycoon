@@ -295,13 +295,13 @@ export const CHASSIS_SLOTS: ChassisSlotDef[] = [
 export function getAvailableComponents(slot: ComponentSlot, year: number): Component[] {
   return ALL_COMPONENTS
     .filter((c) => c.slot === slot && c.yearIntroduced <= year && c.yearDiscontinued >= year)
-    .sort((a, b) => a.costAtLaunch - b.costAtLaunch);
+    .sort((a, b) => a.yearIntroduced - b.yearIntroduced || a.costAtLaunch - b.costAtLaunch);
 }
 
 export function getAvailableChassisOptions(options: ChassisOption[], year: number): ChassisOption[] {
   return options
     .filter((o) => o.yearIntroduced <= year && (o.yearDiscontinued === null || o.yearDiscontinued >= year))
-    .sort((a, b) => a.costAtLaunch - b.costAtLaunch);
+    .sort((a, b) => a.yearIntroduced - b.yearIntroduced || a.costAtLaunch - b.costAtLaunch);
 }
 
 // --- Laptop totals (shared by Sidebar + ReviewStep) ---

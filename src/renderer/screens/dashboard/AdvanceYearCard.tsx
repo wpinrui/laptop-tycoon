@@ -6,7 +6,7 @@ import { tokens } from "../../shell/tokens";
 import { BentoCard } from "./BentoCard";
 import { cardBodyStyle } from "./styles";
 import { getActiveModels } from "./utils";
-import { hasDiscontinuedComponents, LaptopModel } from "../../state/gameTypes";
+import { hasDiscontinuedComponents, LaptopModel, getPlayerCompany, modelDisplayName } from "../../state/gameTypes";
 import { COMPETITORS } from "../../../data/competitors";
 import { generateCompetitorModels } from "../../../simulation/competitorAI";
 import { simulateQuarter } from "../../../simulation/salesEngine";
@@ -52,6 +52,7 @@ function aggregateLaptopResults(quarters: QuarterSimulationResult[]): LaptopSale
 export function AdvanceYearCard() {
   const { state, dispatch } = useGame();
   const { navigateTo } = useNavigation();
+  const player = getPlayerCompany(state);
   const activeModels = getActiveModels(state);
   const isQ1 = state.quarter === 1;
   const quarterLabel = QUARTER_LABELS[state.quarter - 1];
@@ -68,7 +69,7 @@ export function AdvanceYearCard() {
   }
   if (isQ1 && activeModels.length > 0 && needPlans.length > 0) {
     warnings.push(
-      `Add manufacturing plans for: ${needPlans.map((m) => m.design.name).join(", ")}`,
+      `Add manufacturing plans for: ${needPlans.map((m) => modelDisplayName(player.name, m.design.name)).join(", ")}`,
     );
   }
 

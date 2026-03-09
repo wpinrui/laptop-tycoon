@@ -29,6 +29,11 @@ const selectStyle: CSSProperties = {
   outline: "none",
 };
 
+const optionStyle: CSSProperties = {
+  background: tokens.colors.surface,
+  color: tokens.colors.text,
+};
+
 export function MarketSizeCard({ year, quarter }: { year: number; quarter: Quarter }) {
   const [selectedDemographic, setSelectedDemographic] = useState<DemographicId | "all">("all");
 
@@ -55,9 +60,9 @@ export function MarketSizeCard({ year, quarter }: { year: number; quarter: Quart
         onChange={(e) => setSelectedDemographic(e.target.value as DemographicId | "all")}
         style={selectStyle}
       >
-        <option value="all">All Demographics</option>
+        <option value="all" style={optionStyle}>All Demographics</option>
         {DEMOGRAPHICS.map((d) => (
-          <option key={d.id} value={d.id}>{d.name}</option>
+          <option key={d.id} value={d.id} style={optionStyle}>{d.name}</option>
         ))}
       </select>
     </div>

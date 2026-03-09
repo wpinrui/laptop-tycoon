@@ -2,6 +2,7 @@ import { CSSProperties } from "react";
 import { Laptop } from "lucide-react";
 import { useNavigation } from "../../navigation/NavigationContext";
 import { useGame } from "../../state/GameContext";
+import { getPlayerCompany, modelDisplayName } from "../../state/gameTypes";
 import { MenuButton } from "../../shell/MenuButton";
 import { tokens } from "../../shell/tokens";
 import { BentoCard } from "./BentoCard";
@@ -20,6 +21,7 @@ const modelRowStyle: CSSProperties = {
 export function ModelsCard() {
   const { state } = useGame();
   const { navigateTo } = useNavigation();
+  const player = getPlayerCompany(state);
   const activeModels = getActiveModels(state);
   const emptySlots = MAX_MODELS - activeModels.length;
   const canDesignNew = state.quarter === 1 && !state.quarterSimulated;
@@ -34,7 +36,7 @@ export function ModelsCard() {
           return (
             <div key={model.design.id} style={modelRowStyle}>
               <div>
-                <div style={{ fontWeight: 600, fontSize: tokens.font.sizeBase }}>{model.design.name}</div>
+                <div style={{ fontWeight: 600, fontSize: tokens.font.sizeBase }}>{modelDisplayName(player.name, model.design.name)}</div>
                 <div style={{ fontSize: tokens.font.sizeSmall, display: "flex", gap: tokens.spacing.sm, marginTop: 2 }}>
                   {model.retailPrice !== null && (
                     <span style={{ color: tokens.colors.text }}>${model.retailPrice.toLocaleString()}</span>

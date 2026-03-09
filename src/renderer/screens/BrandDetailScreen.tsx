@@ -167,7 +167,7 @@ export function BrandDetailScreen() {
                 onClick={() => dispatch({ type: "SET_AWARENESS_BUDGET", budget: preset })}
                 style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
               >
-                {preset === 0 ? "None" : `$${(preset / 1000).toFixed(0)}K`}
+                {preset === 0 ? "None" : preset >= 1_000_000 ? `$${(preset / 1_000_000).toFixed(0)}M` : `$${(preset / 1000).toFixed(0)}K`}
               </MenuButton>
             );
           })}
