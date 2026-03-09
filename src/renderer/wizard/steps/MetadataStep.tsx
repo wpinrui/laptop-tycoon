@@ -16,10 +16,12 @@ export function MetadataStep() {
 
   const showPredecessor = state.modelType !== "brandNew";
 
+  const player = getPlayerCompany(gameState);
+
   // Populate predecessor models from game state (exclude the model currently being edited)
-  const predecessorModels = getPlayerCompany(gameState).models
+  const predecessorModels = player.models
     .filter((m) => m.design.id !== state.editingModelId)
-    .map((m) => ({ id: m.design.id, name: modelDisplayName(getPlayerCompany(gameState).name, m.design.name), year: m.yearDesigned }));
+    .map((m) => ({ id: m.design.id, name: modelDisplayName(player.name, m.design.name), year: m.yearDesigned }));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
