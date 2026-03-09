@@ -50,7 +50,7 @@ export const COMPETITORS: CompetitorDefinition[] = [
     },
     statPriorities: {
       high: [],
-      low: ["buildQuality", "design", "supportAndService", "display"],
+      low: ["buildQuality", "design", "display"],
     },
     pricingStrategy: { marginMultiplier: 1.05 },
     screenSizePreference: [14, 15],

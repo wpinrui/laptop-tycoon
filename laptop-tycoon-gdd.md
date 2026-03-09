@@ -195,7 +195,7 @@ Each buyer type has:
 | Student | Price, battery, portability, performance | Very high | Large population throughout. |
 | Creative Professional | Display, performance, build quality, design | Low | Small but high margin. Grows significantly post-2010. |
 | Gamer | Gaming perf, display, thermals | Moderate | Tiny pre-2005, explodes after. |
-| Tech Enthusiast | Performance, value-for-money, connectivity, repairability | Moderate | Small population. 2-year replacement cycle. |
+| Tech Enthusiast | Performance, value-for-money, connectivity, thermals | Moderate | Small population. 2-year replacement cycle. |
 | General Consumer | Price, design | High | Largest group. |
 | Budget Buyer | Price above all else | Extreme | Tolerates bad everything if cheap enough. |
 
@@ -622,7 +622,7 @@ Reviews are published after Q1 sales resolve (not at launch). This means the rev
 
 Two reviews per laptop:
 
-- **Tech Enthusiast outlet:** Evaluates through the lens of performance, value, repairability, connectivity.
+- **Tech Enthusiast outlet:** Evaluates through the lens of performance, value, thermals, connectivity.
 - **Mainstream outlet:** Evaluates through the lens of design, price, ease of use, brand.
 
 Each review is assembled from **sentence templates**. The template system reads the laptop's stat profile relative to the competition and selects appropriate commentary.

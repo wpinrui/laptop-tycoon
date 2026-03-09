@@ -14,19 +14,16 @@ export type LaptopStat =
   | "buildQuality"
   | "keyboard"
   | "trackpad"
-  | "repairability"
   | "weight"
   | "thinness"
-  | "thermals"
-  // Spending-driven
-  | "supportAndService";
+  | "thermals";
 
 export type StatVector = Partial<Record<LaptopStat, number>>;
 
 export const ALL_STATS: LaptopStat[] = [
   "performance", "gamingPerformance", "batteryLife", "display", "connectivity",
   "speakers", "webcam", "design", "buildQuality", "keyboard", "trackpad",
-  "repairability", "weight", "thinness", "thermals", "supportAndService",
+  "weight", "thinness", "thermals",
 ];
 
 // --- Screen Size ---
@@ -170,7 +167,7 @@ export interface Demographic {
   name: string;
   priceSensitivity: PriceSensitivity;
   screenSizePreference: ScreenSizePreference;
-  /** Weights across all 16 stats. Must sum to 1.0. */
+  /** Weights across all 14 stats. Must sum to 1.0. */
   statWeights: Record<LaptopStat, number>;
   description: string;
 }

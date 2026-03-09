@@ -54,7 +54,7 @@ export interface AwardsAwarded {
 
 /** Stat groups the tech enthusiast outlet cares about */
 const TECH_STATS: LaptopStat[] = [
-  "performance", "gamingPerformance", "connectivity", "repairability",
+  "performance", "gamingPerformance", "connectivity",
   "thermals", "batteryLife", "display",
 ];
 
@@ -244,20 +244,6 @@ const STAT_TEMPLATES: Partial<Record<LaptopStat, SentimentTemplates>> = {
       "The {{laptop}} runs hot and loud — the cooling system can't keep up.",
     ],
   },
-  repairability: {
-    good: [
-      "Repairability is refreshingly good — key components are user-accessible.",
-      "The {{laptop}} earns points for letting users upgrade RAM and storage easily.",
-    ],
-    neutral: [
-      "Repairability is mixed — some components are accessible, others are soldered.",
-      "You can replace the storage, but RAM and battery are locked down.",
-    ],
-    bad: [
-      "Everything is soldered shut. If something breaks, you're looking at a costly repair.",
-      "Repairability is essentially nonexistent — a disappointing trend this model continues.",
-    ],
-  },
   speakers: {
     good: [
       "Speaker quality surprises — full sound with decent bass for a laptop.",
@@ -284,17 +270,6 @@ const STAT_TEMPLATES: Partial<Record<LaptopStat, SentimentTemplates>> = {
     bad: [
       "The webcam produces a grainy, dark image. Not ideal for regular video calls.",
       "Webcam quality is disappointing in an era when video calls are essential.",
-    ],
-  },
-  supportAndService: {
-    good: [
-      "The manufacturer's support reputation adds peace of mind to the purchase.",
-    ],
-    neutral: [
-      "Support and warranty are standard for the industry.",
-    ],
-    bad: [
-      "After-sales support has room for improvement.",
     ],
   },
 };

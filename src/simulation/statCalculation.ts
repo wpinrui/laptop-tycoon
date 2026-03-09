@@ -27,7 +27,10 @@ import {
   coolingMultiplier,
   availableVolumeCm3,
   totalConsumedVolumeCm3,
+  chassisShellWeightG,
+  avgUsageMultiplier,
 } from "../data/designConstants";
+import { getBatteryEra } from "../data/batteryEras";
 
 export interface RawStatTotalsParams {
   screenSize: ScreenSizeInches;
@@ -121,6 +124,43 @@ export function computeRawStatTotals(params: RawStatTotalsParams): StatVector {
       totals.gamingPerformance = Math.max(0, (totals.gamingPerformance ?? 0) - gamingLoss);
     }
   }
+
+  // --- Derived stats: batteryLife, weight, thinness ---
+
+  // batteryLife: hours of use = batteryWh / (totalPower * avgUsageMultiplier)
+  // Score: ~10 points per hour, capped at 100
+  if (totalPower > 0) {
+    const usageMult = avgUsageMultiplier(gameYear);
+    const batteryHours = batteryCapacityWh / (totalPower * usageMult);
+    totals.batteryLife = (totals.batteryLife ?? 0) + Math.round(Math.min(100, batteryHours * 10));
+  } else {
+    // No power draw = infinite battery life
+    totals.batteryLife = (totals.batteryLife ?? 0) + 100;
+  }
+
+  // weight: lighter = higher score
+  // Total weight = base chassis weight + components + ports + chassis options + battery + shell
+  const era = getBatteryEra(gameYear);
+  let componentWeight = 0;
+  for (const [slot, comp] of Object.entries(components)) {
+    if (!comp) continue;
+    componentWeight += applyDisplayMultiplier(comp.weightG, slot, displayMult);
+  }
+  let portWeight = 0;
+  for (const pt of PORT_TYPES) {
+    portWeight += (ports[pt.id] ?? 0) * pt.weightPerPortG;
+  }
+  const chassisOptionWeight = allChassisOptions.reduce((sum, o) => sum + (o?.weightG ?? 0), 0);
+  const batteryWeight = Math.round(batteryCapacityWh * era.weightPerWh);
+  const materialDensity = chassis.material?.shellDensityMultiplier ?? 1.0;
+  const shellWeight = chassisShellWeightG(screenSize, bezelMm, thicknessCm, materialDensity);
+  const totalWeight = screenSizeDef.baseWeightG + componentWeight + portWeight + chassisOptionWeight + batteryWeight + shellWeight;
+  // Map: 500g → 90, 1500g → 70, 2500g → 50, 3500g → 30, 4500g → 10
+  totals.weight = (totals.weight ?? 0) + Math.round(Math.max(0, Math.min(100, (5000 - totalWeight) / 50)));
+
+  // thinness: thinner = higher score (linear mapping)
+  const thinRaw = 1 - (thicknessCm - THICKNESS_MIN_CM) / (THICKNESS_MAX_CM - THICKNESS_MIN_CM);
+  totals.thinness = (totals.thinness ?? 0) + Math.round(Math.max(0, Math.min(100, thinRaw * 100)));
 
   // Clamp all stats to 0 minimum
   for (const key of Object.keys(totals) as LaptopStat[]) {
