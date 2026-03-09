@@ -85,7 +85,7 @@ export function BrandDetailScreen() {
 
       <div style={{ display: "flex", flex: 1, gap: tokens.spacing.lg, minHeight: 0 }}>
         {/* Main content: Budget + Sponsorships */}
-        <div className="content-panel hide-scrollbar" style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+        <div className="content-panel hide-scrollbar" style={{ flex: 2, overflowY: "auto", minHeight: 0 }}>
           {/* Awareness Budget */}
           <div style={sectionStyle}>
             <p style={headingStyle}>Awareness Budget</p>
@@ -113,7 +113,7 @@ export function BrandDetailScreen() {
           </div>
 
           {/* Sponsorships */}
-          <div style={{ borderTop: `1px solid ${tokens.colors.panelBorder}`, paddingTop: tokens.spacing.lg, ...sectionStyle }}>
+          <div style={sectionStyle}>
             <p style={headingStyle}>Sponsorships & Partnerships</p>
             <p style={{ ...hintStyle, marginBottom: tokens.spacing.md, marginTop: 0 }}>
               Discrete annual deals that target specific demographics. Toggle to purchase or cancel.
@@ -171,8 +171,7 @@ export function BrandDetailScreen() {
         {/* Sidebar: Brand Reach + Perception */}
         <div
           style={{
-            width: 280,
-            flexShrink: 0,
+            flex: 1,
             background: tokens.colors.cardBg,
             border: `1px solid ${tokens.colors.panelBorder}`,
             borderRadius: tokens.borderRadius.md,
