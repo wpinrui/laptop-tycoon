@@ -30,7 +30,7 @@ export const GPUS: Component[] = [
     volumeCm3: 0,
     minThicknessCm: 0,
     specs: { type: "Integrated", memory: "Shared", pipeline: "4 pixel" },
-    stats: { gamingPerformance: 12 },
+    stats: { gamingPerformance: 10 },
   },
 
   // --- 2000 ---
@@ -47,7 +47,7 @@ export const GPUS: Component[] = [
     volumeCm3: 15,
     minThicknessCm: 0.8,
     specs: { type: "Dedicated", memory: "8 MB", core: "125 MHz" },
-    stats: { gamingPerformance: 20 },
+    stats: { gamingPerformance: 40 },
   },
   {
     id: "nvidia_geforce2_go",
@@ -62,7 +62,7 @@ export const GPUS: Component[] = [
     volumeCm3: 22,
     minThicknessCm: 1.0,
     specs: { type: "Dedicated", memory: "16 MB DDR", core: "143 MHz" },
-    stats: { gamingPerformance: 30 },
+    stats: { gamingPerformance: 55 },
   },
 
   // --- 2001 ---
@@ -79,7 +79,7 @@ export const GPUS: Component[] = [
     volumeCm3: 18,
     minThicknessCm: 0.9,
     specs: { type: "Dedicated", memory: "32 MB DDR", core: "230 MHz" },
-    stats: { gamingPerformance: 35 },
+    stats: { gamingPerformance: 60 },
   },
   {
     id: "nvidia_geforce4_440_go",
@@ -94,7 +94,7 @@ export const GPUS: Component[] = [
     volumeCm3: 28,
     minThicknessCm: 1.1,
     specs: { type: "Dedicated", memory: "64 MB DDR", core: "220 MHz" },
-    stats: { gamingPerformance: 42 },
+    stats: { gamingPerformance: 75 },
   },
 
   // --- 2002 ---
@@ -111,7 +111,7 @@ export const GPUS: Component[] = [
     volumeCm3: 18,
     minThicknessCm: 0.9,
     specs: { type: "Dedicated", memory: "64 MB DDR", core: "250 MHz" },
-    stats: { gamingPerformance: 40 },
+    stats: { gamingPerformance: 70 },
   },
   {
     id: "nvidia_geforce4_go_4200",
@@ -126,7 +126,7 @@ export const GPUS: Component[] = [
     volumeCm3: 30,
     minThicknessCm: 1.2,
     specs: { type: "Dedicated", memory: "64 MB DDR", core: "250 MHz" },
-    stats: { gamingPerformance: 50 },
+    stats: { gamingPerformance: 90 },
   },
 
   // --- 2003 ---
@@ -143,7 +143,7 @@ export const GPUS: Component[] = [
     volumeCm3: 25,
     minThicknessCm: 1.1,
     specs: { type: "Dedicated", memory: "64 MB DDR", core: "300 MHz", directX: "9.0" },
-    stats: { gamingPerformance: 52 },
+    stats: { gamingPerformance: 95 },
   },
   {
     id: "nvidia_geforcefx_go5600",
@@ -158,7 +158,7 @@ export const GPUS: Component[] = [
     volumeCm3: 35,
     minThicknessCm: 1.3,
     specs: { type: "Dedicated", memory: "128 MB DDR", core: "325 MHz", directX: "9.0" },
-    stats: { gamingPerformance: 58 },
+    stats: { gamingPerformance: 110 },
   },
 
   // --- 2004 ---
@@ -175,7 +175,7 @@ export const GPUS: Component[] = [
     volumeCm3: 28,
     minThicknessCm: 1.1,
     specs: { type: "Dedicated", memory: "128 MB DDR", core: "400 MHz", directX: "9.0" },
-    stats: { gamingPerformance: 62 },
+    stats: { gamingPerformance: 105 },
   },
   {
     id: "nvidia_geforce_go_6800",
@@ -190,7 +190,7 @@ export const GPUS: Component[] = [
     volumeCm3: 65,
     minThicknessCm: 1.6,
     specs: { type: "Dedicated", memory: "256 MB GDDR3", core: "300 MHz", directX: "9.0c" },
-    stats: { gamingPerformance: 72 },
+    stats: { gamingPerformance: 140 },
   },
 
   // --- 2005 ---
@@ -207,7 +207,7 @@ export const GPUS: Component[] = [
     volumeCm3: 30,
     minThicknessCm: 1.2,
     specs: { type: "Dedicated", memory: "128 MB GDDR3", core: "425 MHz", directX: "9.0" },
-    stats: { gamingPerformance: 62 },
+    stats: { gamingPerformance: 110 },
   },
   {
     id: "nvidia_geforce_go_7800_gtx",
@@ -222,6 +222,6 @@ export const GPUS: Component[] = [
     volumeCm3: 85,
     minThicknessCm: 1.9,
     specs: { type: "Dedicated", memory: "256 MB GDDR3", core: "400 MHz", directX: "9.0c" },
-    stats: { gamingPerformance: 80 },
+    stats: { gamingPerformance: 160 },
   },
 ];
