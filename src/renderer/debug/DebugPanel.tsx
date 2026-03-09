@@ -780,7 +780,7 @@ function SimulationTab() {
               })}
             />
             <div style={{ ...labelS, marginTop: 4 }}>
-              Note: Actual simulation adds +/-{DEMAND_NOISE_MIN}-{DEMAND_NOISE_MAX}% sales noise on top.
+              Note: Actual simulation adds +/- {DEMAND_NOISE_MIN}%-{DEMAND_NOISE_MAX}% sales noise on top.
             </div>
           </div>
         )}
