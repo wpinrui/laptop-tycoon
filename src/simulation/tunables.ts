@@ -30,8 +30,8 @@ export const COMPETITOR_TIME_IN_MARKET_BONUS = 0.5;
 
 /** Scales raw value-for-money contribution into perception points (roughly +-5 per year) */
 export const PERCEPTION_CONTRIBUTION_SCALE = 5;
-/** Perception decay factor (50% fade per year — recency bias) */
-export const PERCEPTION_DECAY = 0.5;
+/** Perception decay factor (25% fade per year — recency bias) */
+export const PERCEPTION_DECAY = 0.75;
 /** Negativity bias multiplier — bad value-for-money hits harder */
 export const NEGATIVITY_MULTIPLIER = 1.5;
 /** Perception floor (minimum per-demographic perception score) */
