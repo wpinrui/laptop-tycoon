@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
+import { DollarSign, BarChart3, Newspaper, History } from "lucide-react";
 import { useNavigation } from "./NavigationContext";
 import { GameLayout } from "../shell/GameLayout";
 import { ContentPanel } from "../shell/ContentPanel";
-import { MenuButton } from "../shell/MenuButton";
+import { ScreenHeader } from "../shell/ScreenHeader";
 import { tokens } from "../shell/tokens";
 import { PauseMenu } from "../shell/PauseMenu";
 import { StatusBar } from "../shell/StatusBar";
@@ -19,16 +20,11 @@ import { BrandDetailScreen } from "../screens/BrandDetailScreen";
 import { ReviewsAwardsScreen } from "../screens/ReviewsAwardsScreen";
 import { DebugPanel } from "../debug/DebugPanel";
 
-function PlaceholderScreen({ title }: { title: string }) {
-  const { navigateTo } = useNavigation();
-
+function PlaceholderScreen({ title, icon }: { title: string; icon: React.ComponentType<{ size?: number; color?: string }> }) {
   return (
-    <ContentPanel maxWidth={600}>
-      <h2 style={{ margin: 0, marginBottom: tokens.spacing.sm }}>{title}</h2>
-      <p style={{ color: tokens.colors.textMuted, margin: 0, marginBottom: tokens.spacing.lg }}>Coming soon</p>
-      <MenuButton onClick={() => navigateTo("dashboard")}>
-        Back to Dashboard
-      </MenuButton>
+    <ContentPanel maxWidth={tokens.layout.panelMaxWidth} style={{ display: "flex", flexDirection: "column", overflow: "hidden", height: tokens.layout.panelHeight, width: tokens.layout.panelWidth }}>
+      <ScreenHeader title={title} icon={icon} />
+      <p style={{ color: tokens.colors.textMuted, margin: 0, flex: 1, paddingTop: tokens.spacing.lg }}>Coming soon</p>
       <StatusBar />
     </ContentPanel>
   );
@@ -51,17 +47,17 @@ function ScreenContent() {
     case "manufacturingWizard":
       return <ManufacturingWizard />;
     case "financialHistory":
-      return <PlaceholderScreen title="Financial History" />;
+      return <PlaceholderScreen title="Financial History" icon={DollarSign} />;
     case "marketOverview":
-      return <PlaceholderScreen title="Market Overview" />;
+      return <PlaceholderScreen title="Market Overview" icon={BarChart3} />;
     case "brandDetail":
       return <BrandDetailScreen />;
     case "reviewsAwards":
       return <ReviewsAwardsScreen />;
     case "news":
-      return <PlaceholderScreen title="News" />;
+      return <PlaceholderScreen title="News" icon={Newspaper} />;
     case "history":
-      return <PlaceholderScreen title="History" />;
+      return <PlaceholderScreen title="History" icon={History} />;
     case "quarterlySummary":
       return <QuarterlySummaryScreen />;
     case "yearEndSummary":

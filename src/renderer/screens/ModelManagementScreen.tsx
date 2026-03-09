@@ -7,6 +7,7 @@ import { selectPrompts } from "../manufacturing/data/pressReleasePrompts";
 import { LaptopModel, hasDiscontinuedComponents, getPlayerCompany, modelDisplayName } from "../state/gameTypes";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
+import { ScreenHeader } from "../shell/ScreenHeader";
 import { tokens } from "../shell/tokens";
 import { StatusBar } from "../shell/StatusBar";
 import { getActiveModels, MAX_MODELS } from "./dashboard/utils";
@@ -28,16 +29,9 @@ const panelStyle: CSSProperties = {
   height: tokens.layout.panelHeight,
   width: tokens.layout.panelWidth,
   maxWidth: tokens.layout.panelMaxWidth,
+  overflow: "hidden",
 };
 
-const headerStyle: CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  paddingBottom: tokens.spacing.lg,
-  borderBottom: `1px solid ${tokens.colors.panelBorder}`,
-  flexShrink: 0,
-};
 
 const modelCardStyle: CSSProperties = {
   background: tokens.colors.cardBg,
@@ -98,30 +92,29 @@ export function ModelManagementScreen() {
 
   return (
     <ContentPanel maxWidth={tokens.layout.panelMaxWidth} style={panelStyle}>
-      <div style={headerStyle}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: tokens.font.sizeTitle }}>Your Models</h2>
-          <p style={{ margin: 0, marginTop: tokens.spacing.xs, color: tokens.colors.textMuted, fontSize: tokens.font.sizeSmall }}>
-            {activeModels.length} / {MAX_MODELS} slots used
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: tokens.spacing.sm }}>
-          <MenuButton onClick={() => navigateTo("dashboard")}>
-            Back
-          </MenuButton>
-          <MenuButton
-            variant="accent"
-            onClick={() => navigateTo("designWizard")}
-            disabled={emptySlots === 0 || !canDesignNew}
-          >
-            <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-              <Plus size={16} /> New Design
+      <ScreenHeader
+        title="Your Models"
+        icon={Laptop}
+        right={
+          <>
+            <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
+              {activeModels.length} / {MAX_MODELS} slots
             </span>
-          </MenuButton>
-        </div>
-      </div>
+            <MenuButton
+              variant="accent"
+              onClick={() => navigateTo("designWizard")}
+              disabled={emptySlots === 0 || !canDesignNew}
+              style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
+                <Plus size={16} /> New Design
+              </span>
+            </MenuButton>
+          </>
+        }
+      />
 
-      <div style={{ flex: 1, overflowY: "auto", marginTop: tokens.spacing.lg }}>
+      <div className="hide-scrollbar" style={{ flex: 1, overflowY: "auto", marginTop: tokens.spacing.lg }}>
       {activeModels.length === 0 ? (
         <div style={{
           textAlign: "center",
@@ -192,6 +185,7 @@ export function ModelManagementScreen() {
           )}
         </div>
       )}
+      <div style={{ flexShrink: 0, height: tokens.spacing.lg }} />
       </div>
       <StatusBar />
     </ContentPanel>

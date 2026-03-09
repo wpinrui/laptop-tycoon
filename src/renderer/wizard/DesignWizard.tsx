@@ -462,44 +462,80 @@ function WizardContent() {
         }}
       >
         <MenuButton
-          onClick={() => dispatch({ type: "PREV_STEP" })}
-          disabled={isFirst}
+          onClick={() => {
+            if (isFirst) {
+              setShowCloseConfirm(true);
+            } else {
+              dispatch({ type: "PREV_STEP" });
+            }
+          }}
           style={{ fontSize: tokens.font.sizeBase }}
         >
           Back
         </MenuButton>
-        <MenuButton
-          variant={isLast ? "accent" : "surface"}
-          onClick={() => {
-            if (isLast) {
-              const design = wizardStateToDesign(state, gameState.year);
-              if (state.editingModelId) {
-                gameDispatch({ type: "UPDATE_MODEL_DESIGN", modelId: state.editingModelId, design });
+        <div style={{ display: "flex", gap: tokens.spacing.sm }}>
+          {!isLast && allStepsComplete && state.visitedSteps.has("review") && (
+            <MenuButton
+              variant="accent"
+              onClick={() => {
+                const design = wizardStateToDesign(state, gameState.year);
+                if (state.editingModelId) {
+                  gameDispatch({ type: "UPDATE_MODEL_DESIGN", modelId: state.editingModelId, design });
+                } else {
+                  gameDispatch({
+                    type: "ADD_MODEL",
+                    model: {
+                      design,
+                      status: "draft",
+                      retailPrice: null,
+                      manufacturingQuantity: null,
+                      yearDesigned: gameState.year,
+                      manufacturingPlan: null,
+                      unitsInStock: 0,
+                    },
+                  });
+                }
+                dispatch({ type: "RESET" });
+                navigateTo("modelManagement");
+              }}
+              style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}
+            >
+              {state.editingModelId ? "Save Changes" : "Finalize Design"}
+            </MenuButton>
+          )}
+          <MenuButton
+            variant={isLast ? "accent" : "surface"}
+            onClick={() => {
+              if (isLast) {
+                const design = wizardStateToDesign(state, gameState.year);
+                if (state.editingModelId) {
+                  gameDispatch({ type: "UPDATE_MODEL_DESIGN", modelId: state.editingModelId, design });
+                } else {
+                  gameDispatch({
+                    type: "ADD_MODEL",
+                    model: {
+                      design,
+                      status: "draft",
+                      retailPrice: null,
+                      manufacturingQuantity: null,
+                      yearDesigned: gameState.year,
+                      manufacturingPlan: null,
+                      unitsInStock: 0,
+                    },
+                  });
+                }
+                dispatch({ type: "RESET" });
+                navigateTo("modelManagement");
               } else {
-                gameDispatch({
-                  type: "ADD_MODEL",
-                  model: {
-                    design,
-                    status: "draft",
-                    retailPrice: null,
-                    manufacturingQuantity: null,
-                    yearDesigned: gameState.year,
-                    manufacturingPlan: null,
-                    unitsInStock: 0,
-                  },
-                });
+                dispatch({ type: "NEXT_STEP" });
               }
-              dispatch({ type: "RESET" });
-              navigateTo("modelManagement");
-            } else {
-              dispatch({ type: "NEXT_STEP" });
-            }
-          }}
-          disabled={!canAdvance}
-          style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}
-        >
-          {isLast ? (state.editingModelId ? "Save Changes" : "Finalize Design") : "Next"}
-        </MenuButton>
+            }}
+            disabled={!canAdvance}
+            style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}
+          >
+            {isLast ? (state.editingModelId ? "Save Changes" : "Finalize Design") : "Next"}
+          </MenuButton>
+        </div>
       </div>
       {showCloseConfirm && (
         <ConfirmDiscardDialog

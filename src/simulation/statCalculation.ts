@@ -115,8 +115,8 @@ export function computeRawStatTotals(params: RawStatTotalsParams): StatVector {
     if (!comp) continue;
     totalPower += applyDisplayMultiplier(comp.powerDrawW, slot, displayMult);
   }
-  if (totalPower > 0) {
-    const coolingFromSolution = chassis.coolingSolution?.coolingCapacityW ?? 0;
+  if (totalPower > 0 && chassis.coolingSolution) {
+    const coolingFromSolution = chassis.coolingSolution.coolingCapacityW;
     const totalVolume = totalConsumedVolumeCm3(components, batteryCapacityWh, ports, allChassisOptions, gameYear);
     const totalAvailable = availableVolumeCm3(screenSize, bezelMm, thicknessCm, gameYear);
     const spaceUtil = totalAvailable > 0 ? totalVolume / totalAvailable : 1;
@@ -133,7 +133,7 @@ export function computeRawStatTotals(params: RawStatTotalsParams): StatVector {
       totals.performance = Math.round((totals.performance ?? 0) * throttleRatio);
       totals.gamingPerformance = Math.round((totals.gamingPerformance ?? 0) * throttleRatio);
     }
-  } else {
+  } else if (totalPower === 0) {
     // No power draw = perfect thermals (passive build)
     totals.thermals = THERMALS_MAX_SCORE;
   }
