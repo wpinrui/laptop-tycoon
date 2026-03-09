@@ -139,6 +139,7 @@ export interface BatteryEraConfig {
   yearEnd: number;
   costPerWh: number;
   weightPerWh: number;
+  volumePerWh: number;
   techLabel: string;
 }
 
