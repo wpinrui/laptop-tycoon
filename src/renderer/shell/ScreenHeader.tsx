@@ -8,7 +8,6 @@ const headerStyle: CSSProperties = {
   alignItems: "center",
   gap: tokens.spacing.md,
   paddingBottom: tokens.spacing.lg,
-  borderBottom: `1px solid ${tokens.colors.panelBorder}`,
   flexShrink: 0,
 };
 
@@ -31,15 +30,13 @@ interface ScreenHeaderProps {
   iconColor?: string;
   /** Extra content rendered on the right side of the header */
   right?: ReactNode;
-  /** Hide the bottom border */
-  noBorder?: boolean;
 }
 
-export function ScreenHeader({ title, icon: Icon, iconColor = tokens.colors.accent, right, noBorder }: ScreenHeaderProps) {
+export function ScreenHeader({ title, icon: Icon, iconColor = tokens.colors.accent, right }: ScreenHeaderProps) {
   const { navigateTo } = useNavigation();
 
   return (
-    <div style={noBorder ? { ...headerStyle, borderBottom: "none" } : headerStyle}>
+    <div style={headerStyle}>
       <button
         style={backButtonStyle}
         onClick={() => navigateTo("dashboard")}

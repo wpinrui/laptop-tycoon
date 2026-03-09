@@ -76,7 +76,6 @@ export function BrandDetailScreen() {
       <ScreenHeader
         title="Brand Management"
         icon={Sparkles}
-        noBorder
         right={
           <span style={{ fontSize: tokens.font.sizeBase, color: tokens.colors.textMuted }}>
             Annual spend: <span style={{ color: tokens.colors.warning, fontWeight: 600 }}>${totalAnnualSpend.toLocaleString()}</span>
