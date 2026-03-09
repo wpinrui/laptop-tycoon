@@ -6,8 +6,8 @@ import { ALL_STATS, LaptopStat, DemographicId, StatVector } from "../../data/typ
 import { DEMOGRAPHICS } from "../../data/demographics";
 import { STARTING_DEMAND_POOL } from "../../data/startingDemand";
 import { getDemandPoolSize, getScreenSizeFit } from "../../simulation/demographicData";
-import { PRICE_SENSITIVITY_EXPONENT, REPLACEMENT_CYCLE, QUARTER_SHARES, QUARTER_SHARES_SUM, DEMAND_NOISE_MIN, DEMAND_NOISE_MAX } from "../../simulation/tunables";
-import { getTheoreticalMaxima } from "../../simulation/theoreticalMax";
+import { REPLACEMENT_CYCLE, QUARTER_SHARES, QUARTER_SHARES_SUM, DEMAND_NOISE_MIN, DEMAND_NOISE_MAX } from "../../simulation/tunables";
+import { getTheoreticalMaxima, getTheoreticalMaxCost } from "../../simulation/theoreticalMax";
 import { tokens } from "../shell/tokens";
 
 const DEMOGRAPHIC_IDS = DEMOGRAPHICS.map((d) => d.id);
@@ -355,10 +355,11 @@ interface VPComputeContext {
   demographic: (typeof DEMOGRAPHICS)[number];
   selectedDemo: DemographicId;
   companies: CompanyState[];
+  year: number;
 }
 
 function computeVPForLaptop(laptop: MarketEntry, ctx: VPComputeContext) {
-  const { maxStats, demographic, selectedDemo, companies } = ctx;
+  const { maxStats, demographic, selectedDemo, companies, year } = ctx;
 
   const normalised = {} as Record<LaptopStat, number>;
   for (const stat of ALL_STATS) {
@@ -373,11 +374,13 @@ function computeVPForLaptop(laptop: MarketEntry, ctx: VPComputeContext) {
     weightedStatScore += w;
   }
 
+  const maxCost = getTheoreticalMaxCost(year);
+  const priceScore = Math.max(0, Math.min(1, 1 - laptop.retailPrice / maxCost));
+
   const pref = demographic.screenSizePreference;
   const screenPenalty = getScreenSizeFit(laptop.screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);
-  const exponent = PRICE_SENSITIVITY_EXPONENT[demographic.priceSensitivity];
-  const priceComponent = Math.pow(laptop.retailPrice, exponent);
-  const rawVP = (weightedStatScore * screenPenalty) / priceComponent;
+  const totalScore = weightedStatScore + priceScore * demographic.priceWeight;
+  const rawVP = totalScore * screenPenalty;
 
   const company = companies.find((c) => c.id === laptop.owner);
   const brandPerception = company ? (company.brandPerception[selectedDemo] ?? 0) : 0;
@@ -390,7 +393,7 @@ function computeVPForLaptop(laptop: MarketEntry, ctx: VPComputeContext) {
 
   return {
     laptop, normalised, weightedPerStat, weightedStatScore,
-    screenPenalty, exponent, priceComponent, rawVP,
+    priceScore, screenPenalty, rawVP,
     brandPerception, campaignPerception, perceptionMod,
     biasedVP, reach, effectiveVP,
   };
@@ -460,8 +463,8 @@ function SimulationTab() {
   }, [state.year]);
 
   const vpContext: VPComputeContext = useMemo(
-    () => ({ maxStats, demographic, selectedDemo, companies: state.companies }),
-    [maxStats, demographic, selectedDemo, state.companies],
+    () => ({ maxStats, demographic, selectedDemo, companies: state.companies, year: state.year }),
+    [maxStats, demographic, selectedDemo, state.companies, state.year],
   );
 
   // --- Compute all intermediate values ---
@@ -624,20 +627,20 @@ function SimulationTab() {
         {currentStep === 5 && (
           <div>
             <div style={{ color: "#ffc800", fontWeight: "bold", marginBottom: 4, fontSize: 10 }}>
-              Raw VP = (weighted_score x screen_penalty) / price ^ {demographic.priceSensitivity} ({PRICE_SENSITIVITY_EXPONENT[demographic.priceSensitivity]})
+              Raw VP = (stat_score + price_score x {demographic.priceWeight.toFixed(2)}) x screen_penalty
             </div>
             <StepTable
-              columns={["StatScore", "ScrPen", "Price", "Exponent", "Price^Exp", "Raw VP"]}
+              columns={["StatScore", "PriceScore", "PriceWt", "TotalScore", "ScrPen", "Raw VP"]}
               rows={computed.map((c) => ({
                 label: `${c.laptop.companyName.slice(0, 10)} ${c.laptop.modelName}`,
                 isPlayer: c.laptop.isPlayer,
                 cells: [
                   c.weightedStatScore.toFixed(4),
+                  c.priceScore.toFixed(3),
+                  demographic.priceWeight.toFixed(2),
+                  (c.weightedStatScore + c.priceScore * demographic.priceWeight).toFixed(4),
                   c.screenPenalty.toFixed(3),
-                  `$${c.laptop.retailPrice.toLocaleString()}`,
-                  c.exponent.toFixed(1),
-                  c.priceComponent.toFixed(1),
-                  c.rawVP.toExponential(4),
+                  c.rawVP.toFixed(6),
                 ],
               }))}
             />

@@ -1,13 +1,14 @@
 /**
  * Debug optimiser: finds the best laptop configuration for a given demographic
- * by maximising the actual sales engine VP formula (weighted normalised stats / cost^exponent).
+ * by maximising the sales engine VP formula where price is a weighted stat:
+ *   (statScore + priceScore × priceWeight) × screenPenalty
  *
  * Uses iterative hill-climbing: seed with cheapest parts, then repeatedly try
  * swapping each slot to every alternative and keep whichever swap improves the
  * full-build score the most. Repeat until no single swap improves the score.
  */
 
-import { Demographic, ComponentSlot, Component, ChassisOption, ChassisOptionSlot, LaptopStat, ScreenSizeInches } from "../../data/types";
+import { Demographic, ComponentSlot, Component, ChassisOption, LaptopStat, ScreenSizeInches } from "../../data/types";
 import { SCREEN_SIZES } from "../../data/screenSizes";
 import {
   getAvailableComponents,
@@ -29,9 +30,8 @@ import {
 } from "../../data/designConstants";
 import { COLOUR_OPTIONS } from "../../data/colourOptions";
 import { computeRawStatTotals } from "../../simulation/statCalculation";
-import { PRICE_SENSITIVITY_EXPONENT } from "../../simulation/tunables";
 import { getScreenSizeFit } from "../../simulation/demographicData";
-import { getTheoreticalMaxima } from "../../simulation/theoreticalMax";
+import { getTheoreticalMaxima, getTheoreticalMaxCost } from "../../simulation/theoreticalMax";
 import { WizardState } from "./types";
 import { COMPONENT_STEP_SLOTS } from "./types";
 import { getBatteryEra } from "../../data/batteryEras";
@@ -94,14 +94,13 @@ function findMinThickness(
 }
 
 /**
- * Score a complete build using the exact sales engine VP formula:
- *   (weightedNormalisedScore × screenPenalty) / cost^sensitivityExponent
+ * Score a complete build using the sales engine VP formula:
+ *   (weightedStatScore + priceScore × priceWeight) × screenPenalty
  */
 function scoreBuild(
   config: BuildConfig,
   demographic: Demographic,
   year: number,
-  sensitivityExp: number,
 ): number {
   const { screenSize, components, chassis, batteryCapacityWh, selectedColours } = config;
   const chassisOptions = [chassis.material, chassis.coolingSolution, chassis.keyboardFeature, chassis.trackpadFeature];
@@ -120,19 +119,22 @@ function scoreBuild(
   });
 
   const maxima = getTheoreticalMaxima(year);
-  let weightedScore = 0;
+  let weightedStatScore = 0;
   for (const [stat, weight] of Object.entries(demographic.statWeights)) {
     const raw = stats[stat as LaptopStat] ?? 0;
     const max = maxima[stat as LaptopStat] ?? 1;
     const norm = max > 0 ? raw / max : 0;
-    weightedScore += norm * weight;
+    weightedStatScore += norm * weight;
   }
+
+  const totalCost = computeBuildCost(config, year);
+  const maxCost = getTheoreticalMaxCost(year);
+  const priceScore = Math.max(0, Math.min(1, 1 - totalCost / maxCost));
 
   const pref = demographic.screenSizePreference;
   const screenPenalty = getScreenSizeFit(screenSize, pref.preferredMin, pref.preferredMax, pref.penaltyPerInch);
-  const totalCost = computeBuildCost(config, year);
 
-  return (weightedScore * screenPenalty) / Math.pow(Math.max(1, totalCost), sensitivityExp);
+  return (weightedStatScore + priceScore * demographic.priceWeight) * screenPenalty;
 }
 
 // ─── main optimiser ────────────────────────────────────────────────────
@@ -189,7 +191,6 @@ function hillClimb(
   initChassis: WizardState["chassis"],
   demographic: Demographic,
   year: number,
-  sensitivityExp: number,
 ): { components: Partial<Record<ComponentSlot, Component>>; chassis: WizardState["chassis"]; batteryCapacityWh: number } {
   const screenDef = SCREEN_SIZES.find(s => s.size === screenSize)!;
   const displayMult = screenDef.displayMultiplier;
@@ -203,7 +204,7 @@ function hillClimb(
     screenSize, components, chassis, batteryCapacityWh, selectedColours, displayMult,
   });
 
-  let currentScore = scoreBuild(makeConfig(), demographic, year, sensitivityExp);
+  let currentScore = scoreBuild(makeConfig(), demographic, year);
   let improved = true;
 
   while (improved) {
@@ -220,7 +221,7 @@ function hillClimb(
         if (candidate === current) continue;
         const trial = { ...components, [slot]: candidate };
         const config: BuildConfig = { screenSize, components: trial, chassis, batteryCapacityWh, selectedColours, displayMult };
-        const s = scoreBuild(config, demographic, year, sensitivityExp);
+        const s = scoreBuild(config, demographic, year);
         if (s > bestSlotScore) {
           bestSlotScore = s;
           bestForSlot = candidate;
@@ -245,7 +246,7 @@ function hillClimb(
         if (candidate === current) continue;
         const trialChassis = { ...chassis, [def.slot]: candidate };
         const config: BuildConfig = { screenSize, components, chassis: trialChassis, batteryCapacityWh, selectedColours, displayMult };
-        const s = scoreBuild(config, demographic, year, sensitivityExp);
+        const s = scoreBuild(config, demographic, year);
         if (s > bestSlotScore) {
           bestSlotScore = s;
           bestForSlot = candidate;
@@ -266,7 +267,7 @@ function hillClimb(
       for (let batt = MIN_BATTERY_WH; batt <= MAX_BATTERY_WH; batt += BATTERY_STEP_WH) {
         if (batt === batteryCapacityWh) continue;
         const config: BuildConfig = { screenSize, components, chassis, batteryCapacityWh: batt, selectedColours, displayMult };
-        const s = scoreBuild(config, demographic, year, sensitivityExp);
+        const s = scoreBuild(config, demographic, year);
         if (s > bestBattScore) {
           bestBattScore = s;
           bestBatt = batt;
@@ -293,7 +294,6 @@ function hillClimb(
  * 4. Pick the screen size with the best final score
  */
 export function optimiseForDemographic(demographic: Demographic, year: number): OptimisedResult {
-  const sensitivityExp = PRICE_SENSITIVITY_EXPONENT[demographic.priceSensitivity];
   const selectedColours = [COLOUR_OPTIONS[0].id];
 
   let bestResult: OptimisedResult | null = null;
@@ -304,7 +304,7 @@ export function optimiseForDemographic(demographic: Demographic, year: number): 
     const displayMult = screenDef.displayMultiplier;
 
     const seed = seedCheapestBuild(screenSize, year);
-    const optimised = hillClimb(screenSize, seed.components, seed.chassis, demographic, year, sensitivityExp);
+    const optimised = hillClimb(screenSize, seed.components, seed.chassis, demographic, year);
 
     const chassisOptions = [optimised.chassis.material, optimised.chassis.coolingSolution, optimised.chassis.keyboardFeature, optimised.chassis.trackpadFeature];
     const thickness = findMinThickness(screenSize, optimised.components, optimised.batteryCapacityWh, chassisOptions, year);
@@ -317,7 +317,7 @@ export function optimiseForDemographic(demographic: Demographic, year: number): 
       selectedColours,
       displayMult,
     };
-    const score = scoreBuild(config, demographic, year, sensitivityExp);
+    const score = scoreBuild(config, demographic, year);
 
     if (score > bestScore) {
       bestScore = score;
