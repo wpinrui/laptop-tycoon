@@ -99,7 +99,7 @@ export function modelDisplayName(companyName: string, designName: string): strin
 }
 
 export const STARTING_CASH = 50_000_000;
-export const STARTING_YEAR = 2005;
+export const STARTING_YEAR = 2000;
 
 const ZERO_DEMOGRAPHICS: Record<DemographicId, number> = {
   corporate: 0,
