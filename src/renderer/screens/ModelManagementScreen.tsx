@@ -68,7 +68,7 @@ export function ModelManagementScreen() {
   const activeModels = getActiveModels(state);
   const discontinuedModels = player.models.filter((m) => m.status === "discontinued");
   const emptySlots = MAX_MODELS - activeModels.length;
-  const canDesignNew = state.quarter === 1 && !state.quarterSimulated;
+  const canDesignNew = !state.quarterSimulated;
 
   function handleEdit(model: LaptopModel) {
     wizardDispatch({ type: "LOAD_DESIGN", design: model.design });

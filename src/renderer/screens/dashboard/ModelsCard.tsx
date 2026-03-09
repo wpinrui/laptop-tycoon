@@ -24,7 +24,7 @@ export function ModelsCard() {
   const player = getPlayerCompany(state);
   const activeModels = getActiveModels(state);
   const emptySlots = MAX_MODELS - activeModels.length;
-  const canDesignNew = state.quarter === 1 && !state.quarterSimulated;
+  const canDesignNew = !state.quarterSimulated;
 
   return (
     <BentoCard title="Your Models" icon={Laptop} screen="modelManagement">
