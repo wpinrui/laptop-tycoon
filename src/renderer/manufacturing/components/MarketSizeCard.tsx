@@ -86,7 +86,7 @@ function CustomSelect({
             left: "50%",
             transform: "translateX(-50%)",
             marginTop: 4,
-            background: "#1e1e1e",
+            background: tokens.colors.surface,
             border: `1px solid ${tokens.colors.panelBorder}`,
             borderRadius: tokens.borderRadius.sm,
             overflow: "hidden",

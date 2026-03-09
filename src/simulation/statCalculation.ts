@@ -136,6 +136,11 @@ export function computeRawStatTotals(params: RawStatTotalsParams): StatVector {
   } else if (totalPower === 0) {
     // No power draw = perfect thermals (passive build)
     totals.thermals = THERMALS_MAX_SCORE;
+  } else {
+    // Power draw but no cooling solution: worst thermals, fully throttled
+    totals.thermals = 0;
+    totals.performance = 0;
+    totals.gamingPerformance = 0;
   }
 
   // --- Derived stats: batteryLife, weight, thinness ---
