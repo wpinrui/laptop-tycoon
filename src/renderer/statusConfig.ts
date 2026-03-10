@@ -10,7 +10,8 @@ export interface StatusStyle {
 }
 
 export const STATUS_CONFIG: Record<DisplayStatus, StatusStyle> = {
-  draft: { label: "Designed", color: tokens.colors.textMuted, bg: tokens.colors.surface },
+  draft: { label: "Draft", color: tokens.colors.textMuted, bg: tokens.colors.surface },
+  designed: { label: "Designed", color: tokens.colors.interactiveAccent, bg: tokens.colors.interactiveAccentBg },
   ready: { label: "Ready", color: tokens.colors.accent, bg: tokens.colors.accentBg },
   manufacturing: { label: "Manufacturing", color: tokens.colors.warning, bg: "rgba(255, 167, 38, 0.12)" },
   onSale: { label: "On Sale", color: tokens.colors.success, bg: "rgba(102, 187, 106, 0.12)" },
@@ -18,7 +19,7 @@ export const STATUS_CONFIG: Record<DisplayStatus, StatusStyle> = {
 };
 
 export function getDisplayStatus(model: LaptopModel, gameYear: number, gameQuarter: 1 | 2 | 3 | 4): DisplayStatus {
-  if (model.status === "draft" && model.manufacturingPlan !== null
+  if (model.status === "designed" && model.manufacturingPlan !== null
     && model.manufacturingPlan.year === gameYear && model.manufacturingPlan.quarter === gameQuarter) {
     return "ready";
   }

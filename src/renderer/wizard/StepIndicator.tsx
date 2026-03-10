@@ -12,6 +12,7 @@ const STEP_ICONS: Record<WizardStep, LucideIcon> = {
   battery: Battery,
   body: Laptop,
   review: ClipboardCheck,
+  complete: Check,
 };
 
 interface StepIndicatorProps {

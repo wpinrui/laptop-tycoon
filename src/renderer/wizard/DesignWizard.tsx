@@ -29,6 +29,7 @@ import { MediaConnectivityStep } from "./steps/MediaConnectivityStep";
 import { BatteryStep } from "./steps/BatteryStep";
 import { BodyStep } from "./steps/BodyStep";
 import { ReviewStep } from "./steps/ReviewStep";
+import { CompleteStep } from "./steps/CompleteStep";
 import { WizardSidebar } from "./LaptopEstimateSidebar";
 import { StatusBar } from "../shell/StatusBar";
 import { DEMOGRAPHICS } from "../../data/demographics";
@@ -132,6 +133,7 @@ function isStepComplete(step: WizardStep, state: WizardState, year: number): boo
       return state.thicknessCm >= minHeight;
     }
     case "review":
+    case "complete":
       return true;
   }
 }
@@ -327,10 +329,10 @@ function WizardContent() {
     } else {
       gameDispatch({
         type: "ADD_MODEL",
-        rdCost: RD_COST[state.modelType],
+        rdCost,
         model: {
           design,
-          status: "draft",
+          status: "designed",
           retailPrice: null,
           manufacturingQuantity: null,
           yearDesigned: gameState.year,
@@ -339,6 +341,25 @@ function WizardContent() {
         },
       });
     }
+    dispatch({ type: "RESET" });
+    navigateTo("modelManagement");
+  }
+
+  function handleSaveAsDraft() {
+    const design = wizardStateToDesign(state, gameState.year);
+    gameDispatch({
+      type: "ADD_MODEL",
+      rdCost: 0,
+      model: {
+        design,
+        status: "draft",
+        retailPrice: null,
+        manufacturingQuantity: null,
+        yearDesigned: gameState.year,
+        manufacturingPlan: null,
+        unitsInStock: 0,
+      },
+    });
     dispatch({ type: "RESET" });
     navigateTo("modelManagement");
   }
@@ -382,6 +403,8 @@ function WizardContent() {
         return <BodyStep />;
       case "review":
         return <ReviewStep />;
+      case "complete":
+        return <CompleteStep onFinalize={handleFinalize} onSaveAsDraft={handleSaveAsDraft} />;
     }
   })();
 
@@ -500,29 +523,16 @@ function WizardContent() {
           Back
         </MenuButton>
         <div style={{ display: "flex", gap: tokens.spacing.sm }}>
-          {!isLast && allStepsComplete && state.visitedSteps.has("review") && (
+          {!isLast && (
             <MenuButton
-              variant="accent"
-              onClick={handleFinalize}
+              variant="surface"
+              onClick={() => dispatch({ type: "NEXT_STEP" })}
+              disabled={!canAdvance}
               style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}
             >
-              {state.editingModelId ? "Save Changes" : "Finalize Design"}
+              Next
             </MenuButton>
           )}
-          <MenuButton
-            variant={isLast ? "accent" : "surface"}
-            onClick={() => {
-              if (isLast) {
-                handleFinalize();
-              } else {
-                dispatch({ type: "NEXT_STEP" });
-              }
-            }}
-            disabled={!canAdvance}
-            style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}
-          >
-            {isLast ? (state.editingModelId ? "Save Changes" : "Finalize Design") : "Next"}
-          </MenuButton>
         </div>
       </div>
       {showCloseConfirm && (

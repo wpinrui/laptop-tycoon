@@ -16,7 +16,6 @@ import {
   computeLaptopTotals,
   componentCostDecayed,
 } from "../../../data/designConstants";
-import { RD_COST } from "../../../simulation/tunables";
 import { getAllChassisOptions, WIZARD_STEP_LABELS, WIZARD_STEPS, COMPONENT_STEP_SLOTS, WizardStep } from "../types";
 import { getScreenSizeDef } from "../../../data/screenSizes";
 import { getBatteryEra } from "../../../data/batteryEras";
@@ -67,7 +66,6 @@ export function ReviewStep() {
   const { state, gameYear } = useWizard();
   const { state: gameState } = useGame();
   const [dialogTarget, setDialogTarget] = useState<DialogTarget | null>(null);
-  const rdCost = RD_COST[state.modelType];
   const screenSizeDef = getScreenSizeDef(state.screenSize);
   const era = getBatteryEra(gameYear);
   const displayMult = screenSizeDef.displayMultiplier;
@@ -373,44 +371,7 @@ export function ReviewStep() {
             ${totalCost}
           </span>
         </div>
-        <div
-          style={{
-            borderTop: "1px solid #2e4a2e",
-            marginTop: "8px",
-            paddingTop: "8px",
-            display: "flex",
-            justifyContent: "space-between",
-          }}
-        >
-          <span style={{ fontSize: "0.875rem", fontWeight: "bold", color: "#e0e0e0" }}>
-            R&D Cost (one-time)
-          </span>
-          <span style={{ fontSize: "1rem", fontWeight: "bold", color: "#4caf50" }}>
-            ${rdCost.toLocaleString()}
-          </span>
-        </div>
       </div>
-      </div>
-
-      {/* R&D cost banner */}
-      <div
-        style={{
-          background: tokens.colors.accentBg,
-          border: `1px solid ${tokens.colors.accent}`,
-          borderRadius: "8px",
-          padding: "12px 16px",
-          marginTop: "4px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <span style={{ fontSize: "0.875rem", color: tokens.colors.accent }}>
-          {state.editingModelId ? "Saving redesign" : "Finalizing"} will deduct <strong>${rdCost.toLocaleString()}</strong> R&D cost from your cash
-        </span>
-        <span style={{ fontSize: "0.875rem", color: tokens.colors.textMuted }}>
-          Cash: ${gameState.cash.toLocaleString()}
-        </span>
       </div>
 
       {/* Edit dialog */}

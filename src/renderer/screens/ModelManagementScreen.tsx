@@ -309,6 +309,20 @@ function ModelCard({
                   style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
                 >
                   <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
+                    <Pencil size={14} /> Edit Design
+                  </span>
+                </MenuButton>
+              )}
+            </>
+          )}
+          {status === "designed" && (
+            <>
+              {onEdit && (
+                <MenuButton
+                  onClick={onEdit}
+                  style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
                     <Pencil size={14} /> Redesign
                   </span>
                 </MenuButton>

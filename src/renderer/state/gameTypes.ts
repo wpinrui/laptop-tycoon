@@ -33,7 +33,7 @@ export interface LaptopDesign {
   unitCost: number;
 }
 
-export type ModelStatus = "draft" | "manufacturing" | "onSale" | "discontinued";
+export type ModelStatus = "draft" | "designed" | "manufacturing" | "onSale" | "discontinued";
 
 export interface LaptopModel {
   design: LaptopDesign;

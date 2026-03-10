@@ -20,7 +20,8 @@ export type WizardStep =
   | "mediaConnectivity"
   | "battery"
   | "body"
-  | "review";
+  | "review"
+  | "complete";
 
 export const WIZARD_STEPS: WizardStep[] = [
   "metadata",
@@ -31,6 +32,7 @@ export const WIZARD_STEPS: WizardStep[] = [
   "battery",
   "body",
   "review",
+  "complete",
 ];
 
 export const WIZARD_STEP_LABELS: Record<WizardStep, string> = {
@@ -42,6 +44,7 @@ export const WIZARD_STEP_LABELS: Record<WizardStep, string> = {
   battery: "Battery",
   body: "Body",
   review: "Review",
+  complete: "Complete",
 };
 
 /** Maps wizard steps to which component slots they configure. Shared by DesignWizard and ReviewStep. */

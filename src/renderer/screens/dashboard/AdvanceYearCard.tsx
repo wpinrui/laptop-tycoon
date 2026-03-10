@@ -18,9 +18,11 @@ import { SPONSORSHIPS, getSponsorshipCost } from "../../../data/sponsorships";
 /** Models that need a current-year manufacturing plan before simulation. */
 function modelsNeedingPlans(state: { year: number; models: ReturnType<typeof getActiveModels> }) {
   return state.models.filter((m) => {
+    // Draft models haven't been finalized — no plan needed
+    if (m.status === "draft") return false;
     // Discontinued components → retail-only from inventory, no plan needed
     if (hasDiscontinuedComponents(m.design, state.year)) return false;
-    // Draft or onSale without a current-year plan
+    // Designed or onSale without a current-year plan
     const hasPlanForYear = m.manufacturingPlan?.year === state.year;
     return !hasPlanForYear;
   });
