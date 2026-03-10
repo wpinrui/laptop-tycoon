@@ -137,6 +137,8 @@ export function computeRawStatTotals(params: RawStatTotalsParams): StatVector {
     // No power draw = perfect thermals (passive build)
     totals.thermals = THERMALS_MAX_SCORE;
   }
+  // NOTE: totalPower > 0 && !coolingSolution intentionally falls through —
+  // thermals stays at default (0) and performance is NOT throttled.
 
   // --- Derived stats: batteryLife, weight, thinness ---
 
