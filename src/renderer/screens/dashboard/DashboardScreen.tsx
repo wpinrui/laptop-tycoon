@@ -11,6 +11,7 @@ import { BrandCard } from "./BrandCard";
 import { ReviewsCard } from "./ReviewsCard";
 import { NewsCard } from "./NewsCard";
 import { HistoryCard } from "./HistoryCard";
+import { CompetitorsCard } from "./CompetitorsCard";
 import { AdvanceYearCard } from "./AdvanceYearCard";
 
 const panelStyle: CSSProperties = {
@@ -91,6 +92,7 @@ export function DashboardScreen() {
         <div style={columnStyle}>
           <BrandCard />
           <MarketCard />
+          <CompetitorsCard />
           <div style={{ flexShrink: 0, height: tokens.spacing.lg }} />
         </div>
         <div style={columnStyle}>
