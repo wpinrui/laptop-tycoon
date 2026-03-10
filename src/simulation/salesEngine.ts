@@ -20,6 +20,7 @@ import {
   QuarterSimulationResult,
   DemandProjection,
   PerceptionChange,
+  sellThroughRate,
 } from "./salesTypes";
 import {
   CHANNEL_MARGIN_RATE,
@@ -436,8 +437,7 @@ function buildPerceptionReason(
   for (const pr of playerResults) {
     const db = pr.demographicBreakdown.find((b) => b.demographicId === demId);
     if (db && db.unitsDemanded > 0) {
-      const sellThrough = pr.unitsDemanded > 0 ? pr.unitsSold / pr.unitsDemanded : 1;
-      const units = db.unitsDemanded * sellThrough;
+      const units = db.unitsDemanded * sellThroughRate(pr);
       if (units > 0) {
         const model = playerModels.find((m) => m.design.id === pr.laptopId);
         const name = model?.design.name ?? pr.laptopId.slice(0, 6);
@@ -457,8 +457,7 @@ function buildPerceptionReason(
   for (const lr of allResults) {
     const db = lr.demographicBreakdown.find((b) => b.demographicId === demId);
     if (db && db.unitsDemanded > 0) {
-      const sellThrough = lr.unitsDemanded > 0 ? lr.unitsSold / lr.unitsDemanded : 1;
-      const units = db.unitsDemanded * sellThrough;
+      const units = db.unitsDemanded * sellThroughRate(lr);
       weightedVP += db.rawVP * units;
       totalUnits += units;
     }

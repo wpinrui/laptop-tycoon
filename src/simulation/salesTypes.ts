@@ -52,6 +52,11 @@ export interface LaptopSalesResult {
   demographicBreakdown: DemographicSalesBreakdown[];
 }
 
+/** Fraction of demanded units that were actually sold (0–1). Accounts for stock-outs. */
+export function sellThroughRate(lr: LaptopSalesResult): number {
+  return lr.unitsDemanded > 0 ? lr.unitsSold / lr.unitsDemanded : 1;
+}
+
 /** Per-demographic perception change for a single company */
 export interface PerceptionChange {
   demographicId: DemographicId;
