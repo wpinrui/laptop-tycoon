@@ -494,17 +494,22 @@ const RADAR_COLORS = ["#4fc3f7", "#ffb74d", "#ce93d8"];
 function RadarChart({
   datasets,
   labels,
-  size = 320,
 }: {
   datasets: { name: string; values: number[]; color: string }[];
   labels: string[];
-  size?: number;
 }) {
-  const cx = size / 2;
-  const cy = size / 2;
-  const radius = size / 2 - 40;
+  const vb = 500;
+  const cx = vb / 2;
+  const cy = vb / 2;
+  const radius = vb / 2 - 80;
   const n = labels.length;
   const angleStep = (2 * Math.PI) / n;
+
+  // Per-axis max for normalisation (outer ring = max across compared laptops)
+  const axisMax = labels.map((_, i) => {
+    const max = Math.max(...datasets.map((ds) => ds.values[i]));
+    return max > 0 ? max : 1;
+  });
 
   function point(i: number, r: number): [number, number] {
     const angle = -Math.PI / 2 + i * angleStep;
@@ -514,7 +519,7 @@ function RadarChart({
   const rings = [0.25, 0.5, 0.75, 1];
 
   return (
-    <svg width={size} height={size} style={{ flexShrink: 0 }}>
+    <svg viewBox={`0 0 ${vb} ${vb}`} style={{ width: "100%", height: "100%" }}>
       {/* Grid rings */}
       {rings.map((frac) => (
         <polygon
@@ -532,12 +537,12 @@ function RadarChart({
       })}
       {/* Data polygons */}
       {datasets.map((ds) => {
-        const pts = ds.values.map((v, i) => point(i, radius * Math.min(v / 100, 1)).join(",")).join(" ");
+        const pts = ds.values.map((v, i) => point(i, radius * Math.min(v / axisMax[i], 1)).join(",")).join(" ");
         return (
           <g key={ds.name}>
             <polygon points={pts} fill={ds.color} fillOpacity={0.1} stroke={ds.color} strokeWidth={2} />
             {ds.values.map((v, i) => {
-              const [px, py] = point(i, radius * Math.min(v / 100, 1));
+              const [px, py] = point(i, radius * Math.min(v / axisMax[i], 1));
               return <circle key={i} cx={px} cy={py} r={3} fill={ds.color} />;
             })}
           </g>
@@ -545,7 +550,7 @@ function RadarChart({
       })}
       {/* Labels */}
       {labels.map((label, i) => {
-        const [px, py] = point(i, radius + 16);
+        const [px, py] = point(i, radius + 20);
         const angle = -Math.PI / 2 + i * angleStep;
         const textAnchor = Math.abs(Math.cos(angle)) < 0.1 ? "middle" : Math.cos(angle) > 0 ? "start" : "end";
         return (
@@ -556,7 +561,7 @@ function RadarChart({
             textAnchor={textAnchor}
             dominantBaseline="central"
             fill={tokens.colors.textMuted}
-            fontSize={10}
+            fontSize={12}
             fontFamily={tokens.font.family}
           >
             {label}
@@ -759,7 +764,7 @@ function CompareView({
         </p>
       ) : (
       <div style={{ display: "flex", gap: tokens.spacing.lg, alignItems: "flex-start" }}>
-      <table style={{ borderCollapse: "collapse" }}>
+      <table style={{ borderCollapse: "separate", borderSpacing: 0, background: tokens.colors.cardBg, borderRadius: tokens.borderRadius.md, padding: tokens.spacing.sm, border: `1px solid ${tokens.colors.panelBorder}`, overflow: "hidden" }}>
       <thead>
         <tr>
           <th style={{ ...thBase, textAlign: "left" }}></th>
@@ -868,15 +873,26 @@ function CompareView({
         })}
       </tbody>
     </table>
-    <RadarChart
-      size={340}
-      labels={ALL_STATS.map((s) => STAT_LABELS[s])}
-      datasets={allStats.map(({ entry, stats }, idx) => ({
-        name: entry.model.design.name,
-        color: RADAR_COLORS[idx % RADAR_COLORS.length],
-        values: ALL_STATS.map((s) => Math.round(stats[s] ?? 0)),
-      }))}
-    />
+    <div style={{
+      flex: 1,
+      minWidth: 0,
+      background: tokens.colors.cardBg,
+      border: `1px solid ${tokens.colors.panelBorder}`,
+      borderRadius: tokens.borderRadius.md,
+      padding: tokens.spacing.sm,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    }}>
+      <RadarChart
+        labels={ALL_STATS.map((s) => STAT_LABELS[s])}
+        datasets={allStats.map(({ entry, stats }, idx) => ({
+          name: entry.model.design.name,
+          color: RADAR_COLORS[idx % RADAR_COLORS.length],
+          values: ALL_STATS.map((s) => Math.round(stats[s] ?? 0)),
+        }))}
+      />
+    </div>
     </div>
       )}
     </div>
