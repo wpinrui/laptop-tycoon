@@ -14,7 +14,7 @@ import {
 import { SCREEN_SIZES } from "../../data/screenSizes";
 import { computeRawStatTotals } from "../../simulation/statCalculation";
 import { getTheoreticalMaxima } from "../../simulation/theoreticalMax";
-import { ComponentSlot, LaptopStat, Demographic, ScreenSizeInches } from "../../data/types";
+import { ComponentSlot, LaptopStat, Demographic, ScreenSizeInches, STAT_LABELS } from "../../data/types";
 import { useGame } from "../state/GameContext";
 import { useNavigation } from "../navigation/NavigationContext";
 import { LaptopDesign } from "../state/gameTypes";
@@ -202,14 +202,6 @@ const SLOT_LABELS: Record<string, string> = {
 const CHASSIS_LABELS: Record<string, string> = {
   material: "Material", coolingSolution: "Cooling", keyboardFeature: "Keyboard", trackpadFeature: "Trackpad",
 };
-const STAT_LABELS: Record<string, string> = {
-  performance: "Performance", gamingPerformance: "Gaming", display: "Display",
-  connectivity: "Connectivity", webcam: "Webcam", wifi: "WiFi",
-  speakers: "Speakers", keyboard: "Keyboard", trackpad: "Trackpad",
-  design: "Design", buildQuality: "Build Quality", thinness: "Thinness",
-  weight: "Weight", thermals: "Thermals", batteryLife: "Battery Life",
-};
-
 function buildCopyTextForBuild(
   name: string,
   components: Partial<Record<ComponentSlot, import("../../data/types").Component>>,
@@ -270,7 +262,7 @@ function buildCopyTextForBuild(
   for (const [stat, raw] of Object.entries(stats)) {
     const max = maxima[stat as LaptopStat] ?? 1;
     const norm = max > 0 ? (raw as number) / max : 0;
-    const label = STAT_LABELS[stat] ?? stat;
+    const label = STAT_LABELS[stat as keyof typeof STAT_LABELS] ?? stat;
     lines.push(`- ${label}: ${norm.toFixed(3)} (raw: ${(raw as number).toFixed(1)}, max: ${max.toFixed(1)})`);
   }
 
