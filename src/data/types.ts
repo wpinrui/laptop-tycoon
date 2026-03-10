@@ -26,6 +26,24 @@ export const ALL_STATS: LaptopStat[] = [
   "weight", "thinness", "thermals",
 ];
 
+/** Human-readable labels for each laptop stat. */
+export const STAT_LABELS: Record<LaptopStat, string> = {
+  performance: "Performance",
+  gamingPerformance: "Gaming Performance",
+  batteryLife: "Battery Life",
+  display: "Display",
+  connectivity: "Connectivity",
+  speakers: "Speakers",
+  webcam: "Webcam",
+  design: "Design",
+  buildQuality: "Build Quality",
+  keyboard: "Keyboard",
+  trackpad: "Trackpad",
+  weight: "Weight",
+  thinness: "Thinness",
+  thermals: "Thermals",
+};
+
 // --- Screen Size ---
 
 export type ScreenSizeInches = 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;

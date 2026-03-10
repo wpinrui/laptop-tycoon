@@ -6,25 +6,8 @@ import { ScreenHeader } from "../shell/ScreenHeader";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
 import { DEMOGRAPHICS } from "../../data/demographics";
-import { getPriceCeiling, getQuarterlyBuyers } from "../../simulation/demographicData";
-import { Demographic } from "../../data/types";
-
-const STAT_LABELS: Record<string, string> = {
-  performance: "Performance",
-  gamingPerformance: "Gaming",
-  batteryLife: "Battery Life",
-  display: "Display",
-  connectivity: "Connectivity",
-  speakers: "Speakers",
-  webcam: "Webcam",
-  design: "Design",
-  buildQuality: "Build Quality",
-  keyboard: "Keyboard",
-  trackpad: "Trackpad",
-  weight: "Weight",
-  thinness: "Thinness",
-  thermals: "Thermals",
-};
+import { getPriceCeiling, getAnnualBuyers } from "../../simulation/demographicData";
+import { Demographic, STAT_LABELS } from "../../data/types";
 
 function getPriceSensitivityLabel(priceWeight: number): { label: string; color: string } {
   if (priceWeight >= 0.35) return { label: "Very price sensitive", color: tokens.colors.danger };
@@ -38,19 +21,10 @@ function getTopAndBottomStats(demo: Demographic): { top: string[]; bottom: strin
     .filter(([, w]) => w > 0)
     .sort(([, a], [, b]) => b - a);
 
-  const top = entries.slice(0, 3).map(([stat]) => STAT_LABELS[stat] ?? stat);
-  const bottom = entries.slice(-3).reverse().map(([stat]) => STAT_LABELS[stat] ?? stat);
+  const top = entries.slice(0, 3).map(([stat]) => STAT_LABELS[stat as keyof typeof STAT_LABELS] ?? stat);
+  const bottom = entries.slice(-3).reverse().map(([stat]) => STAT_LABELS[stat as keyof typeof STAT_LABELS] ?? stat);
 
   return { top, bottom };
-}
-
-function getAnnualBuyers(demographicId: Demographic["id"], year: number): number {
-  // Sum quarterly buyers across all 4 quarters
-  let total = 0;
-  for (let q = 1; q <= 4; q++) {
-    total += getQuarterlyBuyers(demographicId, year, q as 1 | 2 | 3 | 4);
-  }
-  return total;
 }
 
 const gridStyle: CSSProperties = {

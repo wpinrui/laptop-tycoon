@@ -3,18 +3,12 @@ import { BentoCard } from "./BentoCard";
 import { tokens } from "../../shell/tokens";
 import { useGame } from "../../state/GameContext";
 import { DEMOGRAPHICS } from "../../../data/demographics";
-import { getQuarterlyBuyers } from "../../../simulation/demographicData";
+import { getAnnualBuyers } from "../../../simulation/demographicData";
 
 export function MarketCard() {
   const { state } = useGame();
 
-  // Show total annual buyers across all demographics
-  let totalBuyers = 0;
-  for (const demo of DEMOGRAPHICS) {
-    for (let q = 1; q <= 4; q++) {
-      totalBuyers += getQuarterlyBuyers(demo.id, state.year, q as 1 | 2 | 3 | 4);
-    }
-  }
+  const totalBuyers = DEMOGRAPHICS.reduce((sum, demo) => sum + getAnnualBuyers(demo.id, state.year), 0);
 
   return (
     <BentoCard title="Market" icon={BarChart3} screen="marketOverview">

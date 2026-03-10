@@ -78,6 +78,15 @@ export function getQuarterlyBuyers(demographicId: DemographicId, year: number, q
   return Math.round(annualActiveBuyers * quarterShare);
 }
 
+/** Total buyers for a demographic across all 4 quarters in a given year. */
+export function getAnnualBuyers(demographicId: DemographicId, year: number): number {
+  let total = 0;
+  for (let q = 1; q <= 4; q++) {
+    total += getQuarterlyBuyers(demographicId, year, q as 1 | 2 | 3 | 4);
+  }
+  return total;
+}
+
 // --- Screen Size Fit (soft filter) ---
 
 export function getScreenSizeFit(

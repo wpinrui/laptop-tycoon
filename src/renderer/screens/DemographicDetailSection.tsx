@@ -1,30 +1,12 @@
 import { CSSProperties, useState, useMemo } from "react";
 import { DEMOGRAPHICS } from "../../data/demographics";
-import { LaptopStat, ALL_STATS, DemographicId, Demographic } from "../../data/types";
+import { LaptopStat, ALL_STATS, DemographicId, Demographic, STAT_LABELS } from "../../data/types";
 import { LaptopSalesResult, PerceptionChange } from "../../simulation/salesTypes";
 import { tokens } from "../shell/tokens";
 import { formatNumber } from "../utils/formatCash";
 import { sectionStyle, tableStyle, thStyle, tdStyle, tdRight, sectionHeadingStyle } from "./summaryStyles";
 import { useGame } from "../state/GameContext";
 import { CompanyState, modelDisplayName } from "../state/gameTypes";
-
-/** Human-readable stat labels */
-const STAT_LABELS: Record<LaptopStat, string> = {
-  performance: "Performance",
-  gamingPerformance: "Gaming Performance",
-  batteryLife: "Battery Life",
-  display: "Display",
-  connectivity: "Connectivity",
-  speakers: "Speakers",
-  webcam: "Webcam",
-  design: "Design",
-  buildQuality: "Build Quality",
-  keyboard: "Keyboard",
-  trackpad: "Trackpad",
-  weight: "Weight",
-  thinness: "Thinness",
-  thermals: "Thermals",
-};
 
 /** Get top N stats by weight for a demographic */
 function getTopStats(demographic: Demographic, count: number): LaptopStat[] {
