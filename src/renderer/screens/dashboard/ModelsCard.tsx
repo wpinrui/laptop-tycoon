@@ -37,12 +37,14 @@ export function ModelsCard() {
             <div key={model.design.id} style={modelRowStyle}>
               <div>
                 <div style={{ fontWeight: 600, fontSize: tokens.font.sizeBase }}>{modelDisplayName(player.name, model.design.name)}</div>
-                <div style={{ fontSize: tokens.font.sizeSmall, display: "flex", gap: tokens.spacing.sm, marginTop: 2 }}>
-                  {model.retailPrice !== null && (
-                    <span style={{ color: tokens.colors.text }}>${model.retailPrice.toLocaleString()}</span>
-                  )}
+                {model.retailPrice !== null && (
+                  <div style={{ fontSize: tokens.font.sizeBase, fontWeight: 600, marginTop: 2 }}>
+                    ${model.retailPrice.toLocaleString()}
+                  </div>
+                )}
+                <div style={{ fontSize: tokens.font.sizeBase, display: "flex", gap: tokens.spacing.md, marginTop: 2 }}>
                   {model.manufacturingQuantity !== null && model.manufacturingQuantity > 0 && (
-                    <span style={{ color: tokens.colors.textMuted }}>{model.manufacturingQuantity.toLocaleString()} units</span>
+                    <span style={{ color: tokens.colors.textMuted }}>Producing {model.manufacturingQuantity.toLocaleString()}</span>
                   )}
                   {model.unitsInStock > 0 && (
                     <span style={{ color: tokens.colors.textMuted }}>{model.unitsInStock.toLocaleString()} in stock</span>

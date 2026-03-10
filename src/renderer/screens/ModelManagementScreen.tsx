@@ -45,7 +45,7 @@ const specRowStyle: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   padding: `${tokens.spacing.xs}px 0`,
-  fontSize: tokens.font.sizeSmall,
+  fontSize: tokens.font.sizeBase,
 };
 
 const actionBarStyle: CSSProperties = {
@@ -246,24 +246,28 @@ function ModelCard({
 
       <div style={{ marginTop: tokens.spacing.md }}>
         <SpecRow label="Unit Cost" value={`$${design.unitCost.toLocaleString()}`} />
-        <SpecRow label="Components" value={Object.keys(design.components).length.toString()} />
         {retailPrice !== null && (
           <SpecRow label="Retail Price" value={`$${retailPrice.toLocaleString()}`} />
         )}
-        {manufacturingQuantity !== null && (
-          <SpecRow label="Manufacturing Qty" value={manufacturingQuantity.toLocaleString()} />
-        )}
-        {model.unitsInStock > 0 && (
-          <SpecRow label="Inventory" value={`${model.unitsInStock.toLocaleString()} units`} />
-        )}
-        {hasPlan && (manufacturingQuantity ?? 0) > 0 && model.unitsInStock > 0 && (
-          <SpecRow
-            label="Total Available"
-            value={`${((manufacturingQuantity ?? 0) + model.unitsInStock).toLocaleString()} units`}
-            highlight
-          />
-        )}
       </div>
+
+      {((manufacturingQuantity !== null) || model.unitsInStock > 0) && (
+        <div style={{ marginTop: tokens.spacing.sm, paddingTop: tokens.spacing.sm, borderTop: `1px solid ${tokens.colors.panelBorder}` }}>
+          {manufacturingQuantity !== null && (
+            <SpecRow label="Producing" value={`${manufacturingQuantity.toLocaleString()} units`} />
+          )}
+          {model.unitsInStock > 0 && (
+            <SpecRow label="In Stock" value={`${model.unitsInStock.toLocaleString()} units`} />
+          )}
+          {hasPlan && (manufacturingQuantity ?? 0) > 0 && model.unitsInStock > 0 && (
+            <SpecRow
+              label="Total Available"
+              value={`${((manufacturingQuantity ?? 0) + model.unitsInStock).toLocaleString()} units`}
+              highlight
+            />
+          )}
+        </div>
+      )}
 
       {isRetailOnly && model.unitsInStock > 0 && (
         <div style={{
