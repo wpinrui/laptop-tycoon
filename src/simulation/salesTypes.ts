@@ -58,6 +58,8 @@ export interface PerceptionChange {
   oldPerception: number;
   newPerception: number;
   delta: number;
+  /** Human-readable explanation of why perception changed */
+  reason: string;
 }
 
 export interface QuarterSimulationResult {

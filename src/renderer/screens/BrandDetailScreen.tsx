@@ -1,4 +1,4 @@
-import { CSSProperties, useState } from "react";
+import { CSSProperties, useMemo, useState } from "react";
 import { Sparkles, Check } from "lucide-react";
 import { useGame } from "../state/GameContext";
 import { getPlayerCompany } from "../state/gameTypes";
@@ -11,6 +11,8 @@ import { ProgressBar } from "./dashboard/ProgressBar";
 import { formatPerception } from "./dashboard/utils";
 import { DEMOGRAPHICS } from "../../data/demographics";
 import { SPONSORSHIPS, getSponsorshipCost } from "../../data/sponsorships";
+import { DemographicId } from "../../data/types";
+import { PerceptionChange } from "../../simulation/salesTypes";
 
 const BUDGET_PRESETS = [0, 100_000, 250_000, 500_000, 1_000_000, 2_000_000];
 
@@ -63,6 +65,33 @@ export function BrandDetailScreen() {
   const { state, dispatch } = useGame();
   const player = getPlayerCompany(state);
   const [hoveredSponsorship, setHoveredSponsorship] = useState<string | null>(null);
+
+  // Get the most recent perception changes: current year's quarters, or last completed year
+  const latestPerceptionChanges = useMemo(() => {
+    const map = new Map<DemographicId, PerceptionChange>();
+    const source = state.quarterHistory.length > 0
+      ? state.quarterHistory
+      : state.yearHistory.length > 0
+        ? [state.yearHistory[state.yearHistory.length - 1]]
+        : [];
+    for (const result of source) {
+      for (const pc of result.perceptionChanges) {
+        const existing = map.get(pc.demographicId);
+        if (existing) {
+          // Accumulate: keep first old, use latest new, sum deltas, keep latest reason
+          map.set(pc.demographicId, {
+            ...existing,
+            newPerception: pc.newPerception,
+            delta: pc.newPerception - existing.oldPerception,
+            reason: pc.reason,
+          });
+        } else {
+          map.set(pc.demographicId, { ...pc });
+        }
+      }
+    }
+    return map;
+  }, [state.quarterHistory, state.yearHistory]);
 
   const totalSponsorshipCost = state.sponsorships.reduce((sum, id) => {
     const s = SPONSORSHIPS.find((sp) => sp.id === id);
@@ -200,15 +229,34 @@ export function BrandDetailScreen() {
           <SidebarHeading>BRAND PERCEPTION</SidebarHeading>
           {DEMOGRAPHICS.map((dem) => {
             const perception = formatPerception(player.brandPerception[dem.id] ?? 0);
+            const change = latestPerceptionChanges.get(dem.id);
+            const hasMeaningfulChange = change && Math.abs(change.delta) >= 0.1;
             return (
-              <div key={dem.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.text }}>{dem.name}</span>
-                <span>
-                  <span style={{ fontWeight: 600, fontSize: tokens.font.sizeSmall, color: perception.color }}>
-                    {perception.sign}{perception.value}
+              <div key={dem.id} style={{ marginBottom: hasMeaningfulChange ? 10 : 6 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.text }}>{dem.name}</span>
+                  <span>
+                    {hasMeaningfulChange && (
+                      <span style={{
+                        fontSize: "0.6875rem",
+                        fontWeight: 600,
+                        color: change.delta > 0 ? tokens.colors.success : tokens.colors.danger,
+                        marginRight: 4,
+                      }}>
+                        {change.delta > 0 ? "+" : ""}{change.delta.toFixed(1)}
+                      </span>
+                    )}
+                    <span style={{ fontWeight: 600, fontSize: tokens.font.sizeSmall, color: perception.color }}>
+                      {perception.sign}{perception.value}
+                    </span>
+                    <span style={{ color: tokens.colors.textMuted, fontSize: "0.6875rem" }}> / 50</span>
                   </span>
-                  <span style={{ color: tokens.colors.textMuted, fontSize: "0.6875rem" }}> / 50</span>
-                </span>
+                </div>
+                {hasMeaningfulChange && (
+                  <p style={{ margin: 0, marginTop: 2, fontSize: "0.6875rem", color: tokens.colors.textMuted }}>
+                    {change.reason}
+                  </p>
+                )}
               </div>
             );
           })}

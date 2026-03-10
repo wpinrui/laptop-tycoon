@@ -90,16 +90,7 @@ interface DemographicDetailProps {
 }
 
 function perceptionExplanation(pc: PerceptionChange): string {
-  const abs = Math.abs(pc.delta);
-  if (abs < 0.1) return "No meaningful change";
-  if (pc.delta > 0) {
-    if (abs > 5) return "Strong sales with great value-for-money";
-    if (abs > 2) return "Solid value perception from buyers";
-    return "Slight improvement from positive experiences";
-  }
-  if (abs > 5) return "Very poor value-for-money drove perception down";
-  if (abs > 2) return "Buyers felt they overpaid for what they got";
-  return "Slight decline from underwhelming experiences";
+  return pc.reason;
 }
 
 function DemographicComparisonTable({

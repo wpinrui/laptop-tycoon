@@ -318,11 +318,13 @@ function buildYearResult(
   // Aggregate perception changes: use first quarter's old values and last quarter's new values
   const firstQ = quarters[0];
   const lastQ = quarters[quarters.length - 1];
-  const perceptionChanges = firstQ.perceptionChanges.map((pc, i) => ({
-    ...pc,
-    newPerception: lastQ.perceptionChanges[i]?.newPerception ?? pc.newPerception,
-    delta: (lastQ.perceptionChanges[i]?.newPerception ?? pc.newPerception) - pc.oldPerception,
-  }));
+  const perceptionChanges = firstQ.perceptionChanges.map((pc, i) => {
+    const newPerception = lastQ.perceptionChanges[i]?.newPerception ?? pc.newPerception;
+    const delta = newPerception - pc.oldPerception;
+    // Use the last quarter's reason as the year-level summary (most recent context)
+    const reason = lastQ.perceptionChanges[i]?.reason ?? pc.reason;
+    return { ...pc, newPerception, delta, reason };
+  });
 
   // Aggregate laptop results (sum across quarters)
   const laptopResultMap = new Map<string, typeof lastQuarter.laptopResults[0]>();
