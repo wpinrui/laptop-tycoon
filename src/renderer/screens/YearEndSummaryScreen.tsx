@@ -29,7 +29,7 @@ export function YearEndSummaryScreen() {
 
   if (!result) {
     return (
-      <ContentPanel maxWidth={800}>
+      <ContentPanel maxWidth={tokens.layout.panelMaxWidth} style={{ height: tokens.layout.panelHeight, width: tokens.layout.panelWidth }}>
         <h1 style={titleStyle}>No simulation results</h1>
         <MenuButton onClick={() => navigateTo("dashboard")}>Back to Dashboard</MenuButton>
       </ContentPanel>
@@ -45,8 +45,8 @@ export function YearEndSummaryScreen() {
   const periodLabel = isAnnual ? `Year ${yearResult!.year}` : `Q4 ${yearResult!.year}`;
 
   return (
-    <ContentPanel maxWidth={900}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: tokens.spacing.lg }}>
+    <ContentPanel maxWidth={tokens.layout.panelMaxWidth} style={{ display: "flex", flexDirection: "column", overflow: "hidden", height: tokens.layout.panelHeight, width: tokens.layout.panelWidth }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: tokens.spacing.lg, flexShrink: 0 }}>
         <h1 style={{ ...titleStyle, marginBottom: 0 }}>{periodLabel} Results</h1>
         {q4Result && (
           <div style={{ display: "flex", gap: tokens.spacing.xs }}>
@@ -75,6 +75,7 @@ export function YearEndSummaryScreen() {
         )}
       </div>
 
+      <div className="content-panel hide-scrollbar" style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
       {/* Per-model breakdown */}
       <div style={sectionStyle}>
         <h3 style={sectionHeadingStyle}>
@@ -178,13 +179,15 @@ export function YearEndSummaryScreen() {
         </div>
       </div>
 
+      <div style={{ flexShrink: 0, height: tokens.spacing.lg }} />
+      </div>
       <MenuButton
         variant="accent"
         onClick={() => {
           dispatch({ type: "ADVANCE_QUARTER" });
           navigateTo("dashboard");
         }}
-        style={{ width: "100%", marginTop: tokens.spacing.md }}
+        style={{ width: "100%", marginTop: tokens.spacing.md, marginBottom: tokens.spacing.lg, flexShrink: 0 }}
       >
         Continue to Year {yearResult!.year + 1}
       </MenuButton>

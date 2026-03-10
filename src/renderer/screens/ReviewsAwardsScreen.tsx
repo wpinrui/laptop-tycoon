@@ -1,26 +1,26 @@
+import { Trophy } from "lucide-react";
 import { useGame } from "../state/GameContext";
-import { useNavigation } from "../navigation/NavigationContext";
 import { ContentPanel } from "../shell/ContentPanel";
-import { MenuButton } from "../shell/MenuButton";
+import { ScreenHeader } from "../shell/ScreenHeader";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
-import { titleStyle, sectionStyle, sectionHeadingStyle, tableStyle, thStyle, tdStyle, tdRight } from "./summaryStyles";
+import { sectionStyle, sectionHeadingStyle, tableStyle, thStyle, tdStyle, tdRight } from "./summaryStyles";
 import { AWARD_CATEGORY_LIST } from "../../simulation/reviewsAwards";
 import { AwardsTable } from "./AwardsTable";
 import { reviewScoreColor } from "../utils/reviewScoreColor";
 
 export function ReviewsAwardsScreen() {
   const { state } = useGame();
-  const { navigateTo } = useNavigation();
   const reviews = state.currentYearReviews;
   const awards = state.currentYearAwards;
   const playerReviews = reviews.filter((r) => r.owner === "player");
   const competitorReviews = reviews.filter((r) => r.owner !== "player");
 
   return (
-    <ContentPanel maxWidth={900}>
-      <h1 style={titleStyle}>Reviews & Awards — {state.year}</h1>
+    <ContentPanel maxWidth={tokens.layout.panelMaxWidth} style={{ display: "flex", flexDirection: "column", overflow: "hidden", height: tokens.layout.panelHeight, width: tokens.layout.panelWidth }}>
+      <ScreenHeader title={`Reviews & Awards — ${state.year}`} icon={Trophy} />
 
+      <div className="content-panel hide-scrollbar" style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
       {/* Player Reviews */}
       <div style={sectionStyle}>
         <h3 style={sectionHeadingStyle}>Your Reviews</h3>
@@ -103,13 +103,8 @@ export function ReviewsAwardsScreen() {
         )}
       </div>
 
-      <MenuButton
-        variant="accent"
-        onClick={() => navigateTo("dashboard")}
-        style={{ width: "100%", marginTop: tokens.spacing.md }}
-      >
-        Back to Dashboard
-      </MenuButton>
+      <div style={{ flexShrink: 0, height: tokens.spacing.lg }} />
+      </div>
       <StatusBar />
     </ContentPanel>
   );

@@ -22,9 +22,7 @@ function isStepComplete(step: ManufacturingWizardStep, state: ManufacturingWizar
     case "manufacturing":
       return state.unitPrice > 0 && state.unitsOrdered >= 0;
     case "pressRelease":
-      return state.pressReleasePromptIds.every(
-        (id) => (state.pressReleaseResponses[id] ?? "").trim().length > 0,
-      );
+      return true;
     case "confirmation":
       return true;
   }
@@ -35,10 +33,13 @@ function WizardContent() {
   const { state: gameState, dispatch: gameDispatch } = useGame();
   const { navigateTo } = useNavigation();
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [visitedConfirmation, setVisitedConfirmation] = useState(false);
 
   const currentIdx = MFG_WIZARD_STEPS.indexOf(state.currentStep);
   const isFirst = currentIdx === 0;
   const isLast = state.currentStep === "confirmation";
+
+  if (isLast && !visitedConfirmation) setVisitedConfirmation(true);
 
   const allStepsComplete = MFG_WIZARD_STEPS.every((s) => isStepComplete(s, state));
   const canAdvance = isStepComplete(state.currentStep, state);
@@ -177,26 +178,42 @@ function WizardContent() {
         }}
       >
         <MenuButton
-          onClick={() => dispatch({ type: "PREV_STEP" })}
-          disabled={isFirst}
+          onClick={() => {
+            if (isFirst) {
+              setShowCloseConfirm(true);
+            } else {
+              dispatch({ type: "PREV_STEP" });
+            }
+          }}
           style={{ fontSize: tokens.font.sizeBase }}
         >
           Back
         </MenuButton>
-        <MenuButton
-          variant={isLast ? "accent" : "surface"}
-          onClick={() => {
-            if (isLast) {
-              handleConfirm();
-            } else {
-              dispatch({ type: "NEXT_STEP" });
-            }
-          }}
-          disabled={isLast ? !allStepsComplete : !canAdvance}
-          style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}
-        >
-          {isLast ? "Confirm Manufacturing Plan" : "Next"}
-        </MenuButton>
+        <div style={{ display: "flex", gap: tokens.spacing.sm }}>
+          {!isLast && allStepsComplete && visitedConfirmation && (
+            <MenuButton
+              variant="accent"
+              onClick={handleConfirm}
+              style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}
+            >
+              Confirm Manufacturing Plan
+            </MenuButton>
+          )}
+          <MenuButton
+            variant={isLast ? "accent" : "surface"}
+            onClick={() => {
+              if (isLast) {
+                handleConfirm();
+              } else {
+                dispatch({ type: "NEXT_STEP" });
+              }
+            }}
+            disabled={isLast ? !allStepsComplete : !canAdvance}
+            style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}
+          >
+            {isLast ? "Confirm Manufacturing Plan" : "Next"}
+          </MenuButton>
+        </div>
       </div>
 
       {showCloseConfirm && (

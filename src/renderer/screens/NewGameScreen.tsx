@@ -88,8 +88,32 @@ export function NewGameScreen() {
 
   const [companyName, setCompanyName] = useState("");
   const [companyLogo, setCompanyLogo] = useState<string | null>(null);
+  const [padLogo, setPadLogo] = useState(true);
+  const [rawLogo, setRawLogo] = useState<string | null>(null);
 
   const canStart = companyName.trim().length > 0;
+
+  function applyPadding(dataUrl: string, pad: boolean) {
+    if (!pad) {
+      setCompanyLogo(dataUrl);
+      return;
+    }
+    const img = new Image();
+    img.onload = () => {
+      const size = Math.max(img.width, img.height);
+      const padded = Math.round(size / 0.8); // 10% padding each side
+      const canvas = document.createElement("canvas");
+      canvas.width = padded;
+      canvas.height = padded;
+      const ctx = canvas.getContext("2d")!;
+      const offset = Math.round((padded - size) / 2);
+      const dx = offset + Math.round((size - img.width) / 2);
+      const dy = offset + Math.round((size - img.height) / 2);
+      ctx.drawImage(img, dx, dy, img.width, img.height);
+      setCompanyLogo(canvas.toDataURL("image/png"));
+    };
+    img.src = dataUrl;
+  }
 
   function handleLogoSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -97,7 +121,9 @@ export function NewGameScreen() {
 
     const reader = new FileReader();
     reader.onload = () => {
-      setCompanyLogo(reader.result as string);
+      const dataUrl = reader.result as string;
+      setRawLogo(dataUrl);
+      applyPadding(dataUrl, padLogo);
     };
     reader.readAsDataURL(file);
   }
@@ -156,24 +182,49 @@ export function NewGameScreen() {
               <p style={{ margin: 0 }}>Square image recommended</p>
               <p style={{ margin: 0 }}>PNG with transparency supported</p>
               {companyLogo && (
-                <button
-                  style={{
-                    marginTop: tokens.spacing.xs,
-                    background: "none",
-                    border: "none",
-                    color: tokens.colors.danger,
-                    cursor: "pointer",
-                    padding: 0,
-                    fontSize: tokens.font.sizeSmall,
-                    fontFamily: tokens.font.family,
-                  }}
-                  onClick={() => {
-                    setCompanyLogo(null);
-                    if (fileInputRef.current) fileInputRef.current.value = "";
-                  }}
-                >
-                  Remove
-                </button>
+                <>
+                  <button
+                    style={{
+                      marginTop: tokens.spacing.xs,
+                      background: "none",
+                      border: "none",
+                      color: tokens.colors.danger,
+                      cursor: "pointer",
+                      padding: 0,
+                      fontSize: tokens.font.sizeSmall,
+                      fontFamily: tokens.font.family,
+                    }}
+                    onClick={() => {
+                      setCompanyLogo(null);
+                      setRawLogo(null);
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                    }}
+                  >
+                    Remove
+                  </button>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      marginTop: tokens.spacing.xs,
+                      cursor: "pointer",
+                      fontSize: tokens.font.sizeSmall,
+                      color: tokens.colors.textMuted,
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={padLogo}
+                      onChange={(e) => {
+                        setPadLogo(e.target.checked);
+                        if (rawLogo) applyPadding(rawLogo, e.target.checked);
+                      }}
+                      style={{ accentColor: tokens.colors.accent, cursor: "pointer" }}
+                    />
+                    Add padding
+                  </label>
+                </>
               )}
             </div>
           </div>

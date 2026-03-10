@@ -5,9 +5,7 @@ import {
   formatWeight,
   availableVolumeCm3,
   coolingMultiplier,
-  minThicknessForVolumeCm,
   totalConsumedVolumeCm3,
-  maxHeightConstraintCm,
   batteryWarningThresholdH,
   avgUsageMultiplier,
   computeLaptopTotals,
@@ -74,19 +72,12 @@ export function WizardSidebar({
   if (showEstimate) {
     const totalVolume = totalConsumedVolumeCm3(state.components, state.batteryCapacityWh, state.ports, allChassisOptions, gameYear);
     const totalAvailable = availableVolumeCm3(state.screenSize, bezel, thickness, gameYear);
-    const volumeOverflow = totalVolume > totalAvailable;
-    const volumePercent = totalAvailable > 0 ? Math.min(100, (totalVolume / totalAvailable) * 100) : 100;
 
     const coolingFromSolution = state.chassis.coolingSolution?.coolingCapacityW ?? 0;
     const spaceUtilization = totalAvailable > 0 ? totalVolume / totalAvailable : 1;
     const coolMult = coolingMultiplier(thickness, bezel, spaceUtilization);
     const effectiveCooling = Math.round(coolingFromSolution * coolMult);
     const thermalWarning = totalPower > effectiveCooling;
-
-    const minFromVolume = minThicknessForVolumeCm(totalVolume, state.screenSize, bezel, gameYear);
-    const minFromHeight = maxHeightConstraintCm(state.components, state.ports, allChassisOptions);
-    const minThickness = Math.max(minFromVolume, minFromHeight);
-    const thicknessTooThin = thickness < minThickness;
 
     const estimatedTotalWeight = screenSizeDef.baseWeightG + totals.subtotalWeight;
 
@@ -98,18 +89,7 @@ export function WizardSidebar({
       <>
         <SidebarDivider />
         <SidebarHeading>LAPTOP ESTIMATE</SidebarHeading>
-        <SidebarRow
-          label="Chassis Space Utilisation"
-          value={`${Math.round(volumePercent)}%`}
-          warning={volumeOverflow ? `${Math.round(totalVolume)} cm³ used but only ${Math.round(totalAvailable)} cm³ available` : undefined}
-        />
         <SidebarRow label="Total Weight" value={formatWeight(estimatedTotalWeight)} />
-        <SidebarRow
-          label="Thickness"
-          value={`${thickness.toFixed(1)} cm`}
-          warning={thicknessTooThin ? `Components need at least ${minThickness.toFixed(1)} cm` : undefined}
-        />
-        <SidebarRow label="Bezel Width" value={`${bezel} mm`} />
         <SidebarRow label="Power Draw" value={`${totalPower} W`} />
         <SidebarRow
           label="Cooling"

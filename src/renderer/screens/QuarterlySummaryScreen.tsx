@@ -18,7 +18,7 @@ export function QuarterlySummaryScreen() {
 
   if (!result) {
     return (
-      <ContentPanel maxWidth={800}>
+      <ContentPanel maxWidth={tokens.layout.panelMaxWidth} style={{ height: tokens.layout.panelHeight, width: tokens.layout.panelWidth }}>
         <h1 style={titleStyle}>No simulation results</h1>
         <MenuButton onClick={() => navigateTo("dashboard")}>Back to Dashboard</MenuButton>
       </ContentPanel>
@@ -47,9 +47,10 @@ export function QuarterlySummaryScreen() {
   const ytdRevenue = Array.from(ytdByModel.values()).reduce((s, v) => s + v.revenue, 0);
 
   return (
-    <ContentPanel maxWidth={900}>
-      <h1 style={titleStyle}>{quarterLabel} {result.year} Results</h1>
+    <ContentPanel maxWidth={tokens.layout.panelMaxWidth} style={{ display: "flex", flexDirection: "column", overflow: "hidden", height: tokens.layout.panelHeight, width: tokens.layout.panelWidth }}>
+      <h1 style={{ ...titleStyle, flexShrink: 0 }}>{quarterLabel} {result.year} Results</h1>
 
+      <div className="content-panel hide-scrollbar" style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
       {/* Per-model breakdown */}
       <div style={sectionStyle}>
         <h3 style={sectionHeadingStyle}>
@@ -140,13 +141,15 @@ export function QuarterlySummaryScreen() {
         </div>
       </div>
 
+      <div style={{ flexShrink: 0, height: tokens.spacing.lg }} />
+      </div>
       <MenuButton
         variant="accent"
         onClick={() => {
           dispatch({ type: "ADVANCE_QUARTER" });
           navigateTo("dashboard");
         }}
-        style={{ width: "100%", marginTop: tokens.spacing.md }}
+        style={{ width: "100%", marginTop: tokens.spacing.md, marginBottom: tokens.spacing.lg, flexShrink: 0 }}
       >
         Continue to {result.quarter < 4 ? `${QUARTER_LABELS[result.quarter as 1 | 2 | 3]} ${result.year}` : `Year ${result.year + 1}`}
       </MenuButton>

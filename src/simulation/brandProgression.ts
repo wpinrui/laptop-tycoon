@@ -111,8 +111,10 @@ export function updateBrandReach(
     }
 
     // 3. Word of mouth — organic from units sold this quarter
+    //    Positive perception amplifies WOM, negative perception dampens it
     const unitsSold = unitsByDemographic[demId] ?? 0;
-    rawGrowth += unitsSold / WOM_DIVISOR;
+    const perception = player.brandPerception[demId] ?? 0;
+    rawGrowth += (unitsSold / WOM_DIVISOR) * (1 + perception / 100);
 
     // 4. Marketing campaigns — secondary reach from ad spend (uniform, quarterly)
     rawGrowth += (totalCampaignSpend / CAMPAIGN_DIVISOR) / 4;
