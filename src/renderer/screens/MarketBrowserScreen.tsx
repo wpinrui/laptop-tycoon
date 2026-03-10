@@ -519,7 +519,7 @@ function RadarChart({
   const rings = [0.25, 0.5, 0.75, 1];
 
   return (
-    <svg viewBox={`0 0 ${vb} ${vb}`} style={{ width: "100%", height: "100%" }}>
+    <svg viewBox={`0 0 ${vb} ${vb}`} style={{ width: "100%", maxHeight: "100%" }}>
       {/* Grid rings */}
       {rings.map((frac) => (
         <polygon
@@ -631,34 +631,47 @@ function CompareView({
 
   const thBase: CSSProperties = {
     textAlign: "right",
-    padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+    padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`,
     borderBottom: `1px solid ${tokens.colors.panelBorder}`,
-    fontSize: tokens.font.sizeSmall,
+    fontSize: tokens.font.sizeBase,
     fontWeight: 600,
-    minWidth: 100,
-    maxWidth: 180,
+    minWidth: 120,
+    maxWidth: 200,
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
   };
   const rowLabel: CSSProperties = {
-    padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+    padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`,
     borderBottom: `1px solid ${tokens.colors.surface}`,
     fontWeight: 600,
-    fontSize: tokens.font.sizeSmall,
+    fontSize: tokens.font.sizeBase,
     whiteSpace: "nowrap",
   };
   const tdR: CSSProperties = {
-    padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+    padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`,
     borderBottom: `1px solid ${tokens.colors.surface}`,
     textAlign: "right",
-    fontSize: tokens.font.sizeSmall,
+    fontSize: tokens.font.sizeBase,
   };
 
   const priceVals = allStats.map((r) => r.entry.model.retailPrice ?? 0);
 
+  function compareRow(label: string, vals: number[], higherIsBetter: boolean, format: (v: number) => string) {
+    return (
+      <tr>
+        <td style={rowLabel}>{label}</td>
+        {allStats.map(({ entry }, i) => (
+          <td key={entry.model.design.id} style={{ ...tdR, color: scoreColor(vals[i], vals, higherIsBetter) }}>
+            {format(vals[i])}
+          </td>
+        ))}
+      </tr>
+    );
+  }
+
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       {/* Searchable dropdown to add laptops */}
       {entries.length < 3 && (
         <div ref={dropdownRef} style={{ position: "relative", marginBottom: tokens.spacing.md, display: "inline-block" }}>
@@ -763,8 +776,9 @@ function CompareView({
           Add laptops to compare (up to 3).
         </p>
       ) : (
-      <div style={{ display: "flex", gap: tokens.spacing.lg, alignItems: "flex-start" }}>
-      <table style={{ borderCollapse: "separate", borderSpacing: 0, background: tokens.colors.cardBg, borderRadius: tokens.borderRadius.md, padding: tokens.spacing.sm, border: `1px solid ${tokens.colors.panelBorder}`, overflow: "hidden" }}>
+      <div style={{ display: "flex", gap: tokens.spacing.lg, flex: 1, minHeight: 0 }}>
+      <div style={{ overflowY: "auto", minHeight: 0, background: tokens.colors.cardBg, borderRadius: tokens.borderRadius.md, border: `1px solid ${tokens.colors.panelBorder}`, padding: tokens.spacing.sm }}>
+      <table style={{ borderCollapse: "separate", borderSpacing: 0 }}>
       <thead>
         <tr>
           <th style={{ ...thBase, textAlign: "left" }}></th>
@@ -814,48 +828,9 @@ function CompareView({
             <td key={entry.model.design.id} style={tdR}>{entry.model.design.screenSize}"</td>
           ))}
         </tr>
-        {(() => {
-          const batteryVals = allStats.map((r) => r.entry.model.design.batteryCapacityWh);
-          return (
-            <tr>
-              <td style={rowLabel}>Battery</td>
-              {allStats.map(({ entry }, i) => (
-                <td key={entry.model.design.id} style={{ ...tdR, color: scoreColor(batteryVals[i], batteryVals, true) }}>
-                  {entry.model.design.batteryCapacityWh} Wh
-                </td>
-              ))}
-            </tr>
-          );
-        })()}
-        {(() => {
-          const thicknessVals = allStats.map((r) => r.entry.model.design.thicknessCm);
-          return (
-            <tr>
-              <td style={rowLabel}>Thickness</td>
-              {allStats.map(({ entry }, i) => (
-                <td key={entry.model.design.id} style={{ ...tdR, color: scoreColor(thicknessVals[i], thicknessVals, false) }}>
-                  {entry.model.design.thicknessCm.toFixed(1)} cm
-                </td>
-              ))}
-            </tr>
-          );
-        })()}
-        {(() => {
-          const salesVals = allStats.map((r) => getLastQuarterSales(r.entry.model.design.id) ?? 0);
-          return (
-            <tr>
-              <td style={rowLabel}>Last Qtr Sales</td>
-              {allStats.map(({ entry }, i) => {
-                const sales = getLastQuarterSales(entry.model.design.id);
-                return (
-                  <td key={entry.model.design.id} style={{ ...tdR, color: sales !== null ? scoreColor(salesVals[i], salesVals, true) : undefined }}>
-                    {sales !== null ? `${sales.toLocaleString()} units` : "—"}
-                  </td>
-                );
-              })}
-            </tr>
-          );
-        })()}
+        {compareRow("Battery", allStats.map((r) => r.entry.model.design.batteryCapacityWh), true, (v) => `${v} Wh`)}
+        {compareRow("Thickness", allStats.map((r) => r.entry.model.design.thicknessCm), false, (v) => `${v.toFixed(1)} cm`)}
+        {compareRow("Last Qtr Sales", allStats.map((r) => getLastQuarterSales(r.entry.model.design.id) ?? 0), true, (v) => v > 0 ? `${v.toLocaleString()} units` : "—")}
         {/* Separator */}
         <tr><td colSpan={allStats.length + 1} style={{ padding: `${tokens.spacing.xs}px 0`, borderBottom: `1px solid ${tokens.colors.panelBorder}` }}></td></tr>
         {ALL_STATS.map((stat) => {
@@ -873,9 +848,11 @@ function CompareView({
         })}
       </tbody>
     </table>
+    </div>
     <div style={{
       flex: 1,
       minWidth: 0,
+      minHeight: 0,
       background: tokens.colors.cardBg,
       border: `1px solid ${tokens.colors.panelBorder}`,
       borderRadius: tokens.borderRadius.md,
@@ -962,26 +939,26 @@ export function MarketBrowserScreen() {
     filtered = filtered.filter((e) => (e.model.retailPrice ?? 0) <= max);
   }
 
-  // Sort
-  filtered.sort((a, b) => {
-    if (sortBy.startsWith("stat:")) {
-      const stat = sortBy.slice(5) as LaptopStat;
-      const aStats = computeStatsForDesign(a.model.design, state.year);
-      const bStats = computeStatsForDesign(b.model.design, state.year);
-      return (bStats[stat] ?? 0) - (aStats[stat] ?? 0); // descending
-    }
-    switch (sortBy) {
-      case "price":
-        return (a.model.retailPrice ?? 0) - (b.model.retailPrice ?? 0);
-      case "name":
-        return a.model.design.name.localeCompare(b.model.design.name);
-      case "brand":
-        return a.company.name.localeCompare(b.company.name);
-      case "screenSize":
-        return a.model.design.screenSize - b.model.design.screenSize;
-    }
-    return 0;
-  });
+  // Sort — precompute stats once to avoid repeated calls in comparator
+  if (sortBy.startsWith("stat:")) {
+    const stat = sortBy.slice(5) as LaptopStat;
+    const statsCache = new Map(filtered.map((e) => [e.model.design.id, computeStatsForDesign(e.model.design, state.year)]));
+    filtered.sort((a, b) => (statsCache.get(b.model.design.id)?.[stat] ?? 0) - (statsCache.get(a.model.design.id)?.[stat] ?? 0));
+  } else {
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "price":
+          return (a.model.retailPrice ?? 0) - (b.model.retailPrice ?? 0);
+        case "name":
+          return a.model.design.name.localeCompare(b.model.design.name);
+        case "brand":
+          return a.company.name.localeCompare(b.company.name);
+        case "screenSize":
+          return a.model.design.screenSize - b.model.design.screenSize;
+      }
+      return 0;
+    });
+  }
 
   const compareEntries = compareIds
     .map((id) => allEntries.find((e) => e.model.design.id === id))
