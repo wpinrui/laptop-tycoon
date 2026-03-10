@@ -256,6 +256,13 @@ function ModelCard({
         {model.unitsInStock > 0 && (
           <SpecRow label="Inventory" value={`${model.unitsInStock.toLocaleString()} units`} />
         )}
+        {hasPlan && (manufacturingQuantity ?? 0) > 0 && model.unitsInStock > 0 && (
+          <SpecRow
+            label="Total Available"
+            value={`${((manufacturingQuantity ?? 0) + model.unitsInStock).toLocaleString()} units`}
+            highlight
+          />
+        )}
       </div>
 
       {isRetailOnly && model.unitsInStock > 0 && (
@@ -392,10 +399,10 @@ function InlineConfirm({
   );
 }
 
-function SpecRow({ label, value }: { label: string; value: string }) {
+function SpecRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div style={specRowStyle}>
-      <span style={{ color: tokens.colors.textMuted }}>{label}</span>
+    <div style={{ ...specRowStyle, ...(highlight ? { borderTop: `1px solid ${tokens.colors.panelBorder}`, marginTop: tokens.spacing.xs, paddingTop: tokens.spacing.sm } : {}) }}>
+      <span style={{ color: highlight ? tokens.colors.text : tokens.colors.textMuted, fontWeight: highlight ? 600 : undefined }}>{label}</span>
       <span style={{ fontWeight: 600 }}>{value}</span>
     </div>
   );

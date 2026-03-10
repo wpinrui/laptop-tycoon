@@ -41,6 +41,9 @@ export function ModelsCard() {
                   {model.retailPrice !== null && (
                     <span style={{ color: tokens.colors.text }}>${model.retailPrice.toLocaleString()}</span>
                   )}
+                  {model.manufacturingQuantity !== null && model.manufacturingQuantity > 0 && (
+                    <span style={{ color: tokens.colors.textMuted }}>{model.manufacturingQuantity.toLocaleString()} units</span>
+                  )}
                   {model.unitsInStock > 0 && (
                     <span style={{ color: tokens.colors.textMuted }}>{model.unitsInStock.toLocaleString()} in stock</span>
                   )}
