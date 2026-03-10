@@ -52,12 +52,37 @@ export interface LaptopSalesResult {
   demographicBreakdown: DemographicSalesBreakdown[];
 }
 
+/** Fraction of demanded units that were actually sold (0–1). Accounts for stock-outs. */
+export function sellThroughRate(lr: LaptopSalesResult): number {
+  return lr.unitsDemanded > 0 ? lr.unitsSold / lr.unitsDemanded : 1;
+}
+
+/** Weighted-average rawVP across all laptops for a single demographic (by sold units). */
+export function marketAverageRawVP(
+  demId: DemographicId,
+  allResults: LaptopSalesResult[],
+): number {
+  let totalUnits = 0;
+  let weightedVP = 0;
+  for (const lr of allResults) {
+    const db = lr.demographicBreakdown.find((b) => b.demographicId === demId);
+    if (db && db.unitsDemanded > 0) {
+      const units = db.unitsDemanded * sellThroughRate(lr);
+      weightedVP += db.rawVP * units;
+      totalUnits += units;
+    }
+  }
+  return totalUnits > 0 ? weightedVP / totalUnits : 0;
+}
+
 /** Per-demographic perception change for a single company */
 export interface PerceptionChange {
   demographicId: DemographicId;
   oldPerception: number;
   newPerception: number;
   delta: number;
+  /** Human-readable explanation of why perception changed */
+  reason: string;
 }
 
 export interface QuarterSimulationResult {

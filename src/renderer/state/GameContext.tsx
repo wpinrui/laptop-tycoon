@@ -8,6 +8,7 @@ import { updateBrandReach, updateCompetitorBrandReach, applySingleQuarterPercept
 import { applyDeathSpiralPrevention } from "../../simulation/deathSpiralPrevention";
 import { LaptopReview, Award, applyAwardBonuses } from "../../simulation/reviewsAwards";
 import { SPONSORSHIPS, getSponsorshipCost } from "../../data/sponsorships";
+import { PERCEPTION_MEANINGFUL_DELTA } from "../../simulation/tunables";
 
 export interface CompetitorModelEntry {
   competitorId: string;
@@ -318,11 +319,21 @@ function buildYearResult(
   // Aggregate perception changes: use first quarter's old values and last quarter's new values
   const firstQ = quarters[0];
   const lastQ = quarters[quarters.length - 1];
-  const perceptionChanges = firstQ.perceptionChanges.map((pc, i) => ({
-    ...pc,
-    newPerception: lastQ.perceptionChanges[i]?.newPerception ?? pc.newPerception,
-    delta: (lastQ.perceptionChanges[i]?.newPerception ?? pc.newPerception) - pc.oldPerception,
-  }));
+  const perceptionChanges = firstQ.perceptionChanges.map((pc, i) => {
+    const newPerception = lastQ.perceptionChanges[i]?.newPerception ?? pc.newPerception;
+    const delta = newPerception - pc.oldPerception;
+    // Pick the reason from the quarter whose delta best represents the year-level change:
+    // find the quarter with the largest absolute delta matching the overall sign
+    let reason = lastQ.perceptionChanges[i]?.reason ?? pc.reason;
+    const sameSignQuarters = quarters
+      .map((q) => q.perceptionChanges[i])
+      .filter((qpc) => qpc && Math.sign(qpc.delta) === Math.sign(delta) && Math.abs(qpc.delta) >= PERCEPTION_MEANINGFUL_DELTA);
+    if (sameSignQuarters.length > 0) {
+      sameSignQuarters.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+      reason = sameSignQuarters[0].reason;
+    }
+    return { ...pc, newPerception, delta, reason };
+  });
 
   // Aggregate laptop results (sum across quarters)
   const laptopResultMap = new Map<string, typeof lastQuarter.laptopResults[0]>();

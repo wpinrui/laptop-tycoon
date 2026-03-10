@@ -1,12 +1,13 @@
 import {
   LaptopStat,
   Demographic,
+  DemographicId,
   StatVector,
   ALL_STATS,
 } from "../data/types";
 import { DEMOGRAPHICS } from "../data/demographics";
 import { STARTING_DEMAND_POOL } from "../data/startingDemand";
-import { GameState, LaptopModel, getPlayerCompany } from "../renderer/state/gameTypes";
+import { GameState, LaptopModel, CompanyState, getPlayerCompany } from "../renderer/state/gameTypes";
 import { computeStatsForDesign } from "./statCalculation";
 import {
   getDemandPoolSize,
@@ -19,6 +20,8 @@ import {
   QuarterSimulationResult,
   DemandProjection,
   PerceptionChange,
+  sellThroughRate,
+  marketAverageRawVP,
 } from "./salesTypes";
 import {
   CHANNEL_MARGIN_RATE,
@@ -29,6 +32,7 @@ import {
   REPLACEMENT_CYCLE,
   QUARTER_SHARES,
   QUARTER_SHARES_SUM,
+  PERCEPTION_MEANINGFUL_DELTA,
 } from "./tunables";
 import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
 import { sampleCampaignOutcome } from "../renderer/manufacturing/utils/skewNormal";
@@ -402,6 +406,7 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
 /**
  * Compute per-demographic perception changes for one quarter.
  * Uses single-quarter perception update (not 4x loop).
+ * Generates a human-readable reason for each change.
  */
 function computeQuarterlyPerceptionChanges(
   state: GameState,
@@ -409,12 +414,68 @@ function computeQuarterlyPerceptionChanges(
 ): PerceptionChange[] {
   const player = getPlayerCompany(state);
   const newPerception = applySingleQuarterPerception(player, laptopResults);
+  const playerResults = laptopResults.filter((r) => r.owner === player.id);
 
   return DEMOGRAPHICS.map((dem) => {
     const oldP = player.brandPerception[dem.id] ?? 0;
     const newP = newPerception[dem.id] ?? 0;
-    return { demographicId: dem.id, oldPerception: oldP, newPerception: newP, delta: newP - oldP };
+    const delta = newP - oldP;
+    const reason = buildPerceptionReason(dem.id, delta, playerResults, laptopResults, player.models);
+    return { demographicId: dem.id, oldPerception: oldP, newPerception: newP, delta, reason };
   });
+}
+
+/** Build a human-readable reason for a perception change in one demographic. */
+function buildPerceptionReason(
+  demId: DemographicId,
+  delta: number,
+  playerResults: LaptopSalesResult[],
+  allResults: LaptopSalesResult[],
+  playerModels: CompanyState["models"],
+): string {
+  // Check if player had any sales in this demographic
+  // Use sell-through ratio to estimate actual units sold per demographic
+  const playerSales: { name: string; rawVP: number; units: number }[] = [];
+  for (const pr of playerResults) {
+    const db = pr.demographicBreakdown.find((b) => b.demographicId === demId);
+    if (db && db.unitsDemanded > 0) {
+      const units = db.unitsDemanded * sellThroughRate(pr);
+      if (units > 0) {
+        const model = playerModels.find((m) => m.design.id === pr.laptopId);
+        const name = model?.design.name ?? pr.laptopId.slice(0, 6);
+        playerSales.push({ name, rawVP: db.rawVP, units });
+      }
+    }
+  }
+
+  if (playerSales.length === 0) {
+    if (Math.abs(delta) < PERCEPTION_MEANINGFUL_DELTA) return "No sales — perception unchanged";
+    return "No sales this quarter — natural decay";
+  }
+
+  const marketAvgVP = marketAverageRawVP(demId, allResults);
+
+  // Find best-selling player laptop in this demographic
+  playerSales.sort((a, b) => b.units - a.units);
+  const top = playerSales[0];
+  const vpDiff = top.rawVP - marketAvgVP;
+
+  if (Math.abs(delta) < PERCEPTION_MEANINGFUL_DELTA) {
+    return `${top.name} sold at near-average value`;
+  }
+
+  if (delta > 0) {
+    if (vpDiff > 0) {
+      return `${top.name} offered above-average value`;
+    }
+    return `Sales volume gave a slight perception boost`;
+  }
+
+  // delta < 0
+  if (vpDiff < 0) {
+    return `${top.name} offered below-average value`;
+  }
+  return "Natural decay outweighed modest sales";
 }
 
 // --- Demand Projection (for manufacturing wizard) ---

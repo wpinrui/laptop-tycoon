@@ -7,7 +7,7 @@ import { DemographicId } from "../data/types";
 import { DEMOGRAPHICS } from "../data/demographics";
 import { SPONSORSHIPS } from "../data/sponsorships";
 import { GameState, CompanyState, getPlayerCompany } from "../renderer/state/gameTypes";
-import { LaptopSalesResult, QuarterSimulationResult } from "./salesTypes";
+import { LaptopSalesResult, QuarterSimulationResult, sellThroughRate, marketAverageRawVP } from "./salesTypes";
 import {
   S_CURVE_STEEPNESS,
   S_CURVE_MIDPOINT,
@@ -192,19 +192,7 @@ function applyOneQuarterPerception(
     const demId = dem.id;
     const old = oldPerception[demId] ?? 0;
 
-    // Collect all purchased laptop rawVPs in this demographic (all companies)
-    const allPurchases: { rawVP: number; units: number }[] = [];
-    for (const lr of allLaptopResults) {
-      const db = lr.demographicBreakdown.find((b) => b.demographicId === demId);
-      if (db && db.unitsDemanded > 0) {
-        allPurchases.push({ rawVP: db.rawVP, units: db.unitsDemanded });
-      }
-    }
-
-    const totalUnitsAll = allPurchases.reduce((s, p) => s + p.units, 0);
-    const meanRawVP = totalUnitsAll > 0
-      ? allPurchases.reduce((s, p) => s + p.rawVP * p.units, 0) / totalUnitsAll
-      : 0;
+    const meanRawVP = marketAverageRawVP(demId, allLaptopResults);
 
     // Collect this company's purchases in this demographic
     let weightedExperience = 0;
@@ -212,9 +200,10 @@ function applyOneQuarterPerception(
     for (const cr of companyResults) {
       const db = cr.demographicBreakdown.find((b) => b.demographicId === demId);
       if (db && db.unitsDemanded > 0) {
+        const units = db.unitsDemanded * sellThroughRate(cr);
         const experience = db.rawVP - meanRawVP;
-        weightedExperience += experience * db.unitsDemanded;
-        companyUnits += db.unitsDemanded;
+        weightedExperience += experience * units;
+        companyUnits += units;
       }
     }
 
