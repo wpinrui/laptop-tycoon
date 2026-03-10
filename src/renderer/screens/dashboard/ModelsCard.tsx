@@ -8,7 +8,7 @@ import { tokens } from "../../shell/tokens";
 import { BentoCard } from "./BentoCard";
 import { emptyStateStyle } from "./styles";
 import { getActiveModels, MAX_MODELS } from "./utils";
-import { STATUS_CONFIG } from "../../statusConfig";
+import { STATUS_CONFIG, getDisplayStatus } from "../../statusConfig";
 
 const modelRowStyle: CSSProperties = {
   display: "flex",
@@ -32,7 +32,7 @@ export function ModelsCard() {
         <p style={emptyStateStyle}>No models yet. Design your first laptop!</p>
       ) : (
         activeModels.map((model) => {
-          const status = STATUS_CONFIG[model.status];
+          const status = STATUS_CONFIG[getDisplayStatus(model, state.year, state.quarter)];
           return (
             <div key={model.design.id} style={modelRowStyle}>
               <div>

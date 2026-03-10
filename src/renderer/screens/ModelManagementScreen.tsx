@@ -11,7 +11,7 @@ import { ScreenHeader } from "../shell/ScreenHeader";
 import { tokens } from "../shell/tokens";
 import { StatusBar } from "../shell/StatusBar";
 import { getActiveModels, MAX_MODELS } from "./dashboard/utils";
-import { STATUS_CONFIG } from "../statusConfig";
+import { STATUS_CONFIG, getDisplayStatus } from "../statusConfig";
 import {
   Laptop,
   Plus,
@@ -220,6 +220,8 @@ function ModelCard({
   const { design, status, retailPrice, manufacturingQuantity, yearDesigned, manufacturingPlan } = model;
   const hasPlan = manufacturingPlan !== null && manufacturingPlan.year === gameYear && manufacturingPlan.quarter === gameQuarter;
   const isRetailOnly = hasDiscontinuedComponents(design, gameYear);
+  const displayStatus = getDisplayStatus(model, gameYear, gameQuarter);
+  const statusStyle = STATUS_CONFIG[displayStatus];
 
   return (
     <div style={{ ...modelCardStyle, opacity: disabled ? 0.5 : 1 }}>
@@ -236,11 +238,11 @@ function ModelCard({
           fontSize: tokens.font.sizeSmall,
           padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
           borderRadius: tokens.borderRadius.sm,
-          background: STATUS_CONFIG[status].bg,
-          color: STATUS_CONFIG[status].color,
+          background: statusStyle.bg,
+          color: statusStyle.color,
           fontWeight: 600,
         }}>
-          {STATUS_CONFIG[status].label}
+          {statusStyle.label}
         </span>
       </div>
 
