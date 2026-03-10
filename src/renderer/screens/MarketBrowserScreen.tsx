@@ -6,6 +6,7 @@ import { ContentPanel } from "../shell/ContentPanel";
 import { ScreenHeader } from "../shell/ScreenHeader";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
+import { CustomSelect, SelectOption, SelectGroup } from "../shell/CustomSelect";
 import { computeStatsForDesign } from "../../simulation/statCalculation";
 import { ALL_STATS, STAT_LABELS, LaptopStat, ComponentSlot } from "../../data/types";
 import { DEMOGRAPHICS } from "../../data/demographics";
@@ -177,14 +178,6 @@ const toolbarStyle: CSSProperties = {
   flexShrink: 0,
 };
 
-const selectStyle: CSSProperties = {
-  background: tokens.colors.surface,
-  color: tokens.colors.text,
-  border: `1px solid ${tokens.colors.panelBorder}`,
-  borderRadius: tokens.borderRadius.sm,
-  padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
-  fontSize: tokens.font.sizeSmall,
-};
 
 // --- Helpers ---
 
@@ -740,14 +733,43 @@ export function MarketBrowserScreen() {
   const maxStats = getMaxStatValue(allEntries, state.year);
   const playerCompanyId = state.companies.find((c) => c.isPlayer)?.id ?? "";
 
-  // Brand filter options
+  // Build option lists for CustomSelect dropdowns
   const brands = Array.from(new Set(allEntries.map((e) => e.company.id)));
 
-  // Screen sizes present in market
-  const screenSizes = Array.from(new Set(allEntries.map((e) => e.model.design.screenSize))).sort((a, b) => a - b);
+  const sortOptions: SelectGroup[] = [
+    { label: "General", options: [
+      { value: "price", label: "Price" },
+      { value: "name", label: "Name" },
+      { value: "brand", label: "Brand" },
+      { value: "screenSize", label: "Screen Size" },
+    ]},
+    { label: "By Stat (best first)", options: ALL_STATS.map((stat) => ({ value: `stat:${stat}`, label: STAT_LABELS[stat] })) },
+  ];
 
-  // Price range buckets
+  const brandOptions: SelectOption[] = [
+    { value: "all", label: "All" },
+    ...brands.map((id) => ({
+      value: id,
+      label: state.companies.find((c) => c.id === id)?.name ?? id,
+    })),
+  ];
+
+  const screenSizes = Array.from(new Set(allEntries.map((e) => e.model.design.screenSize))).sort((a, b) => a - b);
+  const screenOptions: SelectOption[] = [
+    { value: "all", label: "All" },
+    ...screenSizes.map((size) => ({ value: String(size), label: `${size}"` })),
+  ];
+
   const priceBuckets = [500, 1000, 1500, 2000, 3000, 5000];
+  const priceOptions: SelectOption[] = [
+    { value: "all", label: "Any" },
+    ...priceBuckets.map((p) => ({ value: String(p), label: `$${p.toLocaleString()}` })),
+  ];
+
+  const demographicOptions: SelectOption[] = [
+    { value: "all", label: "All" },
+    ...DEMOGRAPHICS.map((dem) => ({ value: dem.id, label: dem.name })),
+  ];
 
   // Demographic-weighted stats to show in table
   const tableStats = useMemo(() => {
@@ -833,89 +855,36 @@ export function MarketBrowserScreen() {
           </button>
         </div>
 
-        <label style={labelStyle}>
-          Sort:{" "}
-          <select
-            style={selectStyle}
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortKey)}
-          >
-            <option value="price">Price</option>
-            <option value="name">Name</option>
-            <option value="brand">Brand</option>
-            <option value="screenSize">Screen Size</option>
-            <optgroup label="By Stat (best first)">
-              {ALL_STATS.map((stat) => (
-                <option key={stat} value={`stat:${stat}`}>
-                  {STAT_LABELS[stat]}
-                </option>
-              ))}
-            </optgroup>
-          </select>
-        </label>
-        <label style={labelStyle}>
-          Brand:{" "}
-          <select
-            style={selectStyle}
-            value={filterBrand}
-            onChange={(e) => setFilterBrand(e.target.value)}
-          >
-            <option value="all">All</option>
-            {brands.map((id) => {
-              const name = state.companies.find((c) => c.id === id)?.name ?? id;
-              return (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              );
-            })}
-          </select>
-        </label>
-        <label style={labelStyle}>
-          Screen:{" "}
-          <select
-            style={selectStyle}
-            value={filterScreenSize}
-            onChange={(e) => setFilterScreenSize(e.target.value)}
-          >
-            <option value="all">All</option>
-            {screenSizes.map((size) => (
-              <option key={size} value={size}>
-                {size}"
-              </option>
-            ))}
-          </select>
-        </label>
-        <label style={labelStyle}>
-          Max price:{" "}
-          <select
-            style={selectStyle}
-            value={filterPriceMax}
-            onChange={(e) => setFilterPriceMax(e.target.value)}
-          >
-            <option value="all">Any</option>
-            {priceBuckets.map((p) => (
-              <option key={p} value={p}>
-                ${p.toLocaleString()}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label style={labelStyle}>
-          Demographic:{" "}
-          <select
-            style={selectStyle}
-            value={demographicFilter}
-            onChange={(e) => setDemographicFilter(e.target.value)}
-          >
-            <option value="all">All</option>
-            {DEMOGRAPHICS.map((dem) => (
-              <option key={dem.id} value={dem.id}>
-                {dem.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <CustomSelect
+          label="Sort"
+          value={sortBy}
+          onChange={(v) => setSortBy(v as SortKey)}
+          options={sortOptions}
+        />
+        <CustomSelect
+          label="Brand"
+          value={filterBrand}
+          onChange={setFilterBrand}
+          options={brandOptions}
+        />
+        <CustomSelect
+          label="Screen"
+          value={filterScreenSize}
+          onChange={setFilterScreenSize}
+          options={screenOptions}
+        />
+        <CustomSelect
+          label="Max price"
+          value={filterPriceMax}
+          onChange={setFilterPriceMax}
+          options={priceOptions}
+        />
+        <CustomSelect
+          label="Demographic"
+          value={demographicFilter}
+          onChange={setDemographicFilter}
+          options={demographicOptions}
+        />
         <span style={labelStyle}>
           {filtered.length} laptop{filtered.length !== 1 ? "s" : ""} on sale
         </span>
