@@ -1,5 +1,5 @@
-import { CSSProperties, useState } from "react";
-import { Monitor } from "lucide-react";
+import { CSSProperties, useState, useMemo } from "react";
+import { Monitor, LayoutGrid, Table } from "lucide-react";
 import { useGame } from "../state/GameContext";
 import { CompanyState, LaptopModel } from "../state/gameTypes";
 import { ContentPanel } from "../shell/ContentPanel";
@@ -7,8 +7,11 @@ import { ScreenHeader } from "../shell/ScreenHeader";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
 import { computeStatsForDesign } from "../../simulation/statCalculation";
-import { ALL_STATS, STAT_LABELS, ComponentSlot } from "../../data/types";
+import { ALL_STATS, STAT_LABELS, LaptopStat, ComponentSlot } from "../../data/types";
+import { DEMOGRAPHICS } from "../../data/demographics";
 import { PORT_TYPES } from "../../data/portTypes";
+
+type ViewMode = "cards" | "table" | "compare";
 
 interface MarketEntry {
   company: CompanyState;
@@ -27,7 +30,7 @@ function getMarketEntries(state: ReturnType<typeof useGame>["state"]): MarketEnt
   return entries;
 }
 
-type SortKey = "name" | "price" | "brand" | "screenSize";
+type SortKey = "name" | "price" | "brand" | "screenSize" | `stat:${string}`;
 
 function getLastQuarterSales(
   state: ReturnType<typeof useGame>["state"],
@@ -364,6 +367,9 @@ function LaptopCard({
                   }}
                 />
               </div>
+              <span style={{ fontSize: 11, color: tokens.colors.textMuted, minWidth: 24, textAlign: "right" }}>
+                {Math.round(value)}
+              </span>
             </div>
           );
         })}
@@ -372,15 +378,295 @@ function LaptopCard({
   );
 }
 
+// --- View mode button ---
+
+const viewBtnStyle = (active: boolean): CSSProperties => ({
+  background: active ? tokens.colors.surface : "transparent",
+  color: active ? tokens.colors.accent : tokens.colors.textMuted,
+  border: `1px solid ${active ? tokens.colors.accent : tokens.colors.panelBorder}`,
+  borderRadius: tokens.borderRadius.sm,
+  padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  gap: 4,
+  fontSize: tokens.font.sizeSmall,
+});
+
+// --- Table view ---
+
+const TABLE_STATS: LaptopStat[] = ["performance", "gamingPerformance", "batteryLife", "display", "buildQuality", "thermals", "weight"];
+
+function scoreColor(value: number, allValues: number[], higherIsBetter: boolean): string | undefined {
+  if (allValues.length < 2) return undefined;
+  const max = Math.max(...allValues);
+  const min = Math.min(...allValues);
+  if (max === min) return undefined;
+  if (higherIsBetter) {
+    if (value === max) return tokens.colors.success;
+    if (value === min) return tokens.colors.danger;
+  } else {
+    if (value === min) return tokens.colors.success;
+    if (value === max) return tokens.colors.danger;
+  }
+  return undefined;
+}
+
+function TableView({
+  entries,
+  year,
+  playerCompanyId,
+  statsToShow,
+  compareIds,
+  onToggleCompare,
+}: {
+  entries: MarketEntry[];
+  year: number;
+  playerCompanyId: string;
+  statsToShow: LaptopStat[];
+  compareIds: string[];
+  onToggleCompare: (id: string) => void;
+}) {
+  const rows = useMemo(() =>
+    entries.map((e) => ({
+      entry: e,
+      stats: computeStatsForDesign(e.model.design, year),
+    })),
+    [entries, year],
+  );
+
+  const thBase: CSSProperties = {
+    textAlign: "left",
+    padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+    borderBottom: `1px solid ${tokens.colors.panelBorder}`,
+    color: tokens.colors.textMuted,
+    fontSize: 11,
+    fontWeight: 600,
+    whiteSpace: "nowrap",
+    position: "sticky",
+    top: 0,
+    background: tokens.colors.cardBg,
+    zIndex: 1,
+  };
+  const thRight: CSSProperties = { ...thBase, textAlign: "right" };
+  const td: CSSProperties = {
+    padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+    borderBottom: `1px solid ${tokens.colors.surface}`,
+    fontSize: tokens.font.sizeSmall,
+    whiteSpace: "nowrap",
+  };
+  const tdR: CSSProperties = { ...td, textAlign: "right" };
+
+  return (
+    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <thead>
+        <tr>
+          <th style={thBase}>Model</th>
+          <th style={thBase}>Brand</th>
+          <th style={thRight}>Price</th>
+          <th style={thRight}>Screen</th>
+          {statsToShow.map((stat) => (
+            <th key={stat} style={thRight}>{STAT_LABELS[stat]}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map(({ entry, stats }) => {
+          const isPlayer = entry.company.id === playerCompanyId;
+          const isCompared = compareIds.includes(entry.model.design.id);
+          const rowColor = isPlayer ? tokens.colors.accent : undefined;
+          return (
+            <tr
+              key={entry.model.design.id}
+              onClick={() => onToggleCompare(entry.model.design.id)}
+              style={{ cursor: "pointer", background: isCompared ? tokens.colors.surface : undefined }}
+            >
+              <td style={{ ...td, fontWeight: 600, color: rowColor }}>
+                {isCompared && <span style={{ color: tokens.colors.accent, marginRight: 4 }}>{compareIds.indexOf(entry.model.design.id) + 1}.</span>}
+                {entry.model.design.name}
+              </td>
+              <td style={{ ...td, color: tokens.colors.textMuted }}>{entry.company.name}</td>
+              <td style={tdR}>${entry.model.retailPrice!.toLocaleString()}</td>
+              <td style={tdR}>{entry.model.design.screenSize}"</td>
+              {statsToShow.map((stat) => {
+                const val = Math.round(stats[stat] ?? 0);
+                const allVals = rows.map((r) => Math.round(r.stats[stat] ?? 0));
+                return (
+                  <td key={stat} style={{ ...tdR, color: scoreColor(val, allVals, true) }}>
+                    {val}
+                  </td>
+                );
+              })}
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
+// --- Compare view ---
+
+function CompareView({
+  entries,
+  year,
+  playerCompanyId,
+  onRemove,
+  getLastQuarterSales,
+}: {
+  entries: MarketEntry[];
+  year: number;
+  playerCompanyId: string;
+  onRemove: (id: string) => void;
+  getLastQuarterSales: (id: string) => number | null;
+}) {
+  const allStats = useMemo(() =>
+    entries.map((e) => ({
+      entry: e,
+      stats: computeStatsForDesign(e.model.design, year),
+    })),
+    [entries, year],
+  );
+
+  if (entries.length === 0) {
+    return (
+      <p style={{ color: tokens.colors.textMuted, fontStyle: "italic", padding: tokens.spacing.md }}>
+        Click laptops in Cards or Table view to add them here (up to 4).
+      </p>
+    );
+  }
+
+  const thBase: CSSProperties = {
+    textAlign: "right",
+    padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+    borderBottom: `1px solid ${tokens.colors.panelBorder}`,
+    fontSize: tokens.font.sizeSmall,
+    fontWeight: 600,
+    minWidth: 100,
+    maxWidth: 180,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  };
+  const rowLabel: CSSProperties = {
+    padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+    borderBottom: `1px solid ${tokens.colors.surface}`,
+    fontWeight: 600,
+    fontSize: tokens.font.sizeSmall,
+    whiteSpace: "nowrap",
+  };
+  const tdR: CSSProperties = {
+    padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+    borderBottom: `1px solid ${tokens.colors.surface}`,
+    textAlign: "right",
+    fontSize: tokens.font.sizeSmall,
+  };
+
+  const priceVals = allStats.map((r) => r.entry.model.retailPrice ?? 0);
+
+  return (
+    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <thead>
+        <tr>
+          <th style={{ ...thBase, textAlign: "left" }}></th>
+          {allStats.map(({ entry }) => {
+            const isPlayer = entry.company.id === playerCompanyId;
+            return (
+              <th key={entry.model.design.id} style={{ ...thBase, color: isPlayer ? tokens.colors.accent : tokens.colors.text }}>
+                <div>{entry.model.design.name}</div>
+                <div style={{ fontWeight: 400, color: tokens.colors.textMuted, fontSize: 11 }}>{entry.company.name}</div>
+                <button
+                  onClick={() => onRemove(entry.model.design.id)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: tokens.colors.danger,
+                    cursor: "pointer",
+                    fontSize: 11,
+                    padding: 0,
+                    marginTop: 2,
+                  }}
+                >
+                  remove
+                </button>
+              </th>
+            );
+          })}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style={rowLabel}>Price</td>
+          {allStats.map(({ entry }) => (
+            <td key={entry.model.design.id} style={{ ...tdR, color: scoreColor(entry.model.retailPrice ?? 0, priceVals, false) }}>
+              ${entry.model.retailPrice!.toLocaleString()}
+            </td>
+          ))}
+        </tr>
+        <tr>
+          <td style={rowLabel}>Screen</td>
+          {allStats.map(({ entry }) => (
+            <td key={entry.model.design.id} style={tdR}>{entry.model.design.screenSize}"</td>
+          ))}
+        </tr>
+        <tr>
+          <td style={rowLabel}>Battery</td>
+          {allStats.map(({ entry }) => (
+            <td key={entry.model.design.id} style={tdR}>{entry.model.design.batteryCapacityWh} Wh</td>
+          ))}
+        </tr>
+        <tr>
+          <td style={rowLabel}>Thickness</td>
+          {allStats.map(({ entry }) => (
+            <td key={entry.model.design.id} style={tdR}>{entry.model.design.thicknessCm.toFixed(1)} cm</td>
+          ))}
+        </tr>
+        <tr>
+          <td style={rowLabel}>Last Qtr Sales</td>
+          {allStats.map(({ entry }) => {
+            const sales = getLastQuarterSales(entry.model.design.id);
+            return (
+              <td key={entry.model.design.id} style={tdR}>
+                {sales !== null ? `${sales.toLocaleString()} units` : "—"}
+              </td>
+            );
+          })}
+        </tr>
+        {/* Separator */}
+        <tr><td colSpan={allStats.length + 1} style={{ padding: `${tokens.spacing.xs}px 0`, borderBottom: `1px solid ${tokens.colors.panelBorder}` }}></td></tr>
+        {ALL_STATS.map((stat) => {
+          const vals = allStats.map((r) => Math.round(r.stats[stat] ?? 0));
+          return (
+            <tr key={stat}>
+              <td style={rowLabel}>{STAT_LABELS[stat]}</td>
+              {allStats.map(({ entry }, i) => (
+                <td key={entry.model.design.id} style={{ ...tdR, color: scoreColor(vals[i], vals, true) }}>
+                  {vals[i]}
+                </td>
+              ))}
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
+// --- Main screen ---
+
 export function MarketBrowserScreen() {
   const { state } = useGame();
   const [sortBy, setSortBy] = useState<SortKey>("price");
   const [filterBrand, setFilterBrand] = useState<string>("all");
   const [filterScreenSize, setFilterScreenSize] = useState<string>("all");
   const [filterPriceMax, setFilterPriceMax] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<ViewMode>("cards");
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [demographicFilter, setDemographicFilter] = useState<string>("all");
 
   const allEntries = getMarketEntries(state);
   const maxStats = getMaxStatValue(allEntries, state.year);
+  const playerCompanyId = state.companies.find((c) => c.isPlayer)?.id ?? "";
 
   // Brand filter options
   const brands = Array.from(new Set(allEntries.map((e) => e.company.id)));
@@ -390,6 +676,16 @@ export function MarketBrowserScreen() {
 
   // Price range buckets
   const priceBuckets = [500, 1000, 1500, 2000, 3000, 5000];
+
+  // Demographic-weighted stats to show in table
+  const tableStats = useMemo(() => {
+    if (demographicFilter === "all") return TABLE_STATS;
+    const dem = DEMOGRAPHICS.find((d) => d.id === demographicFilter);
+    if (!dem) return TABLE_STATS;
+    return [...ALL_STATS]
+      .sort((a, b) => (dem.statWeights[b] ?? 0) - (dem.statWeights[a] ?? 0))
+      .slice(0, 7);
+  }, [demographicFilter]);
 
   // Filter
   let filtered = allEntries;
@@ -407,6 +703,12 @@ export function MarketBrowserScreen() {
 
   // Sort
   filtered.sort((a, b) => {
+    if (sortBy.startsWith("stat:")) {
+      const stat = sortBy.slice(5) as LaptopStat;
+      const aStats = computeStatsForDesign(a.model.design, state.year);
+      const bStats = computeStatsForDesign(b.model.design, state.year);
+      return (bStats[stat] ?? 0) - (aStats[stat] ?? 0); // descending
+    }
     switch (sortBy) {
       case "price":
         return (a.model.retailPrice ?? 0) - (b.model.retailPrice ?? 0);
@@ -417,7 +719,22 @@ export function MarketBrowserScreen() {
       case "screenSize":
         return a.model.design.screenSize - b.model.design.screenSize;
     }
+    return 0;
   });
+
+  const compareEntries = compareIds
+    .map((id) => allEntries.find((e) => e.model.design.id === id))
+    .filter(Boolean) as MarketEntry[];
+
+  const toggleCompare = (id: string) => {
+    setCompareIds((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= 4) return prev;
+      return [...prev, id];
+    });
+  };
+
+  const lookupSales = (id: string) => getLastQuarterSales(state, id);
 
   const labelStyle: CSSProperties = { fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted };
 
@@ -436,6 +753,22 @@ export function MarketBrowserScreen() {
 
       {/* Fixed toolbar — does not scroll */}
       <div style={toolbarStyle}>
+        {/* View mode toggle */}
+        <div style={{ display: "flex", gap: 4 }}>
+          <button style={viewBtnStyle(viewMode === "cards")} onClick={() => setViewMode("cards")}>
+            <LayoutGrid size={14} /> Cards
+          </button>
+          <button style={viewBtnStyle(viewMode === "table")} onClick={() => setViewMode("table")}>
+            <Table size={14} /> Table
+          </button>
+          <button
+            style={viewBtnStyle(viewMode === "compare")}
+            onClick={() => setViewMode("compare")}
+          >
+            Compare{compareIds.length > 0 && ` (${compareIds.length})`}
+          </button>
+        </div>
+
         <label style={labelStyle}>
           Sort:{" "}
           <select
@@ -447,6 +780,13 @@ export function MarketBrowserScreen() {
             <option value="name">Name</option>
             <option value="brand">Brand</option>
             <option value="screenSize">Screen Size</option>
+            <optgroup label="By Stat (best first)">
+              {ALL_STATS.map((stat) => (
+                <option key={stat} value={`stat:${stat}`}>
+                  {STAT_LABELS[stat]}
+                </option>
+              ))}
+            </optgroup>
           </select>
         </label>
         <label style={labelStyle}>
@@ -497,12 +837,27 @@ export function MarketBrowserScreen() {
             ))}
           </select>
         </label>
+        <label style={labelStyle}>
+          Demographic:{" "}
+          <select
+            style={selectStyle}
+            value={demographicFilter}
+            onChange={(e) => setDemographicFilter(e.target.value)}
+          >
+            <option value="all">All</option>
+            {DEMOGRAPHICS.map((dem) => (
+              <option key={dem.id} value={dem.id}>
+                {dem.name}
+              </option>
+            ))}
+          </select>
+        </label>
         <span style={labelStyle}>
           {filtered.length} laptop{filtered.length !== 1 ? "s" : ""} on sale
         </span>
       </div>
 
-      {/* Scrollable card grid */}
+      {/* Scrollable content area */}
       <div
         className="content-panel hide-scrollbar"
         style={{ flex: 1, overflowY: "auto", minHeight: 0 }}
@@ -511,18 +866,64 @@ export function MarketBrowserScreen() {
           <p style={{ color: tokens.colors.textMuted, fontStyle: "italic" }}>
             No laptops on the market yet. Design and manufacture your first model!
           </p>
-        ) : (
+        ) : viewMode === "cards" ? (
           <div style={gridStyle}>
-            {filtered.map((entry) => (
-              <LaptopCard
-                key={entry.model.design.id}
-                entry={entry}
-                year={state.year}
-                maxStats={maxStats}
-                lastQuarterSales={getLastQuarterSales(state, entry.model.design.id)}
-              />
-            ))}
+            {filtered.map((entry) => {
+              const id = entry.model.design.id;
+              const isCompared = compareIds.includes(id);
+              return (
+                <div
+                  key={id}
+                  onClick={() => toggleCompare(id)}
+                  style={{ cursor: "pointer", position: "relative" }}
+                >
+                  {isCompared && (
+                    <div style={{
+                      position: "absolute",
+                      top: 6,
+                      right: 6,
+                      background: tokens.colors.accent,
+                      color: "#000",
+                      borderRadius: "50%",
+                      width: 20,
+                      height: 20,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      zIndex: 1,
+                    }}>
+                      {compareIds.indexOf(id) + 1}
+                    </div>
+                  )}
+                  <LaptopCard
+                    entry={entry}
+                    year={state.year}
+                    maxStats={maxStats}
+                    lastQuarterSales={getLastQuarterSales(state, id)}
+                  />
+                </div>
+              );
+            })}
           </div>
+        ) : viewMode === "table" ? (
+          <TableView
+            entries={filtered}
+            year={state.year}
+            playerCompanyId={playerCompanyId}
+            statsToShow={tableStats}
+            compareIds={compareIds}
+            onToggleCompare={toggleCompare}
+          />
+        ) : (
+          <CompareView
+            entries={compareEntries}
+            year={state.year}
+            playerCompanyId={playerCompanyId}
+            onRemove={(id) => setCompareIds((prev) => prev.filter((x) => x !== id))}
+            getLastQuarterSales={lookupSales}
+          />
         )}
       </div>
       <StatusBar />
