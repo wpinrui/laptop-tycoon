@@ -19,7 +19,7 @@ type GameAction =
   | { type: "LOAD_GAME"; state: GameState }
   | { type: "SET_CASH"; cash: number }
   | { type: "ADVANCE_QUARTER" }
-  | { type: "ADD_MODEL"; model: LaptopModel }
+  | { type: "ADD_MODEL"; model: LaptopModel; rdCost: number }
   | { type: "UPDATE_MODEL_STATUS"; modelId: string; status: ModelStatus }
   | { type: "SET_MODEL_PRICING"; modelId: string; retailPrice: number; manufacturingQuantity: number }
   | { type: "UPDATE_MODEL_DESIGN"; modelId: string; design: LaptopDesign }
@@ -128,6 +128,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case "ADD_MODEL":
       return {
         ...state,
+        cash: state.cash - action.rdCost,
         companies: updatePlayer(state.companies, (p) => ({
           ...p,
           models: [...p.models, action.model],

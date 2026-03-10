@@ -37,6 +37,7 @@ import { overlayStyle } from "../shell/tokens";
 import { ContentPanel } from "../shell/ContentPanel";
 import { getDemandPoolSize } from "../../simulation/demographicData";
 import { STARTING_DEMAND_POOL } from "../../data/startingDemand";
+import { RD_COST } from "../../simulation/tunables";
 
 
 function DemographicPickerDialog({ onPick, onCancel, year }: { onPick: (d: Demographic) => void; onCancel: () => void; year: number }) {
@@ -324,6 +325,7 @@ function WizardContent() {
     } else {
       gameDispatch({
         type: "ADD_MODEL",
+        rdCost: RD_COST[state.modelType],
         model: {
           design,
           status: "draft",

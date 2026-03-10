@@ -10,7 +10,7 @@ export interface StatusStyle {
 }
 
 export const STATUS_CONFIG: Record<DisplayStatus, StatusStyle> = {
-  draft: { label: "Draft", color: tokens.colors.textMuted, bg: tokens.colors.surface },
+  draft: { label: "Designed", color: tokens.colors.textMuted, bg: tokens.colors.surface },
   ready: { label: "Ready", color: tokens.colors.accent, bg: tokens.colors.accentBg },
   manufacturing: { label: "Manufacturing", color: tokens.colors.warning, bg: "rgba(255, 167, 38, 0.12)" },
   onSale: { label: "On Sale", color: tokens.colors.success, bg: "rgba(102, 187, 106, 0.12)" },
