@@ -86,13 +86,13 @@ export function DashboardScreen() {
         <div style={columnStyle}>
           <ModelsCard />
           <NewsCard />
+          <CompetitorsCard />
           <HistoryCard />
           <div style={{ flexShrink: 0, height: tokens.spacing.lg }} />
         </div>
         <div style={columnStyle}>
           <BrandCard />
           <MarketCard />
-          <CompetitorsCard />
           <div style={{ flexShrink: 0, height: tokens.spacing.lg }} />
         </div>
         <div style={columnStyle}>
