@@ -33,9 +33,6 @@ export function ModelsCard() {
       ) : (
         activeModels.map((model) => {
           const status = STATUS_CONFIG[model.status];
-          const hasPlan = model.manufacturingPlan !== null
-            && model.manufacturingPlan.year === state.year
-            && model.manufacturingPlan.quarter === state.quarter;
           return (
             <div key={model.design.id} style={modelRowStyle}>
               <div>
@@ -46,7 +43,7 @@ export function ModelsCard() {
                   </div>
                 )}
                 <div style={{ fontSize: tokens.font.sizeBase, display: "flex", gap: tokens.spacing.md, marginTop: 2 }}>
-                  {hasPlan && model.manufacturingQuantity !== null && model.manufacturingQuantity > 0 && (
+                  {model.manufacturingQuantity !== null && model.manufacturingQuantity > 0 && (
                     <span style={{ color: tokens.colors.textMuted }}>Producing {model.manufacturingQuantity.toLocaleString()}</span>
                   )}
                   {model.unitsInStock > 0 && (

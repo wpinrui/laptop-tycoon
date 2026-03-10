@@ -251,9 +251,9 @@ function ModelCard({
         )}
       </div>
 
-      {(hasPlan || model.unitsInStock > 0) && (
+      {((manufacturingQuantity !== null) || model.unitsInStock > 0) && (
         <div style={{ marginTop: tokens.spacing.sm, paddingTop: tokens.spacing.sm, borderTop: `1px solid ${tokens.colors.panelBorder}` }}>
-          {hasPlan && manufacturingQuantity !== null && (
+          {manufacturingQuantity !== null && (
             <SpecRow label="Producing" value={`${manufacturingQuantity.toLocaleString()} units`} />
           )}
           {model.unitsInStock > 0 && (
