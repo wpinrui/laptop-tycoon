@@ -487,6 +487,86 @@ function TableView({
   );
 }
 
+// --- Radar chart for compare view ---
+
+const RADAR_COLORS = ["#4fc3f7", "#ffb74d", "#ce93d8"];
+
+function RadarChart({
+  datasets,
+  labels,
+  size = 320,
+}: {
+  datasets: { name: string; values: number[]; color: string }[];
+  labels: string[];
+  size?: number;
+}) {
+  const cx = size / 2;
+  const cy = size / 2;
+  const radius = size / 2 - 40;
+  const n = labels.length;
+  const angleStep = (2 * Math.PI) / n;
+
+  function point(i: number, r: number): [number, number] {
+    const angle = -Math.PI / 2 + i * angleStep;
+    return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)];
+  }
+
+  const rings = [0.25, 0.5, 0.75, 1];
+
+  return (
+    <svg width={size} height={size} style={{ flexShrink: 0 }}>
+      {/* Grid rings */}
+      {rings.map((frac) => (
+        <polygon
+          key={frac}
+          points={Array.from({ length: n }, (_, i) => point(i, radius * frac).join(",")).join(" ")}
+          fill="none"
+          stroke={tokens.colors.panelBorder}
+          strokeWidth={1}
+        />
+      ))}
+      {/* Axis lines */}
+      {labels.map((_, i) => {
+        const [px, py] = point(i, radius);
+        return <line key={i} x1={cx} y1={cy} x2={px} y2={py} stroke={tokens.colors.panelBorder} strokeWidth={1} />;
+      })}
+      {/* Data polygons */}
+      {datasets.map((ds) => {
+        const pts = ds.values.map((v, i) => point(i, radius * Math.min(v / 100, 1)).join(",")).join(" ");
+        return (
+          <g key={ds.name}>
+            <polygon points={pts} fill={ds.color} fillOpacity={0.1} stroke={ds.color} strokeWidth={2} />
+            {ds.values.map((v, i) => {
+              const [px, py] = point(i, radius * Math.min(v / 100, 1));
+              return <circle key={i} cx={px} cy={py} r={3} fill={ds.color} />;
+            })}
+          </g>
+        );
+      })}
+      {/* Labels */}
+      {labels.map((label, i) => {
+        const [px, py] = point(i, radius + 16);
+        const angle = -Math.PI / 2 + i * angleStep;
+        const textAnchor = Math.abs(Math.cos(angle)) < 0.1 ? "middle" : Math.cos(angle) > 0 ? "start" : "end";
+        return (
+          <text
+            key={i}
+            x={px}
+            y={py}
+            textAnchor={textAnchor}
+            dominantBaseline="central"
+            fill={tokens.colors.textMuted}
+            fontSize={10}
+            fontFamily={tokens.font.family}
+          >
+            {label}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
+
 // --- Compare view ---
 
 function CompareView({
@@ -575,7 +655,7 @@ function CompareView({
   return (
     <div>
       {/* Searchable dropdown to add laptops */}
-      {entries.length < 4 && (
+      {entries.length < 3 && (
         <div ref={dropdownRef} style={{ position: "relative", marginBottom: tokens.spacing.md, display: "inline-block" }}>
           <button
             onClick={() => {
@@ -675,18 +755,22 @@ function CompareView({
 
       {entries.length === 0 ? (
         <p style={{ color: tokens.colors.textMuted, fontStyle: "italic" }}>
-          Add laptops to compare (up to 4).
+          Add laptops to compare (up to 3).
         </p>
       ) : (
+      <div style={{ display: "flex", gap: tokens.spacing.lg, alignItems: "flex-start" }}>
       <table style={{ borderCollapse: "collapse" }}>
       <thead>
         <tr>
           <th style={{ ...thBase, textAlign: "left" }}></th>
-          {allStats.map(({ entry }) => {
+          {allStats.map(({ entry }, idx) => {
             const isPlayer = entry.company.id === playerCompanyId;
             return (
               <th key={entry.model.design.id} style={{ ...thBase, color: isPlayer ? tokens.colors.accent : tokens.colors.text }}>
-                <div>{entry.model.design.name}</div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: RADAR_COLORS[idx % RADAR_COLORS.length], display: "inline-block", flexShrink: 0 }} />
+                  <span>{entry.model.design.name}</span>
+                </div>
                 <div style={{ fontWeight: 400, color: tokens.colors.textMuted, fontSize: 11 }}>{entry.company.name}</div>
                 <button
                   onClick={() => onRemove(entry.model.design.id)}
@@ -784,6 +868,16 @@ function CompareView({
         })}
       </tbody>
     </table>
+    <RadarChart
+      size={340}
+      labels={ALL_STATS.map((s) => STAT_LABELS[s])}
+      datasets={allStats.map(({ entry, stats }, idx) => ({
+        name: entry.model.design.name,
+        color: RADAR_COLORS[idx % RADAR_COLORS.length],
+        values: ALL_STATS.map((s) => Math.round(stats[s] ?? 0)),
+      }))}
+    />
+    </div>
       )}
     </div>
   );
@@ -975,7 +1069,7 @@ export function MarketBrowserScreen() {
             year={state.year}
             playerCompanyId={playerCompanyId}
             allMarketEntries={allEntries}
-            onAdd={(id) => setCompareIds((prev) => prev.length >= 4 ? prev : [...prev, id])}
+            onAdd={(id) => setCompareIds((prev) => prev.length >= 3 ? prev : [...prev, id])}
             onRemove={(id) => setCompareIds((prev) => prev.filter((x) => x !== id))}
             getLastQuarterSales={lookupSales}
           />
