@@ -7,7 +7,7 @@ import {
 } from "../data/types";
 import { DEMOGRAPHICS } from "../data/demographics";
 import { STARTING_DEMAND_POOL } from "../data/startingDemand";
-import { GameState, LaptopModel, getPlayerCompany } from "../renderer/state/gameTypes";
+import { GameState, LaptopModel, CompanyState, getPlayerCompany } from "../renderer/state/gameTypes";
 import { computeStatsForDesign } from "./statCalculation";
 import {
   getDemandPoolSize,
@@ -417,7 +417,7 @@ function computeQuarterlyPerceptionChanges(
     const oldP = player.brandPerception[dem.id] ?? 0;
     const newP = newPerception[dem.id] ?? 0;
     const delta = newP - oldP;
-    const reason = buildPerceptionReason(dem.id, delta, playerResults, laptopResults, state);
+    const reason = buildPerceptionReason(dem.id, delta, playerResults, laptopResults, player.models);
     return { demographicId: dem.id, oldPerception: oldP, newPerception: newP, delta, reason };
   });
 }
@@ -428,14 +428,14 @@ function buildPerceptionReason(
   delta: number,
   playerResults: LaptopSalesResult[],
   allResults: LaptopSalesResult[],
-  state: GameState,
+  playerModels: CompanyState["models"],
 ): string {
   // Check if player had any sales in this demographic
   const playerSales: { name: string; rawVP: number; units: number }[] = [];
   for (const pr of playerResults) {
     const db = pr.demographicBreakdown.find((b) => b.demographicId === demId);
     if (db && db.unitsDemanded > 0) {
-      const model = getPlayerCompany(state).models.find((m) => m.design.id === pr.laptopId);
+      const model = playerModels.find((m) => m.design.id === pr.laptopId);
       const name = model?.design.name ?? pr.laptopId.slice(0, 6);
       playerSales.push({ name, rawVP: db.rawVP, units: db.unitsDemanded });
     }
