@@ -23,7 +23,7 @@ import {
   THICKNESS_MIN_CM,
   THICKNESS_MAX_CM,
   THICKNESS_STEP_CM,
-  BEZEL_MIN_MM,
+  minBezelForYear,
   MIN_BATTERY_WH,
   MAX_BATTERY_WH,
   BATTERY_STEP_WH,
@@ -86,7 +86,7 @@ function findMinThickness(
   const minHeight = maxHeightConstraintCm(components, {}, chassisOptions);
 
   for (let t = THICKNESS_MIN_CM; t <= THICKNESS_MAX_CM; t = Math.round((t + THICKNESS_STEP_CM) * 10) / 10) {
-    const avail = availableVolumeCm3(screenSize, BEZEL_MIN_MM, t, year);
+    const avail = availableVolumeCm3(screenSize, minBezelForYear(year), t, year);
     if (avail >= consumedVol && t >= minHeight) {
       return t;
     }
@@ -114,7 +114,7 @@ function scoreBuild(
     chassis,
     batteryCapacityWh,
     thicknessCm: thickness,
-    bezelMm: BEZEL_MIN_MM,
+    bezelMm: minBezelForYear(year),
     selectedColours,
     gameYear: year,
   });
@@ -329,7 +329,7 @@ export function optimiseForDemographic(demographic: Demographic, year: number): 
         chassis: optimised.chassis,
         batteryCapacityWh: optimised.batteryCapacityWh,
         thicknessCm: thickness,
-        bezelMm: BEZEL_MIN_MM,
+        bezelMm: minBezelForYear(year),
         selectedColours,
       };
     }
@@ -343,7 +343,7 @@ export function optimiseForDemographic(demographic: Demographic, year: number): 
       chassis: { material: null, coolingSolution: null, keyboardFeature: null, trackpadFeature: null },
       batteryCapacityWh: MIN_BATTERY_WH,
       thicknessCm: THICKNESS_MAX_CM,
-      bezelMm: BEZEL_MIN_MM,
+      bezelMm: minBezelForYear(year),
       selectedColours: [COLOUR_OPTIONS[0].id],
     };
   }

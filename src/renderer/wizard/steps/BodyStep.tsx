@@ -3,9 +3,9 @@ import {
   THICKNESS_MIN_CM,
   THICKNESS_MAX_CM,
   THICKNESS_STEP_CM,
-  BEZEL_MIN_MM,
   BEZEL_MAX_MM,
   BEZEL_STEP_MM,
+  minBezelForYear,
   availableVolumeCm3,
   minThicknessForVolumeCm,
   chassisCost,
@@ -28,6 +28,7 @@ export function BodyStep() {
   const { state, dispatch, gameYear } = useWizard();
 
   const thickness = state.thicknessCm;
+  const bezelMin = minBezelForYear(gameYear);
   const bezel = state.bezelMm;
 
   // --- Volume ---
@@ -106,7 +107,7 @@ export function BodyStep() {
               Bezel Width (uniform)
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "4px" }}>
-              <span style={{ color: "#888", fontSize: "0.75rem" }}>{BEZEL_MIN_MM} mm</span>
+              <span style={{ color: "#888", fontSize: "0.75rem" }}>{bezelMin} mm</span>
               <span style={{ fontSize: "1.75rem", fontWeight: "bold", color: tokens.colors.interactiveAccent }}>
                 {bezel} mm
               </span>
@@ -114,7 +115,7 @@ export function BodyStep() {
             </div>
             <input
               type="range"
-              min={BEZEL_MIN_MM}
+              min={bezelMin}
               max={BEZEL_MAX_MM}
               step={BEZEL_STEP_MM}
               value={bezel}
