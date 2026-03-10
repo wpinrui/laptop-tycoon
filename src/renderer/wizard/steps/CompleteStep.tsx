@@ -1,5 +1,6 @@
 import { useWizard } from "../WizardContext";
 import { useGame } from "../../state/GameContext";
+import { getPlayerCompany } from "../../state/gameTypes";
 import { tokens } from "../../shell/tokens";
 import { RD_COST } from "../../../simulation/tunables";
 import { MenuButton } from "../../shell/MenuButton";
@@ -14,6 +15,11 @@ export function CompleteStep({ onFinalize, onSaveAsDraft }: {
   const rdCost = RD_COST[state.modelType];
   const isEditing = !!state.editingModelId;
   const canAfford = gameState.cash >= rdCost;
+  // Show "Save as Draft" for new designs or when editing an existing draft
+  const editingModel = isEditing
+    ? getPlayerCompany(gameState).models.find((m) => m.design.id === state.editingModelId)
+    : null;
+  const showDraftOption = !isEditing || editingModel?.status === "draft";
 
   return (
     <div style={{ maxWidth: 520, margin: "0 auto", paddingTop: tokens.spacing.xl }}>
@@ -85,7 +91,7 @@ export function CompleteStep({ onFinalize, onSaveAsDraft }: {
       </div>
 
       {/* Save as Draft option */}
-      {!isEditing && (
+      {showDraftOption && (
         <div
           style={{
             background: tokens.colors.surface,

@@ -326,6 +326,7 @@ function WizardContent() {
     if (state.editingModelId) {
       gameDispatch({ type: "SET_CASH", cash: gameState.cash - rdCost });
       gameDispatch({ type: "UPDATE_MODEL_DESIGN", modelId: state.editingModelId, design });
+      gameDispatch({ type: "UPDATE_MODEL_STATUS", modelId: state.editingModelId, status: "designed" });
     } else {
       gameDispatch({
         type: "ADD_MODEL",
@@ -347,19 +348,23 @@ function WizardContent() {
 
   function handleSaveAsDraft() {
     const design = wizardStateToDesign(state, gameState.year);
-    gameDispatch({
-      type: "ADD_MODEL",
-      rdCost: 0,
-      model: {
-        design,
-        status: "draft",
-        retailPrice: null,
-        manufacturingQuantity: null,
-        yearDesigned: gameState.year,
-        manufacturingPlan: null,
-        unitsInStock: 0,
-      },
-    });
+    if (state.editingModelId) {
+      gameDispatch({ type: "UPDATE_MODEL_DESIGN", modelId: state.editingModelId, design });
+    } else {
+      gameDispatch({
+        type: "ADD_MODEL",
+        rdCost: 0,
+        model: {
+          design,
+          status: "draft",
+          retailPrice: null,
+          manufacturingQuantity: null,
+          yearDesigned: gameState.year,
+          manufacturingPlan: null,
+          unitsInStock: 0,
+        },
+      });
+    }
     dispatch({ type: "RESET" });
     navigateTo("modelManagement");
   }
