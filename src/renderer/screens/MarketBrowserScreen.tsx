@@ -177,7 +177,6 @@ const toolbarStyle: CSSProperties = {
   flexShrink: 0,
 };
 
-
 // --- Helpers ---
 
 function getAllStats(model: LaptopModel, year: number): { stat: string; label: string; value: number }[] {
@@ -423,6 +422,14 @@ function TableView({
     [entries, year],
   );
 
+  const columnVals = useMemo(() => {
+    const result: Record<string, number[]> = {};
+    for (const stat of statsToShow) {
+      result[stat] = rows.map((r) => Math.round(r.stats[stat] ?? 0));
+    }
+    return result;
+  }, [rows, statsToShow]);
+
   const thBase: CSSProperties = {
     textAlign: "left",
     padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
@@ -472,9 +479,8 @@ function TableView({
               <td style={tdR}>{entry.model.design.screenSize}"</td>
               {statsToShow.map((stat) => {
                 const val = Math.round(stats[stat] ?? 0);
-                const allVals = rows.map((r) => Math.round(r.stats[stat] ?? 0));
                 return (
-                  <td key={stat} style={{ ...tdR, color: scoreColor(val, allVals, true) }}>
+                  <td key={stat} style={{ ...tdR, color: scoreColor(val, columnVals[stat], true) }}>
                     {val}
                   </td>
                 );
@@ -776,101 +782,101 @@ function CompareView({
           Add laptops to compare (up to 3).
         </p>
       ) : (
-      <div style={{ display: "flex", gap: tokens.spacing.lg, flex: 1, minHeight: 0 }}>
-      <div style={{ overflowY: "auto", minHeight: 0, background: tokens.colors.cardBg, borderRadius: tokens.borderRadius.md, border: `1px solid ${tokens.colors.panelBorder}`, padding: tokens.spacing.sm }}>
-      <table style={{ borderCollapse: "separate", borderSpacing: 0 }}>
-      <thead>
-        <tr>
-          <th style={{ ...thBase, textAlign: "left" }}></th>
-          {allStats.map(({ entry }, idx) => {
-            const isPlayer = entry.company.id === playerCompanyId;
-            return (
-              <th key={entry.model.design.id} style={{ ...thBase, color: isPlayer ? tokens.colors.accent : tokens.colors.text }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: RADAR_COLORS[idx % RADAR_COLORS.length], display: "inline-block", flexShrink: 0 }} />
-                  <span>{entry.model.design.name}</span>
-                </div>
-                <div style={{ fontWeight: 400, color: tokens.colors.textMuted, fontSize: 11 }}>{entry.company.name}</div>
-                <button
-                  onClick={() => onRemove(entry.model.design.id)}
-                  title="Remove"
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    color: tokens.colors.danger,
-                    cursor: "pointer",
-                    padding: 0,
-                    marginTop: 2,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    verticalAlign: "middle",
-                  }}
-                >
-                  <X size={14} />
-                </button>
-              </th>
-            );
-          })}
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td style={rowLabel}>Price</td>
-          {allStats.map(({ entry }) => (
-            <td key={entry.model.design.id} style={{ ...tdR, color: scoreColor(entry.model.retailPrice ?? 0, priceVals, false) }}>
-              ${entry.model.retailPrice!.toLocaleString()}
-            </td>
-          ))}
-        </tr>
-        <tr>
-          <td style={rowLabel}>Screen</td>
-          {allStats.map(({ entry }) => (
-            <td key={entry.model.design.id} style={tdR}>{entry.model.design.screenSize}"</td>
-          ))}
-        </tr>
-        {compareRow("Battery", allStats.map((r) => r.entry.model.design.batteryCapacityWh), true, (v) => `${v} Wh`)}
-        {compareRow("Thickness", allStats.map((r) => r.entry.model.design.thicknessCm), false, (v) => `${v.toFixed(1)} cm`)}
-        {compareRow("Last Qtr Sales", allStats.map((r) => getLastQuarterSales(r.entry.model.design.id) ?? 0), true, (v) => v > 0 ? `${v.toLocaleString()} units` : "—")}
-        {/* Separator */}
-        <tr><td colSpan={allStats.length + 1} style={{ padding: `${tokens.spacing.xs}px 0`, borderBottom: `1px solid ${tokens.colors.panelBorder}` }}></td></tr>
-        {ALL_STATS.map((stat) => {
-          const vals = allStats.map((r) => Math.round(r.stats[stat] ?? 0));
-          return (
-            <tr key={stat}>
-              <td style={rowLabel}>{STAT_LABELS[stat]}</td>
-              {allStats.map(({ entry }, i) => (
-                <td key={entry.model.design.id} style={{ ...tdR, color: scoreColor(vals[i], vals, true) }}>
-                  {vals[i]}
-                </td>
-              ))}
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
-    </div>
-    <div style={{
-      flex: 1,
-      minWidth: 0,
-      minHeight: 0,
-      background: tokens.colors.cardBg,
-      border: `1px solid ${tokens.colors.panelBorder}`,
-      borderRadius: tokens.borderRadius.md,
-      padding: tokens.spacing.sm,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-    }}>
-      <RadarChart
-        labels={ALL_STATS.map((s) => STAT_LABELS[s])}
-        datasets={allStats.map(({ entry, stats }, idx) => ({
-          name: entry.model.design.name,
-          color: RADAR_COLORS[idx % RADAR_COLORS.length],
-          values: ALL_STATS.map((s) => Math.round(stats[s] ?? 0)),
-        }))}
-      />
-    </div>
-    </div>
+        <div style={{ display: "flex", gap: tokens.spacing.lg, flex: 1, minHeight: 0 }}>
+          <div style={{ overflowY: "auto", minHeight: 0, background: tokens.colors.cardBg, borderRadius: tokens.borderRadius.md, border: `1px solid ${tokens.colors.panelBorder}`, padding: tokens.spacing.sm }}>
+            <table style={{ borderCollapse: "separate", borderSpacing: 0 }}>
+              <thead>
+                <tr>
+                  <th style={{ ...thBase, textAlign: "left" }}></th>
+                  {allStats.map(({ entry }, idx) => {
+                    const isPlayer = entry.company.id === playerCompanyId;
+                    return (
+                      <th key={entry.model.design.id} style={{ ...thBase, color: isPlayer ? tokens.colors.accent : tokens.colors.text }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4 }}>
+                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: RADAR_COLORS[idx % RADAR_COLORS.length], display: "inline-block", flexShrink: 0 }} />
+                          <span>{entry.model.design.name}</span>
+                        </div>
+                        <div style={{ fontWeight: 400, color: tokens.colors.textMuted, fontSize: 11 }}>{entry.company.name}</div>
+                        <button
+                          onClick={() => onRemove(entry.model.design.id)}
+                          title="Remove"
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: tokens.colors.danger,
+                            cursor: "pointer",
+                            padding: 0,
+                            marginTop: 2,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          <X size={14} />
+                        </button>
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style={rowLabel}>Price</td>
+                  {allStats.map(({ entry }) => (
+                    <td key={entry.model.design.id} style={{ ...tdR, color: scoreColor(entry.model.retailPrice ?? 0, priceVals, false) }}>
+                      ${entry.model.retailPrice!.toLocaleString()}
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td style={rowLabel}>Screen</td>
+                  {allStats.map(({ entry }) => (
+                    <td key={entry.model.design.id} style={tdR}>{entry.model.design.screenSize}"</td>
+                  ))}
+                </tr>
+                {compareRow("Battery", allStats.map((r) => r.entry.model.design.batteryCapacityWh), true, (v) => `${v} Wh`)}
+                {compareRow("Thickness", allStats.map((r) => r.entry.model.design.thicknessCm), false, (v) => `${v.toFixed(1)} cm`)}
+                {compareRow("Last Qtr Sales", allStats.map((r) => getLastQuarterSales(r.entry.model.design.id) ?? 0), true, (v) => v > 0 ? `${v.toLocaleString()} units` : "—")}
+                {/* Separator */}
+                <tr><td colSpan={allStats.length + 1} style={{ padding: `${tokens.spacing.xs}px 0`, borderBottom: `1px solid ${tokens.colors.panelBorder}` }}></td></tr>
+                {ALL_STATS.map((stat) => {
+                  const vals = allStats.map((r) => Math.round(r.stats[stat] ?? 0));
+                  return (
+                    <tr key={stat}>
+                      <td style={rowLabel}>{STAT_LABELS[stat]}</td>
+                      {allStats.map(({ entry }, i) => (
+                        <td key={entry.model.design.id} style={{ ...tdR, color: scoreColor(vals[i], vals, true) }}>
+                          {vals[i]}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div style={{
+            flex: 1,
+            minWidth: 0,
+            minHeight: 0,
+            background: tokens.colors.cardBg,
+            border: `1px solid ${tokens.colors.panelBorder}`,
+            borderRadius: tokens.borderRadius.md,
+            padding: tokens.spacing.sm,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}>
+            <RadarChart
+              labels={ALL_STATS.map((s) => STAT_LABELS[s])}
+              datasets={allStats.map(({ entry, stats }, idx) => ({
+                name: entry.model.design.name,
+                color: RADAR_COLORS[idx % RADAR_COLORS.length],
+                values: ALL_STATS.map((s) => Math.round(stats[s] ?? 0)),
+              }))}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
@@ -923,7 +929,6 @@ export function MarketBrowserScreen() {
     { value: "all", label: "Any" },
     ...priceBuckets.map((p) => ({ value: String(p), label: `$${p.toLocaleString()}` })),
   ];
-
 
   // Filter
   let filtered = allEntries;
