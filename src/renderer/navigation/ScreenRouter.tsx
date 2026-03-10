@@ -19,7 +19,7 @@ import { GameOverScreen } from "../screens/GameOverScreen";
 import { BrandDetailScreen } from "../screens/BrandDetailScreen";
 import { ReviewsAwardsScreen } from "../screens/ReviewsAwardsScreen";
 import { MarketOverviewScreen } from "../screens/MarketOverviewScreen";
-import { MarketBrowserScreen } from "../screens/MarketBrowserScreen";
+import { MarketBrowserScreen } from "../screens/market-browser";
 import { DebugPanel } from "../debug/DebugPanel";
 
 function PlaceholderScreen({ title, icon }: { title: string; icon: React.ComponentType<{ size?: number; color?: string }> }) {
