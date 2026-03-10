@@ -101,6 +101,11 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           models.map((m) => {
             if (m.status === "discontinued") return m;
 
+            // Auto-discontinue drafts/designed models whose components are now obsolete
+            if ((m.status === "draft" || m.status === "designed") && hasDiscontinuedComponents(m.design, nextYear)) {
+              return { ...m, status: "discontinued" as const, manufacturingPlan: null, manufacturingQuantity: null };
+            }
+
             // Find sim results for this model to get unsold units
             const simResult = lastSim?.laptopResults.find((r) => r.laptopId === m.design.id);
             const newStock = simResult ? simResult.unsoldUnits : m.unitsInStock;
