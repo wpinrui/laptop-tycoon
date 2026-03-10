@@ -22,5 +22,8 @@ export function getDisplayStatus(model: LaptopModel, gameYear: number, gameQuart
     && model.manufacturingPlan.year === gameYear && model.manufacturingPlan.quarter === gameQuarter) {
     return "ready";
   }
+  // "manufacturing" and "onSale" are functionally identical — units are
+  // produced and sold in the same simulation step, so just show "On Sale".
+  if (model.status === "manufacturing") return "onSale";
   return model.status;
 }
