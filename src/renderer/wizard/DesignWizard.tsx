@@ -538,6 +538,15 @@ function WizardContent() {
               Next
             </MenuButton>
           )}
+          {!isLast && allStepsComplete && (
+            <MenuButton
+              variant="accent"
+              onClick={() => dispatch({ type: "GO_TO_STEP", step: "complete" })}
+              style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}
+            >
+              Complete →
+            </MenuButton>
+          )}
         </div>
       </div>
       {showCloseConfirm && (
