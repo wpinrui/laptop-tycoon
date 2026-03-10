@@ -7,7 +7,7 @@ import { DemographicId } from "../data/types";
 import { DEMOGRAPHICS } from "../data/demographics";
 import { SPONSORSHIPS } from "../data/sponsorships";
 import { GameState, CompanyState, getPlayerCompany } from "../renderer/state/gameTypes";
-import { LaptopSalesResult, QuarterSimulationResult, sellThroughRate } from "./salesTypes";
+import { LaptopSalesResult, QuarterSimulationResult, sellThroughRate, marketAverageRawVP } from "./salesTypes";
 import {
   S_CURVE_STEEPNESS,
   S_CURVE_MIDPOINT,
@@ -192,20 +192,7 @@ function applyOneQuarterPerception(
     const demId = dem.id;
     const old = oldPerception[demId] ?? 0;
 
-    // Collect all purchased laptop rawVPs in this demographic (all companies)
-    // Use sell-through ratio to estimate actual units sold per demographic
-    const allPurchases: { rawVP: number; units: number }[] = [];
-    for (const lr of allLaptopResults) {
-      const db = lr.demographicBreakdown.find((b) => b.demographicId === demId);
-      if (db && db.unitsDemanded > 0) {
-        allPurchases.push({ rawVP: db.rawVP, units: db.unitsDemanded * sellThroughRate(lr) });
-      }
-    }
-
-    const totalUnitsAll = allPurchases.reduce((s, p) => s + p.units, 0);
-    const meanRawVP = totalUnitsAll > 0
-      ? allPurchases.reduce((s, p) => s + p.rawVP * p.units, 0) / totalUnitsAll
-      : 0;
+    const meanRawVP = marketAverageRawVP(demId, allLaptopResults);
 
     // Collect this company's purchases in this demographic
     let weightedExperience = 0;

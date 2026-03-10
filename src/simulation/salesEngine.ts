@@ -21,6 +21,7 @@ import {
   DemandProjection,
   PerceptionChange,
   sellThroughRate,
+  marketAverageRawVP,
 } from "./salesTypes";
 import {
   CHANNEL_MARGIN_RATE,
@@ -31,6 +32,7 @@ import {
   REPLACEMENT_CYCLE,
   QUARTER_SHARES,
   QUARTER_SHARES_SUM,
+  PERCEPTION_MEANINGFUL_DELTA,
 } from "./tunables";
 import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
 import { sampleCampaignOutcome } from "../renderer/manufacturing/utils/skewNormal";
@@ -447,29 +449,18 @@ function buildPerceptionReason(
   }
 
   if (playerSales.length === 0) {
-    if (Math.abs(delta) < 0.1) return "No sales — perception unchanged";
+    if (Math.abs(delta) < PERCEPTION_MEANINGFUL_DELTA) return "No sales — perception unchanged";
     return "No sales this quarter — natural decay";
   }
 
-  // Compute market average rawVP for this demographic (using sold units)
-  let totalUnits = 0;
-  let weightedVP = 0;
-  for (const lr of allResults) {
-    const db = lr.demographicBreakdown.find((b) => b.demographicId === demId);
-    if (db && db.unitsDemanded > 0) {
-      const units = db.unitsDemanded * sellThroughRate(lr);
-      weightedVP += db.rawVP * units;
-      totalUnits += units;
-    }
-  }
-  const marketAvgVP = totalUnits > 0 ? weightedVP / totalUnits : 0;
+  const marketAvgVP = marketAverageRawVP(demId, allResults);
 
   // Find best-selling player laptop in this demographic
   playerSales.sort((a, b) => b.units - a.units);
   const top = playerSales[0];
   const vpDiff = top.rawVP - marketAvgVP;
 
-  if (Math.abs(delta) < 0.1) {
+  if (Math.abs(delta) < PERCEPTION_MEANINGFUL_DELTA) {
     return `${top.name} sold at near-average value`;
   }
 

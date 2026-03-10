@@ -38,6 +38,8 @@ export const NEGATIVITY_MULTIPLIER = 1.5;
 export const PERCEPTION_MIN = -50;
 /** Perception ceiling (maximum per-demographic perception score) */
 export const PERCEPTION_MAX = 50;
+/** Minimum absolute delta to count as a "meaningful" perception change */
+export const PERCEPTION_MEANINGFUL_DELTA = 0.1;
 
 // ==================== Sales Engine ====================
 

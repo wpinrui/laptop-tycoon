@@ -8,6 +8,7 @@ import { updateBrandReach, updateCompetitorBrandReach, applySingleQuarterPercept
 import { applyDeathSpiralPrevention } from "../../simulation/deathSpiralPrevention";
 import { LaptopReview, Award, applyAwardBonuses } from "../../simulation/reviewsAwards";
 import { SPONSORSHIPS, getSponsorshipCost } from "../../data/sponsorships";
+import { PERCEPTION_MEANINGFUL_DELTA } from "../../simulation/tunables";
 
 export interface CompetitorModelEntry {
   competitorId: string;
@@ -326,7 +327,7 @@ function buildYearResult(
     let reason = lastQ.perceptionChanges[i]?.reason ?? pc.reason;
     const sameSignQuarters = quarters
       .map((q) => q.perceptionChanges[i])
-      .filter((qpc) => qpc && Math.sign(qpc.delta) === Math.sign(delta) && Math.abs(qpc.delta) >= 0.1);
+      .filter((qpc) => qpc && Math.sign(qpc.delta) === Math.sign(delta) && Math.abs(qpc.delta) >= PERCEPTION_MEANINGFUL_DELTA);
     if (sameSignQuarters.length > 0) {
       sameSignQuarters.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
       reason = sameSignQuarters[0].reason;

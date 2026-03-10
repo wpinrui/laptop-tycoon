@@ -13,6 +13,7 @@ import { DEMOGRAPHICS } from "../../data/demographics";
 import { SPONSORSHIPS, getSponsorshipCost } from "../../data/sponsorships";
 import { DemographicId } from "../../data/types";
 import { PerceptionChange } from "../../simulation/salesTypes";
+import { PERCEPTION_MEANINGFUL_DELTA } from "../../simulation/tunables";
 
 const BUDGET_PRESETS = [0, 100_000, 250_000, 500_000, 1_000_000, 2_000_000];
 
@@ -230,7 +231,7 @@ export function BrandDetailScreen() {
           {DEMOGRAPHICS.map((dem) => {
             const perception = formatPerception(player.brandPerception[dem.id] ?? 0);
             const change = latestPerceptionChanges.get(dem.id);
-            const hasMeaningfulChange = change && Math.abs(change.delta) >= 0.1;
+            const hasMeaningfulChange = change && Math.abs(change.delta) >= PERCEPTION_MEANINGFUL_DELTA;
             return (
               <div key={dem.id} style={{ marginBottom: hasMeaningfulChange ? 10 : 6 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
