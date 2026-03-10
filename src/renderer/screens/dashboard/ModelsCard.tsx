@@ -8,7 +8,7 @@ import { tokens } from "../../shell/tokens";
 import { BentoCard } from "./BentoCard";
 import { emptyStateStyle } from "./styles";
 import { getActiveModels, MAX_MODELS } from "./utils";
-import { STATUS_CONFIG } from "../../statusConfig";
+import { STATUS_CONFIG, getDisplayStatus } from "../../statusConfig";
 
 const modelRowStyle: CSSProperties = {
   display: "flex",
@@ -32,14 +32,19 @@ export function ModelsCard() {
         <p style={emptyStateStyle}>No models yet. Design your first laptop!</p>
       ) : (
         activeModels.map((model) => {
-          const status = STATUS_CONFIG[model.status];
+          const status = STATUS_CONFIG[getDisplayStatus(model, state.year, state.quarter)];
           return (
             <div key={model.design.id} style={modelRowStyle}>
               <div>
                 <div style={{ fontWeight: 600, fontSize: tokens.font.sizeBase }}>{modelDisplayName(player.name, model.design.name)}</div>
-                <div style={{ fontSize: tokens.font.sizeSmall, display: "flex", gap: tokens.spacing.sm, marginTop: 2 }}>
-                  {model.retailPrice !== null && (
-                    <span style={{ color: tokens.colors.text }}>${model.retailPrice.toLocaleString()}</span>
+                {model.retailPrice !== null && (
+                  <div style={{ fontSize: tokens.font.sizeBase, fontWeight: 600, marginTop: 2 }}>
+                    ${model.retailPrice.toLocaleString()}
+                  </div>
+                )}
+                <div style={{ fontSize: tokens.font.sizeBase, display: "flex", gap: tokens.spacing.md, marginTop: 2 }}>
+                  {model.manufacturingQuantity !== null && model.manufacturingQuantity > 0 && (
+                    <span style={{ color: tokens.colors.textMuted }}>Producing {model.manufacturingQuantity.toLocaleString()}</span>
                   )}
                   {model.unitsInStock > 0 && (
                     <span style={{ color: tokens.colors.textMuted }}>{model.unitsInStock.toLocaleString()} in stock</span>

@@ -85,6 +85,13 @@ export const SUPPORT_BUDGET_MIN = 0;
 /** Support budget slider maximum */
 export const SUPPORT_BUDGET_MAX = 50;
 
+/** R&D cost charged at design finalisation (one-time, sunk) */
+export const RD_COST: Record<ModelType, number> = {
+  brandNew: 200_000,
+  successor: 75_000,
+  specBump: 15_000,
+};
+
 /** Fixed tooling cost by model type */
 export const TOOLING_COST: Record<ModelType, number> = {
   brandNew: 800_000,

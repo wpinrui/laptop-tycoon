@@ -29,6 +29,7 @@ import { MediaConnectivityStep } from "./steps/MediaConnectivityStep";
 import { BatteryStep } from "./steps/BatteryStep";
 import { BodyStep } from "./steps/BodyStep";
 import { ReviewStep } from "./steps/ReviewStep";
+import { CompleteStep } from "./steps/CompleteStep";
 import { WizardSidebar } from "./LaptopEstimateSidebar";
 import { StatusBar } from "../shell/StatusBar";
 import { DEMOGRAPHICS } from "../../data/demographics";
@@ -37,6 +38,7 @@ import { overlayStyle } from "../shell/tokens";
 import { ContentPanel } from "../shell/ContentPanel";
 import { getDemandPoolSize } from "../../simulation/demographicData";
 import { STARTING_DEMAND_POOL } from "../../data/startingDemand";
+import { RD_COST } from "../../simulation/tunables";
 
 
 function DemographicPickerDialog({ onPick, onCancel, year }: { onPick: (d: Demographic) => void; onCancel: () => void; year: number }) {
@@ -131,6 +133,7 @@ function isStepComplete(step: WizardStep, state: WizardState, year: number): boo
       return state.thicknessCm >= minHeight;
     }
     case "review":
+    case "complete":
       return true;
   }
 }
@@ -319,11 +322,38 @@ function WizardContent() {
 
   function handleFinalize() {
     const design = wizardStateToDesign(state, gameState.year);
+    const rdCost = RD_COST[state.modelType];
+    if (state.editingModelId) {
+      gameDispatch({ type: "SET_CASH", cash: gameState.cash - rdCost });
+      gameDispatch({ type: "UPDATE_MODEL_DESIGN", modelId: state.editingModelId, design });
+      gameDispatch({ type: "UPDATE_MODEL_STATUS", modelId: state.editingModelId, status: "designed" });
+    } else {
+      gameDispatch({
+        type: "ADD_MODEL",
+        rdCost,
+        model: {
+          design,
+          status: "designed",
+          retailPrice: null,
+          manufacturingQuantity: null,
+          yearDesigned: gameState.year,
+          manufacturingPlan: null,
+          unitsInStock: 0,
+        },
+      });
+    }
+    dispatch({ type: "RESET" });
+    navigateTo("modelManagement");
+  }
+
+  function handleSaveAsDraft() {
+    const design = wizardStateToDesign(state, gameState.year);
     if (state.editingModelId) {
       gameDispatch({ type: "UPDATE_MODEL_DESIGN", modelId: state.editingModelId, design });
     } else {
       gameDispatch({
         type: "ADD_MODEL",
+        rdCost: 0,
         model: {
           design,
           status: "draft",
@@ -378,6 +408,8 @@ function WizardContent() {
         return <BodyStep />;
       case "review":
         return <ReviewStep />;
+      case "complete":
+        return <CompleteStep onFinalize={handleFinalize} onSaveAsDraft={handleSaveAsDraft} />;
     }
   })();
 
@@ -496,29 +528,25 @@ function WizardContent() {
           Back
         </MenuButton>
         <div style={{ display: "flex", gap: tokens.spacing.sm }}>
-          {!isLast && allStepsComplete && state.visitedSteps.has("review") && (
+          {!isLast && (
             <MenuButton
-              variant="accent"
-              onClick={handleFinalize}
+              variant="surface"
+              onClick={() => dispatch({ type: "NEXT_STEP" })}
+              disabled={!canAdvance}
               style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}
             >
-              {state.editingModelId ? "Save Changes" : "Finalize Design"}
+              Next
             </MenuButton>
           )}
-          <MenuButton
-            variant={isLast ? "accent" : "surface"}
-            onClick={() => {
-              if (isLast) {
-                handleFinalize();
-              } else {
-                dispatch({ type: "NEXT_STEP" });
-              }
-            }}
-            disabled={!canAdvance}
-            style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}
-          >
-            {isLast ? (state.editingModelId ? "Save Changes" : "Finalize Design") : "Next"}
-          </MenuButton>
+          {!isLast && allStepsComplete && (
+            <MenuButton
+              variant="accent"
+              onClick={() => dispatch({ type: "GO_TO_STEP", step: "complete" })}
+              style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}
+            >
+              Complete →
+            </MenuButton>
+          )}
         </div>
       </div>
       {showCloseConfirm && (

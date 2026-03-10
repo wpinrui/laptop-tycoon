@@ -1,5 +1,7 @@
-import { ModelStatus } from "./state/gameTypes";
+import { LaptopModel, ModelStatus } from "./state/gameTypes";
 import { tokens } from "./shell/tokens";
+
+export type DisplayStatus = ModelStatus | "ready";
 
 export interface StatusStyle {
   label: string;
@@ -7,9 +9,22 @@ export interface StatusStyle {
   bg: string;
 }
 
-export const STATUS_CONFIG: Record<ModelStatus, StatusStyle> = {
+export const STATUS_CONFIG: Record<DisplayStatus, StatusStyle> = {
   draft: { label: "Draft", color: tokens.colors.textMuted, bg: tokens.colors.surface },
+  designed: { label: "Designed", color: tokens.colors.interactiveAccent, bg: tokens.colors.interactiveAccentBg },
+  ready: { label: "Ready", color: tokens.colors.accent, bg: tokens.colors.accentBg },
   manufacturing: { label: "Manufacturing", color: tokens.colors.warning, bg: "rgba(255, 167, 38, 0.12)" },
   onSale: { label: "On Sale", color: tokens.colors.success, bg: "rgba(102, 187, 106, 0.12)" },
   discontinued: { label: "Discontinued", color: tokens.colors.textMuted, bg: tokens.colors.surface },
 };
+
+export function getDisplayStatus(model: LaptopModel, gameYear: number, gameQuarter: 1 | 2 | 3 | 4): DisplayStatus {
+  if (model.status === "designed" && model.manufacturingPlan !== null
+    && model.manufacturingPlan.year === gameYear && model.manufacturingPlan.quarter === gameQuarter) {
+    return "ready";
+  }
+  // "manufacturing" and "onSale" are functionally identical — units are
+  // produced and sold in the same simulation step, so just show "On Sale".
+  if (model.status === "manufacturing") return "onSale";
+  return model.status;
+}

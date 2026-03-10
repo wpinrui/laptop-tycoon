@@ -11,7 +11,7 @@ import { ScreenHeader } from "../shell/ScreenHeader";
 import { tokens } from "../shell/tokens";
 import { StatusBar } from "../shell/StatusBar";
 import { getActiveModels, MAX_MODELS } from "./dashboard/utils";
-import { STATUS_CONFIG } from "../statusConfig";
+import { STATUS_CONFIG, getDisplayStatus } from "../statusConfig";
 import {
   Laptop,
   Plus,
@@ -45,7 +45,7 @@ const specRowStyle: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   padding: `${tokens.spacing.xs}px 0`,
-  fontSize: tokens.font.sizeSmall,
+  fontSize: tokens.font.sizeBase,
 };
 
 const actionBarStyle: CSSProperties = {
@@ -220,6 +220,8 @@ function ModelCard({
   const { design, status, retailPrice, manufacturingQuantity, yearDesigned, manufacturingPlan } = model;
   const hasPlan = manufacturingPlan !== null && manufacturingPlan.year === gameYear && manufacturingPlan.quarter === gameQuarter;
   const isRetailOnly = hasDiscontinuedComponents(design, gameYear);
+  const displayStatus = getDisplayStatus(model, gameYear, gameQuarter);
+  const statusStyle = STATUS_CONFIG[displayStatus];
 
   return (
     <div style={{ ...modelCardStyle, opacity: disabled ? 0.5 : 1 }}>
@@ -236,27 +238,38 @@ function ModelCard({
           fontSize: tokens.font.sizeSmall,
           padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
           borderRadius: tokens.borderRadius.sm,
-          background: STATUS_CONFIG[status].bg,
-          color: STATUS_CONFIG[status].color,
+          background: statusStyle.bg,
+          color: statusStyle.color,
           fontWeight: 600,
         }}>
-          {STATUS_CONFIG[status].label}
+          {statusStyle.label}
         </span>
       </div>
 
       <div style={{ marginTop: tokens.spacing.md }}>
         <SpecRow label="Unit Cost" value={`$${design.unitCost.toLocaleString()}`} />
-        <SpecRow label="Components" value={Object.keys(design.components).length.toString()} />
         {retailPrice !== null && (
           <SpecRow label="Retail Price" value={`$${retailPrice.toLocaleString()}`} />
         )}
-        {manufacturingQuantity !== null && (
-          <SpecRow label="Manufacturing Qty" value={manufacturingQuantity.toLocaleString()} />
-        )}
-        {model.unitsInStock > 0 && (
-          <SpecRow label="Inventory" value={`${model.unitsInStock.toLocaleString()} units`} />
-        )}
       </div>
+
+      {((manufacturingQuantity !== null) || model.unitsInStock > 0) && (
+        <div style={{ marginTop: tokens.spacing.sm, paddingTop: tokens.spacing.sm, borderTop: `1px solid ${tokens.colors.panelBorder}` }}>
+          {manufacturingQuantity !== null && (
+            <SpecRow label="Producing" value={`${manufacturingQuantity.toLocaleString()} units`} />
+          )}
+          {model.unitsInStock > 0 && (
+            <SpecRow label="In Stock" value={`${model.unitsInStock.toLocaleString()} units`} />
+          )}
+          {hasPlan && (manufacturingQuantity ?? 0) > 0 && model.unitsInStock > 0 && (
+            <SpecRow
+              label="Total Available"
+              value={`${((manufacturingQuantity ?? 0) + model.unitsInStock).toLocaleString()} units`}
+              highlight
+            />
+          )}
+        </div>
+      )}
 
       {isRetailOnly && model.unitsInStock > 0 && (
         <div style={{
@@ -297,6 +310,20 @@ function ModelCard({
                 >
                   <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
                     <Pencil size={14} /> Edit Design
+                  </span>
+                </MenuButton>
+              )}
+            </>
+          )}
+          {status === "designed" && (
+            <>
+              {onEdit && (
+                <MenuButton
+                  onClick={onEdit}
+                  style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
+                    <Pencil size={14} /> Redesign
                   </span>
                 </MenuButton>
               )}
@@ -392,10 +419,10 @@ function InlineConfirm({
   );
 }
 
-function SpecRow({ label, value }: { label: string; value: string }) {
+function SpecRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div style={specRowStyle}>
-      <span style={{ color: tokens.colors.textMuted }}>{label}</span>
+    <div style={{ ...specRowStyle, ...(highlight ? { borderTop: `1px solid ${tokens.colors.panelBorder}`, marginTop: tokens.spacing.xs, paddingTop: tokens.spacing.sm } : {}) }}>
+      <span style={{ color: highlight ? tokens.colors.text : tokens.colors.textMuted, fontWeight: highlight ? 600 : undefined }}>{label}</span>
       <span style={{ fontWeight: 600 }}>{value}</span>
     </div>
   );
