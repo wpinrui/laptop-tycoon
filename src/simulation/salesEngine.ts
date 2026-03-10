@@ -431,13 +431,18 @@ function buildPerceptionReason(
   playerModels: CompanyState["models"],
 ): string {
   // Check if player had any sales in this demographic
+  // Use sell-through ratio to estimate actual units sold per demographic
   const playerSales: { name: string; rawVP: number; units: number }[] = [];
   for (const pr of playerResults) {
     const db = pr.demographicBreakdown.find((b) => b.demographicId === demId);
     if (db && db.unitsDemanded > 0) {
-      const model = playerModels.find((m) => m.design.id === pr.laptopId);
-      const name = model?.design.name ?? pr.laptopId.slice(0, 6);
-      playerSales.push({ name, rawVP: db.rawVP, units: db.unitsDemanded });
+      const sellThrough = pr.unitsDemanded > 0 ? pr.unitsSold / pr.unitsDemanded : 1;
+      const units = db.unitsDemanded * sellThrough;
+      if (units > 0) {
+        const model = playerModels.find((m) => m.design.id === pr.laptopId);
+        const name = model?.design.name ?? pr.laptopId.slice(0, 6);
+        playerSales.push({ name, rawVP: db.rawVP, units });
+      }
     }
   }
 
@@ -446,14 +451,16 @@ function buildPerceptionReason(
     return "No sales this quarter — natural decay";
   }
 
-  // Compute market average rawVP for this demographic
+  // Compute market average rawVP for this demographic (using sold units)
   let totalUnits = 0;
   let weightedVP = 0;
   for (const lr of allResults) {
     const db = lr.demographicBreakdown.find((b) => b.demographicId === demId);
     if (db && db.unitsDemanded > 0) {
-      weightedVP += db.rawVP * db.unitsDemanded;
-      totalUnits += db.unitsDemanded;
+      const sellThrough = lr.unitsDemanded > 0 ? lr.unitsSold / lr.unitsDemanded : 1;
+      const units = db.unitsDemanded * sellThrough;
+      weightedVP += db.rawVP * units;
+      totalUnits += units;
     }
   }
   const marketAvgVP = totalUnits > 0 ? weightedVP / totalUnits : 0;

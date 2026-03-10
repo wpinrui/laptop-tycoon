@@ -321,8 +321,16 @@ function buildYearResult(
   const perceptionChanges = firstQ.perceptionChanges.map((pc, i) => {
     const newPerception = lastQ.perceptionChanges[i]?.newPerception ?? pc.newPerception;
     const delta = newPerception - pc.oldPerception;
-    // Use the last quarter's reason as the year-level summary (most recent context)
-    const reason = lastQ.perceptionChanges[i]?.reason ?? pc.reason;
+    // Pick the reason from the quarter whose delta best represents the year-level change:
+    // find the quarter with the largest absolute delta matching the overall sign
+    let reason = lastQ.perceptionChanges[i]?.reason ?? pc.reason;
+    const sameSignQuarters = quarters
+      .map((q) => q.perceptionChanges[i])
+      .filter((qpc) => qpc && Math.sign(qpc.delta) === Math.sign(delta) && Math.abs(qpc.delta) >= 0.1);
+    if (sameSignQuarters.length > 0) {
+      sameSignQuarters.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+      reason = sameSignQuarters[0].reason;
+    }
     return { ...pc, newPerception, delta, reason };
   });
 

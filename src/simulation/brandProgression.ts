@@ -193,11 +193,13 @@ function applyOneQuarterPerception(
     const old = oldPerception[demId] ?? 0;
 
     // Collect all purchased laptop rawVPs in this demographic (all companies)
+    // Use sell-through ratio to estimate actual units sold per demographic
     const allPurchases: { rawVP: number; units: number }[] = [];
     for (const lr of allLaptopResults) {
       const db = lr.demographicBreakdown.find((b) => b.demographicId === demId);
       if (db && db.unitsDemanded > 0) {
-        allPurchases.push({ rawVP: db.rawVP, units: db.unitsDemanded });
+        const sellThrough = lr.unitsDemanded > 0 ? lr.unitsSold / lr.unitsDemanded : 1;
+        allPurchases.push({ rawVP: db.rawVP, units: db.unitsDemanded * sellThrough });
       }
     }
 
@@ -212,9 +214,11 @@ function applyOneQuarterPerception(
     for (const cr of companyResults) {
       const db = cr.demographicBreakdown.find((b) => b.demographicId === demId);
       if (db && db.unitsDemanded > 0) {
+        const sellThrough = cr.unitsDemanded > 0 ? cr.unitsSold / cr.unitsDemanded : 1;
+        const units = db.unitsDemanded * sellThrough;
         const experience = db.rawVP - meanRawVP;
-        weightedExperience += experience * db.unitsDemanded;
-        companyUnits += db.unitsDemanded;
+        weightedExperience += experience * units;
+        companyUnits += units;
       }
     }
 
