@@ -5,12 +5,14 @@ import { ContentPanel } from "../../shell/ContentPanel";
 import { ScreenHeader } from "../../shell/ScreenHeader";
 import { StatusBar } from "../../shell/StatusBar";
 import { CustomSelect, SelectOption, SelectGroup } from "../../shell/CustomSelect";
-import { computeStatsForDesign } from "../../../simulation/statCalculation";
-import { ALL_STATS, STAT_LABELS, LaptopStat } from "../../../data/types";
 import {
   ViewMode,
   SortKey,
+  LaptopStat,
   MarketEntry,
+  ALL_STATS,
+  STAT_LABELS,
+  computeStatsForDesign,
   getMarketEntries,
   getLastQuarterSales,
   getMaxStatValue,

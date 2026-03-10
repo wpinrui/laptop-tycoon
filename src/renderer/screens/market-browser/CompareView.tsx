@@ -1,4 +1,4 @@
-import { CSSProperties, useState, useMemo, useRef, useEffect } from "react";
+import { CSSProperties, useState, useMemo, useRef, useCallback } from "react";
 import { X } from "lucide-react";
 import {
   MarketEntry,
@@ -11,6 +11,33 @@ import {
   tokens,
 } from "./types";
 import { RadarChart } from "./RadarChart";
+import { useClickOutside } from "../../hooks/useClickOutside";
+
+const thBase: CSSProperties = {
+  textAlign: "right",
+  padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`,
+  borderBottom: `1px solid ${tokens.colors.panelBorder}`,
+  fontSize: tokens.font.sizeBase,
+  fontWeight: 600,
+  minWidth: 120,
+  maxWidth: 200,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
+const rowLabel: CSSProperties = {
+  padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`,
+  borderBottom: `1px solid ${tokens.colors.surface}`,
+  fontWeight: 600,
+  fontSize: tokens.font.sizeBase,
+  whiteSpace: "nowrap",
+};
+const tdR: CSSProperties = {
+  padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`,
+  borderBottom: `1px solid ${tokens.colors.surface}`,
+  textAlign: "right",
+  fontSize: tokens.font.sizeBase,
+};
 
 export function CompareView({
   entries,
@@ -33,18 +60,8 @@ export function CompareView({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!dropdownOpen) return;
-    function handleClick(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
-        setSearch("");
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [dropdownOpen]);
+  const closeDropdown = useCallback(() => { setDropdownOpen(false); setSearch(""); }, []);
+  useClickOutside(dropdownRef, closeDropdown, dropdownOpen);
 
   const availableEntries = useMemo(() => {
     const selectedIds = new Set(entries.map((e) => e.model.design.id));
@@ -66,32 +83,6 @@ export function CompareView({
     })),
     [entries, year],
   );
-
-  const thBase: CSSProperties = {
-    textAlign: "right",
-    padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`,
-    borderBottom: `1px solid ${tokens.colors.panelBorder}`,
-    fontSize: tokens.font.sizeBase,
-    fontWeight: 600,
-    minWidth: 120,
-    maxWidth: 200,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  };
-  const rowLabel: CSSProperties = {
-    padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`,
-    borderBottom: `1px solid ${tokens.colors.surface}`,
-    fontWeight: 600,
-    fontSize: tokens.font.sizeBase,
-    whiteSpace: "nowrap",
-  };
-  const tdR: CSSProperties = {
-    padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`,
-    borderBottom: `1px solid ${tokens.colors.surface}`,
-    textAlign: "right",
-    fontSize: tokens.font.sizeBase,
-  };
 
   const priceVals = allStats.map((r) => r.entry.model.retailPrice ?? 0);
 
@@ -252,14 +243,7 @@ export function CompareView({
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td style={rowLabel}>Price</td>
-                  {allStats.map(({ entry }) => (
-                    <td key={entry.model.design.id} style={{ ...tdR, color: scoreColor(entry.model.retailPrice ?? 0, priceVals, false) }}>
-                      ${entry.model.retailPrice!.toLocaleString()}
-                    </td>
-                  ))}
-                </tr>
+                {compareRow("Price", priceVals, false, (v) => `$${v.toLocaleString()}`)}
                 <tr>
                   <td style={rowLabel}>Screen</td>
                   {allStats.map(({ entry }) => (

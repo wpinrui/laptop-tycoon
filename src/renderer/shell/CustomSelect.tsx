@@ -1,5 +1,6 @@
-import { CSSProperties, useState, useRef, useEffect, ReactNode } from "react";
+import { CSSProperties, useState, useRef, useCallback, ReactNode } from "react";
 import { tokens } from "./tokens";
+import { useClickOutside } from "../hooks/useClickOutside";
 
 export interface SelectOption<T extends string = string> {
   value: T;
@@ -81,17 +82,8 @@ export function CustomSelect<T extends string = string>({
 }: CustomSelectProps<T>) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
+  const close = useCallback(() => setOpen(false), []);
+  useClickOutside(ref, close, open);
 
   const all = flatOptions(options);
   const selected = all.find((o) => o.value === value);
