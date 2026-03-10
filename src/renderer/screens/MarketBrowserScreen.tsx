@@ -165,12 +165,13 @@ const statBarBgStyle: CSSProperties = {
   overflow: "hidden",
 };
 
-const controlsStyle: CSSProperties = {
+const toolbarStyle: CSSProperties = {
   display: "flex",
   gap: tokens.spacing.md,
   alignItems: "center",
-  marginBottom: tokens.spacing.md,
+  paddingBottom: tokens.spacing.md,
   flexWrap: "wrap",
+  flexShrink: 0,
 };
 
 const selectStyle: CSSProperties = {
@@ -375,6 +376,8 @@ export function MarketBrowserScreen() {
   const { state } = useGame();
   const [sortBy, setSortBy] = useState<SortKey>("price");
   const [filterBrand, setFilterBrand] = useState<string>("all");
+  const [filterScreenSize, setFilterScreenSize] = useState<string>("all");
+  const [filterPriceMax, setFilterPriceMax] = useState<string>("all");
 
   const allEntries = getMarketEntries(state);
   const maxStats = getMaxStatValue(allEntries, state.year);
@@ -382,10 +385,24 @@ export function MarketBrowserScreen() {
   // Brand filter options
   const brands = Array.from(new Set(allEntries.map((e) => e.company.id)));
 
+  // Screen sizes present in market
+  const screenSizes = Array.from(new Set(allEntries.map((e) => e.model.design.screenSize))).sort((a, b) => a - b);
+
+  // Price range buckets
+  const priceBuckets = [500, 1000, 1500, 2000, 3000, 5000];
+
   // Filter
   let filtered = allEntries;
   if (filterBrand !== "all") {
     filtered = filtered.filter((e) => e.company.id === filterBrand);
+  }
+  if (filterScreenSize !== "all") {
+    const size = Number(filterScreenSize);
+    filtered = filtered.filter((e) => e.model.design.screenSize === size);
+  }
+  if (filterPriceMax !== "all") {
+    const max = Number(filterPriceMax);
+    filtered = filtered.filter((e) => (e.model.retailPrice ?? 0) <= max);
   }
 
   // Sort
@@ -402,6 +419,8 @@ export function MarketBrowserScreen() {
     }
   });
 
+  const labelStyle: CSSProperties = { fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted };
+
   return (
     <ContentPanel
       maxWidth={tokens.layout.panelMaxWidth}
@@ -414,47 +433,80 @@ export function MarketBrowserScreen() {
       }}
     >
       <ScreenHeader title="Market Browser" icon={Monitor} />
+
+      {/* Fixed toolbar — does not scroll */}
+      <div style={toolbarStyle}>
+        <label style={labelStyle}>
+          Sort:{" "}
+          <select
+            style={selectStyle}
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortKey)}
+          >
+            <option value="price">Price</option>
+            <option value="name">Name</option>
+            <option value="brand">Brand</option>
+            <option value="screenSize">Screen Size</option>
+          </select>
+        </label>
+        <label style={labelStyle}>
+          Brand:{" "}
+          <select
+            style={selectStyle}
+            value={filterBrand}
+            onChange={(e) => setFilterBrand(e.target.value)}
+          >
+            <option value="all">All</option>
+            {brands.map((id) => {
+              const name = state.companies.find((c) => c.id === id)?.name ?? id;
+              return (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              );
+            })}
+          </select>
+        </label>
+        <label style={labelStyle}>
+          Screen:{" "}
+          <select
+            style={selectStyle}
+            value={filterScreenSize}
+            onChange={(e) => setFilterScreenSize(e.target.value)}
+          >
+            <option value="all">All</option>
+            {screenSizes.map((size) => (
+              <option key={size} value={size}>
+                {size}"
+              </option>
+            ))}
+          </select>
+        </label>
+        <label style={labelStyle}>
+          Max price:{" "}
+          <select
+            style={selectStyle}
+            value={filterPriceMax}
+            onChange={(e) => setFilterPriceMax(e.target.value)}
+          >
+            <option value="all">Any</option>
+            {priceBuckets.map((p) => (
+              <option key={p} value={p}>
+                ${p.toLocaleString()}
+              </option>
+            ))}
+          </select>
+        </label>
+        <span style={labelStyle}>
+          {filtered.length} laptop{filtered.length !== 1 ? "s" : ""} on sale
+        </span>
+      </div>
+
+      {/* Scrollable card grid */}
       <div
         className="content-panel hide-scrollbar"
         style={{ flex: 1, overflowY: "auto", minHeight: 0 }}
       >
-        <div style={controlsStyle}>
-          <label style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
-            Sort by:{" "}
-            <select
-              style={selectStyle}
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortKey)}
-            >
-              <option value="price">Price</option>
-              <option value="name">Name</option>
-              <option value="brand">Brand</option>
-              <option value="screenSize">Screen Size</option>
-            </select>
-          </label>
-          <label style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
-            Brand:{" "}
-            <select
-              style={selectStyle}
-              value={filterBrand}
-              onChange={(e) => setFilterBrand(e.target.value)}
-            >
-              <option value="all">All</option>
-              {brands.map((id) => {
-                const name = state.companies.find((c) => c.id === id)?.name ?? id;
-                return (
-                  <option key={id} value={id}>
-                    {name}
-                  </option>
-                );
-              })}
-            </select>
-          </label>
-          <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
-            {filtered.length} laptop{filtered.length !== 1 ? "s" : ""} on sale
-          </span>
-        </div>
-
         {filtered.length === 0 ? (
           <p style={{ color: tokens.colors.textMuted, fontStyle: "italic" }}>
             No laptops on the market yet. Design and manufacture your first model!
