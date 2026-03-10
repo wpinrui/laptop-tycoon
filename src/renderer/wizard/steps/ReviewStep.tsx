@@ -406,7 +406,7 @@ export function ReviewStep() {
         }}
       >
         <span style={{ fontSize: "0.875rem", color: tokens.colors.accent }}>
-          Finalizing will deduct <strong>${rdCost.toLocaleString()}</strong> R&D cost from your cash
+          {state.editingModelId ? "Saving redesign" : "Finalizing"} will deduct <strong>${rdCost.toLocaleString()}</strong> R&D cost from your cash
         </span>
         <span style={{ fontSize: "0.875rem", color: tokens.colors.textMuted }}>
           Cash: ${gameState.cash.toLocaleString()}

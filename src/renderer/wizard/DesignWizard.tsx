@@ -320,7 +320,9 @@ function WizardContent() {
 
   function handleFinalize() {
     const design = wizardStateToDesign(state, gameState.year);
+    const rdCost = RD_COST[state.modelType];
     if (state.editingModelId) {
+      gameDispatch({ type: "SET_CASH", cash: gameState.cash - rdCost });
       gameDispatch({ type: "UPDATE_MODEL_DESIGN", modelId: state.editingModelId, design });
     } else {
       gameDispatch({

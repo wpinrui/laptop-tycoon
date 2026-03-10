@@ -1,6 +1,7 @@
 import { CSSProperties, useState } from "react";
 import { useGame } from "../state/GameContext";
 import { useNavigation } from "../navigation/NavigationContext";
+import { useWizard } from "../wizard/WizardContext";
 import { useMfgWizard } from "../manufacturing/ManufacturingWizardContext";
 import { selectPrompts } from "../manufacturing/data/pressReleasePrompts";
 import { LaptopModel, hasDiscontinuedComponents, getPlayerCompany, modelDisplayName } from "../state/gameTypes";
@@ -14,6 +15,7 @@ import { STATUS_CONFIG, getDisplayStatus } from "../statusConfig";
 import {
   Laptop,
   Plus,
+  Pencil,
   Factory,
   Trash2,
   ChevronDown,
@@ -57,6 +59,7 @@ const actionBarStyle: CSSProperties = {
 export function ModelManagementScreen() {
   const { state, dispatch } = useGame();
   const { navigateTo } = useNavigation();
+  const { dispatch: wizardDispatch } = useWizard();
   const { dispatch: mfgDispatch } = useMfgWizard();
   const [confirmScrapId, setConfirmScrapId] = useState<string | null>(null);
   const [showDiscontinued, setShowDiscontinued] = useState(false);
@@ -66,6 +69,11 @@ export function ModelManagementScreen() {
   const discontinuedModels = player.models.filter((m) => m.status === "discontinued");
   const emptySlots = MAX_MODELS - activeModels.length;
   const canDesignNew = !state.quarterSimulated;
+
+  function handleEdit(model: LaptopModel) {
+    wizardDispatch({ type: "LOAD_DESIGN", design: model.design });
+    navigateTo("designWizard");
+  }
 
   function handleManufacturing(model: LaptopModel) {
     if (model.manufacturingPlan) {
@@ -126,6 +134,7 @@ export function ModelManagementScreen() {
             model={model}
             companyName={player.name}
             confirmScrap={confirmScrapId === model.design.id}
+            onEdit={canDesignNew ? () => handleEdit(model) : undefined}
             onAddManufacturing={() => handleManufacturing(model)}
             onScrapClick={() => setConfirmScrapId(model.design.id)}
             onScrapConfirm={() => handleScrap(model.design.id)}
@@ -187,6 +196,7 @@ function ModelCard({
   model,
   companyName,
   confirmScrap,
+  onEdit,
   onAddManufacturing,
   onScrapClick,
   onScrapConfirm,
@@ -198,6 +208,7 @@ function ModelCard({
   model: LaptopModel;
   companyName: string;
   confirmScrap: boolean;
+  onEdit?: () => void;
   onAddManufacturing?: () => void;
   onScrapClick: () => void;
   onScrapConfirm: () => void;
@@ -292,6 +303,16 @@ function ModelCard({
         <div style={actionBarStyle}>
           {status === "draft" && (
             <>
+              {onEdit && (
+                <MenuButton
+                  onClick={onEdit}
+                  style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
+                    <Pencil size={14} /> Redesign
+                  </span>
+                </MenuButton>
+              )}
               {onAddManufacturing && (
                 <MenuButton
                   variant="accent"
