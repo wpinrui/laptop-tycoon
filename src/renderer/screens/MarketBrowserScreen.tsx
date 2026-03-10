@@ -678,7 +678,7 @@ function CompareView({
           Add laptops to compare (up to 4).
         </p>
       ) : (
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <table style={{ borderCollapse: "collapse" }}>
       <thead>
         <tr>
           <th style={{ ...thBase, textAlign: "left" }}></th>
