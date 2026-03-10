@@ -1,5 +1,5 @@
 import { CSSProperties, useState, useMemo, useRef, useEffect } from "react";
-import { Monitor, LayoutGrid, Table } from "lucide-react";
+import { Monitor, LayoutGrid, Table, X } from "lucide-react";
 import { useGame } from "../state/GameContext";
 import { CompanyState, LaptopModel } from "../state/gameTypes";
 import { ContentPanel } from "../shell/ContentPanel";
@@ -690,17 +690,22 @@ function CompareView({
                 <div style={{ fontWeight: 400, color: tokens.colors.textMuted, fontSize: 11 }}>{entry.company.name}</div>
                 <button
                   onClick={() => onRemove(entry.model.design.id)}
+                  title="Remove"
                   style={{
                     background: "transparent",
                     border: "none",
                     color: tokens.colors.danger,
                     cursor: "pointer",
-                    fontSize: 11,
                     padding: 0,
                     marginTop: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginLeft: "auto",
+                    marginRight: "auto",
                   }}
                 >
-                  remove
+                  <X size={14} />
                 </button>
               </th>
             );
@@ -722,29 +727,48 @@ function CompareView({
             <td key={entry.model.design.id} style={tdR}>{entry.model.design.screenSize}"</td>
           ))}
         </tr>
-        <tr>
-          <td style={rowLabel}>Battery</td>
-          {allStats.map(({ entry }) => (
-            <td key={entry.model.design.id} style={tdR}>{entry.model.design.batteryCapacityWh} Wh</td>
-          ))}
-        </tr>
-        <tr>
-          <td style={rowLabel}>Thickness</td>
-          {allStats.map(({ entry }) => (
-            <td key={entry.model.design.id} style={tdR}>{entry.model.design.thicknessCm.toFixed(1)} cm</td>
-          ))}
-        </tr>
-        <tr>
-          <td style={rowLabel}>Last Qtr Sales</td>
-          {allStats.map(({ entry }) => {
-            const sales = getLastQuarterSales(entry.model.design.id);
-            return (
-              <td key={entry.model.design.id} style={tdR}>
-                {sales !== null ? `${sales.toLocaleString()} units` : "—"}
-              </td>
-            );
-          })}
-        </tr>
+        {(() => {
+          const batteryVals = allStats.map((r) => r.entry.model.design.batteryCapacityWh);
+          return (
+            <tr>
+              <td style={rowLabel}>Battery</td>
+              {allStats.map(({ entry }, i) => (
+                <td key={entry.model.design.id} style={{ ...tdR, color: scoreColor(batteryVals[i], batteryVals, true) }}>
+                  {entry.model.design.batteryCapacityWh} Wh
+                </td>
+              ))}
+            </tr>
+          );
+        })()}
+        {(() => {
+          const thicknessVals = allStats.map((r) => r.entry.model.design.thicknessCm);
+          return (
+            <tr>
+              <td style={rowLabel}>Thickness</td>
+              {allStats.map(({ entry }, i) => (
+                <td key={entry.model.design.id} style={{ ...tdR, color: scoreColor(thicknessVals[i], thicknessVals, false) }}>
+                  {entry.model.design.thicknessCm.toFixed(1)} cm
+                </td>
+              ))}
+            </tr>
+          );
+        })()}
+        {(() => {
+          const salesVals = allStats.map((r) => getLastQuarterSales(r.entry.model.design.id) ?? 0);
+          return (
+            <tr>
+              <td style={rowLabel}>Last Qtr Sales</td>
+              {allStats.map(({ entry }, i) => {
+                const sales = getLastQuarterSales(entry.model.design.id);
+                return (
+                  <td key={entry.model.design.id} style={{ ...tdR, color: sales !== null ? scoreColor(salesVals[i], salesVals, true) : undefined }}>
+                    {sales !== null ? `${sales.toLocaleString()} units` : "—"}
+                  </td>
+                );
+              })}
+            </tr>
+          );
+        })()}
         {/* Separator */}
         <tr><td colSpan={allStats.length + 1} style={{ padding: `${tokens.spacing.xs}px 0`, borderBottom: `1px solid ${tokens.colors.panelBorder}` }}></td></tr>
         {ALL_STATS.map((stat) => {
