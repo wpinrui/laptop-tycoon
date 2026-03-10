@@ -1,10 +1,9 @@
 import { CSSProperties } from "react";
-import { CompanyState, LaptopModel } from "../../state/gameTypes";
+import { CompanyState, GameState, LaptopModel } from "../../state/gameTypes";
 import { computeStatsForDesign } from "../../../simulation/statCalculation";
 import { ALL_STATS, STAT_LABELS, LaptopStat, ComponentSlot } from "../../../data/types";
 import { PORT_TYPES } from "../../../data/portTypes";
 import { tokens } from "../../shell/tokens";
-import { useGame } from "../../state/GameContext";
 
 export { ALL_STATS, STAT_LABELS, type LaptopStat, type ComponentSlot };
 export { computeStatsForDesign };
@@ -44,7 +43,7 @@ export const RADAR_COLORS = ["#4fc3f7", "#ffb74d", "#ce93d8"];
 
 // --- Helpers ---
 
-export function getMarketEntries(state: ReturnType<typeof useGame>["state"]): MarketEntry[] {
+export function getMarketEntries(state: GameState): MarketEntry[] {
   const entries: MarketEntry[] = [];
   for (const company of state.companies) {
     for (const model of company.models) {
@@ -57,7 +56,7 @@ export function getMarketEntries(state: ReturnType<typeof useGame>["state"]): Ma
 }
 
 export function getLastQuarterSales(
-  state: ReturnType<typeof useGame>["state"],
+  state: GameState,
   laptopId: string,
 ): number | null {
   const lastSim = state.lastSimulationResult;
@@ -147,7 +146,7 @@ export const priceStyle: CSSProperties = {
   fontSize: tokens.font.sizeLarge,
   fontWeight: 700,
   color: tokens.colors.accent,
-  textAlign: "right" as const,
+  textAlign: "right",
 };
 
 export const sectionStyle: CSSProperties = {
@@ -178,8 +177,8 @@ export const specLabelStyle: CSSProperties = {
 };
 
 export const specValueStyle: CSSProperties = {
-  textAlign: "right" as const,
+  textAlign: "right",
   overflow: "hidden",
   textOverflow: "ellipsis",
-  whiteSpace: "nowrap" as const,
+  whiteSpace: "nowrap",
 };

@@ -14,21 +14,21 @@ export function CompetitorsCard() {
   const playerCount = allOnSale.filter((e) => e.company.isPlayer).length;
   const competitorCount = allOnSale.filter((e) => !e.company.isPlayer).length;
 
+  const rows = [
+    { label: "Your models on sale", value: playerCount },
+    { label: "Competitor models", value: competitorCount },
+    { label: "Total on market", value: allOnSale.length },
+  ];
+
   return (
     <BentoCard title="Competitors" icon={Monitor} screen="marketBrowser">
       <div style={{ display: "flex", flexDirection: "column", gap: tokens.spacing.xs }}>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: tokens.font.sizeSmall }}>
-          <span style={{ color: tokens.colors.textMuted }}>Your models on sale</span>
-          <span style={{ fontWeight: 600 }}>{playerCount}</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: tokens.font.sizeSmall }}>
-          <span style={{ color: tokens.colors.textMuted }}>Competitor models</span>
-          <span style={{ fontWeight: 600 }}>{competitorCount}</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: tokens.font.sizeSmall }}>
-          <span style={{ color: tokens.colors.textMuted }}>Total on market</span>
-          <span style={{ fontWeight: 600 }}>{allOnSale.length}</span>
-        </div>
+        {rows.map(({ label, value }) => (
+          <div key={label} style={{ display: "flex", justifyContent: "space-between", fontSize: tokens.font.sizeSmall }}>
+            <span style={{ color: tokens.colors.textMuted }}>{label}</span>
+            <span style={{ fontWeight: 600 }}>{value}</span>
+          </div>
+        ))}
       </div>
     </BentoCard>
   );
