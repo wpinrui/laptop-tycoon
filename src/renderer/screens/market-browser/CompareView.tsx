@@ -7,6 +7,7 @@ import {
   computeStatsForDesign,
   scoreColor,
   RADAR_COLORS,
+  MAX_COMPARE,
   tokens,
 } from "./types";
 import { RadarChart } from "./RadarChart";
@@ -110,7 +111,7 @@ export function CompareView({
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       {/* Searchable dropdown to add laptops */}
-      {entries.length < 3 && (
+      {entries.length < MAX_COMPARE && (
         <div ref={dropdownRef} style={{ position: "relative", marginBottom: tokens.spacing.md, display: "inline-block" }}>
           <button
             onClick={() => {
@@ -210,7 +211,7 @@ export function CompareView({
 
       {entries.length === 0 ? (
         <p style={{ color: tokens.colors.textMuted, fontStyle: "italic" }}>
-          Add laptops to compare (up to 3).
+          Add laptops to compare (up to {MAX_COMPARE}).
         </p>
       ) : (
         <div style={{ display: "flex", gap: tokens.spacing.lg, flex: 1, minHeight: 0 }}>

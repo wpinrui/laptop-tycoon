@@ -38,6 +38,8 @@ export const MEDIA_SLOTS: ComponentSlot[] = ["wifi", "webcam", "speakers"];
 
 export const TABLE_STATS: LaptopStat[] = ["performance", "gamingPerformance", "batteryLife", "display", "buildQuality", "thermals", "weight"];
 
+export const MAX_COMPARE = 3;
+
 export const RADAR_COLORS = ["#4fc3f7", "#ffb74d", "#ce93d8"];
 
 // --- Helpers ---

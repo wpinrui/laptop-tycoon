@@ -15,6 +15,7 @@ import {
   getLastQuarterSales,
   getMaxStatValue,
   TABLE_STATS,
+  MAX_COMPARE,
   tokens,
 } from "./types";
 import { LaptopCard } from "./LaptopCard";
@@ -66,14 +67,14 @@ export function MarketBrowserScreen() {
   // Build option lists for CustomSelect dropdowns
   const brands = Array.from(new Set(allEntries.map((e) => e.company.id)));
 
-  const sortOptions: SelectGroup[] = [
+  const sortOptions: SelectGroup<SortKey>[] = [
     { label: "General", options: [
       { value: "price", label: "Price" },
       { value: "name", label: "Name" },
       { value: "brand", label: "Brand" },
       { value: "screenSize", label: "Screen Size" },
     ]},
-    { label: "By Stat (best first)", options: ALL_STATS.map((stat) => ({ value: `stat:${stat}`, label: STAT_LABELS[stat] })) },
+    { label: "By Stat (best first)", options: ALL_STATS.map((stat) => ({ value: `stat:${stat}` as SortKey, label: STAT_LABELS[stat] })) },
   ];
 
   const brandOptions: SelectOption[] = [
@@ -170,10 +171,10 @@ export function MarketBrowserScreen() {
           </button>
         </div>
 
-        <CustomSelect
+        <CustomSelect<SortKey>
           label="Sort"
           value={sortBy}
-          onChange={(v) => setSortBy(v as SortKey)}
+          onChange={setSortBy}
           options={sortOptions}
         />
         <CustomSelect
@@ -233,7 +234,7 @@ export function MarketBrowserScreen() {
             year={state.year}
             playerCompanyId={playerCompanyId}
             allMarketEntries={allEntries}
-            onAdd={(id) => setCompareIds((prev) => prev.length >= 3 ? prev : [...prev, id])}
+            onAdd={(id) => setCompareIds((prev) => prev.length >= MAX_COMPARE ? prev : [...prev, id])}
             onRemove={(id) => setCompareIds((prev) => prev.filter((x) => x !== id))}
             getLastQuarterSales={lookupSales}
           />
