@@ -698,11 +698,9 @@ function CompareView({
                     cursor: "pointer",
                     padding: 0,
                     marginTop: 2,
-                    display: "flex",
+                    display: "inline-flex",
                     alignItems: "center",
-                    justifyContent: "center",
-                    marginLeft: "auto",
-                    marginRight: "auto",
+                    verticalAlign: "middle",
                   }}
                 >
                   <X size={14} />
