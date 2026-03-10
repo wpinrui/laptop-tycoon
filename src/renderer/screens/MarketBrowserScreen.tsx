@@ -7,7 +7,8 @@ import { ScreenHeader } from "../shell/ScreenHeader";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
 import { computeStatsForDesign } from "../../simulation/statCalculation";
-import { ALL_STATS, STAT_LABELS } from "../../data/types";
+import { ALL_STATS, STAT_LABELS, ComponentSlot } from "../../data/types";
+import { PORT_TYPES } from "../../data/portTypes";
 
 interface MarketEntry {
   company: CompanyState;
@@ -38,11 +39,28 @@ function getLastQuarterSales(
   return result ? result.unitsSold : null;
 }
 
+const COMPONENT_SLOT_LABELS: Record<ComponentSlot, string> = {
+  cpu: "CPU",
+  gpu: "GPU",
+  ram: "RAM",
+  storage: "Storage",
+  resolution: "Resolution",
+  displayTech: "Display Tech",
+  displaySurface: "Surface",
+  wifi: "WiFi",
+  webcam: "Webcam",
+  speakers: "Speakers",
+};
+
+const SPEC_SLOTS: ComponentSlot[] = ["cpu", "gpu", "ram", "storage"];
+const DISPLAY_SLOTS: ComponentSlot[] = ["resolution", "displayTech", "displaySurface"];
+const MEDIA_SLOTS: ComponentSlot[] = ["wifi", "webcam", "speakers"];
+
 // --- Styles ---
 
 const gridStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))",
   gap: tokens.spacing.md,
   paddingBottom: tokens.spacing.lg,
 };
@@ -83,12 +101,38 @@ const priceStyle: CSSProperties = {
   textAlign: "right" as const,
 };
 
-const metaRowStyle: CSSProperties = {
+const sectionStyle: CSSProperties = {
+  marginTop: tokens.spacing.sm,
+  paddingTop: tokens.spacing.sm,
+  borderTop: `1px solid ${tokens.colors.panelBorder}`,
+};
+
+const sectionTitleStyle: CSSProperties = {
+  fontSize: "0.6875rem",
+  color: tokens.colors.textMuted,
+  fontWeight: "bold",
+  letterSpacing: "0.5px",
+  marginBottom: tokens.spacing.xs,
+};
+
+const specRowStyle: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   fontSize: tokens.font.sizeSmall,
+  padding: `1px 0`,
+};
+
+const specLabelStyle: CSSProperties = {
   color: tokens.colors.textMuted,
-  marginBottom: tokens.spacing.xs,
+  flexShrink: 0,
+  marginRight: tokens.spacing.sm,
+};
+
+const specValueStyle: CSSProperties = {
+  textAlign: "right" as const,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap" as const,
 };
 
 const statBarContainerStyle: CSSProperties = {
@@ -138,15 +182,14 @@ const selectStyle: CSSProperties = {
   fontSize: tokens.font.sizeSmall,
 };
 
-// --- Top stats for a model ---
+// --- Helpers ---
 
-function getTopStats(model: LaptopModel, year: number): { stat: string; label: string; value: number }[] {
+function getAllStats(model: LaptopModel, year: number): { stat: string; label: string; value: number }[] {
   const stats = computeStatsForDesign(model.design, year);
   return ALL_STATS
     .map((stat) => ({ stat, label: STAT_LABELS[stat], value: stats[stat] ?? 0 }))
     .filter((s) => s.value > 0)
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 5);
+    .sort((a, b) => b.value - a.value);
 }
 
 function getMaxStatValue(entries: MarketEntry[], year: number): Record<string, number> {
@@ -161,7 +204,46 @@ function getMaxStatValue(entries: MarketEntry[], year: number): Record<string, n
   return maxes;
 }
 
+function getPortSummary(ports: Record<string, number>): string[] {
+  const lines: string[] = [];
+  for (const [portId, count] of Object.entries(ports)) {
+    if (count <= 0) continue;
+    const portDef = PORT_TYPES.find((p) => p.id === portId);
+    const name = portDef?.name ?? portId;
+    lines.push(count > 1 ? `${count}x ${name}` : name);
+  }
+  return lines;
+}
+
 // --- Components ---
+
+function SpecSection({ title, slots, design }: {
+  title: string;
+  slots: ComponentSlot[];
+  design: LaptopModel["design"];
+}) {
+  const items = slots
+    .map((slot) => {
+      const comp = design.components[slot];
+      if (!comp) return null;
+      return { label: COMPONENT_SLOT_LABELS[slot], value: comp.name };
+    })
+    .filter(Boolean) as { label: string; value: string }[];
+
+  if (items.length === 0) return null;
+
+  return (
+    <div style={sectionStyle}>
+      <div style={sectionTitleStyle}>{title}</div>
+      {items.map(({ label, value }) => (
+        <div key={label} style={specRowStyle}>
+          <span style={specLabelStyle}>{label}</span>
+          <span style={specValueStyle}>{value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function LaptopCard({
   entry,
@@ -175,35 +257,96 @@ function LaptopCard({
   lastQuarterSales: number | null;
 }) {
   const { company, model } = entry;
+  const { design } = model;
   const isPlayer = company.isPlayer;
-  const topStats = getTopStats(model, year);
+  const allModelStats = getAllStats(model, year);
+  const ports = getPortSummary(design.ports);
 
   return (
     <div style={isPlayer ? playerCardStyle : cardStyle}>
+      {/* Header: name + price */}
       <div style={cardHeaderStyle}>
         <div>
-          <div style={modelNameStyle}>{model.design.name}</div>
+          <div style={modelNameStyle}>{design.name}</div>
           <div style={brandNameStyle}>{company.name}</div>
         </div>
         <div style={priceStyle}>${model.retailPrice!.toLocaleString()}</div>
       </div>
 
-      <div style={metaRowStyle}>
-        <span>{model.design.screenSize}" screen</span>
-        <span>{model.design.selectedColours.length} colour{model.design.selectedColours.length !== 1 ? "s" : ""}</span>
+      {/* Quick facts */}
+      <div style={specRowStyle}>
+        <span style={specLabelStyle}>Screen</span>
+        <span style={specValueStyle}>{design.screenSize}"</span>
       </div>
-
+      <div style={specRowStyle}>
+        <span style={specLabelStyle}>Thickness</span>
+        <span style={specValueStyle}>{design.thicknessCm.toFixed(1)} cm</span>
+      </div>
+      <div style={specRowStyle}>
+        <span style={specLabelStyle}>Battery</span>
+        <span style={specValueStyle}>{design.batteryCapacityWh} Wh</span>
+      </div>
+      <div style={specRowStyle}>
+        <span style={specLabelStyle}>Colours</span>
+        <span style={specValueStyle}>{design.selectedColours.length}</span>
+      </div>
       {lastQuarterSales !== null && (
-        <div style={metaRowStyle}>
-          <span>Last quarter sales</span>
-          <span style={{ fontWeight: 600, color: tokens.colors.text }}>
+        <div style={specRowStyle}>
+          <span style={specLabelStyle}>Last quarter sales</span>
+          <span style={{ ...specValueStyle, fontWeight: 600 }}>
             {lastQuarterSales.toLocaleString()} units
           </span>
         </div>
       )}
 
+      {/* Hardware specs */}
+      <SpecSection title="PROCESSING" slots={SPEC_SLOTS} design={design} />
+      <SpecSection title="DISPLAY" slots={DISPLAY_SLOTS} design={design} />
+      <SpecSection title="MEDIA & CONNECTIVITY" slots={MEDIA_SLOTS} design={design} />
+
+      {/* Chassis */}
+      <div style={sectionStyle}>
+        <div style={sectionTitleStyle}>CHASSIS</div>
+        {design.chassis.material && (
+          <div style={specRowStyle}>
+            <span style={specLabelStyle}>Material</span>
+            <span style={specValueStyle}>{design.chassis.material.name}</span>
+          </div>
+        )}
+        {design.chassis.coolingSolution && (
+          <div style={specRowStyle}>
+            <span style={specLabelStyle}>Cooling</span>
+            <span style={specValueStyle}>{design.chassis.coolingSolution.name}</span>
+          </div>
+        )}
+        {design.chassis.keyboardFeature && (
+          <div style={specRowStyle}>
+            <span style={specLabelStyle}>Keyboard</span>
+            <span style={specValueStyle}>{design.chassis.keyboardFeature.name}</span>
+          </div>
+        )}
+        {design.chassis.trackpadFeature && (
+          <div style={specRowStyle}>
+            <span style={specLabelStyle}>Trackpad</span>
+            <span style={specValueStyle}>{design.chassis.trackpadFeature.name}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Ports */}
+      {ports.length > 0 && (
+        <div style={sectionStyle}>
+          <div style={sectionTitleStyle}>PORTS</div>
+          <div style={{ fontSize: tokens.font.sizeSmall, lineHeight: 1.5 }}>
+            {ports.join(" · ")}
+          </div>
+        </div>
+      )}
+
+      {/* Stat bars */}
       <div style={statBarContainerStyle}>
-        {topStats.map(({ stat, label, value }) => {
+        <div style={sectionTitleStyle}>RATINGS</div>
+        {allModelStats.map(({ stat, label, value }) => {
           const max = maxStats[stat] || 1;
           const pct = Math.min(100, (value / max) * 100);
           return (
