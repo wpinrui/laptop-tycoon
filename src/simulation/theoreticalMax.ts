@@ -28,8 +28,8 @@ import {
   THICKNESS_MIN_CM,
   THICKNESS_MAX_CM,
   THICKNESS_STEP_CM,
-  BEZEL_MIN_MM,
   BEZEL_MAX_MM,
+  minBezelForYear,
   availableVolumeCm3,
   totalConsumedVolumeCm3,
   maxHeightConstraintCm,
@@ -198,9 +198,10 @@ function computeTheoreticalMaxForStat(targetStat: LaptopStat, year: number): num
     const selectedColours = targetStat === "design" ? ALL_COLOUR_IDS : [COLOUR_OPTIONS[0].id];
 
     // Bezel
-    const bezelMm = targetStat === "design" ? BEZEL_MIN_MM
+    const minBezel = minBezelForYear(year);
+    const bezelMm = targetStat === "design" ? minBezel
       : (targetStat === "performance" || targetStat === "gamingPerformance") ? BEZEL_MAX_MM
-      : BEZEL_MIN_MM;
+      : minBezel;
 
     // Battery: initial guess (only batteryLife wants max; everything else starts minimal)
     const initBattery = targetStat === "batteryLife" ? MAX_BATTERY_WH : MIN_BATTERY_WH;

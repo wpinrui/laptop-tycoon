@@ -15,9 +15,9 @@ import {
   THICKNESS_MIN_CM,
   THICKNESS_MAX_CM,
   THICKNESS_STEP_CM,
-  BEZEL_MIN_MM,
   BEZEL_MAX_MM,
   BEZEL_STEP_MM,
+  minBezelForYear,
   minThicknessForVolumeCm,
   getAvailableComponents,
   getAvailableChassisOptions,
@@ -433,19 +433,20 @@ function ThicknessEditor() {
 }
 
 function BezelEditor() {
-  const { state, dispatch } = useWizard();
+  const { state, dispatch, gameYear } = useWizard();
   const bezel = state.bezelMm;
+  const bezelMin = minBezelForYear(gameYear);
 
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "12px" }}>
-        <span style={{ color: "#888", fontSize: "0.875rem" }}>{BEZEL_MIN_MM} mm</span>
+        <span style={{ color: "#888", fontSize: "0.875rem" }}>{bezelMin} mm</span>
         <span style={{ fontSize: "2.5rem", fontWeight: "bold", color: tokens.colors.interactiveAccent }}>{bezel} mm</span>
         <span style={{ color: "#888", fontSize: "0.875rem" }}>{BEZEL_MAX_MM} mm</span>
       </div>
       <input
         type="range"
-        min={BEZEL_MIN_MM}
+        min={bezelMin}
         max={BEZEL_MAX_MM}
         step={BEZEL_STEP_MM}
         value={bezel}

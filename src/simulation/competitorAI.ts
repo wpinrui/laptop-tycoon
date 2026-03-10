@@ -13,8 +13,8 @@ import {
   THICKNESS_MIN_CM,
   THICKNESS_MAX_CM,
   THICKNESS_STEP_CM,
-  BEZEL_MIN_MM,
   BEZEL_MAX_MM,
+  minBezelForYear,
 } from "../data/designConstants";
 import {
   MATERIALS,
@@ -215,10 +215,11 @@ function pickThickness(archetype: CompetitorArchetype): number {
   return Math.round((2.5 + Math.random() * 1.5) / THICKNESS_STEP_CM) * THICKNESS_STEP_CM;
 }
 
-function pickBezel(archetype: CompetitorArchetype): number {
+function pickBezel(archetype: CompetitorArchetype, year: number): number {
+  const minBezel = minBezelForYear(year);
   if (archetype === "budget") return BEZEL_MAX_MM - Math.floor(Math.random() * 5); // 35-40mm
-  if (archetype === "premium") return BEZEL_MIN_MM + Math.floor(Math.random() * 5); // 3-7mm
-  return 15 + Math.floor(Math.random() * 10); // 15-24mm
+  if (archetype === "premium") return minBezel + Math.floor(Math.random() * 5);
+  return Math.max(minBezel, 15) + Math.floor(Math.random() * 10);
 }
 
 function generateSingleModel(
@@ -256,7 +257,7 @@ function generateSingleModel(
   };
 
   const thicknessCm = clamp(pickThickness(archetype), THICKNESS_MIN_CM, THICKNESS_MAX_CM);
-  const bezelMm = clamp(pickBezel(archetype), BEZEL_MIN_MM, BEZEL_MAX_MM);
+  const bezelMm = clamp(pickBezel(archetype, year), minBezelForYear(year), BEZEL_MAX_MM);
   const batteryCapacityWh = pickBattery(archetype);
   const ports = pickPorts(year, archetype);
   const selectedColours = pickColours(archetype);

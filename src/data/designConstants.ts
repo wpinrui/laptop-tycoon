@@ -29,10 +29,26 @@ export const THICKNESS_DEFAULT_CM = 3.5;
 
 // --- Bezel ---
 
+/** Absolute minimum bezel ever achievable (modern era) */
 export const BEZEL_MIN_MM = 3;
 export const BEZEL_MAX_MM = 40;
 export const BEZEL_STEP_MM = 1;
 export const BEZEL_DEFAULT_MM = 20;
+
+/**
+ * Year-dependent minimum bezel width (mm).
+ * Reflects manufacturing & display technology constraints:
+ *   2000: ~10mm (thick LCD bezels, bulky inverters)
+ *   2010: ~6mm  (LED backlights, thinner panels)
+ *   2020+: ~3mm (near borderless, OLED flex cables)
+ * Smooth exponential decay from 10 → 3 over 20 years.
+ */
+export function minBezelForYear(year: number): number {
+  const t = Math.max(0, Math.min(1, (year - 2000) / 20));
+  // Exponential decay: 10mm → 3mm
+  const min = BEZEL_MIN_MM + (10 - BEZEL_MIN_MM) * Math.pow(1 - t, 2);
+  return Math.round(min);
+}
 
 // --- Design bonus tuning constants ---
 
