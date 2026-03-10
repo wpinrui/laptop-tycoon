@@ -114,7 +114,7 @@ export function CustomSelect<T extends string = string>({
           onClick={() => setOpen(!open)}
           style={{
             gridArea: "1 / 1",
-            background: tokens.colors.surface,
+            background: tokens.colors.cardBg,
             color: tokens.colors.text,
             border: `1px solid ${tokens.colors.panelBorder}`,
             borderRadius: tokens.borderRadius.sm,
@@ -160,7 +160,7 @@ export function CustomSelect<T extends string = string>({
               top: "100%",
               left: 0,
               marginTop: 4,
-              background: tokens.colors.surface,
+              background: tokens.colors.cardBg,
               border: `1px solid ${tokens.colors.panelBorder}`,
               borderRadius: tokens.borderRadius.sm,
               overflow: "hidden",
