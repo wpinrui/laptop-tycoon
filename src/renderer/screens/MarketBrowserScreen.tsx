@@ -9,7 +9,6 @@ import { tokens } from "../shell/tokens";
 import { CustomSelect, SelectOption, SelectGroup } from "../shell/CustomSelect";
 import { computeStatsForDesign } from "../../simulation/statCalculation";
 import { ALL_STATS, STAT_LABELS, LaptopStat, ComponentSlot } from "../../data/types";
-import { DEMOGRAPHICS } from "../../data/demographics";
 import { PORT_TYPES } from "../../data/portTypes";
 
 type ViewMode = "cards" | "table" | "compare";
@@ -727,7 +726,6 @@ export function MarketBrowserScreen() {
   const [filterPriceMax, setFilterPriceMax] = useState<string>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [compareIds, setCompareIds] = useState<string[]>([]);
-  const [demographicFilter, setDemographicFilter] = useState<string>("all");
 
   const allEntries = getMarketEntries(state);
   const maxStats = getMaxStatValue(allEntries, state.year);
@@ -766,20 +764,6 @@ export function MarketBrowserScreen() {
     ...priceBuckets.map((p) => ({ value: String(p), label: `$${p.toLocaleString()}` })),
   ];
 
-  const demographicOptions: SelectOption[] = [
-    { value: "all", label: "All" },
-    ...DEMOGRAPHICS.map((dem) => ({ value: dem.id, label: dem.name })),
-  ];
-
-  // Demographic-weighted stats to show in table
-  const tableStats = useMemo(() => {
-    if (demographicFilter === "all") return TABLE_STATS;
-    const dem = DEMOGRAPHICS.find((d) => d.id === demographicFilter);
-    if (!dem) return TABLE_STATS;
-    return [...ALL_STATS]
-      .sort((a, b) => (dem.statWeights[b] ?? 0) - (dem.statWeights[a] ?? 0))
-      .slice(0, 7);
-  }, [demographicFilter]);
 
   // Filter
   let filtered = allEntries;
@@ -879,12 +863,6 @@ export function MarketBrowserScreen() {
           onChange={setFilterPriceMax}
           options={priceOptions}
         />
-        <CustomSelect
-          label="Demographic"
-          value={demographicFilter}
-          onChange={setDemographicFilter}
-          options={demographicOptions}
-        />
         <span style={labelStyle}>
           {filtered.length} laptop{filtered.length !== 1 ? "s" : ""} on sale
         </span>
@@ -916,7 +894,7 @@ export function MarketBrowserScreen() {
             entries={filtered}
             year={state.year}
             playerCompanyId={playerCompanyId}
-            statsToShow={tableStats}
+            statsToShow={TABLE_STATS}
           />
         ) : (
           <CompareView
