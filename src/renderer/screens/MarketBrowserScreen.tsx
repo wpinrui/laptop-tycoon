@@ -417,15 +417,11 @@ function TableView({
   year,
   playerCompanyId,
   statsToShow,
-  compareIds,
-  onToggleCompare,
 }: {
   entries: MarketEntry[];
   year: number;
   playerCompanyId: string;
   statsToShow: LaptopStat[];
-  compareIds: string[];
-  onToggleCompare: (id: string) => void;
 }) {
   const rows = useMemo(() =>
     entries.map((e) => ({
@@ -473,16 +469,10 @@ function TableView({
       <tbody>
         {rows.map(({ entry, stats }) => {
           const isPlayer = entry.company.id === playerCompanyId;
-          const isCompared = compareIds.includes(entry.model.design.id);
           const rowColor = isPlayer ? tokens.colors.accent : undefined;
           return (
-            <tr
-              key={entry.model.design.id}
-              onClick={() => onToggleCompare(entry.model.design.id)}
-              style={{ cursor: "pointer", background: isCompared ? tokens.colors.surface : undefined }}
-            >
+            <tr key={entry.model.design.id}>
               <td style={{ ...td, fontWeight: 600, color: rowColor }}>
-                {isCompared && <span style={{ color: tokens.colors.accent, marginRight: 4 }}>{compareIds.indexOf(entry.model.design.id) + 1}.</span>}
                 {entry.model.design.name}
               </td>
               <td style={{ ...td, color: tokens.colors.textMuted }}>{entry.company.name}</td>
@@ -511,15 +501,34 @@ function CompareView({
   entries,
   year,
   playerCompanyId,
+  allMarketEntries,
+  onAdd,
   onRemove,
   getLastQuarterSales,
 }: {
   entries: MarketEntry[];
   year: number;
   playerCompanyId: string;
+  allMarketEntries: MarketEntry[];
+  onAdd: (id: string) => void;
   onRemove: (id: string) => void;
   getLastQuarterSales: (id: string) => number | null;
 }) {
+  const [search, setSearch] = useState("");
+
+  const searchResults = useMemo(() => {
+    if (!search.trim()) return [];
+    const selectedIds = new Set(entries.map((e) => e.model.design.id));
+    const q = search.toLowerCase();
+    return allMarketEntries
+      .filter((e) => !selectedIds.has(e.model.design.id))
+      .filter((e) =>
+        e.model.design.name.toLowerCase().includes(q) ||
+        e.company.name.toLowerCase().includes(q),
+      )
+      .slice(0, 8);
+  }, [search, allMarketEntries, entries]);
+
   const allStats = useMemo(() =>
     entries.map((e) => ({
       entry: e,
@@ -527,14 +536,6 @@ function CompareView({
     })),
     [entries, year],
   );
-
-  if (entries.length === 0) {
-    return (
-      <p style={{ color: tokens.colors.textMuted, fontStyle: "italic", padding: tokens.spacing.md }}>
-        Click laptops in Cards or Table view to add them here (up to 4).
-      </p>
-    );
-  }
 
   const thBase: CSSProperties = {
     textAlign: "right",
@@ -565,7 +566,76 @@ function CompareView({
   const priceVals = allStats.map((r) => r.entry.model.retailPrice ?? 0);
 
   return (
-    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+    <div>
+      {/* Search to add laptops */}
+      {entries.length < 4 && (
+        <div style={{ position: "relative", marginBottom: tokens.spacing.md }}>
+          <input
+            type="text"
+            placeholder="Search to add a laptop..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+              padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+              fontSize: tokens.font.sizeSmall,
+              background: tokens.colors.surface,
+              color: tokens.colors.text,
+              border: `1px solid ${tokens.colors.panelBorder}`,
+              borderRadius: tokens.borderRadius.sm,
+              width: 280,
+            }}
+          />
+          {searchResults.length > 0 && (
+            <div style={{
+              position: "absolute",
+              top: "100%",
+              left: 0,
+              width: 340,
+              background: tokens.colors.cardBg,
+              border: `1px solid ${tokens.colors.panelBorder}`,
+              borderRadius: tokens.borderRadius.sm,
+              zIndex: 10,
+              maxHeight: 240,
+              overflowY: "auto",
+            }}>
+              {searchResults.map((e) => (
+                <button
+                  key={e.model.design.id}
+                  onClick={() => { onAdd(e.model.design.id); setSearch(""); }}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    width: "100%",
+                    padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+                    background: "transparent",
+                    color: tokens.colors.text,
+                    border: "none",
+                    borderBottom: `1px solid ${tokens.colors.surface}`,
+                    cursor: "pointer",
+                    fontSize: tokens.font.sizeSmall,
+                    textAlign: "left",
+                  }}
+                  onMouseEnter={(ev) => { ev.currentTarget.style.background = tokens.colors.surface; }}
+                  onMouseLeave={(ev) => { ev.currentTarget.style.background = "transparent"; }}
+                >
+                  <span>
+                    <span style={{ fontWeight: 600 }}>{e.model.design.name}</span>
+                    <span style={{ color: tokens.colors.textMuted, marginLeft: 6 }}>{e.company.name}</span>
+                  </span>
+                  <span style={{ color: tokens.colors.accent }}>${e.model.retailPrice!.toLocaleString()}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {entries.length === 0 ? (
+        <p style={{ color: tokens.colors.textMuted, fontStyle: "italic" }}>
+          Search above to add laptops to compare (up to 4).
+        </p>
+      ) : (
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
       <thead>
         <tr>
           <th style={{ ...thBase, textAlign: "left" }}></th>
@@ -649,6 +719,8 @@ function CompareView({
         })}
       </tbody>
     </table>
+      )}
+    </div>
   );
 }
 
@@ -725,14 +797,6 @@ export function MarketBrowserScreen() {
   const compareEntries = compareIds
     .map((id) => allEntries.find((e) => e.model.design.id === id))
     .filter(Boolean) as MarketEntry[];
-
-  const toggleCompare = (id: string) => {
-    setCompareIds((prev) => {
-      if (prev.includes(id)) return prev.filter((x) => x !== id);
-      if (prev.length >= 4) return prev;
-      return [...prev, id];
-    });
-  };
 
   const lookupSales = (id: string) => getLastQuarterSales(state, id);
 
@@ -868,44 +932,15 @@ export function MarketBrowserScreen() {
           </p>
         ) : viewMode === "cards" ? (
           <div style={gridStyle}>
-            {filtered.map((entry) => {
-              const id = entry.model.design.id;
-              const isCompared = compareIds.includes(id);
-              return (
-                <div
-                  key={id}
-                  onClick={() => toggleCompare(id)}
-                  style={{ cursor: "pointer", position: "relative" }}
-                >
-                  {isCompared && (
-                    <div style={{
-                      position: "absolute",
-                      top: 6,
-                      right: 6,
-                      background: tokens.colors.accent,
-                      color: "#000",
-                      borderRadius: "50%",
-                      width: 20,
-                      height: 20,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      zIndex: 1,
-                    }}>
-                      {compareIds.indexOf(id) + 1}
-                    </div>
-                  )}
-                  <LaptopCard
-                    entry={entry}
-                    year={state.year}
-                    maxStats={maxStats}
-                    lastQuarterSales={getLastQuarterSales(state, id)}
-                  />
-                </div>
-              );
-            })}
+            {filtered.map((entry) => (
+              <LaptopCard
+                key={entry.model.design.id}
+                entry={entry}
+                year={state.year}
+                maxStats={maxStats}
+                lastQuarterSales={getLastQuarterSales(state, entry.model.design.id)}
+              />
+            ))}
           </div>
         ) : viewMode === "table" ? (
           <TableView
@@ -913,14 +948,14 @@ export function MarketBrowserScreen() {
             year={state.year}
             playerCompanyId={playerCompanyId}
             statsToShow={tableStats}
-            compareIds={compareIds}
-            onToggleCompare={toggleCompare}
           />
         ) : (
           <CompareView
             entries={compareEntries}
             year={state.year}
             playerCompanyId={playerCompanyId}
+            allMarketEntries={allEntries}
+            onAdd={(id) => setCompareIds((prev) => prev.length >= 4 ? prev : [...prev, id])}
             onRemove={(id) => setCompareIds((prev) => prev.filter((x) => x !== id))}
             getLastQuarterSales={lookupSales}
           />
