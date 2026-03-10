@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { DollarSign, BarChart3, Newspaper, History } from "lucide-react";
+import { DollarSign, Newspaper, History } from "lucide-react";
 import { useNavigation } from "./NavigationContext";
 import { GameLayout } from "../shell/GameLayout";
 import { ContentPanel } from "../shell/ContentPanel";
@@ -18,6 +18,7 @@ import { QuarterlySummaryScreen } from "../screens/QuarterlySummaryScreen";
 import { GameOverScreen } from "../screens/GameOverScreen";
 import { BrandDetailScreen } from "../screens/BrandDetailScreen";
 import { ReviewsAwardsScreen } from "../screens/ReviewsAwardsScreen";
+import { MarketOverviewScreen } from "../screens/MarketOverviewScreen";
 import { DebugPanel } from "../debug/DebugPanel";
 
 function PlaceholderScreen({ title, icon }: { title: string; icon: React.ComponentType<{ size?: number; color?: string }> }) {
@@ -49,7 +50,7 @@ function ScreenContent() {
     case "financialHistory":
       return <PlaceholderScreen title="Financial History" icon={DollarSign} />;
     case "marketOverview":
-      return <PlaceholderScreen title="Market Overview" icon={BarChart3} />;
+      return <MarketOverviewScreen />;
     case "brandDetail":
       return <BrandDetailScreen />;
     case "reviewsAwards":
