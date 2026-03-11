@@ -81,6 +81,7 @@ export function MarketBrowserScreen() {
   const [filterYear, setFilterYear] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [hideZeroSales, setHideZeroSales] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [compareIds, setCompareIds] = useState<string[]>([]);
 
@@ -192,6 +193,9 @@ export function MarketBrowserScreen() {
   }
   if (filterStatus !== "all") {
     filtered = filtered.filter((ews) => ews.entry.model.status === filterStatus);
+  }
+  if (hideZeroSales) {
+    filtered = filtered.filter((ews) => (getLastQuarterSales(state, ews.entry.model.design.id) ?? 0) > 0);
   }
 
   // Sort — uses pre-computed stats (no redundant recomputation)
@@ -319,6 +323,15 @@ export function MarketBrowserScreen() {
           onChange={setFilterStatus}
           options={statusOptions}
         />
+        <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, cursor: "pointer" }}>
+          <input
+            type="checkbox"
+            checked={hideZeroSales}
+            onChange={(e) => setHideZeroSales(e.target.checked)}
+            style={{ accentColor: tokens.colors.accent }}
+          />
+          Hide unsold
+        </label>
         <span style={labelStyle}>
           {filtered.length} laptop{filtered.length !== 1 ? "s" : ""} on sale
         </span>
