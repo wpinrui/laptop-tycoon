@@ -89,7 +89,6 @@ function WizardContent() {
         unitsOrdered: state.unitsOrdered,
         unitCost: Math.round(cost.manufacturingCostPerUnit),
         totalCost: Math.round(cost.totalManufacturingSpend),
-        supportBudget: state.supportBudget,
       },
       pressRelease: {
         promptIds: state.pressReleasePromptIds,

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ContentPanel } from "../../shell/ContentPanel";
 import { MenuButton } from "../../shell/MenuButton";
 import { tokens, overlayStyle } from "../../shell/tokens";
-import { ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST, MIN_PRICE_MULTIPLIER, MAX_PRICE_MULTIPLIER, CHANNEL_MARGIN_RATE, MIN_RETAIL_PRICE, snapPrice } from "../utils/constants";
+import { MIN_PRICE_MULTIPLIER, MAX_PRICE_MULTIPLIER, CHANNEL_MARGIN_RATE, MIN_RETAIL_PRICE, snapPrice, getBaseCostPerUnit } from "../utils/constants";
 
 interface ChangePricingDialogProps {
   modelName: string;
@@ -23,7 +23,7 @@ export function ChangePricingDialog({
 }: ChangePricingDialogProps) {
   const [price, setPrice] = useState(currentPrice);
 
-  const baseTotalPerUnit = baseBomCost + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST;
+  const baseTotalPerUnit = getBaseCostPerUnit(baseBomCost);
   const minPrice = Math.max(snapPrice(baseTotalPerUnit * MIN_PRICE_MULTIPLIER), MIN_RETAIL_PRICE);
   const maxPrice = snapPrice(baseTotalPerUnit * MAX_PRICE_MULTIPLIER);
 

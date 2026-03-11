@@ -1,6 +1,11 @@
 /**
  * Re-exports from centralised tunables for backwards-compatible imports.
  */
+import {
+  ASSEMBLY_QA_COST,
+  PACKAGING_LOGISTICS_COST,
+} from "../../../simulation/tunables";
+
 export {
   REFERENCE_QUANTITY,
   MULTI_MODEL_OVERHEAD,
@@ -23,4 +28,9 @@ export const MIN_RETAIL_PRICE = 49;
 /** Snap price to nearest $50 ending in 9, e.g. $449, $499, $549 */
 export function snapPrice(raw: number): number {
   return Math.round(raw / 50) * 50 - 1;
+}
+
+/** Base per-unit cost before markup: BOM + assembly + packaging. */
+export function getBaseCostPerUnit(bomCost: number): number {
+  return bomCost + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST;
 }

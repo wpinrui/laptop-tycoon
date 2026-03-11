@@ -42,7 +42,6 @@ export interface ManufacturingPlan {
   unitsOrdered: number;
   unitCost: number;
   totalCost: number;
-  supportBudget: number;
 }
 
 export interface PressReleasePrompt {
@@ -79,7 +78,6 @@ export interface ManufacturingWizardState {
   campaignId: string | null;
   unitPrice: number;
   unitsOrdered: number;
-  supportBudget: number;
   pressReleasePromptIds: number[];
   pressReleaseResponses: Record<number, string>;
   noiseMargin: number;

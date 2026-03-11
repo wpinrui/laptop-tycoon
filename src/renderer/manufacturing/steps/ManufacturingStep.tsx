@@ -10,7 +10,7 @@ import {
   MIN_BATCH_SIZE, MIN_PRICE_MULTIPLIER, DEFAULT_PRICE_MULTIPLIER, MAX_PRICE_MULTIPLIER,
   ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST, CHANNEL_MARGIN_RATE,
   TOOLING_COST, CERTIFICATION_COST, MULTI_MODEL_OVERHEAD,
-  MIN_RETAIL_PRICE, snapPrice,
+  MIN_RETAIL_PRICE, snapPrice, getBaseCostPerUnit,
 } from "../utils/constants";
 import { getActiveModels } from "../../screens/dashboard/utils";
 import { projectDemandRange } from "../../../simulation/salesEngine";
@@ -180,7 +180,6 @@ function DetailRow({ label, value, color }: { label: string; value: string; colo
 
 // projectDemandRange provides real simulation-backed demand estimates
 
-
 export function ManufacturingStep() {
   const { state, dispatch } = useMfgWizard();
   const { state: gameState } = useGame();
@@ -205,7 +204,7 @@ export function ManufacturingStep() {
   const totalFixedCosts = toolingCost + certCost + overhead + adCost;
 
   // Price slider: based on total cost per unit (BOM + assembly + packaging)
-  const baseTotalPerUnit = baseBom + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST;
+  const baseTotalPerUnit = getBaseCostPerUnit(baseBom);
   const minPrice = Math.max(snapPrice(baseTotalPerUnit * MIN_PRICE_MULTIPLIER), MIN_RETAIL_PRICE);
   const maxPrice = snapPrice(baseTotalPerUnit * MAX_PRICE_MULTIPLIER);
 

@@ -21,10 +21,9 @@ export interface CostBreakdown {
   bomAfterEos: number;       // BOM after EoS
   assemblyQa: number;
   packagingLogistics: number;
-  supportBudget: number;
   manufacturingCostPerUnit: number; // sum of above
   channelMargin: number;     // retailer's cut per unit (from retail price)
-  totalCostPerUnit: number;  // manufacturing + channel + support
+  totalCostPerUnit: number;  // manufacturing + channel margin
   revenuePerUnit: number;    // retail price minus channel margin
 
   // Fixed costs
@@ -46,7 +45,6 @@ export function calculateCostBreakdown(params: {
   baseBomCost: number;
   unitsOrdered: number;
   retailPrice: number;
-  supportBudget: number;
   assemblyQa: number;
   packagingLogistics: number;
   channelMarginRate: number;
@@ -56,14 +54,14 @@ export function calculateCostBreakdown(params: {
   adCost: number;
 }): CostBreakdown {
   const {
-    baseBomCost, unitsOrdered, retailPrice, supportBudget,
+    baseBomCost, unitsOrdered, retailPrice,
     assemblyQa, packagingLogistics, channelMarginRate,
     toolingCost, certificationCost, multiModelOverhead, adCost,
   } = params;
 
   const bomAfterEos = calculateBomUnitCost(baseBomCost, unitsOrdered);
   const eosDiscount = bomAfterEos - baseBomCost;
-  const manufacturingCostPerUnit = bomAfterEos + assemblyQa + packagingLogistics + supportBudget;
+  const manufacturingCostPerUnit = bomAfterEos + assemblyQa + packagingLogistics;
 
   const channelMargin = retailPrice * channelMarginRate;
   const revenuePerUnit = retailPrice - channelMargin;
@@ -81,7 +79,6 @@ export function calculateCostBreakdown(params: {
     bomAfterEos,
     assemblyQa,
     packagingLogistics,
-    supportBudget,
     manufacturingCostPerUnit,
     channelMargin,
     totalCostPerUnit,
@@ -113,7 +110,6 @@ export function buildCostBreakdown(gameState: GameState, wizardState: Manufactur
     baseBomCost,
     unitsOrdered: wizardState.unitsOrdered,
     retailPrice: wizardState.unitPrice,
-    supportBudget: wizardState.supportBudget,
     assemblyQa: ASSEMBLY_QA_COST,
     packagingLogistics: PACKAGING_LOGISTICS_COST,
     channelMarginRate: CHANNEL_MARGIN_RATE,
