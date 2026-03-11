@@ -159,6 +159,7 @@ export function ModelManagementScreen() {
             onScrapCancel={() => setConfirmScrapId(null)}
             gameYear={state.year}
             gameQuarter={state.quarter}
+            quarterSimulated={state.quarterSimulated}
           />
         ))
       )}
@@ -197,6 +198,7 @@ export function ModelManagementScreen() {
                   disabled
                   gameYear={state.year}
                   gameQuarter={state.quarter}
+                  quarterSimulated={state.quarterSimulated}
                 />
               ))}
             </div>
@@ -240,6 +242,7 @@ function ModelCard({
   disabled,
   gameYear,
   gameQuarter,
+  quarterSimulated,
 }: {
   model: LaptopModel;
   companyName: string;
@@ -253,6 +256,7 @@ function ModelCard({
   disabled?: boolean;
   gameYear: number;
   gameQuarter: 1 | 2 | 3 | 4;
+  quarterSimulated: boolean;
 }) {
   const { design, status, retailPrice, manufacturingQuantity, yearDesigned, manufacturingPlan } = model;
   const hasCurrentQuarterPlan = manufacturingPlan !== null && manufacturingPlan.year === gameYear && manufacturingPlan.quarter === gameQuarter;
@@ -305,15 +309,15 @@ function ModelCard({
         )}
       </div>
 
-      {((manufacturingQuantity !== null) || model.unitsInStock > 0) && (
+      {((manufacturingQuantity !== null && hasCurrentQuarterPlan && !quarterSimulated) || model.unitsInStock > 0) && (
         <div style={{ marginTop: tokens.spacing.sm, paddingTop: tokens.spacing.sm, borderTop: `1px solid ${tokens.colors.panelBorder}` }}>
-          {hasCurrentQuarterPlan && manufacturingQuantity !== null && (
+          {hasCurrentQuarterPlan && !quarterSimulated && manufacturingQuantity !== null && (
             <SpecRow label="Producing" value={`${manufacturingQuantity.toLocaleString()} units`} />
           )}
           {model.unitsInStock > 0 && (
             <SpecRow label="In Stock" value={`${model.unitsInStock.toLocaleString()} units`} />
           )}
-          {hasCurrentQuarterPlan && (manufacturingQuantity ?? 0) > 0 && model.unitsInStock > 0 && (
+          {hasCurrentQuarterPlan && !quarterSimulated && (manufacturingQuantity ?? 0) > 0 && model.unitsInStock > 0 && (
             <SpecRow
               label="Total Available"
               value={`${((manufacturingQuantity ?? 0) + model.unitsInStock).toLocaleString()} units`}
