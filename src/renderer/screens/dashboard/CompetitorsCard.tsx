@@ -2,15 +2,12 @@ import { Monitor } from "lucide-react";
 import { BentoCard } from "./BentoCard";
 import { tokens } from "../../shell/tokens";
 import { useGame } from "../../state/GameContext";
+import { getMarketEntries } from "../market-browser/types";
 
 export function CompetitorsCard() {
   const { state } = useGame();
 
-  const allOnSale = state.companies.flatMap((c) =>
-    c.models
-      .filter((m) => m.status === "onSale" || m.status === "manufacturing")
-      .map((m) => ({ company: c, model: m })),
-  );
+  const allOnSale = getMarketEntries(state);
   const playerCount = allOnSale.filter((e) => e.company.isPlayer).length;
   const competitorCount = allOnSale.filter((e) => !e.company.isPlayer).length;
 
