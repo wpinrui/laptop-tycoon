@@ -264,6 +264,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
               ...m,
               manufacturingPlan: restored,
               previousManufacturingPlan: null,
+              retailPrice: restored?.manufacturing.unitPrice ?? m.retailPrice,
               manufacturingQuantity: restored?.manufacturing.unitsOrdered ?? null,
               totalProductionSpend: (m.totalProductionSpend ?? 0) - planCost,
               totalUnitsOrdered: (m.totalUnitsOrdered ?? 0) - plan.manufacturing.unitsOrdered,

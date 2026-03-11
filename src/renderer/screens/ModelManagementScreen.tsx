@@ -388,69 +388,36 @@ function ModelCard({
 
       {!disabled && (
         <div style={actionBarStyle}>
-          {status === "draft" && (
-            <>
-              {onEdit && (
-                <MenuButton
-                  onClick={onEdit}
-                  style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
-                >
-                  <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-                    <Pencil size={14} /> Edit Design
-                  </span>
-                </MenuButton>
-              )}
-            </>
+          {(status === "draft" || status === "designed") && onEdit && (
+            <MenuButton
+              onClick={onEdit}
+              style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
+                <Pencil size={14} /> {status === "draft" ? "Edit Design" : "Redesign"}
+              </span>
+            </MenuButton>
           )}
-          {status === "designed" && (
-            <>
-              {onEdit && (
-                <MenuButton
-                  onClick={onEdit}
-                  style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
-                >
-                  <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-                    <Pencil size={14} /> Redesign
-                  </span>
-                </MenuButton>
-              )}
-              {onAddManufacturing && (
-                <MenuButton
-                  variant="accent"
-                  onClick={onAddManufacturing}
-                  style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
-                >
-                  <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-                    <Factory size={14} /> {getMfgButtonLabel()}
-                  </span>
-                </MenuButton>
-              )}
-            </>
+          {(status === "designed" || ((status === "onSale" || status === "manufacturing") && !isRetailOnly)) && onAddManufacturing && (
+            <MenuButton
+              variant="accent"
+              onClick={onAddManufacturing}
+              style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
+                <Factory size={14} /> {getMfgButtonLabel()}
+              </span>
+            </MenuButton>
           )}
-          {(status === "onSale" || status === "manufacturing") && !isRetailOnly && (
-            <>
-              {onAddManufacturing && (
-                <MenuButton
-                  variant="accent"
-                  onClick={onAddManufacturing}
-                  style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
-                >
-                  <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-                    <Factory size={14} /> {getMfgButtonLabel()}
-                  </span>
-                </MenuButton>
-              )}
-              {canChangePricing && onChangePricing && (
-                <MenuButton
-                  onClick={onChangePricing}
-                  style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
-                >
-                  <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-                    <DollarSign size={14} /> Change Pricing
-                  </span>
-                </MenuButton>
-              )}
-            </>
+          {(status === "onSale" || status === "manufacturing") && !isRetailOnly && canChangePricing && onChangePricing && (
+            <MenuButton
+              onClick={onChangePricing}
+              style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
+                <DollarSign size={14} /> Change Pricing
+              </span>
+            </MenuButton>
           )}
           {onDiscontinue && (
             <MenuButton

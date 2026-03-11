@@ -204,20 +204,20 @@ export function ManufacturingStep() {
   // Fixed costs that must be paid regardless
   const totalFixedCosts = toolingCost + certCost + overhead + adCost;
 
-  // Price slider: based on total cost per unit (BOM + assembly + packaging + support)
-  const baseTotalPerUnit = baseBom + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST + state.supportBudget;
+  // Price slider: based on total cost per unit (BOM + assembly + packaging)
+  const baseTotalPerUnit = baseBom + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST;
   const minPrice = Math.max(snapPrice(baseTotalPerUnit * MIN_PRICE_MULTIPLIER), MIN_RETAIL_PRICE);
   const maxPrice = snapPrice(baseTotalPerUnit * MAX_PRICE_MULTIPLIER);
 
   // Quantity slider: binary search for max affordable
   const cashForManufacturing = Math.max(0, gameState.cash - totalFixedCosts);
-  const minPerUnit = calculateBomUnitCost(baseBom, 10_000_000) + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST + state.supportBudget;
+  const minPerUnit = calculateBomUnitCost(baseBom, 10_000_000) + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST;
   const maxQuantity = (() => {
     let lo = MIN_BATCH_SIZE;
     let hi = Math.max(MIN_BATCH_SIZE, Math.floor(cashForManufacturing / Math.max(1, minPerUnit)));
     while (lo < hi) {
       const mid = Math.ceil((lo + hi) / 2);
-      const mfgPerUnit = calculateBomUnitCost(baseBom, mid) + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST + state.supportBudget;
+      const mfgPerUnit = calculateBomUnitCost(baseBom, mid) + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST;
       if (mfgPerUnit * mid <= cashForManufacturing) {
         lo = mid;
       } else {
