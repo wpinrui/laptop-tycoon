@@ -1,6 +1,6 @@
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
 import { ManufacturingWizardState, ManufacturingWizardStep, MFG_WIZARD_STEPS, FullManufacturingPlan } from "./types";
-import { DEMAND_NOISE_MIN, DEMAND_NOISE_MAX, ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST } from "./utils/constants";
+import { DEMAND_NOISE_MIN, DEMAND_NOISE_MAX, ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST, MIN_RETAIL_PRICE, snapPrice } from "./utils/constants";
 import { AD_CAMPAIGNS } from "./data/campaigns";
 
 type MfgWizardAction =
@@ -38,7 +38,7 @@ function mfgWizardReducer(state: ManufacturingWizardState, action: MfgWizardActi
   switch (action.type) {
     case "INIT": {
       const baseTotalPerUnit = action.baseBomCost + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST;
-      const defaultPrice = action.existingRetailPrice ?? Math.max(49, Math.round(baseTotalPerUnit * 1.5 / 50) * 50 - 1);
+      const defaultPrice = action.existingRetailPrice ?? Math.max(MIN_RETAIL_PRICE, snapPrice(baseTotalPerUnit * 1.5));
       return {
         ...INITIAL_STATE,
         modelId: action.modelId,

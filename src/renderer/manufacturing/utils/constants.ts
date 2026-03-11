@@ -16,3 +16,11 @@ export {
   TOOLING_COST,
   CERTIFICATION_COST,
 } from "../../../simulation/tunables";
+
+/** Absolute floor for retail pricing. */
+export const MIN_RETAIL_PRICE = 49;
+
+/** Snap price to nearest $50 ending in 9, e.g. $449, $499, $549 */
+export function snapPrice(raw: number): number {
+  return Math.round(raw / 50) * 50 - 1;
+}

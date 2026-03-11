@@ -10,6 +10,7 @@ import {
   MIN_BATCH_SIZE, MAX_PRICE_MULTIPLIER,
   ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST, CHANNEL_MARGIN_RATE,
   TOOLING_COST, CERTIFICATION_COST, MULTI_MODEL_OVERHEAD,
+  MIN_RETAIL_PRICE, snapPrice,
 } from "../utils/constants";
 import { getActiveModels } from "../../screens/dashboard/utils";
 import { projectDemandRange } from "../../../simulation/salesEngine";
@@ -179,10 +180,6 @@ function DetailRow({ label, value, color }: { label: string; value: string; colo
 
 // projectDemandRange provides real simulation-backed demand estimates
 
-/** Snap price to nearest $50 ending in 9, e.g. $449, $499, $549 */
-function snapPrice(raw: number): number {
-  return Math.round(raw / 50) * 50 - 1;
-}
 
 export function ManufacturingStep() {
   const { state, dispatch } = useMfgWizard();
@@ -209,7 +206,7 @@ export function ManufacturingStep() {
 
   // Price slider: based on total cost per unit (BOM + assembly + packaging + support)
   const baseTotalPerUnit = baseBom + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST + state.supportBudget;
-  const minPrice = Math.max(snapPrice(baseTotalPerUnit * 0.5), 49);
+  const minPrice = Math.max(snapPrice(baseTotalPerUnit * 0.5), MIN_RETAIL_PRICE);
   const maxPrice = snapPrice(baseTotalPerUnit * MAX_PRICE_MULTIPLIER);
 
   // Quantity slider: binary search for max affordable
@@ -529,7 +526,6 @@ export function ManufacturingStep() {
               <DetailRow label="Component cost (BOM)" value={fmt(cost.bomCost)} />
               <DetailRow label="Assembly & QA" value={fmt(cost.assemblyQa)} />
               <DetailRow label="Packaging & logistics" value={fmt(cost.packagingLogistics)} />
-              <DetailRow label="Support reserve" value={fmt(cost.supportBudget)} />
               {cost.eosDiscount < 0 && (
                 <DetailRow label="Economies of scale" value={`-${fmt(Math.abs(cost.eosDiscount))}`} color={tokens.colors.success} />
               )}

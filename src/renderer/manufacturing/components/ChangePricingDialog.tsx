@@ -2,12 +2,7 @@ import { useState } from "react";
 import { ContentPanel } from "../../shell/ContentPanel";
 import { MenuButton } from "../../shell/MenuButton";
 import { tokens, overlayStyle } from "../../shell/tokens";
-import { ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST, MAX_PRICE_MULTIPLIER, CHANNEL_MARGIN_RATE } from "../utils/constants";
-
-/** Snap price to nearest $50 ending in 9, e.g. $449, $499, $549 */
-function snapPrice(raw: number): number {
-  return Math.round(raw / 50) * 50 - 1;
-}
+import { ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST, MAX_PRICE_MULTIPLIER, CHANNEL_MARGIN_RATE, MIN_RETAIL_PRICE, snapPrice } from "../utils/constants";
 
 interface ChangePricingDialogProps {
   modelName: string;
@@ -29,7 +24,7 @@ export function ChangePricingDialog({
   const [price, setPrice] = useState(currentPrice);
 
   const baseTotalPerUnit = baseBomCost + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST;
-  const minPrice = Math.max(snapPrice(baseTotalPerUnit * 0.5), 49);
+  const minPrice = Math.max(snapPrice(baseTotalPerUnit * 0.5), MIN_RETAIL_PRICE);
   const maxPrice = snapPrice(baseTotalPerUnit * MAX_PRICE_MULTIPLIER);
 
   const revenuePerUnit = price - price * CHANNEL_MARGIN_RATE;
