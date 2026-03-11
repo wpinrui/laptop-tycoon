@@ -88,25 +88,6 @@ export function getLastQuarterSales(
   return result ? result.unitsSold : null;
 }
 
-export function getAllStats(model: LaptopModel, year: number): { stat: LaptopStat; label: string; value: number }[] {
-  const stats = computeStatsForDesign(model.design, year);
-  return ALL_STATS
-    .map((stat) => ({ stat, label: STAT_LABELS[stat], value: stats[stat] ?? 0 }))
-    .filter((s) => s.value > 0)
-    .sort((a, b) => b.value - a.value);
-}
-
-export function getMaxStatValue(entries: MarketEntry[], year: number): Partial<Record<LaptopStat, number>> {
-  const maxes: Partial<Record<LaptopStat, number>> = {};
-  for (const { model } of entries) {
-    const stats = computeStatsForDesign(model.design, year);
-    for (const stat of ALL_STATS) {
-      const val = stats[stat] ?? 0;
-      if (!maxes[stat] || val > maxes[stat]) maxes[stat] = val;
-    }
-  }
-  return maxes;
-}
 
 export function getPortSummary(ports: Record<string, number>): string[] {
   const lines: string[] = [];
