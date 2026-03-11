@@ -234,9 +234,12 @@ function gameReducer(state: GameState, action: GameAction): GameState {
             const isEdit = oldPlan && oldPlan.year === action.plan.year && oldPlan.quarter === action.plan.quarter;
             const oldCost = isEdit ? oldPlan.manufacturing.totalCost + oldPlan.marketing.cost : 0;
             const oldUnits = isEdit ? oldPlan.manufacturing.unitsOrdered : 0;
+            // Save the prior-quarter plan so it can be restored if the additional order is cancelled
+            const previousPlan = !isEdit && oldPlan ? oldPlan : m.previousManufacturingPlan;
             return {
               ...m,
               manufacturingPlan: action.plan,
+              previousManufacturingPlan: previousPlan,
               retailPrice: action.plan.manufacturing.unitPrice,
               manufacturingQuantity: action.plan.manufacturing.unitsOrdered,
               totalProductionSpend: (m.totalProductionSpend ?? 0) - oldCost + newCost,
@@ -256,10 +259,12 @@ function gameReducer(state: GameState, action: GameAction): GameState {
             if (!plan || plan.year !== state.year || plan.quarter !== state.quarter) return m;
             // Undo the cost/units that were accumulated when this plan was saved
             const planCost = plan.manufacturing.totalCost + plan.marketing.cost;
+            const restored = m.previousManufacturingPlan ?? null;
             return {
               ...m,
-              manufacturingPlan: null,
-              manufacturingQuantity: null,
+              manufacturingPlan: restored,
+              previousManufacturingPlan: null,
+              manufacturingQuantity: restored?.manufacturing.unitsOrdered ?? null,
               totalProductionSpend: (m.totalProductionSpend ?? 0) - planCost,
               totalUnitsOrdered: (m.totalUnitsOrdered ?? 0) - plan.manufacturing.unitsOrdered,
             };

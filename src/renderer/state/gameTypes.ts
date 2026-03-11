@@ -42,6 +42,8 @@ export interface LaptopModel {
   manufacturingQuantity: number | null;
   yearDesigned: number;
   manufacturingPlan: FullManufacturingPlan | null;
+  /** Prior-quarter plan saved when an additional order replaces it, so it can be restored on cancel. */
+  previousManufacturingPlan?: FullManufacturingPlan | null;
   /** Unsold units carried forward from previous year(s). */
   unitsInStock: number;
   /** Cumulative amount spent on manufacturing this model across all orders. */
