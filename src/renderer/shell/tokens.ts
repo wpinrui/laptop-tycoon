@@ -52,9 +52,9 @@ export const tokens = {
   },
   font: {
     family: "'Segoe UI', system-ui, -apple-system, sans-serif",
-    sizeSmall: 12,
-    sizeBase: 14,
-    sizeLarge: 18,
+    sizeSmall: 13,
+    sizeBase: 15,
+    sizeLarge: 20,
     sizeTitle: 24,
     sizeHero: 36,
   },
