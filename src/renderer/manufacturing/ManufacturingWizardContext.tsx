@@ -1,6 +1,6 @@
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
 import { ManufacturingWizardState, ManufacturingWizardStep, MFG_WIZARD_STEPS, FullManufacturingPlan } from "./types";
-import { DEMAND_NOISE_MIN, DEMAND_NOISE_MAX, ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST, MIN_RETAIL_PRICE, snapPrice } from "./utils/constants";
+import { DEMAND_NOISE_MIN, DEMAND_NOISE_MAX, ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST, DEFAULT_PRICE_MULTIPLIER, MIN_RETAIL_PRICE, snapPrice } from "./utils/constants";
 import { AD_CAMPAIGNS } from "./data/campaigns";
 
 type MfgWizardAction =
@@ -9,7 +9,6 @@ type MfgWizardAction =
   | { type: "SET_CAMPAIGN"; campaignId: string | null }
   | { type: "SET_UNIT_PRICE"; unitPrice: number }
   | { type: "SET_UNITS_ORDERED"; unitsOrdered: number }
-  | { type: "SET_SUPPORT_BUDGET"; supportBudget: number }
   | { type: "SET_PRESS_RESPONSE"; promptId: number; response: string }
   | { type: "GO_TO_STEP"; step: ManufacturingWizardStep }
   | { type: "NEXT_STEP" }
@@ -38,7 +37,7 @@ function mfgWizardReducer(state: ManufacturingWizardState, action: MfgWizardActi
   switch (action.type) {
     case "INIT": {
       const baseTotalPerUnit = action.baseBomCost + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST;
-      const defaultPrice = action.existingRetailPrice ?? Math.max(MIN_RETAIL_PRICE, snapPrice(baseTotalPerUnit * 1.5));
+      const defaultPrice = action.existingRetailPrice ?? Math.max(MIN_RETAIL_PRICE, snapPrice(baseTotalPerUnit * DEFAULT_PRICE_MULTIPLIER));
       return {
         ...INITIAL_STATE,
         modelId: action.modelId,
@@ -67,8 +66,6 @@ function mfgWizardReducer(state: ManufacturingWizardState, action: MfgWizardActi
       return { ...state, unitPrice: action.unitPrice };
     case "SET_UNITS_ORDERED":
       return { ...state, unitsOrdered: action.unitsOrdered };
-    case "SET_SUPPORT_BUDGET":
-      return { ...state, supportBudget: action.supportBudget };
     case "SET_PRESS_RESPONSE":
       return {
         ...state,

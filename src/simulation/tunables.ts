@@ -78,16 +78,14 @@ export const MULTI_MODEL_OVERHEAD = 500_000;
 export const MIN_BATCH_SIZE = 1_000;
 /** Minimum price multiplier over unit cost (pricing slider floor) */
 export const MIN_PRICE_MULTIPLIER = 0.5;
+/** Default price multiplier for initial retail pricing */
+export const DEFAULT_PRICE_MULTIPLIER = 1.5;
 /** Maximum price multiplier over unit cost */
 export const MAX_PRICE_MULTIPLIER = 4;
 /** Per-unit assembly/QA cost */
 export const ASSEMBLY_QA_COST = 10;
 /** Per-unit packaging/logistics cost */
 export const PACKAGING_LOGISTICS_COST = 15;
-/** Support budget slider minimum */
-export const SUPPORT_BUDGET_MIN = 0;
-/** Support budget slider maximum */
-export const SUPPORT_BUDGET_MAX = 50;
 
 /** R&D cost charged at design finalisation (one-time, sunk) */
 export const RD_COST: Record<ModelType, number> = {

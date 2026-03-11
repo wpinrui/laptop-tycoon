@@ -7,7 +7,7 @@ import { calculateBomUnitCost, buildCostBreakdown } from "../utils/economiesOfSc
 import { AD_CAMPAIGNS, getCampaignCost } from "../data/campaigns";
 import { approxPercentile } from "../utils/skewNormal";
 import {
-  MIN_BATCH_SIZE, MIN_PRICE_MULTIPLIER, MAX_PRICE_MULTIPLIER,
+  MIN_BATCH_SIZE, MIN_PRICE_MULTIPLIER, DEFAULT_PRICE_MULTIPLIER, MAX_PRICE_MULTIPLIER,
   ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST, CHANNEL_MARGIN_RATE,
   TOOLING_COST, CERTIFICATION_COST, MULTI_MODEL_OVERHEAD,
   MIN_RETAIL_PRICE, snapPrice,
@@ -228,7 +228,7 @@ export function ManufacturingStep() {
   })();
 
   // Effective values
-  const effectivePrice = state.unitPrice || snapPrice(baseTotalPerUnit * 1.5);
+  const effectivePrice = state.unitPrice || snapPrice(baseTotalPerUnit * DEFAULT_PRICE_MULTIPLIER);
   const effectiveQty = state.unitsOrdered;
 
   // Full cost breakdown — uses effective values for price/qty
