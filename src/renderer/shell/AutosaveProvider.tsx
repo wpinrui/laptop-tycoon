@@ -32,13 +32,16 @@ export function AutosaveProvider({ children }: { children: ReactNode }) {
     const slotId = getActiveSlotId();
     if (!slotId) return;
 
-    // Use setTimeout to avoid synchronous setState in effect body
+    let hideTimer: ReturnType<typeof setTimeout>;
     const showTimer = setTimeout(() => setShowIndicator(true), 0);
     void autosave(slotId, stateRef.current).then(() => {
-      setTimeout(() => setShowIndicator(false), 2000);
+      hideTimer = setTimeout(() => setShowIndicator(false), 2000);
     });
 
-    return () => clearTimeout(showTimer);
+    return () => {
+      clearTimeout(showTimer);
+      clearTimeout(hideTimer);
+    };
   }, [state.quarterSimulated]);
 
   return (

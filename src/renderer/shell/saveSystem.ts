@@ -83,18 +83,18 @@ export function setActiveSlotId(slotId: string | null): void {
 
 export async function getAllSlotMeta(): Promise<SaveSlotMeta[]> {
   const slotIds = await api().listSlots();
-  const metas: SaveSlotMeta[] = [];
-  for (const slotId of slotIds) {
-    const raw = await api().readFile(slotId, "save.json");
-    if (!raw) continue;
-    try {
-      const envelope = JSON.parse(raw) as SaveEnvelope;
-      metas.push(envelope.meta);
-    } catch {
-      // Corrupted save, skip
-    }
-  }
-  return metas;
+  const results = await Promise.all(
+    slotIds.map(async (slotId) => {
+      const raw = await api().readFile(slotId, "save.json");
+      if (!raw) return null;
+      try {
+        return (JSON.parse(raw) as SaveEnvelope).meta;
+      } catch {
+        return null;
+      }
+    }),
+  );
+  return results.filter((m): m is SaveSlotMeta => m !== null);
 }
 
 export async function hasAnySave(): Promise<boolean> {
@@ -194,19 +194,19 @@ export async function autosave(slotId: string, state: GameState): Promise<boolea
 
 export async function getAutosaveMetas(slotId: string): Promise<AutosaveMeta[]> {
   const files = await api().listFiles(slotId);
-  const metas: AutosaveMeta[] = [];
-  for (const file of files) {
-    if (!file.startsWith("auto-") || !file.endsWith(".json")) continue;
-    const raw = await api().readFile(slotId, file);
-    if (!raw) continue;
-    try {
-      const envelope = JSON.parse(raw) as AutosaveEnvelope;
-      metas.push(envelope.meta);
-    } catch {
-      // Skip corrupted
-    }
-  }
-  // Sort by most recent first
+  const autoFiles = files.filter((f) => f.startsWith("auto-") && f.endsWith(".json"));
+  const results = await Promise.all(
+    autoFiles.map(async (file) => {
+      const raw = await api().readFile(slotId, file);
+      if (!raw) return null;
+      try {
+        return (JSON.parse(raw) as AutosaveEnvelope).meta;
+      } catch {
+        return null;
+      }
+    }),
+  );
+  const metas = results.filter((m): m is AutosaveMeta => m !== null);
   metas.sort((a, b) => b.savedAt - a.savedAt);
   return metas;
 }
