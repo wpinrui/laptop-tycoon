@@ -4,8 +4,8 @@ export type ManufacturingWizardStep =
   | "pressRelease"
   | "confirmation";
 
+/** Visible wizard steps — marketing is hidden (auto-selected). */
 export const MFG_WIZARD_STEPS: ManufacturingWizardStep[] = [
-  "marketing",
   "manufacturing",
   "pressRelease",
   "confirmation",

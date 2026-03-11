@@ -12,6 +12,7 @@ import { tokens } from "../shell/tokens";
 import { StatusBar } from "../shell/StatusBar";
 import { getActiveModels, MAX_MODELS } from "./dashboard/utils";
 import { STATUS_CONFIG, getDisplayStatus } from "../statusConfig";
+import { ChangePricingDialog } from "../manufacturing/components/ChangePricingDialog";
 import {
   Laptop,
   Plus,
@@ -22,6 +23,7 @@ import {
   ChevronUp,
   CheckCircle,
   AlertTriangle,
+  DollarSign,
 } from "lucide-react";
 
 const panelStyle: CSSProperties = {
@@ -55,6 +57,7 @@ const actionBarStyle: CSSProperties = {
   marginTop: tokens.spacing.md,
   borderTop: `1px solid ${tokens.colors.panelBorder}`,
   paddingTop: tokens.spacing.md,
+  flexWrap: "wrap",
 };
 
 export function ModelManagementScreen() {
@@ -64,6 +67,7 @@ export function ModelManagementScreen() {
   const { dispatch: mfgDispatch } = useMfgWizard();
   const [confirmScrapId, setConfirmScrapId] = useState<string | null>(null);
   const [showDiscontinued, setShowDiscontinued] = useState(false);
+  const [pricingModel, setPricingModel] = useState<LaptopModel | null>(null);
 
   const player = getPlayerCompany(state);
   const activeModels = getActiveModels(state);
@@ -149,6 +153,7 @@ export function ModelManagementScreen() {
             confirmScrap={confirmScrapId === model.design.id}
             onEdit={canDesignNew ? () => handleEdit(model) : undefined}
             onAddManufacturing={() => handleManufacturing(model)}
+            onChangePricing={() => setPricingModel(model)}
             onScrapClick={() => setConfirmScrapId(model.design.id)}
             onScrapConfirm={() => handleScrap(model.design.id)}
             onScrapCancel={() => setConfirmScrapId(null)}
@@ -201,6 +206,23 @@ export function ModelManagementScreen() {
       <div style={{ flexShrink: 0, height: tokens.spacing.lg }} />
       </div>
       <StatusBar />
+
+      {pricingModel && pricingModel.retailPrice !== null && (
+        <ChangePricingDialog
+          modelName={modelDisplayName(player.name, pricingModel.design.name)}
+          currentPrice={pricingModel.retailPrice}
+          baseBomCost={pricingModel.design.unitCost}
+          onConfirm={(newPrice) => {
+            dispatch({ type: "SET_RETAIL_PRICE", modelId: pricingModel.design.id, retailPrice: newPrice });
+            setPricingModel(null);
+          }}
+          onCancel={() => setPricingModel(null)}
+          onOpenFullWizard={() => {
+            setPricingModel(null);
+            handleManufacturing(pricingModel);
+          }}
+        />
+      )}
     </ContentPanel>
   );
 }
@@ -211,6 +233,7 @@ function ModelCard({
   confirmScrap,
   onEdit,
   onAddManufacturing,
+  onChangePricing,
   onScrapClick,
   onScrapConfirm,
   onScrapCancel,
@@ -223,6 +246,7 @@ function ModelCard({
   confirmScrap: boolean;
   onEdit?: () => void;
   onAddManufacturing?: () => void;
+  onChangePricing?: () => void;
   onScrapClick: () => void;
   onScrapConfirm: () => void;
   onScrapCancel: () => void;
@@ -247,6 +271,9 @@ function ModelCard({
     if (hasPlanThisYear) return "Order Additional Units";
     return "Add Manufacturing Plan";
   };
+
+  // Show "Change Pricing" for models that already have a price set and aren't in the current-quarter plan flow
+  const canChangePricing = retailPrice !== null && hasPlanThisYear && !hasCurrentQuarterPlan && !isRetailOnly;
 
   return (
     <div style={{ ...modelCardStyle, opacity: disabled ? 0.5 : 1 }}>
@@ -382,16 +409,30 @@ function ModelCard({
               )}
             </>
           )}
-          {(status === "onSale" || status === "manufacturing") && !isRetailOnly && onAddManufacturing && (
-            <MenuButton
-              variant="accent"
-              onClick={onAddManufacturing}
-              style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
-            >
-              <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-                <Factory size={14} /> {getMfgButtonLabel()}
-              </span>
-            </MenuButton>
+          {(status === "onSale" || status === "manufacturing") && !isRetailOnly && (
+            <>
+              {onAddManufacturing && (
+                <MenuButton
+                  variant="accent"
+                  onClick={onAddManufacturing}
+                  style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
+                    <Factory size={14} /> {getMfgButtonLabel()}
+                  </span>
+                </MenuButton>
+              )}
+              {canChangePricing && onChangePricing && (
+                <MenuButton
+                  onClick={onChangePricing}
+                  style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
+                    <DollarSign size={14} /> Change Pricing
+                  </span>
+                </MenuButton>
+              )}
+            </>
           )}
           <InlineConfirm
             label={status === "draft" ? "Scrap" : "Discontinue"}

@@ -1,6 +1,7 @@
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
 import { ManufacturingWizardState, ManufacturingWizardStep, MFG_WIZARD_STEPS, FullManufacturingPlan } from "./types";
 import { DEMAND_NOISE_MIN, DEMAND_NOISE_MAX, ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST } from "./utils/constants";
+import { AD_CAMPAIGNS } from "./data/campaigns";
 
 type MfgWizardAction =
   | { type: "INIT"; modelId: string; promptIds: number[]; baseBomCost: number; isAdditionalOrder?: boolean }
@@ -18,13 +19,15 @@ function generateNoiseMargin(): number {
   return DEMAND_NOISE_MIN + Math.random() * (DEMAND_NOISE_MAX - DEMAND_NOISE_MIN);
 }
 
+const DEFAULT_CAMPAIGN_ID = AD_CAMPAIGNS[0].id;
+
 const INITIAL_STATE: ManufacturingWizardState = {
-  currentStep: "marketing",
+  currentStep: "manufacturing",
   modelId: "",
-  campaignId: null,
+  campaignId: DEFAULT_CAMPAIGN_ID,
   unitPrice: 0,
   unitsOrdered: 1000,
-  supportBudget: 15,
+  supportBudget: 0,
   pressReleasePromptIds: [],
   pressReleaseResponses: {},
   noiseMargin: generateNoiseMargin(),
@@ -34,7 +37,7 @@ const INITIAL_STATE: ManufacturingWizardState = {
 function mfgWizardReducer(state: ManufacturingWizardState, action: MfgWizardAction): ManufacturingWizardState {
   switch (action.type) {
     case "INIT": {
-      const baseTotalPerUnit = action.baseBomCost + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST + INITIAL_STATE.supportBudget;
+      const baseTotalPerUnit = action.baseBomCost + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST;
       const defaultPrice = Math.max(49, Math.round(baseTotalPerUnit * 1.5 / 50) * 50 - 1);
       return {
         ...INITIAL_STATE,
@@ -49,10 +52,10 @@ function mfgWizardReducer(state: ManufacturingWizardState, action: MfgWizardActi
       return {
         ...INITIAL_STATE,
         modelId: action.modelId,
-        campaignId: action.plan.marketing.campaignId,
+        campaignId: action.plan.marketing.campaignId ?? DEFAULT_CAMPAIGN_ID,
         unitPrice: action.plan.manufacturing.unitPrice,
         unitsOrdered: action.plan.manufacturing.unitsOrdered,
-        supportBudget: action.plan.manufacturing.supportBudget,
+        supportBudget: 0,
         pressReleasePromptIds: action.plan.pressRelease.promptIds,
         pressReleaseResponses: { ...action.plan.pressRelease.responses },
         noiseMargin: generateNoiseMargin(),

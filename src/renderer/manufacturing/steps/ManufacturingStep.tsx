@@ -9,7 +9,6 @@ import { approxPercentile } from "../utils/skewNormal";
 import {
   MIN_BATCH_SIZE, MAX_PRICE_MULTIPLIER,
   ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST, CHANNEL_MARGIN_RATE,
-  SUPPORT_BUDGET_MIN, SUPPORT_BUDGET_MAX,
   TOOLING_COST, CERTIFICATION_COST, MULTI_MODEL_OVERHEAD,
 } from "../utils/constants";
 import { getActiveModels } from "../../screens/dashboard/utils";
@@ -384,31 +383,6 @@ export function ManufacturingStep() {
                 Total available for sale: {(effectiveQty + inventory).toLocaleString()} units (ordered + inventory)
               </div>
             )}
-          </div>
-
-          <div style={panelStyle}>
-            <div style={sliderLabelStyle}>
-              <span style={{ fontWeight: 600 }}>Support Budget</span>
-              <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
-                per unit
-              </span>
-            </div>
-            <div style={bigValueStyle}>
-              {fmt(state.supportBudget)} / unit
-            </div>
-            <input
-              type="range"
-              min={SUPPORT_BUDGET_MIN}
-              max={SUPPORT_BUDGET_MAX}
-              step={1}
-              value={state.supportBudget}
-              onChange={(e) => dispatch({ type: "SET_SUPPORT_BUDGET", supportBudget: Number(e.target.value) })}
-              style={{ width: "100%", accentColor: tokens.colors.interactiveAccent }}
-            />
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
-              <span>{fmt(SUPPORT_BUDGET_MIN)}</span>
-              <span>{fmt(SUPPORT_BUDGET_MAX)}</span>
-            </div>
           </div>
 
           {otherPlayerModels.length > 0 && (

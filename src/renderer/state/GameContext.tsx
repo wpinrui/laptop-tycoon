@@ -27,6 +27,7 @@ type GameAction =
   | { type: "SET_MODEL_PRICING"; modelId: string; retailPrice: number; manufacturingQuantity: number }
   | { type: "UPDATE_MODEL_DESIGN"; modelId: string; design: LaptopDesign }
   | { type: "SET_MANUFACTURING_PLAN"; modelId: string; plan: FullManufacturingPlan }
+  | { type: "SET_RETAIL_PRICE"; modelId: string; retailPrice: number }
   | { type: "ADD_COMPETITOR_MODELS"; models: CompetitorModelEntry[] }
   | { type: "APPLY_QUARTER_RESULT"; result: QuarterSimulationResult }
   | { type: "SET_AWARENESS_BUDGET"; budget: number }
@@ -232,6 +233,17 @@ function gameReducer(state: GameState, action: GameAction): GameState {
                   retailPrice: action.plan.manufacturing.unitPrice,
                   manufacturingQuantity: action.plan.manufacturing.unitsOrdered,
                 }
+              : m,
+          ),
+        ),
+      };
+    case "SET_RETAIL_PRICE":
+      return {
+        ...state,
+        companies: updatePlayerModels(state.companies, (models) =>
+          models.map((m) =>
+            m.design.id === action.modelId
+              ? { ...m, retailPrice: action.retailPrice }
               : m,
           ),
         ),

@@ -196,7 +196,7 @@ function WizardContent() {
               onClick={handleConfirm}
               style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}
             >
-              Confirm Manufacturing Plan
+              {state.isAdditionalOrder ? "Confirm Order" : "Confirm Manufacturing Plan"}
             </MenuButton>
           )}
           <MenuButton
@@ -211,7 +211,7 @@ function WizardContent() {
             disabled={isLast ? !allStepsComplete : !canAdvance}
             style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}
           >
-            {isLast ? "Confirm Manufacturing Plan" : "Next"}
+            {isLast ? (state.isAdditionalOrder ? "Confirm Order" : "Confirm Manufacturing Plan") : "Next"}
           </MenuButton>
         </div>
       </div>
