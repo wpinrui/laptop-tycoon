@@ -86,7 +86,6 @@ const expandBtnStyle: CSSProperties = {
   marginTop: tokens.spacing.sm,
 };
 
-
 function SpecSection({ title, slots, design }: {
   title: string;
   slots: ComponentSlot[];

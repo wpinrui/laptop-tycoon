@@ -84,7 +84,7 @@ export function MarketBrowserScreen() {
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [compareIds, setCompareIds] = useState<string[]>([]);
 
-  const allEntries = getMarketEntries(state);
+  const allEntries = useMemo(() => getMarketEntries(state), [state]);
   const playerCompanyId = state.companies.find((c) => c.isPlayer)?.id ?? "";
 
   // Centralized stat computation — computed once, shared by all views
