@@ -1,9 +1,10 @@
-import { CSSProperties, useState, useRef, useEffect } from "react";
+import { CSSProperties, useState } from "react";
 import { DemographicId } from "../../../data/types";
 import { DEMOGRAPHICS } from "../../../data/demographics";
 import { getQuarterlyBuyers } from "../../../simulation/demographicData";
 import { averageReach } from "../../../simulation/brandProgression";
 import { tokens } from "../../shell/tokens";
+import { CustomSelect } from "../../shell/CustomSelect";
 import { Quarter, getPlayerCompany } from "../../state/gameTypes";
 import { useGame } from "../../state/GameContext";
 
@@ -26,107 +27,6 @@ const OPTIONS: { value: DemoValue; label: string }[] = [
   ...DEMOGRAPHICS.map((d) => ({ value: d.id as DemoValue, label: d.name })),
 ];
 
-function CustomSelect({
-  value,
-  onChange,
-}: {
-  value: DemoValue;
-  onChange: (v: DemoValue) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  const selected = OPTIONS.find((o) => o.value === value)!;
-
-  return (
-    <div ref={ref} style={{ position: "relative", display: "inline-grid" }}>
-      <button
-        onClick={() => setOpen(!open)}
-        style={{
-          gridArea: "1 / 1",
-          background: tokens.colors.surface,
-          color: tokens.colors.text,
-          border: `1px solid ${tokens.colors.panelBorder}`,
-          borderRadius: tokens.borderRadius.sm,
-          padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`,
-          fontSize: tokens.font.sizeBase,
-          fontFamily: tokens.font.family,
-          cursor: "pointer",
-          outline: "none",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: tokens.spacing.xs,
-        }}
-      >
-        {selected.label}
-        <span style={{ fontSize: "0.6em", marginLeft: 2 }}>{open ? "\u25B2" : "\u25BC"}</span>
-      </button>
-      {/* Invisible sizer: mirrors button structure exactly to establish max width */}
-      <div style={{ gridArea: "1 / 1", visibility: "hidden", pointerEvents: "none", padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`, fontSize: tokens.font.sizeBase, fontFamily: tokens.font.family, display: "flex", alignItems: "center", justifyContent: "center", gap: tokens.spacing.xs, border: "1px solid transparent" }}>
-        {OPTIONS.reduce((a, b) => (a.length >= b.label.length ? a : b.label), "")}
-        <span style={{ fontSize: "0.6em", marginLeft: 2 }}>{"\u25BC"}</span>
-      </div>
-      {open && (
-        <div
-          style={{
-            position: "absolute",
-            top: "100%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            marginTop: 4,
-            background: tokens.colors.surface,
-            border: `1px solid ${tokens.colors.panelBorder}`,
-            borderRadius: tokens.borderRadius.sm,
-            overflow: "hidden",
-            zIndex: 10,
-            boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
-            minWidth: "100%",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {OPTIONS.map((opt) => (
-            <div
-              key={opt.value}
-              onClick={() => {
-                onChange(opt.value);
-                setOpen(false);
-              }}
-              style={{
-                padding: `${tokens.spacing.sm}px ${tokens.spacing.lg}px`,
-                cursor: "pointer",
-                fontSize: tokens.font.sizeBase,
-                color: opt.value === value ? tokens.colors.accent : tokens.colors.text,
-                fontWeight: opt.value === value ? 600 : 400,
-                background: opt.value === value ? tokens.colors.background : "transparent",
-                transition: "background 0.1s",
-              }}
-              onMouseEnter={(e) => {
-                if (opt.value !== value) e.currentTarget.style.background = tokens.colors.background;
-              }}
-              onMouseLeave={(e) => {
-                if (opt.value !== value) e.currentTarget.style.background = "transparent";
-              }}
-            >
-              {opt.label}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function ArrowButton({ direction, onClick }: { direction: "left" | "right"; onClick: () => void }) {
   return (
@@ -205,6 +105,8 @@ export function MarketSizeCard({ year, quarter }: { year: number; quarter: Quart
         <CustomSelect
           value={selectedDemographic}
           onChange={setSelectedDemographic}
+          options={OPTIONS}
+          size="md"
         />
         <ArrowButton direction="right" onClick={() => {
           const idx = OPTIONS.findIndex((o) => o.value === selectedDemographic);

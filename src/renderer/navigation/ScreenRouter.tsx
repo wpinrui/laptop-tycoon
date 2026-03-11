@@ -19,6 +19,7 @@ import { GameOverScreen } from "../screens/GameOverScreen";
 import { BrandDetailScreen } from "../screens/BrandDetailScreen";
 import { ReviewsAwardsScreen } from "../screens/ReviewsAwardsScreen";
 import { MarketOverviewScreen } from "../screens/MarketOverviewScreen";
+import { MarketBrowserScreen } from "../screens/market-browser";
 import { DebugPanel } from "../debug/DebugPanel";
 
 function PlaceholderScreen({ title, icon }: { title: string; icon: React.ComponentType<{ size?: number; color?: string }> }) {
@@ -59,6 +60,8 @@ function ScreenContent() {
       return <PlaceholderScreen title="News" icon={Newspaper} />;
     case "history":
       return <PlaceholderScreen title="History" icon={History} />;
+    case "marketBrowser":
+      return <MarketBrowserScreen />;
     case "quarterlySummary":
       return <QuarterlySummaryScreen />;
     case "yearEndSummary":

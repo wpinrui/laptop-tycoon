@@ -13,6 +13,7 @@ export type Screen =
   | "history"
   | "quarterlySummary"
   | "yearEndSummary"
+  | "marketBrowser"
   | "gameOver";
 
 export type Overlay = "pauseMenu" | null;
