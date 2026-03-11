@@ -114,6 +114,7 @@ export function MarketBrowserScreen() {
   const sortOptions: SelectGroup<SortKey>[] = [
     { label: "General", options: [
       { value: "year", label: "Year (newest)" },
+      { value: "unitsSold", label: "Units Sold" },
       { value: "price", label: "Price" },
       { value: "name", label: "Name" },
       { value: "brand", label: "Brand" },
@@ -202,6 +203,8 @@ export function MarketBrowserScreen() {
       switch (sortBy) {
         case "year":
           return b.entry.model.yearDesigned - a.entry.model.yearDesigned;
+        case "unitsSold":
+          return (getLastQuarterSales(state, b.entry.model.design.id) ?? 0) - (getLastQuarterSales(state, a.entry.model.design.id) ?? 0);
         case "price":
           return (a.entry.model.retailPrice ?? 0) - (b.entry.model.retailPrice ?? 0);
         case "name":

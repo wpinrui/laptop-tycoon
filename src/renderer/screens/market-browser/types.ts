@@ -16,7 +16,7 @@ export interface MarketEntry {
   model: LaptopModel;
 }
 
-export type SortKey = "year" | "name" | "price" | "brand" | "screenSize" | `stat:${LaptopStat}`;
+export type SortKey = "year" | "unitsSold" | "name" | "price" | "brand" | "screenSize" | `stat:${LaptopStat}`;
 
 export const COMPONENT_SLOT_LABELS: Record<ComponentSlot, string> = {
   cpu: "CPU",
