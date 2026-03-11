@@ -5,24 +5,78 @@ import { useGame } from "../../state/GameContext";
 import { modelDisplayName } from "../../state/gameTypes";
 import { getMarketEntries, getLastQuarterSales } from "../market-browser/types";
 
+function PriceRangeBar({
+  marketMin,
+  marketMax,
+  playerMin,
+  playerMax,
+}: {
+  marketMin: number;
+  marketMax: number;
+  playerMin: number | null;
+  playerMax: number | null;
+}) {
+  const range = marketMax - marketMin;
+  if (range <= 0) return null;
+
+  const pctLeft = playerMin !== null ? ((playerMin - marketMin) / range) * 100 : 0;
+  const pctRight = playerMax !== null ? ((playerMax - marketMin) / range) * 100 : 0;
+
+  return (
+    <div style={{ fontSize: tokens.font.sizeSmall }}>
+      <div style={{ display: "flex", justifyContent: "space-between", color: tokens.colors.textMuted, marginBottom: 3 }}>
+        <span>${marketMin.toLocaleString()}</span>
+        <span>${marketMax.toLocaleString()}</span>
+      </div>
+      <div style={{
+        position: "relative",
+        height: 8,
+        background: tokens.colors.surface,
+        borderRadius: 4,
+        overflow: "hidden",
+      }}>
+        {playerMin !== null && playerMax !== null && (
+          <div style={{
+            position: "absolute",
+            left: `${pctLeft}%`,
+            width: `${Math.max(pctRight - pctLeft, 2)}%`,
+            height: "100%",
+            background: tokens.colors.accent,
+            borderRadius: 4,
+          }} />
+        )}
+      </div>
+      {playerMin !== null && playerMax !== null && (
+        <div style={{ color: tokens.colors.accent, marginTop: 3, fontSize: 11 }}>
+          You: ${playerMin.toLocaleString()}
+          {playerMin !== playerMax && ` – $${playerMax.toLocaleString()}`}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function CompetitorsCard() {
   const { state } = useGame();
 
   const allOnSale = getMarketEntries(state);
-  const playerCount = allOnSale.filter((e) => e.company.isPlayer).length;
+  const playerEntries = allOnSale.filter((e) => e.company.isPlayer);
   const competitorCount = allOnSale.filter((e) => !e.company.isPlayer).length;
 
-  // Price range across entire market
-  const prices = allOnSale.map((e) => e.model.retailPrice ?? 0).filter((p) => p > 0);
-  const minPrice = prices.length > 0 ? Math.min(...prices) : null;
-  const maxPrice = prices.length > 0 ? Math.max(...prices) : null;
+  // Price ranges
+  const allPrices = allOnSale.map((e) => e.model.retailPrice ?? 0).filter((p) => p > 0);
+  const marketMin = allPrices.length > 0 ? Math.min(...allPrices) : null;
+  const marketMax = allPrices.length > 0 ? Math.max(...allPrices) : null;
+
+  const playerPrices = playerEntries.map((e) => e.model.retailPrice ?? 0).filter((p) => p > 0);
+  const playerMin = playerPrices.length > 0 ? Math.min(...playerPrices) : null;
+  const playerMax = playerPrices.length > 0 ? Math.max(...playerPrices) : null;
 
   // Top seller and player's best seller
-  const hasSales = !!state.lastSimulationResult;
   let topSeller: { name: string; units: number; isPlayer: boolean } | null = null;
   let playerBest: { name: string; units: number } | null = null;
 
-  if (hasSales) {
+  if (state.lastSimulationResult) {
     for (const entry of allOnSale) {
       const units = getLastQuarterSales(state, entry.model.design.id);
       if (units === null || units === 0) continue;
@@ -36,32 +90,54 @@ export function CompetitorsCard() {
     }
   }
 
-  const rowStyle = { display: "flex", justifyContent: "space-between", fontSize: tokens.font.sizeSmall } as const;
-  const labelStyle = { color: tokens.colors.textMuted } as const;
-  const valueStyle = { fontWeight: 600 } as const;
-
   return (
     <BentoCard title="Market" icon={Monitor} screen="marketBrowser">
-      <div style={{ display: "flex", flexDirection: "column", gap: tokens.spacing.xs }}>
-        <div style={rowStyle}>
-          <span style={labelStyle}>Models on market</span>
-          <span style={valueStyle}>{playerCount} yours / {competitorCount} competitors</span>
+      <div style={{ display: "flex", flexDirection: "column", gap: tokens.spacing.sm }}>
+        {/* Model counts — subtitle-weight */}
+        <div style={{ fontSize: 11, color: tokens.colors.textMuted }}>
+          {playerEntries.length} yours / {competitorCount} competitors
         </div>
-        {minPrice !== null && maxPrice !== null && (
-          <div style={rowStyle}>
-            <span style={labelStyle}>Price range</span>
-            <span style={valueStyle}>${minPrice.toLocaleString()} – ${maxPrice.toLocaleString()}</span>
-          </div>
+
+        {/* Price range bar */}
+        {marketMin !== null && marketMax !== null && (
+          <PriceRangeBar
+            marketMin={marketMin}
+            marketMax={marketMax}
+            playerMin={playerMin}
+            playerMax={playerMax}
+          />
         )}
+
+        {/* Top seller headline */}
         {topSeller && (
-          <div style={{ marginTop: tokens.spacing.xs, fontSize: tokens.font.sizeSmall }}>
-            <div style={{ color: tokens.colors.textMuted, marginBottom: 2 }}>Top seller last quarter</div>
-            <div style={{ fontWeight: 600, color: topSeller.isPlayer ? tokens.colors.accent : tokens.colors.text }}>
-              {topSeller.name} ({topSeller.units.toLocaleString()})
+          <div style={{
+            borderTop: `1px solid ${tokens.colors.panelBorder}`,
+            paddingTop: tokens.spacing.xs,
+          }}>
+            <div style={{ fontSize: 11, color: tokens.colors.textMuted, marginBottom: 2 }}>
+              Top seller last quarter
+            </div>
+            <div style={{
+              fontSize: tokens.font.sizeBase,
+              fontWeight: 700,
+              color: topSeller.isPlayer ? tokens.colors.accent : tokens.colors.text,
+            }}>
+              {topSeller.name}
+            </div>
+            <div style={{
+              fontSize: tokens.font.sizeSmall,
+              color: topSeller.isPlayer ? tokens.colors.accent : tokens.colors.text,
+              fontWeight: 600,
+            }}>
+              {topSeller.units.toLocaleString()} units
             </div>
             {playerBest && !topSeller.isPlayer && (
-              <div style={{ color: tokens.colors.textMuted, marginTop: 2 }}>
-                vs your best: {playerBest.name} ({playerBest.units.toLocaleString()})
+              <div style={{
+                fontSize: 11,
+                color: tokens.colors.textMuted,
+                marginTop: 3,
+              }}>
+                Your best: {playerBest.name} ({playerBest.units.toLocaleString()})
               </div>
             )}
           </div>
