@@ -98,6 +98,7 @@ export function ModelManagementScreen() {
         promptIds,
         baseBomCost: model.design.unitCost,
         isAdditionalOrder: hasPriorOrder ?? false,
+        existingRetailPrice: model.retailPrice ?? undefined,
       });
     }
     navigateTo("manufacturingWizard");

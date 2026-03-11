@@ -4,7 +4,7 @@ import { DEMAND_NOISE_MIN, DEMAND_NOISE_MAX, ASSEMBLY_QA_COST, PACKAGING_LOGISTI
 import { AD_CAMPAIGNS } from "./data/campaigns";
 
 type MfgWizardAction =
-  | { type: "INIT"; modelId: string; promptIds: number[]; baseBomCost: number; isAdditionalOrder?: boolean }
+  | { type: "INIT"; modelId: string; promptIds: number[]; baseBomCost: number; isAdditionalOrder?: boolean; existingRetailPrice?: number }
   | { type: "LOAD_PLAN"; modelId: string; plan: FullManufacturingPlan; isAdditionalOrder?: boolean }
   | { type: "SET_CAMPAIGN"; campaignId: string | null }
   | { type: "SET_UNIT_PRICE"; unitPrice: number }
@@ -38,7 +38,7 @@ function mfgWizardReducer(state: ManufacturingWizardState, action: MfgWizardActi
   switch (action.type) {
     case "INIT": {
       const baseTotalPerUnit = action.baseBomCost + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST;
-      const defaultPrice = Math.max(49, Math.round(baseTotalPerUnit * 1.5 / 50) * 50 - 1);
+      const defaultPrice = action.existingRetailPrice ?? Math.max(49, Math.round(baseTotalPerUnit * 1.5 / 50) * 50 - 1);
       return {
         ...INITIAL_STATE,
         modelId: action.modelId,
