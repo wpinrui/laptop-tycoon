@@ -54,7 +54,7 @@ export const tokens = {
     family: "'Segoe UI', system-ui, -apple-system, sans-serif",
     sizeSmall: 13,
     sizeBase: 15,
-    sizeLarge: 20,
+    sizeLarge: 18,
     sizeTitle: 24,
     sizeHero: 36,
   },
