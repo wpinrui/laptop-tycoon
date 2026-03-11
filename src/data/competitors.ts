@@ -5,6 +5,7 @@ export type CompetitorArchetype = "budget" | "premium" | "generalist";
 export interface CompetitorDefinition {
   id: string;
   name: string;
+  productLine: string;
   archetype: CompetitorArchetype;
   brandReach: Record<DemographicId, number>;
   brandPerception: Record<DemographicId, number>;
@@ -27,6 +28,7 @@ export const COMPETITORS: CompetitorDefinition[] = [
   {
     id: "valuetech",
     name: "ValueTech",
+    productLine: "EconoBook",
     archetype: "budget",
     brandReach: {
       corporate: 15,
@@ -63,6 +65,7 @@ export const COMPETITORS: CompetitorDefinition[] = [
   {
     id: "prestige",
     name: "Prestige Computing",
+    productLine: "EliteBook",
     archetype: "premium",
     brandReach: {
       corporate: 40,
@@ -99,6 +102,7 @@ export const COMPETITORS: CompetitorDefinition[] = [
   {
     id: "omnibook",
     name: "OmniBook",
+    productLine: "Voyager",
     archetype: "generalist",
     brandReach: {
       corporate: 35,
