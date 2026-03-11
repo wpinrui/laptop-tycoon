@@ -79,7 +79,6 @@ export function MarketBrowserScreen() {
   const [filterPriceMax, setFilterPriceMax] = useState<string>("all");
   const [filterPriceMin, setFilterPriceMin] = useState<string>("all");
   const [filterYear, setFilterYear] = useState<string>("all");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [hideZeroSales, setHideZeroSales] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
@@ -155,12 +154,6 @@ export function MarketBrowserScreen() {
     ...years.map((y) => ({ value: String(y), label: String(y) })),
   ];
 
-  const statusOptions: SelectOption[] = [
-    { value: "all", label: "All" },
-    { value: "onSale", label: "On Sale" },
-    { value: "manufacturing", label: "Manufacturing" },
-  ];
-
   // Filter
   let filtered = [...allEntriesWithStats];
 
@@ -190,9 +183,6 @@ export function MarketBrowserScreen() {
   if (filterYear !== "all") {
     const y = Number(filterYear);
     filtered = filtered.filter((ews) => ews.entry.model.yearDesigned === y);
-  }
-  if (filterStatus !== "all") {
-    filtered = filtered.filter((ews) => ews.entry.model.status === filterStatus);
   }
   if (hideZeroSales) {
     filtered = filtered.filter((ews) => (getLastQuarterSales(state, ews.entry.model.design.id) ?? 0) > 0);
@@ -316,12 +306,6 @@ export function MarketBrowserScreen() {
           value={filterYear}
           onChange={setFilterYear}
           options={yearOptions}
-        />
-        <CustomSelect
-          label="Status"
-          value={filterStatus}
-          onChange={setFilterStatus}
-          options={statusOptions}
         />
         <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, cursor: "pointer" }}>
           <input
