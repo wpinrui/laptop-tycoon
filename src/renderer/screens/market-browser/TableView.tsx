@@ -18,6 +18,7 @@ export function TableView({
   statsToShow,
   compareIds,
   onToggleCompare,
+  compareFull,
 }: {
   entries: EntryWithStats[];
   year: number;
@@ -25,6 +26,7 @@ export function TableView({
   statsToShow: LaptopStat[];
   compareIds: string[];
   onToggleCompare: (id: string) => void;
+  compareFull: boolean;
 }) {
   const columnVals = useMemo(() => {
     const result: Record<string, number[]> = {};
@@ -79,6 +81,7 @@ export function TableView({
           const rowColor = isPlayer ? tokens.colors.accent : undefined;
           const designId = entry.model.design.id;
           const inCompare = compareIds.includes(designId);
+          const disabled = compareFull && !inCompare;
           const ageLabel = getAgeLabel(entry.model.yearDesigned, year);
           const ageColor = getAgeColor(entry.model.yearDesigned, year);
           return (
@@ -86,16 +89,18 @@ export function TableView({
               <td style={tdCenter}>
                 <button
                   onClick={() => onToggleCompare(designId)}
-                  title={inCompare ? "Remove from compare" : "Add to compare"}
+                  disabled={disabled}
+                  title={inCompare ? "Remove from compare" : disabled ? "Compare full (max 3)" : "Add to compare"}
                   style={{
                     background: inCompare ? tokens.colors.accentBg : "transparent",
                     border: `1px solid ${inCompare ? tokens.colors.accent : tokens.colors.panelBorder}`,
                     borderRadius: tokens.borderRadius.sm,
                     color: inCompare ? tokens.colors.accent : tokens.colors.textMuted,
-                    cursor: "pointer",
+                    cursor: disabled ? "default" : "pointer",
                     padding: 2,
                     display: "inline-flex",
                     alignItems: "center",
+                    opacity: disabled ? 0.4 : 1,
                   }}
                 >
                   <GitCompareArrows size={12} />

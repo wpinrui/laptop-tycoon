@@ -214,7 +214,7 @@ export function MarketBrowserScreen() {
 
   const compareEntries = compareIds
     .map((id) => allEntriesWithStats.find((ews) => ews.entry.model.design.id === id))
-    .filter(Boolean) as EntryWithStats[];
+    .filter((ews): ews is EntryWithStats => ews !== undefined);
 
   const toggleCompare = (id: string) => {
     setCompareIds((prev) =>
@@ -356,6 +356,7 @@ export function MarketBrowserScreen() {
             statsToShow={TABLE_STATS}
             compareIds={compareIds}
             onToggleCompare={toggleCompare}
+            compareFull={compareIds.length >= MAX_COMPARE}
           />
         ) : (
           <CompareView
