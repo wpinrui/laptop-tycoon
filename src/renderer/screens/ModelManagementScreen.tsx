@@ -83,10 +83,11 @@ export function ModelManagementScreen() {
   function handleManufacturing(model: LaptopModel) {
     const plan = model.manufacturingPlan;
     const isCurrentQuarterPlan = plan?.year === state.year && plan?.quarter === state.quarter;
+    const isAdditional = model.status === "manufacturing" || model.status === "onSale";
 
     if (plan && isCurrentQuarterPlan) {
       // Editing same-quarter plan — load existing values
-      mfgDispatch({ type: "LOAD_PLAN", modelId: model.design.id, plan });
+      mfgDispatch({ type: "LOAD_PLAN", modelId: model.design.id, plan, isAdditionalOrder: isAdditional });
     } else {
       // New order (first time, or additional order in a later quarter)
       const promptIds = selectPrompts(model.design.modelType, null);
@@ -269,15 +270,19 @@ function ModelCard({
   const isSellingModel = status === "manufacturing" || status === "onSale";
   const outOfStock = isSellingModel && !isRetailOnly && model.unitsInStock === 0 && !hasCurrentQuarterPlan;
 
+  // An additional order is a current-quarter plan on a model that was already manufacturing/selling
+  const isAdditionalOrder = hasCurrentQuarterPlan && (status === "manufacturing" || status === "onSale");
+
   // Button label logic
   const getMfgButtonLabel = () => {
+    if (isAdditionalOrder) return "Modify Additional Order";
     if (hasCurrentQuarterPlan) return "Edit Manufacturing Plan";
     if (hasPlanThisYear) return "Order Additional Units";
     return "Add Manufacturing Plan";
   };
 
-  // Show "Change Pricing" for models that already have a price set and aren't in the current-quarter plan flow
-  const canChangePricing = retailPrice !== null && hasPlanThisYear && !hasCurrentQuarterPlan && !isRetailOnly;
+  // Show "Change Pricing" for models that already have a price set and aren't in the first manufacturing plan flow
+  const canChangePricing = retailPrice !== null && hasPlanThisYear && !isRetailOnly && (!hasCurrentQuarterPlan || isAdditionalOrder);
 
   return (
     <div style={{ ...modelCardStyle, opacity: disabled ? 0.5 : 1 }}>

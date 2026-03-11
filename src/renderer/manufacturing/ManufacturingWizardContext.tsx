@@ -5,7 +5,7 @@ import { AD_CAMPAIGNS } from "./data/campaigns";
 
 type MfgWizardAction =
   | { type: "INIT"; modelId: string; promptIds: number[]; baseBomCost: number; isAdditionalOrder?: boolean }
-  | { type: "LOAD_PLAN"; modelId: string; plan: FullManufacturingPlan }
+  | { type: "LOAD_PLAN"; modelId: string; plan: FullManufacturingPlan; isAdditionalOrder?: boolean }
   | { type: "SET_CAMPAIGN"; campaignId: string | null }
   | { type: "SET_UNIT_PRICE"; unitPrice: number }
   | { type: "SET_UNITS_ORDERED"; unitsOrdered: number }
@@ -59,7 +59,7 @@ function mfgWizardReducer(state: ManufacturingWizardState, action: MfgWizardActi
         pressReleasePromptIds: action.plan.pressRelease.promptIds,
         pressReleaseResponses: { ...action.plan.pressRelease.responses },
         noiseMargin: generateNoiseMargin(),
-        isAdditionalOrder: false,
+        isAdditionalOrder: action.isAdditionalOrder ?? false,
       };
     case "SET_CAMPAIGN":
       return { ...state, campaignId: action.campaignId };
