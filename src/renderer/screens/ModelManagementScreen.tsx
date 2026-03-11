@@ -98,7 +98,7 @@ export function ModelManagementScreen() {
         modelId: model.design.id,
         promptIds,
         baseBomCost: model.design.unitCost,
-        isAdditionalOrder: hasPriorOrder ?? false,
+        isAdditionalOrder: hasPriorOrder,
         existingRetailPrice: model.retailPrice ?? undefined,
       });
     }
@@ -288,6 +288,10 @@ function ModelCard({
   // Show "Change Pricing" for models that already have a price set and aren't in the first manufacturing plan flow
   const canChangePricing = retailPrice !== null && hasPlanThisYear && !isRetailOnly && (!hasCurrentQuarterPlan || isAdditionalOrder);
 
+  // "Producing" only shows when there's a current-quarter plan that hasn't been simulated yet
+  const isPendingProduction = hasCurrentQuarterPlan && !quarterSimulated && !manufacturingPlan?.results && manufacturingQuantity !== null;
+  const showInventorySection = isPendingProduction || model.unitsInStock > 0;
+
   return (
     <div style={{ ...modelCardStyle, opacity: disabled ? 0.5 : 1 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -318,28 +322,23 @@ function ModelCard({
         )}
       </div>
 
-      {(() => {
-        // "Producing" only shows when there's a current-quarter plan that hasn't been simulated yet
-        // (no results on the plan = not yet simulated)
-        const isPendingProduction = hasCurrentQuarterPlan && !quarterSimulated && !manufacturingPlan?.results && manufacturingQuantity !== null;
-        return (isPendingProduction || model.unitsInStock > 0) && (
-          <div style={{ marginTop: tokens.spacing.sm, paddingTop: tokens.spacing.sm, borderTop: `1px solid ${tokens.colors.panelBorder}` }}>
-            {isPendingProduction && (
-              <SpecRow label="Producing" value={`${manufacturingQuantity!.toLocaleString()} units`} />
-            )}
-            {model.unitsInStock > 0 && (
-              <SpecRow label="In Stock" value={`${model.unitsInStock.toLocaleString()} units`} />
-            )}
-            {isPendingProduction && (manufacturingQuantity ?? 0) > 0 && model.unitsInStock > 0 && (
-              <SpecRow
-                label="Total Available"
-                value={`${((manufacturingQuantity ?? 0) + model.unitsInStock).toLocaleString()} units`}
-                highlight
-              />
-            )}
-          </div>
-        );
-      })()}
+      {showInventorySection && (
+        <div style={{ marginTop: tokens.spacing.sm, paddingTop: tokens.spacing.sm, borderTop: `1px solid ${tokens.colors.panelBorder}` }}>
+          {isPendingProduction && (
+            <SpecRow label="Producing" value={`${manufacturingQuantity!.toLocaleString()} units`} />
+          )}
+          {model.unitsInStock > 0 && (
+            <SpecRow label="In Stock" value={`${model.unitsInStock.toLocaleString()} units`} />
+          )}
+          {isPendingProduction && (manufacturingQuantity ?? 0) > 0 && model.unitsInStock > 0 && (
+            <SpecRow
+              label="Total Available"
+              value={`${((manufacturingQuantity ?? 0) + model.unitsInStock).toLocaleString()} units`}
+              highlight
+            />
+          )}
+        </div>
+      )}
 
       {isRetailOnly && model.unitsInStock > 0 && (
         <div style={{
