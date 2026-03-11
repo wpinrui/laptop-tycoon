@@ -10,10 +10,16 @@ function ensureSavesDir(): void {
   }
 }
 
+function sanitise(name: string): string {
+  return name.replace(/[^a-zA-Z0-9_.-]/g, "");
+}
+
 function slotDir(slotId: string): string {
-  // Sanitise to prevent path traversal
-  const safe = slotId.replace(/[^a-zA-Z0-9_-]/g, "");
-  return path.join(savesDir, safe);
+  return path.join(savesDir, sanitise(slotId));
+}
+
+function safeFilePath(slotId: string, filename: string): string {
+  return path.join(slotDir(slotId), sanitise(filename));
 }
 
 function registerSaveHandlers(): void {
@@ -25,7 +31,7 @@ function registerSaveHandlers(): void {
   });
 
   ipcMain.handle("save:readFile", (_e, slotId: string, filename: string) => {
-    const filePath = path.join(slotDir(slotId), filename);
+    const filePath = safeFilePath(slotId, filename);
     if (!fs.existsSync(filePath)) return null;
     return fs.readFileSync(filePath, "utf-8");
   });
@@ -33,7 +39,7 @@ function registerSaveHandlers(): void {
   ipcMain.handle("save:writeFile", (_e, slotId: string, filename: string, data: string) => {
     const dir = slotDir(slotId);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, filename), data, "utf-8");
+    fs.writeFileSync(safeFilePath(slotId, filename), data, "utf-8");
     return true;
   });
 
@@ -44,7 +50,7 @@ function registerSaveHandlers(): void {
   });
 
   ipcMain.handle("save:deleteFile", (_e, slotId: string, filename: string) => {
-    const filePath = path.join(slotDir(slotId), filename);
+    const filePath = safeFilePath(slotId, filename);
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     return true;
   });

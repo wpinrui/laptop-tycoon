@@ -105,7 +105,7 @@ function SlotRow({
   onDeleted,
   expanded,
   onToggleExpand,
-  hasAutosaves,
+  showExpander,
 }: {
   meta: SaveSlotMeta;
   onSelect: () => void;
@@ -113,12 +113,12 @@ function SlotRow({
   onDeleted: () => void;
   expanded: boolean;
   onToggleExpand: () => void;
-  hasAutosaves: boolean;
+  showExpander: boolean;
 }) {
   const Chevron = expanded ? ChevronDown : ChevronRight;
   return (
     <div style={{ display: "flex", gap: tokens.spacing.xs }}>
-      {hasAutosaves && (
+      {showExpander && (
         <button
           style={{
             ...slotStyle,
@@ -136,7 +136,7 @@ function SlotRow({
         </button>
       )}
       <button
-        style={{ ...slotStyle, paddingLeft: hasAutosaves ? tokens.spacing.md : tokens.spacing.lg }}
+        style={{ ...slotStyle, paddingLeft: showExpander ? tokens.spacing.md : tokens.spacing.lg }}
         onClick={onSelect}
         onMouseEnter={(e) => (e.currentTarget.style.background = tokens.colors.surfaceHover)}
         onMouseLeave={(e) => (e.currentTarget.style.background = tokens.colors.surface)}
@@ -262,7 +262,7 @@ export function SaveSlotPicker({
                     onDeleted={() => setPendingDeleteSlot(meta)}
                     expanded={isExpanded}
                     onToggleExpand={() => setExpandedSlot(isExpanded ? null : meta.slotId)}
-                    hasAutosaves={!!onSelectAutosave}
+                    showExpander={!!onSelectAutosave}
                   />
                   {isExpanded && onSelectAutosave && slotAutos.length > 0 && (
                     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
