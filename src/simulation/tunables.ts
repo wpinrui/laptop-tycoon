@@ -76,6 +76,8 @@ export const REFERENCE_QUANTITY = 5_000;
 export const MULTI_MODEL_OVERHEAD = 500_000;
 /** Minimum manufacturing batch size */
 export const MIN_BATCH_SIZE = 1_000;
+/** Minimum price multiplier over unit cost (pricing slider floor) */
+export const MIN_PRICE_MULTIPLIER = 0.5;
 /** Maximum price multiplier over unit cost */
 export const MAX_PRICE_MULTIPLIER = 4;
 /** Per-unit assembly/QA cost */

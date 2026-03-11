@@ -7,7 +7,7 @@ import { calculateBomUnitCost, buildCostBreakdown } from "../utils/economiesOfSc
 import { AD_CAMPAIGNS, getCampaignCost } from "../data/campaigns";
 import { approxPercentile } from "../utils/skewNormal";
 import {
-  MIN_BATCH_SIZE, MAX_PRICE_MULTIPLIER,
+  MIN_BATCH_SIZE, MIN_PRICE_MULTIPLIER, MAX_PRICE_MULTIPLIER,
   ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST, CHANNEL_MARGIN_RATE,
   TOOLING_COST, CERTIFICATION_COST, MULTI_MODEL_OVERHEAD,
   MIN_RETAIL_PRICE, snapPrice,
@@ -206,7 +206,7 @@ export function ManufacturingStep() {
 
   // Price slider: based on total cost per unit (BOM + assembly + packaging + support)
   const baseTotalPerUnit = baseBom + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST + state.supportBudget;
-  const minPrice = Math.max(snapPrice(baseTotalPerUnit * 0.5), MIN_RETAIL_PRICE);
+  const minPrice = Math.max(snapPrice(baseTotalPerUnit * MIN_PRICE_MULTIPLIER), MIN_RETAIL_PRICE);
   const maxPrice = snapPrice(baseTotalPerUnit * MAX_PRICE_MULTIPLIER);
 
   // Quantity slider: binary search for max affordable
