@@ -7,6 +7,7 @@ import {
   scoreColor,
   getAgeLabel,
   getAgeColor,
+  compareBtnStyle,
   tokens,
 } from "./types";
 import { EntryWithStats } from "./MarketBrowserScreen";
@@ -91,17 +92,7 @@ export function TableView({
                   onClick={() => onToggleCompare(designId)}
                   disabled={disabled}
                   title={inCompare ? "Remove from compare" : disabled ? "Compare full (max 3)" : "Add to compare"}
-                  style={{
-                    background: inCompare ? tokens.colors.accentBg : "transparent",
-                    border: `1px solid ${inCompare ? tokens.colors.accent : tokens.colors.panelBorder}`,
-                    borderRadius: tokens.borderRadius.sm,
-                    color: inCompare ? tokens.colors.accent : tokens.colors.textMuted,
-                    cursor: disabled ? "default" : "pointer",
-                    padding: 2,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    opacity: disabled ? 0.4 : 1,
-                  }}
+                  style={compareBtnStyle(inCompare, disabled, true)}
                 >
                   <GitCompareArrows size={12} />
                 </button>

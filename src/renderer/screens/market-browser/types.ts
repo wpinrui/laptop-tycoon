@@ -41,8 +41,22 @@ export const MAX_COMPARE = 3;
 
 export const RADAR_COLORS = ["#4fc3f7", "#ffb74d", "#ce93d8"];
 
+/** Shared compare-toggle button style used by card and table views. */
+export const compareBtnStyle = (active: boolean, disabled: boolean, compact = false): CSSProperties => ({
+  background: active ? tokens.colors.accentBg : "transparent",
+  border: `1px solid ${active ? tokens.colors.accent : tokens.colors.panelBorder}`,
+  borderRadius: tokens.borderRadius.sm,
+  color: active && !disabled ? tokens.colors.accent : tokens.colors.textMuted,
+  cursor: disabled ? "default" : "pointer",
+  padding: compact ? 2 : `${tokens.spacing.xs}px`,
+  display: compact ? "inline-flex" : "flex",
+  alignItems: "center",
+  opacity: disabled ? 0.4 : 1,
+  fontFamily: tokens.font.family,
+});
+
 /** How old a model is relative to the current game year. */
-export function getModelAge(yearDesigned: number, currentYear: number): number {
+function getModelAge(yearDesigned: number, currentYear: number): number {
   return currentYear - yearDesigned;
 }
 

@@ -26,6 +26,7 @@ import {
   specRowStyle,
   specLabelStyle,
   specValueStyle,
+  compareBtnStyle,
 } from "./types";
 
 const statBarContainerStyle: CSSProperties = {
@@ -85,18 +86,6 @@ const expandBtnStyle: CSSProperties = {
   marginTop: tokens.spacing.sm,
 };
 
-const compareBtnStyle = (active: boolean, disabled: boolean): CSSProperties => ({
-  background: active ? tokens.colors.accentBg : "transparent",
-  border: `1px solid ${active ? tokens.colors.accent : tokens.colors.panelBorder}`,
-  borderRadius: tokens.borderRadius.sm,
-  color: disabled ? tokens.colors.textMuted : active ? tokens.colors.accent : tokens.colors.textMuted,
-  cursor: disabled ? "default" : "pointer",
-  padding: `${tokens.spacing.xs}px`,
-  display: "flex",
-  alignItems: "center",
-  opacity: disabled ? 0.4 : 1,
-  fontFamily: tokens.font.family,
-});
 
 function SpecSection({ title, slots, design }: {
   title: string;
