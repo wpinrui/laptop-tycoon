@@ -73,7 +73,7 @@ const searchInputStyle: CSSProperties = {
 
 export function MarketBrowserScreen() {
   const { state } = useGame();
-  const [sortBy, setSortBy] = useState<SortKey>("price");
+  const [sortBy, setSortBy] = useState<SortKey>("year");
   const [filterBrand, setFilterBrand] = useState<string>("all");
   const [filterScreenSize, setFilterScreenSize] = useState<string>("all");
   const [filterPriceMax, setFilterPriceMax] = useState<string>("all");
@@ -113,6 +113,7 @@ export function MarketBrowserScreen() {
 
   const sortOptions: SelectGroup<SortKey>[] = [
     { label: "General", options: [
+      { value: "year", label: "Year (newest)" },
       { value: "price", label: "Price" },
       { value: "name", label: "Name" },
       { value: "brand", label: "Brand" },
@@ -199,6 +200,8 @@ export function MarketBrowserScreen() {
   } else {
     filtered.sort((a, b) => {
       switch (sortBy) {
+        case "year":
+          return b.entry.model.yearDesigned - a.entry.model.yearDesigned;
         case "price":
           return (a.entry.model.retailPrice ?? 0) - (b.entry.model.retailPrice ?? 0);
         case "name":
