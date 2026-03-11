@@ -1,5 +1,6 @@
-import { CSSProperties } from "react";
-import { LaptopModel } from "../../state/gameTypes";
+import { CSSProperties, useState } from "react";
+import { ChevronDown, ChevronUp, GitCompareArrows } from "lucide-react";
+import { LaptopModel, modelDisplayName } from "../../state/gameTypes";
 import {
   MarketEntry,
   LaptopStat,
@@ -8,8 +9,11 @@ import {
   SPEC_SLOTS,
   DISPLAY_SLOTS,
   MEDIA_SLOTS,
-  getAllStats,
   getPortSummary,
+  getAgeLabel,
+  getAgeColor,
+  ALL_STATS,
+  STAT_LABELS,
   tokens,
   cardStyle,
   playerCardStyle,
@@ -22,6 +26,7 @@ import {
   specRowStyle,
   specLabelStyle,
   specValueStyle,
+  compareBtnStyle,
 } from "./types";
 
 const statBarContainerStyle: CSSProperties = {
@@ -54,6 +59,33 @@ const statBarBgStyle: CSSProperties = {
   overflow: "hidden",
 };
 
+const ageBadgeStyle = (color: string): CSSProperties => ({
+  fontSize: tokens.font.sizeSmall,
+  fontWeight: 600,
+  color,
+  padding: `1px ${tokens.spacing.xs}px`,
+  borderRadius: tokens.borderRadius.sm,
+  border: `1px solid ${color}`,
+  lineHeight: 1.3,
+});
+
+const expandBtnStyle: CSSProperties = {
+  background: "transparent",
+  border: `1px solid ${tokens.colors.panelBorder}`,
+  borderRadius: tokens.borderRadius.sm,
+  color: tokens.colors.textMuted,
+  cursor: "pointer",
+  padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+  fontSize: tokens.font.sizeSmall,
+  display: "flex",
+  alignItems: "center",
+  gap: 4,
+  fontFamily: tokens.font.family,
+  width: "100%",
+  justifyContent: "center",
+  marginTop: tokens.spacing.sm,
+};
+
 function SpecSection({ title, slots, design }: {
   title: string;
   slots: ComponentSlot[];
@@ -84,33 +116,61 @@ function SpecSection({ title, slots, design }: {
 
 export function LaptopCard({
   entry,
+  stats,
   year,
   maxStats,
   lastQuarterSales,
+  isInCompare,
+  onToggleCompare,
+  compareDisabled,
 }: {
   entry: MarketEntry;
+  stats: Partial<Record<LaptopStat, number>>;
   year: number;
   maxStats: Partial<Record<LaptopStat, number>>;
   lastQuarterSales: number | null;
+  isInCompare: boolean;
+  onToggleCompare: () => void;
+  compareDisabled: boolean;
 }) {
   const { company, model } = entry;
   const { design } = model;
   const isPlayer = company.isPlayer;
-  const allModelStats = getAllStats(model, year);
   const ports = getPortSummary(design.ports);
+  const [expanded, setExpanded] = useState(false);
+
+  const ageLabel = getAgeLabel(model.yearDesigned, year);
+  const ageColor = getAgeColor(model.yearDesigned, year);
+
+  const allModelStats = ALL_STATS
+    .map((stat) => ({ stat, label: STAT_LABELS[stat], value: stats[stat] ?? 0 }))
+    .filter((s) => s.value > 0);
 
   return (
     <div style={isPlayer ? playerCardStyle : cardStyle}>
-      {/* Header: name + price */}
+      {/* Header: name + price + age */}
       <div style={cardHeaderStyle}>
-        <div>
-          <div style={modelNameStyle}>{design.name}</div>
-          <div style={brandNameStyle}>{company.name}</div>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={modelNameStyle}>{modelDisplayName(company.name, design.name)}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm, marginTop: 2 }}>
+            <span style={brandNameStyle}>{company.name} · {model.yearDesigned}</span>
+            <span style={ageBadgeStyle(ageColor)}>{ageLabel}</span>
+          </div>
         </div>
-        <div style={priceStyle}>${model.retailPrice!.toLocaleString()}</div>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: tokens.spacing.sm, flexShrink: 0 }}>
+          <div style={priceStyle}>${model.retailPrice!.toLocaleString()}</div>
+          <button
+            style={compareBtnStyle(isInCompare, compareDisabled && !isInCompare)}
+            onClick={onToggleCompare}
+            disabled={compareDisabled && !isInCompare}
+            title={isInCompare ? "Remove from compare" : compareDisabled ? "Compare full (max 3)" : "Add to compare"}
+          >
+            <GitCompareArrows size={14} />
+          </button>
+        </div>
       </div>
 
-      {/* Quick facts */}
+      {/* Quick facts — always visible */}
       {[
         { label: "Screen", value: `${design.screenSize}"` },
         { label: "Thickness", value: `${design.thicknessCm.toFixed(1)} cm` },
@@ -126,40 +186,7 @@ export function LaptopCard({
         </div>
       ))}
 
-      {/* Hardware specs */}
-      <SpecSection title="PROCESSING" slots={SPEC_SLOTS} design={design} />
-      <SpecSection title="DISPLAY" slots={DISPLAY_SLOTS} design={design} />
-      <SpecSection title="MEDIA & CONNECTIVITY" slots={MEDIA_SLOTS} design={design} />
-
-      {/* Chassis */}
-      <div style={sectionStyle}>
-        <div style={sectionTitleStyle}>CHASSIS</div>
-        {[
-          { label: "Material", value: design.chassis.material?.name },
-          { label: "Cooling", value: design.chassis.coolingSolution?.name },
-          { label: "Keyboard", value: design.chassis.keyboardFeature?.name },
-          { label: "Trackpad", value: design.chassis.trackpadFeature?.name },
-        ]
-          .filter((r): r is { label: string; value: string } => !!r.value)
-          .map(({ label, value }) => (
-            <div key={label} style={specRowStyle}>
-              <span style={specLabelStyle}>{label}</span>
-              <span style={specValueStyle}>{value}</span>
-            </div>
-          ))}
-      </div>
-
-      {/* Ports */}
-      {ports.length > 0 && (
-        <div style={sectionStyle}>
-          <div style={sectionTitleStyle}>PORTS</div>
-          <div style={{ fontSize: tokens.font.sizeSmall, lineHeight: 1.5 }}>
-            {ports.join(" · ")}
-          </div>
-        </div>
-      )}
-
-      {/* Stat bars */}
+      {/* Stat bars — always visible */}
       <div style={statBarContainerStyle}>
         <div style={sectionTitleStyle}>RATINGS</div>
         {allModelStats.map(({ stat, label, value }) => {
@@ -179,13 +206,56 @@ export function LaptopCard({
                   }}
                 />
               </div>
-              <span style={{ fontSize: 11, color: tokens.colors.textMuted, minWidth: 24, textAlign: "right" }}>
+              <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, minWidth: 24, textAlign: "right" }}>
                 {Math.round(value)}
               </span>
             </div>
           );
         })}
       </div>
+
+      {/* Expandable detail section */}
+      <button style={expandBtnStyle} onClick={() => setExpanded(!expanded)}>
+        {expanded ? "Hide specs" : "Show full specs"}
+        {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+      </button>
+
+      {expanded && (
+        <>
+          {/* Hardware specs */}
+          <SpecSection title="PROCESSING" slots={SPEC_SLOTS} design={design} />
+          <SpecSection title="DISPLAY" slots={DISPLAY_SLOTS} design={design} />
+          <SpecSection title="MEDIA & CONNECTIVITY" slots={MEDIA_SLOTS} design={design} />
+
+          {/* Chassis */}
+          <div style={sectionStyle}>
+            <div style={sectionTitleStyle}>CHASSIS</div>
+            {[
+              { label: "Material", value: design.chassis.material?.name },
+              { label: "Cooling", value: design.chassis.coolingSolution?.name },
+              { label: "Keyboard", value: design.chassis.keyboardFeature?.name },
+              { label: "Trackpad", value: design.chassis.trackpadFeature?.name },
+            ]
+              .filter((r): r is { label: string; value: string } => !!r.value)
+              .map(({ label, value }) => (
+                <div key={label} style={specRowStyle}>
+                  <span style={specLabelStyle}>{label}</span>
+                  <span style={specValueStyle}>{value}</span>
+                </div>
+              ))}
+          </div>
+
+          {/* Ports */}
+          {ports.length > 0 && (
+            <div style={sectionStyle}>
+              <div style={sectionTitleStyle}>PORTS</div>
+              <div style={{ fontSize: tokens.font.sizeSmall, lineHeight: 1.5 }}>
+                {ports.join(" · ")}
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

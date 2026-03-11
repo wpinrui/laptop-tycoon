@@ -29,7 +29,7 @@ export const ALL_STATS: LaptopStat[] = [
 /** Human-readable labels for each laptop stat. */
 export const STAT_LABELS: Record<LaptopStat, string> = {
   performance: "Performance",
-  gamingPerformance: "Gaming Performance",
+  gamingPerformance: "Gaming",
   batteryLife: "Battery Life",
   display: "Display",
   connectivity: "Connectivity",

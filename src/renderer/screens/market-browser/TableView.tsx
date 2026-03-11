@@ -1,46 +1,48 @@
 import { CSSProperties, useMemo } from "react";
+import { GitCompareArrows } from "lucide-react";
+import { modelDisplayName } from "../../state/gameTypes";
 import {
-  MarketEntry,
   LaptopStat,
   STAT_LABELS,
-  computeStatsForDesign,
   scoreColor,
+  getAgeLabel,
+  getAgeColor,
+  compareBtnStyle,
   tokens,
 } from "./types";
+import { EntryWithStats } from "./MarketBrowserScreen";
 
 export function TableView({
   entries,
   year,
   playerCompanyId,
   statsToShow,
+  compareIds,
+  onToggleCompare,
+  compareFull,
 }: {
-  entries: MarketEntry[];
+  entries: EntryWithStats[];
   year: number;
   playerCompanyId: string;
   statsToShow: LaptopStat[];
+  compareIds: string[];
+  onToggleCompare: (id: string) => void;
+  compareFull: boolean;
 }) {
-  const rows = useMemo(() =>
-    entries.map((e) => ({
-      entry: e,
-      stats: computeStatsForDesign(e.model.design, year),
-    })),
-    [entries, year],
-  );
-
   const columnVals = useMemo(() => {
     const result: Record<string, number[]> = {};
     for (const stat of statsToShow) {
-      result[stat] = rows.map((r) => Math.round(r.stats[stat] ?? 0));
+      result[stat] = entries.map((r) => Math.round(r.stats[stat] ?? 0));
     }
     return result;
-  }, [rows, statsToShow]);
+  }, [entries, statsToShow]);
 
   const thBase: CSSProperties = {
     textAlign: "left",
     padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
     borderBottom: `1px solid ${tokens.colors.panelBorder}`,
     color: tokens.colors.textMuted,
-    fontSize: 11,
+    fontSize: tokens.font.sizeSmall,
     fontWeight: 600,
     whiteSpace: "nowrap",
     position: "sticky",
@@ -49,6 +51,7 @@ export function TableView({
     zIndex: 1,
   };
   const thRight: CSSProperties = { ...thBase, textAlign: "right" };
+  const thCenter: CSSProperties = { ...thBase, textAlign: "center", width: 32 };
   const td: CSSProperties = {
     padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
     borderBottom: `1px solid ${tokens.colors.surface}`,
@@ -56,13 +59,16 @@ export function TableView({
     whiteSpace: "nowrap",
   };
   const tdR: CSSProperties = { ...td, textAlign: "right" };
+  const tdCenter: CSSProperties = { ...td, textAlign: "center" };
 
   return (
     <table style={{ width: "100%", borderCollapse: "collapse" }}>
       <thead>
         <tr>
+          <th style={thCenter}></th>
           <th style={thBase}>Model</th>
-          <th style={thBase}>Brand</th>
+          <th style={thRight}>Year</th>
+          <th style={thBase}>Age</th>
           <th style={thRight}>Price</th>
           <th style={thRight}>Screen</th>
           {statsToShow.map((stat) => (
@@ -71,15 +77,31 @@ export function TableView({
         </tr>
       </thead>
       <tbody>
-        {rows.map(({ entry, stats }) => {
+        {entries.map(({ entry, stats }) => {
           const isPlayer = entry.company.id === playerCompanyId;
           const rowColor = isPlayer ? tokens.colors.accent : undefined;
+          const designId = entry.model.design.id;
+          const inCompare = compareIds.includes(designId);
+          const disabled = compareFull && !inCompare;
+          const ageLabel = getAgeLabel(entry.model.yearDesigned, year);
+          const ageColor = getAgeColor(entry.model.yearDesigned, year);
           return (
-            <tr key={entry.model.design.id}>
-              <td style={{ ...td, fontWeight: 600, color: rowColor }}>
-                {entry.model.design.name}
+            <tr key={designId}>
+              <td style={tdCenter}>
+                <button
+                  onClick={() => onToggleCompare(designId)}
+                  disabled={disabled}
+                  title={inCompare ? "Remove from compare" : disabled ? "Compare full (max 3)" : "Add to compare"}
+                  style={compareBtnStyle(inCompare, disabled, true)}
+                >
+                  <GitCompareArrows size={12} />
+                </button>
               </td>
-              <td style={{ ...td, color: tokens.colors.textMuted }}>{entry.company.name}</td>
+              <td style={{ ...td, fontWeight: 600, color: rowColor }}>
+                {modelDisplayName(entry.company.name, entry.model.design.name)}
+              </td>
+              <td style={tdR}>{entry.model.yearDesigned}</td>
+              <td style={{ ...td, color: ageColor, fontWeight: 600 }}>{ageLabel}</td>
               <td style={tdR}>${entry.model.retailPrice!.toLocaleString()}</td>
               <td style={tdR}>{entry.model.design.screenSize}"</td>
               {statsToShow.map((stat) => {

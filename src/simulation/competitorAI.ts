@@ -272,7 +272,7 @@ function generateSingleModel(
   const designId = crypto.randomUUID();
   const design: LaptopDesign = {
     id: designId,
-    name: `${competitor.name} ${year}`,
+    name: `${competitor.productLine} ${year}`,
     modelType: "brandNew",
     predecessorId: null,
     screenSize,

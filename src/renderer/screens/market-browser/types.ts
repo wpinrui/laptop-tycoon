@@ -16,7 +16,7 @@ export interface MarketEntry {
   model: LaptopModel;
 }
 
-export type SortKey = "name" | "price" | "brand" | "screenSize" | `stat:${LaptopStat}`;
+export type SortKey = "year" | "unitsSold" | "name" | "price" | "brand" | "screenSize" | `stat:${LaptopStat}`;
 
 export const COMPONENT_SLOT_LABELS: Record<ComponentSlot, string> = {
   cpu: "CPU",
@@ -40,6 +40,43 @@ export const TABLE_STATS: LaptopStat[] = ["performance", "gamingPerformance", "b
 export const MAX_COMPARE = 3;
 
 export const RADAR_COLORS = ["#4fc3f7", "#ffb74d", "#ce93d8"];
+
+/** Shared compare-toggle button style used by card and table views. */
+export const compareBtnStyle = (active: boolean, disabled: boolean, compact = false): CSSProperties => ({
+  background: active ? tokens.colors.accentBg : "transparent",
+  border: `1px solid ${active ? tokens.colors.accent : tokens.colors.panelBorder}`,
+  borderRadius: tokens.borderRadius.sm,
+  color: active && !disabled ? tokens.colors.accent : tokens.colors.textMuted,
+  cursor: disabled ? "default" : "pointer",
+  padding: compact ? 2 : `${tokens.spacing.xs}px`,
+  display: compact ? "inline-flex" : "flex",
+  alignItems: "center",
+  opacity: disabled ? 0.4 : 1,
+  fontFamily: tokens.font.family,
+});
+
+/** How old a model is relative to the current game year. */
+function getModelAge(yearDesigned: number, currentYear: number): number {
+  return currentYear - yearDesigned;
+}
+
+/** Human-readable age label. */
+export function getAgeLabel(yearDesigned: number, currentYear: number): string {
+  const age = getModelAge(yearDesigned, currentYear);
+  if (age <= 0) return "New";
+  if (age === 1) return "1 yr old";
+  return `${age} yrs old`;
+}
+
+/** Color for age badge — fresh models are green, aging ones fade to warning/danger. */
+export function getAgeColor(yearDesigned: number, currentYear: number): string {
+  const age = getModelAge(yearDesigned, currentYear);
+  if (age <= 0) return tokens.colors.success;
+  if (age === 1) return tokens.colors.accent;
+  if (age <= 2) return tokens.colors.textMuted;
+  if (age <= 3) return tokens.colors.warning;
+  return tokens.colors.danger;
+}
 
 // --- Helpers ---
 
@@ -65,25 +102,6 @@ export function getLastQuarterSales(
   return result ? result.unitsSold : null;
 }
 
-export function getAllStats(model: LaptopModel, year: number): { stat: LaptopStat; label: string; value: number }[] {
-  const stats = computeStatsForDesign(model.design, year);
-  return ALL_STATS
-    .map((stat) => ({ stat, label: STAT_LABELS[stat], value: stats[stat] ?? 0 }))
-    .filter((s) => s.value > 0)
-    .sort((a, b) => b.value - a.value);
-}
-
-export function getMaxStatValue(entries: MarketEntry[], year: number): Partial<Record<LaptopStat, number>> {
-  const maxes: Partial<Record<LaptopStat, number>> = {};
-  for (const { model } of entries) {
-    const stats = computeStatsForDesign(model.design, year);
-    for (const stat of ALL_STATS) {
-      const val = stats[stat] ?? 0;
-      if (!maxes[stat] || val > maxes[stat]) maxes[stat] = val;
-    }
-  }
-  return maxes;
-}
 
 export function getPortSummary(ports: Record<string, number>): string[] {
   const lines: string[] = [];

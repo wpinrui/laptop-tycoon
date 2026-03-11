@@ -61,15 +61,10 @@ export function AdvanceYearCard() {
 
   // Only require manufacturing plans in Q1 — subsequent quarters can proceed freely
   const needPlans = isQ1 ? modelsNeedingPlans({ year: state.year, models: activeModels }) : [];
-  const allReady = isQ1
-    ? activeModels.length > 0 && needPlans.length === 0
-    : activeModels.length > 0;
+  const allReady = isQ1 ? needPlans.length === 0 : true;
   const warnings: string[] = [];
 
-  if (isQ1 && activeModels.length === 0) {
-    warnings.push("Design at least one laptop model");
-  }
-  if (isQ1 && activeModels.length > 0 && needPlans.length > 0) {
+  if (isQ1 && needPlans.length > 0) {
     warnings.push(
       `Add manufacturing plans for: ${needPlans.map((m) => modelDisplayName(player.name, m.design.name)).join(", ")}`,
     );
