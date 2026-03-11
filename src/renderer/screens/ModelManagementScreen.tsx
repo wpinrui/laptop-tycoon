@@ -13,6 +13,7 @@ import { StatusBar } from "../shell/StatusBar";
 import { getActiveModels, MAX_MODELS } from "./dashboard/utils";
 import { STATUS_CONFIG, getDisplayStatus } from "../statusConfig";
 import { ChangePricingDialog } from "../manufacturing/components/ChangePricingDialog";
+import { ConfirmDiscardDialog } from "../shell/ConfirmDiscardDialog";
 import {
   Laptop,
   Plus,
@@ -65,7 +66,7 @@ export function ModelManagementScreen() {
   const { navigateTo } = useNavigation();
   const { dispatch: wizardDispatch } = useWizard();
   const { dispatch: mfgDispatch } = useMfgWizard();
-  const [confirmScrapId, setConfirmScrapId] = useState<string | null>(null);
+  const [discontinueModel, setDiscontinueModel] = useState<LaptopModel | null>(null);
   const [showDiscontinued, setShowDiscontinued] = useState(false);
   const [pricingModel, setPricingModel] = useState<LaptopModel | null>(null);
 
@@ -106,7 +107,7 @@ export function ModelManagementScreen() {
 
   function handleScrap(modelId: string) {
     dispatch({ type: "UPDATE_MODEL_STATUS", modelId, status: "discontinued" });
-    setConfirmScrapId(null);
+    setDiscontinueModel(null);
   }
 
   return (
@@ -152,13 +153,10 @@ export function ModelManagementScreen() {
             key={model.design.id}
             model={model}
             companyName={player.name}
-            confirmScrap={confirmScrapId === model.design.id}
             onEdit={canDesignNew ? () => handleEdit(model) : undefined}
             onAddManufacturing={() => handleManufacturing(model)}
             onChangePricing={() => setPricingModel(model)}
-            onScrapClick={() => setConfirmScrapId(model.design.id)}
-            onScrapConfirm={() => handleScrap(model.design.id)}
-            onScrapCancel={() => setConfirmScrapId(null)}
+            onDiscontinue={() => setDiscontinueModel(model)}
             gameYear={state.year}
             gameQuarter={state.quarter}
             quarterSimulated={state.quarterSimulated}
@@ -193,10 +191,6 @@ export function ModelManagementScreen() {
                   key={model.design.id}
                   model={model}
                   companyName={player.name}
-                  confirmScrap={false}
-                  onScrapClick={() => {}}
-                  onScrapConfirm={() => {}}
-                  onScrapCancel={() => {}}
                   disabled
                   gameYear={state.year}
                   gameQuarter={state.quarter}
@@ -210,6 +204,21 @@ export function ModelManagementScreen() {
       <div style={{ flexShrink: 0, height: tokens.spacing.lg }} />
       </div>
       <StatusBar />
+
+      {discontinueModel && (
+        <ConfirmDiscardDialog
+          title={discontinueModel.status === "draft" ? "Scrap Model?" : "Discontinue Model?"}
+          message={
+            discontinueModel.status === "draft"
+              ? `Are you sure you want to scrap ${modelDisplayName(player.name, discontinueModel.design.name)}? This cannot be undone.`
+              : `Are you sure you want to discontinue ${modelDisplayName(player.name, discontinueModel.design.name)}?${discontinueModel.unitsInStock > 0 ? ` ${discontinueModel.unitsInStock.toLocaleString()} units in stock will be lost.` : ""}`
+          }
+          confirmLabel={discontinueModel.status === "draft" ? "Scrap" : "Discontinue"}
+          cancelLabel="Cancel"
+          onConfirm={() => handleScrap(discontinueModel.design.id)}
+          onCancel={() => setDiscontinueModel(null)}
+        />
+      )}
 
       {pricingModel && pricingModel.retailPrice !== null && (
         <ChangePricingDialog
@@ -234,13 +243,10 @@ export function ModelManagementScreen() {
 function ModelCard({
   model,
   companyName,
-  confirmScrap,
   onEdit,
   onAddManufacturing,
   onChangePricing,
-  onScrapClick,
-  onScrapConfirm,
-  onScrapCancel,
+  onDiscontinue,
   disabled,
   gameYear,
   gameQuarter,
@@ -248,13 +254,10 @@ function ModelCard({
 }: {
   model: LaptopModel;
   companyName: string;
-  confirmScrap: boolean;
   onEdit?: () => void;
   onAddManufacturing?: () => void;
   onChangePricing?: () => void;
-  onScrapClick: () => void;
-  onScrapConfirm: () => void;
-  onScrapCancel: () => void;
+  onDiscontinue?: () => void;
   disabled?: boolean;
   gameYear: number;
   gameQuarter: 1 | 2 | 3 | 4;
@@ -449,73 +452,22 @@ function ModelCard({
               )}
             </>
           )}
-          <InlineConfirm
-            label={status === "draft" ? "Scrap" : "Discontinue"}
-            confirmMessage={status === "draft" ? "Scrap this model?" : "Discontinue this model?"}
-            isConfirming={confirmScrap}
-            onTrigger={onScrapClick}
-            onConfirm={onScrapConfirm}
-            onCancel={onScrapCancel}
-          />
+          {onDiscontinue && (
+            <MenuButton
+              onClick={onDiscontinue}
+              style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
+                <Trash2 size={14} /> {status === "draft" ? "Scrap" : "Discontinue"}
+              </span>
+            </MenuButton>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-function InlineConfirm({
-  label,
-  confirmMessage,
-  isConfirming,
-  onTrigger,
-  onConfirm,
-  onCancel,
-}: {
-  label: string;
-  confirmMessage: string;
-  isConfirming: boolean;
-  onTrigger: () => void;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  if (isConfirming) {
-    return (
-      <div style={{ display: "flex", gap: tokens.spacing.xs, alignItems: "center" }}>
-        <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.danger }}>{confirmMessage}</span>
-        <MenuButton
-          onClick={onConfirm}
-          style={{
-            fontSize: tokens.font.sizeSmall,
-            padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
-            background: tokens.colors.danger,
-            color: "#fff",
-          }}
-        >
-          Yes
-        </MenuButton>
-        <MenuButton
-          onClick={onCancel}
-          style={{
-            fontSize: tokens.font.sizeSmall,
-            padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
-          }}
-        >
-          No
-        </MenuButton>
-      </div>
-    );
-  }
-  return (
-    <MenuButton
-      onClick={onTrigger}
-      style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
-    >
-      <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-        <Trash2 size={14} /> {label}
-      </span>
-    </MenuButton>
-  );
-}
 
 function SpecRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
