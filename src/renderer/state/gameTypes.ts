@@ -46,6 +46,8 @@ export interface LaptopModel {
   unitsInStock: number;
   /** Cumulative amount spent on manufacturing this model across all orders. */
   totalProductionSpend: number;
+  /** Cumulative units ordered across all manufacturing orders. */
+  totalUnitsOrdered: number;
 }
 
 /** Returns true if any component in the design has been discontinued by the given year. */

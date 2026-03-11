@@ -232,12 +232,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
             const oldPlan = m.manufacturingPlan;
             const isEdit = oldPlan && oldPlan.year === action.plan.year && oldPlan.quarter === action.plan.quarter;
             const oldCost = isEdit ? oldPlan.manufacturing.totalCost + oldPlan.marketing.cost : 0;
+            const oldUnits = isEdit ? oldPlan.manufacturing.unitsOrdered : 0;
             return {
               ...m,
               manufacturingPlan: action.plan,
               retailPrice: action.plan.manufacturing.unitPrice,
               manufacturingQuantity: action.plan.manufacturing.unitsOrdered,
               totalProductionSpend: (m.totalProductionSpend ?? 0) - oldCost + newCost,
+              totalUnitsOrdered: (m.totalUnitsOrdered ?? 0) - oldUnits + action.plan.manufacturing.unitsOrdered,
             };
           }),
         ),

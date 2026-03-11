@@ -303,6 +303,7 @@ function generateSingleModel(
     manufacturingPlan: null,
     unitsInStock: 0,
     totalProductionSpend: 0,
+    totalUnitsOrdered: 0,
   };
 }
 

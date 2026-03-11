@@ -270,7 +270,22 @@ export function ManufacturingStep() {
   const optimisticProfit = optimisticSold * cost.revenuePerUnit - cost.totalManufacturingSpend;
   const cashAfter = gameState.cash - cost.totalManufacturingSpend;
 
-  const marginPerUnit = cost.revenuePerUnit - cost.fullyLoadedCostPerUnit;
+  // For additional orders, compute blended break-even cost across all orders
+  const blendedCostPerUnit = (() => {
+    if (!state.isAdditionalOrder || !model) return cost.fullyLoadedCostPerUnit;
+    const priorSpend = model.totalProductionSpend ?? 0;
+    const priorUnits = model.totalUnitsOrdered ?? 0;
+    // Check if we're editing an existing same-quarter plan — subtract its old cost/units
+    const existingPlan = model.manufacturingPlan;
+    const isEdit = existingPlan && existingPlan.year === gameState.year && existingPlan.quarter === gameState.quarter;
+    const oldPlanCost = isEdit ? existingPlan.manufacturing.totalCost + existingPlan.marketing.cost : 0;
+    const oldPlanUnits = isEdit ? existingPlan.manufacturing.unitsOrdered : 0;
+    const totalSpend = priorSpend - oldPlanCost + cost.totalManufacturingSpend;
+    const totalUnits = priorUnits - oldPlanUnits + effectiveQty;
+    return totalUnits > 0 ? totalSpend / totalUnits : cost.fullyLoadedCostPerUnit;
+  })();
+
+  const marginPerUnit = cost.revenuePerUnit - blendedCostPerUnit;
   const marginPct = effectivePrice > 0 ? (marginPerUnit / effectivePrice) * 100 : 0;
 
   const profitable = marginPerUnit > 0;
@@ -407,7 +422,7 @@ export function ManufacturingStep() {
             gap: tokens.spacing.sm,
           }}>
             <MetricCard
-              label="Margin / unit"
+              label={state.isAdditionalOrder ? "Blended margin / unit" : "Margin / unit"}
               value={`${fmt(marginPerUnit)} (${Math.round(marginPct)}%)`}
               color={profitColor}
               bgColor={profitBg}
