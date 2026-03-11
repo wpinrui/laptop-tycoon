@@ -61,6 +61,19 @@ function WizardContent() {
 
   function handleConfirm() {
     if (!model) return;
+
+    // Additional order with 0 units = cancel the additional order
+    if (state.isAdditionalOrder && state.unitsOrdered === 0) {
+      // If we previously saved an additional order this quarter, revert it
+      const existingPlan = model.manufacturingPlan;
+      const hasSavedAdditionalOrder = existingPlan && existingPlan.year === gameState.year && existingPlan.quarter === gameState.quarter;
+      if (hasSavedAdditionalOrder) {
+        gameDispatch({ type: "CANCEL_CURRENT_QUARTER_PLAN", modelId: state.modelId });
+      }
+      navigateTo("modelManagement");
+      return;
+    }
+
     const { cost, campaignCost } = buildCostBreakdown(gameState, state);
 
     const plan: FullManufacturingPlan = {

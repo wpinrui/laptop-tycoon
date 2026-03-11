@@ -27,6 +27,7 @@ type GameAction =
   | { type: "SET_MODEL_PRICING"; modelId: string; retailPrice: number; manufacturingQuantity: number }
   | { type: "UPDATE_MODEL_DESIGN"; modelId: string; design: LaptopDesign }
   | { type: "SET_MANUFACTURING_PLAN"; modelId: string; plan: FullManufacturingPlan }
+  | { type: "CANCEL_CURRENT_QUARTER_PLAN"; modelId: string }
   | { type: "SET_RETAIL_PRICE"; modelId: string; retailPrice: number }
   | { type: "ADD_COMPETITOR_MODELS"; models: CompetitorModelEntry[] }
   | { type: "APPLY_QUARTER_RESULT"; result: QuarterSimulationResult }
@@ -240,6 +241,27 @@ function gameReducer(state: GameState, action: GameAction): GameState {
               manufacturingQuantity: action.plan.manufacturing.unitsOrdered,
               totalProductionSpend: (m.totalProductionSpend ?? 0) - oldCost + newCost,
               totalUnitsOrdered: (m.totalUnitsOrdered ?? 0) - oldUnits + action.plan.manufacturing.unitsOrdered,
+            };
+          }),
+        ),
+      };
+    }
+    case "CANCEL_CURRENT_QUARTER_PLAN": {
+      return {
+        ...state,
+        companies: updatePlayerModels(state.companies, (models) =>
+          models.map((m) => {
+            if (m.design.id !== action.modelId) return m;
+            const plan = m.manufacturingPlan;
+            if (!plan || plan.year !== state.year || plan.quarter !== state.quarter) return m;
+            // Undo the cost/units that were accumulated when this plan was saved
+            const planCost = plan.manufacturing.totalCost + plan.marketing.cost;
+            return {
+              ...m,
+              manufacturingPlan: null,
+              manufacturingQuantity: null,
+              totalProductionSpend: (m.totalProductionSpend ?? 0) - planCost,
+              totalUnitsOrdered: (m.totalUnitsOrdered ?? 0) - plan.manufacturing.unitsOrdered,
             };
           }),
         ),
