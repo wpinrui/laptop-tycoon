@@ -99,8 +99,8 @@ export function MarketBrowserScreen() {
     ...priceBuckets.map((p) => ({ value: String(p), label: `$${p.toLocaleString()}` })),
   ];
 
-  // Filter
-  let filtered = allEntries;
+  // Filter (copy so sort doesn't mutate the source array)
+  let filtered = [...allEntries];
   if (filterBrand !== "all") {
     filtered = filtered.filter((e) => e.company.id === filterBrand);
   }
