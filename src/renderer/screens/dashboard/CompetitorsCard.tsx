@@ -20,7 +20,7 @@ function PriceRangeBar({
   // If all laptops have the same price, show a full bar
   if (range <= 0) {
     return (
-      <div style={{ fontSize: tokens.font.sizeSmall }}>
+      <div style={{ fontSize: tokens.font.sizeBase }}>
         <div style={{ color: tokens.colors.textMuted, marginBottom: 3 }}>
           All models at ${marketMin.toLocaleString()}
         </div>
@@ -39,7 +39,7 @@ function PriceRangeBar({
   const segmentWidth = Math.max(pctRight - pctLeft, 6);
 
   return (
-    <div style={{ fontSize: tokens.font.sizeSmall }}>
+    <div style={{ fontSize: tokens.font.sizeBase }}>
       <div style={{ display: "flex", justifyContent: "space-between", color: tokens.colors.textMuted, marginBottom: 4 }}>
         <span>${marketMin.toLocaleString()}</span>
         <span>${marketMax.toLocaleString()}</span>
@@ -104,7 +104,7 @@ export function CompetitorsCard() {
     <BentoCard title="Market" icon={Monitor} screen="marketBrowser">
       <div style={{ display: "flex", flexDirection: "column", gap: tokens.spacing.md }}>
         {/* Model counts */}
-        <div style={{ fontSize: 11, color: tokens.colors.textMuted }}>
+        <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
           {playerEntries.length} model{playerEntries.length !== 1 ? "s" : ""} vs {competitorCount} competitors
         </div>
 
@@ -124,18 +124,18 @@ export function CompetitorsCard() {
             borderTop: `1px solid ${tokens.colors.panelBorder}`,
             paddingTop: tokens.spacing.sm,
           }}>
-            <div style={{ fontSize: 11, color: tokens.colors.textMuted, marginBottom: 4 }}>
+            <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, marginBottom: 4 }}>
               Top seller last quarter
             </div>
             <div style={{
-              fontSize: tokens.font.sizeBase,
+              fontSize: tokens.font.sizeLarge,
               fontWeight: 700,
               color: topSeller.isPlayer ? tokens.colors.accent : tokens.colors.text,
             }}>
               {topSeller.name}
             </div>
             <div style={{
-              fontSize: tokens.font.sizeSmall,
+              fontSize: tokens.font.sizeBase,
               color: topSeller.isPlayer ? tokens.colors.accent : tokens.colors.text,
               fontWeight: 600,
               marginTop: 2,
@@ -144,7 +144,7 @@ export function CompetitorsCard() {
             </div>
             {playerBest && !topSeller.isPlayer && (
               <div style={{
-                fontSize: 11,
+                fontSize: tokens.font.sizeSmall,
                 color: tokens.colors.textMuted,
                 marginTop: 4,
               }}>
