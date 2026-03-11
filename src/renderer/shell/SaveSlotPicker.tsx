@@ -1,16 +1,28 @@
-import { CSSProperties, useState } from "react";
-import { SaveSlotMeta, getAllSlotMeta, deleteSlot } from "./saveSystem";
+import { CSSProperties, useEffect, useState } from "react";
+import {
+  SaveSlotMeta,
+  AutosaveMeta,
+  getAllSlotMeta,
+  getAutosaveMetas,
+  deleteSlot,
+} from "./saveSystem";
 import { ContentPanel } from "./ContentPanel";
 import { MenuButton } from "./MenuButton";
 import { tokens, overlayStyle as baseOverlayStyle } from "./tokens";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 interface SaveSlotPickerProps {
   title: string;
-  onSelect: (slotIndex: number) => void;
+  onSelect: (slotId: string) => void;
   onCancel: () => void;
   allowDelete?: boolean;
   /** If true, selecting an occupied slot requires overwrite confirmation. */
   confirmOverwrite?: boolean;
+  /** If true, show a "New Save" button for creating a new slot. */
+  allowNewSlot?: boolean;
+  onNewSlot?: () => void;
+  /** If provided, also allow selecting an autosave. */
+  onSelectAutosave?: (slotId: string, autoIndex: number) => void;
 }
 
 const overlayStyle: CSSProperties = {
@@ -35,6 +47,13 @@ const slotStyle: CSSProperties = {
   textAlign: "left",
 };
 
+const autoRowStyle: CSSProperties = {
+  ...slotStyle,
+  fontSize: tokens.font.sizeBase,
+  padding: `${tokens.spacing.sm}px ${tokens.spacing.lg}px ${tokens.spacing.sm}px 48px`,
+  color: tokens.colors.textMuted,
+};
+
 function formatDate(timestamp: number): string {
   const d = new Date(timestamp);
   return d.toLocaleDateString(undefined, {
@@ -46,39 +65,88 @@ function formatDate(timestamp: number): string {
   });
 }
 
+function AutosaveRow({
+  meta,
+  onSelect,
+}: {
+  meta: AutosaveMeta;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      style={autoRowStyle}
+      onClick={onSelect}
+      onMouseEnter={(e) => (e.currentTarget.style.background = tokens.colors.surfaceHover)}
+      onMouseLeave={(e) => (e.currentTarget.style.background = tokens.colors.surface)}
+    >
+      <span
+        style={{
+          background: tokens.colors.surfaceHover,
+          borderRadius: tokens.borderRadius.sm,
+          padding: "2px 6px",
+          fontSize: tokens.font.sizeSmall,
+          fontWeight: 600,
+          marginRight: tokens.spacing.xs,
+        }}
+      >
+        Auto
+      </span>
+      <span>
+        Year {meta.year} Q{meta.quarter} — {formatDate(meta.savedAt)}
+      </span>
+    </button>
+  );
+}
+
 function SlotRow({
-  index,
   meta,
   onSelect,
   allowDelete,
   onDeleted,
+  expanded,
+  onToggleExpand,
+  showExpander,
 }: {
-  index: number;
-  meta: SaveSlotMeta | null;
-  onSelect: (i: number) => void;
+  meta: SaveSlotMeta;
+  onSelect: () => void;
   allowDelete?: boolean;
   onDeleted: () => void;
+  expanded: boolean;
+  onToggleExpand: () => void;
+  showExpander: boolean;
 }) {
+  const Chevron = expanded ? ChevronDown : ChevronRight;
   return (
     <div style={{ display: "flex", gap: tokens.spacing.xs }}>
+      {showExpander && (
+        <button
+          style={{
+            ...slotStyle,
+            width: 36,
+            padding: 0,
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+          onClick={onToggleExpand}
+          onMouseEnter={(e) => (e.currentTarget.style.background = tokens.colors.surfaceHover)}
+          onMouseLeave={(e) => (e.currentTarget.style.background = tokens.colors.surface)}
+          title={expanded ? "Collapse autosaves" : "Expand autosaves"}
+        >
+          <Chevron size={16} />
+        </button>
+      )}
       <button
-        style={slotStyle}
-        onClick={() => onSelect(index)}
+        style={{ ...slotStyle, paddingLeft: showExpander ? tokens.spacing.md : tokens.spacing.lg }}
+        onClick={onSelect}
         onMouseEnter={(e) => (e.currentTarget.style.background = tokens.colors.surfaceHover)}
         onMouseLeave={(e) => (e.currentTarget.style.background = tokens.colors.surface)}
       >
-        <span style={{ fontWeight: 600, minWidth: 60 }}>Slot {index + 1}</span>
-        {meta ? (
-          <span style={{ color: tokens.colors.textMuted, fontSize: tokens.font.sizeBase }}>
-            {meta.companyName} — Year {meta.year} — {formatDate(meta.savedAt)}
-          </span>
-        ) : (
-          <span style={{ color: tokens.colors.textMuted, fontStyle: "italic", fontSize: tokens.font.sizeBase }}>
-            Empty
-          </span>
-        )}
+        <span style={{ fontWeight: 600, minWidth: 0 }}>{meta.companyName}</span>
+        <span style={{ color: tokens.colors.textMuted, fontSize: tokens.font.sizeBase }}>
+          — Year {meta.year} Q{meta.quarter} — {formatDate(meta.savedAt)}
+        </span>
       </button>
-      {allowDelete && meta && (
+      {allowDelete && (
         <button
           style={{
             ...slotStyle,
@@ -87,9 +155,10 @@ function SlotRow({
             padding: `${tokens.spacing.md}px ${tokens.spacing.md}px`,
             color: tokens.colors.danger,
             fontSize: tokens.font.sizeBase,
+            flexShrink: 0,
           }}
           title="Delete save"
-          onClick={() => onDeleted()}
+          onClick={onDeleted}
           onMouseEnter={(e) => (e.currentTarget.style.background = tokens.colors.surfaceHover)}
           onMouseLeave={(e) => (e.currentTarget.style.background = tokens.colors.surface)}
         >
@@ -114,105 +183,173 @@ const subtitleStyle: CSSProperties = {
   textAlign: "center",
 };
 
-export function SaveSlotPicker({ title, onSelect, onCancel, allowDelete, confirmOverwrite }: SaveSlotPickerProps) {
+export function SaveSlotPicker({
+  title,
+  onSelect,
+  onCancel,
+  allowDelete,
+  confirmOverwrite,
+  allowNewSlot,
+  onNewSlot,
+  onSelectAutosave,
+}: SaveSlotPickerProps) {
+  const [slots, setSlots] = useState<SaveSlotMeta[]>([]);
+  const [autosaves, setAutosaves] = useState<Record<string, AutosaveMeta[]>>({});
+  const [expandedSlot, setExpandedSlot] = useState<string | null>(null);
+  const [pendingDeleteSlot, setPendingDeleteSlot] = useState<SaveSlotMeta | null>(null);
+  const [pendingOverwriteSlot, setPendingOverwriteSlot] = useState<SaveSlotMeta | null>(null);
   const [revision, setRevision] = useState(0);
-  const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(null);
-  const [pendingOverwriteIndex, setPendingOverwriteIndex] = useState<number | null>(null);
-  // Re-read slots from localStorage each render (revision forces re-read after delete)
-  void revision;
-  const rawSlots = getAllSlotMeta();
 
-  // Build indexed entries and sort: occupied slots by most recent first, empty slots at the end
-  const entries = rawSlots.map((meta, i) => ({ meta, index: i }));
-  entries.sort((a, b) => {
-    if (a.meta && b.meta) return b.meta.savedAt - a.meta.savedAt;
-    if (a.meta) return -1;
-    if (b.meta) return 1;
-    return a.index - b.index;
-  });
+  // Load slot metadata
+  useEffect(() => {
+    void getAllSlotMeta().then((metas) => {
+      // Sort by most recent first
+      metas.sort((a, b) => b.savedAt - a.savedAt);
+      setSlots(metas);
+    });
+  }, [revision]);
 
-  function confirmDelete() {
-    if (pendingDeleteIndex === null) return;
-    deleteSlot(pendingDeleteIndex);
-    setPendingDeleteIndex(null);
-    setRevision((r) => r + 1);
-  }
+  // Load autosaves when a slot is expanded
+  useEffect(() => {
+    if (!expandedSlot) return;
+    void getAutosaveMetas(expandedSlot).then((metas) => {
+      setAutosaves((prev) => ({ ...prev, [expandedSlot]: metas }));
+    });
+  }, [expandedSlot, revision]);
 
-  function handleSlotSelect(index: number) {
-    if (confirmOverwrite && rawSlots[index]) {
-      setPendingOverwriteIndex(index);
+  function handleSlotSelect(meta: SaveSlotMeta) {
+    if (confirmOverwrite) {
+      setPendingOverwriteSlot(meta);
     } else {
-      onSelect(index);
+      onSelect(meta.slotId);
     }
   }
 
-  const pendingMeta = pendingDeleteIndex !== null ? rawSlots[pendingDeleteIndex] : null;
-  const overwriteMeta = pendingOverwriteIndex !== null ? rawSlots[pendingOverwriteIndex] : null;
+  async function confirmDelete() {
+    if (!pendingDeleteSlot) return;
+    await deleteSlot(pendingDeleteSlot.slotId);
+    setPendingDeleteSlot(null);
+    setExpandedSlot(null);
+    setRevision((r) => r + 1);
+  }
 
   return (
     <>
       <div style={overlayStyle} onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
-        <ContentPanel maxWidth={600}>
+        <ContentPanel maxWidth={640}>
           <h2 style={{ margin: 0, fontSize: tokens.font.sizeTitle, fontWeight: 700, textAlign: "center" }}>
             {title}
           </h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: tokens.spacing.sm, marginTop: tokens.spacing.lg }}>
-            {entries.map(({ meta, index }) => (
-              <SlotRow
-                key={index}
-                index={index}
-                meta={meta}
-                onSelect={handleSlotSelect}
-                allowDelete={allowDelete}
-                onDeleted={() => setPendingDeleteIndex(index)}
-              />
-            ))}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: tokens.spacing.sm,
+              marginTop: tokens.spacing.lg,
+              maxHeight: 420,
+              overflowY: "auto",
+            }}
+          >
+            {slots.map((meta) => {
+              const slotAutos = autosaves[meta.slotId] ?? [];
+              const isExpanded = expandedSlot === meta.slotId;
+              return (
+                <div key={meta.slotId} style={{ display: "flex", flexDirection: "column", gap: tokens.spacing.xs }}>
+                  <SlotRow
+                    meta={meta}
+                    onSelect={() => handleSlotSelect(meta)}
+                    allowDelete={allowDelete}
+                    onDeleted={() => setPendingDeleteSlot(meta)}
+                    expanded={isExpanded}
+                    onToggleExpand={() => setExpandedSlot(isExpanded ? null : meta.slotId)}
+                    showExpander={!!onSelectAutosave}
+                  />
+                  {isExpanded && onSelectAutosave && slotAutos.length > 0 && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      {slotAutos.map((am) => (
+                        <AutosaveRow
+                          key={am.autoIndex}
+                          meta={am}
+                          onSelect={() => onSelectAutosave(meta.slotId, am.autoIndex)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {isExpanded && onSelectAutosave && slotAutos.length === 0 && (
+                    <div style={{ ...autoRowStyle, cursor: "default", fontStyle: "italic" }}>
+                      No autosaves yet
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {slots.length === 0 && (
+              <div style={{ textAlign: "center", color: tokens.colors.textMuted, padding: tokens.spacing.lg }}>
+                No saves found
+              </div>
+            )}
           </div>
-          <div style={{ marginTop: tokens.spacing.lg }}>
-            <MenuButton onClick={onCancel} style={{ width: "100%" }}>Cancel</MenuButton>
+          <div style={{ display: "flex", gap: tokens.spacing.sm, marginTop: tokens.spacing.lg }}>
+            {allowNewSlot && onNewSlot && (
+              <MenuButton variant="accent" onClick={onNewSlot} style={{ flex: 1 }}>
+                New Save
+              </MenuButton>
+            )}
+            <MenuButton onClick={onCancel} style={{ flex: 1 }}>Cancel</MenuButton>
           </div>
         </ContentPanel>
       </div>
-      {pendingDeleteIndex !== null && pendingMeta && (
+      {pendingDeleteSlot && (
         <div
           style={confirmOverlayStyle}
-          onClick={(e) => { if (e.target === e.currentTarget) setPendingDeleteIndex(null); }}
+          onClick={(e) => { if (e.target === e.currentTarget) setPendingDeleteSlot(null); }}
         >
           <ContentPanel maxWidth={560}>
             <h2 style={{ margin: 0, fontSize: tokens.font.sizeTitle, fontWeight: 700, textAlign: "center" }}>
               Delete Save?
             </h2>
             <p style={{ ...subtitleStyle, marginBottom: tokens.spacing.md }}>
-              Slot {pendingDeleteIndex + 1}: {pendingMeta.companyName} — Year {pendingMeta.year}
+              {pendingDeleteSlot.companyName} — Year {pendingDeleteSlot.year}
+            </p>
+            <p style={{ ...subtitleStyle, marginBottom: tokens.spacing.md, fontSize: tokens.font.sizeSmall }}>
+              This will also delete all autosaves for this slot.
             </p>
             <div style={{ display: "flex", gap: tokens.spacing.sm }}>
-              <MenuButton onClick={() => setPendingDeleteIndex(null)} style={{ flex: 1 }}>
+              <MenuButton onClick={() => setPendingDeleteSlot(null)} style={{ flex: 1 }}>
                 Cancel
               </MenuButton>
-              <MenuButton variant="danger" onClick={confirmDelete} style={{ flex: 1 }}>
+              <MenuButton variant="danger" onClick={() => void confirmDelete()} style={{ flex: 1 }}>
                 Delete
               </MenuButton>
             </div>
           </ContentPanel>
         </div>
       )}
-      {pendingOverwriteIndex !== null && overwriteMeta && (
+      {pendingOverwriteSlot && (
         <div
           style={confirmOverlayStyle}
-          onClick={(e) => { if (e.target === e.currentTarget) setPendingOverwriteIndex(null); }}
+          onClick={(e) => { if (e.target === e.currentTarget) setPendingOverwriteSlot(null); }}
         >
           <ContentPanel maxWidth={560}>
             <h2 style={{ margin: 0, fontSize: tokens.font.sizeTitle, fontWeight: 700, textAlign: "center" }}>
               Overwrite Save?
             </h2>
             <p style={{ ...subtitleStyle, marginBottom: tokens.spacing.md }}>
-              Slot {pendingOverwriteIndex + 1}: {overwriteMeta.companyName} — Year {overwriteMeta.year}
+              {pendingOverwriteSlot.companyName} — Year {pendingOverwriteSlot.year}
             </p>
             <div style={{ display: "flex", gap: tokens.spacing.sm }}>
-              <MenuButton onClick={() => setPendingOverwriteIndex(null)} style={{ flex: 1 }}>
+              <MenuButton onClick={() => setPendingOverwriteSlot(null)} style={{ flex: 1 }}>
                 Cancel
               </MenuButton>
-              <MenuButton variant="danger" onClick={() => { const i = pendingOverwriteIndex; setPendingOverwriteIndex(null); onSelect(i); }} style={{ flex: 1 }}>
+              <MenuButton
+                variant="danger"
+                onClick={() => {
+                  const id = pendingOverwriteSlot.slotId;
+                  setPendingOverwriteSlot(null);
+                  onSelect(id);
+                }}
+                style={{ flex: 1 }}
+              >
                 Overwrite
               </MenuButton>
             </div>

@@ -1,7 +1,7 @@
-import { CSSProperties, useState } from "react";
+import { CSSProperties, useEffect, useState } from "react";
 import { useNavigation } from "../navigation/NavigationContext";
 import { useGame } from "../state/GameContext";
-import { hasAnySave, loadFromSlot } from "../shell/saveSystem";
+import { hasAnySave, loadFromSlot, loadAutosave } from "../shell/saveSystem";
 import { SaveSlotPicker } from "../shell/SaveSlotPicker";
 import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
@@ -34,11 +34,24 @@ const menuStyle: CSSProperties = {
 export function MainMenuScreen() {
   const { navigateTo } = useNavigation();
   const { dispatch } = useGame();
-  const saved = hasAnySave();
+  const [hasSaves, setHasSaves] = useState(false);
   const [showLoadSlots, setShowLoadSlots] = useState(false);
 
-  function handleLoadSlot(slotIndex: number) {
-    const state = loadFromSlot(slotIndex);
+  useEffect(() => {
+    void hasAnySave().then(setHasSaves);
+  }, []);
+
+  async function handleLoadSlot(slotId: string) {
+    const state = await loadFromSlot(slotId);
+    if (state) {
+      setShowLoadSlots(false);
+      dispatch({ type: "LOAD_GAME", state });
+      navigateTo("dashboard");
+    }
+  }
+
+  async function handleLoadAutosave(slotId: string, autoIndex: number) {
+    const state = await loadAutosave(slotId, autoIndex);
     if (state) {
       setShowLoadSlots(false);
       dispatch({ type: "LOAD_GAME", state });
@@ -57,7 +70,7 @@ export function MainMenuScreen() {
           <MenuButton variant="accent" onClick={() => navigateTo("newGame")}>
             New Game
           </MenuButton>
-          <MenuButton disabled={!saved} onClick={() => setShowLoadSlots(true)}>
+          <MenuButton disabled={!hasSaves} onClick={() => setShowLoadSlots(true)}>
             Load Game
           </MenuButton>
           <MenuButton disabled>Settings</MenuButton>
@@ -67,9 +80,10 @@ export function MainMenuScreen() {
       {showLoadSlots && (
         <SaveSlotPicker
           title="Load Game"
-          onSelect={handleLoadSlot}
+          onSelect={(slotId) => void handleLoadSlot(slotId)}
           onCancel={() => setShowLoadSlots(false)}
           allowDelete
+          onSelectAutosave={(slotId, autoIndex) => void handleLoadAutosave(slotId, autoIndex)}
         />
       )}
     </>

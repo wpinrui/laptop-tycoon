@@ -5,7 +5,7 @@ import { getPlayerCompany } from "../state/gameTypes";
 import { ContentPanel } from "./ContentPanel";
 import { MenuButton } from "./MenuButton";
 import { SaveSlotPicker } from "./SaveSlotPicker";
-import { saveToSlot } from "./saveSystem";
+import { saveToSlot, saveToNewSlot } from "./saveSystem";
 import { tokens, overlayStyle } from "./tokens";
 
 const titleStyle: CSSProperties = {
@@ -46,16 +46,28 @@ export function PauseMenu() {
   const [showSaveSlots, setShowSaveSlots] = useState(false);
   const [quitAfterSave, setQuitAfterSave] = useState(false);
 
-  function handleSaveToSlot(slotIndex: number) {
-    const ok = saveToSlot(slotIndex, state);
+  async function handleSaveToSlot(slotId: string) {
+    const ok = await saveToSlot(slotId, state);
     setShowSaveSlots(false);
     if (quitAfterSave) {
       setQuitAfterSave(false);
       handleQuitToMenu();
       return;
     }
-    setFeedback(ok ? `Saved to Slot ${slotIndex + 1}.` : "Save failed.");
+    setFeedback(ok ? "Game saved." : "Save failed.");
     if (ok) setTimeout(() => setFeedback(null), 2000);
+  }
+
+  async function handleNewSlot() {
+    const slotId = await saveToNewSlot(state);
+    setShowSaveSlots(false);
+    if (quitAfterSave) {
+      setQuitAfterSave(false);
+      handleQuitToMenu();
+      return;
+    }
+    setFeedback(slotId ? "Game saved." : "Save failed.");
+    if (slotId) setTimeout(() => setFeedback(null), 2000);
   }
 
   function handleQuitToMenu() {
@@ -88,9 +100,11 @@ export function PauseMenu() {
       {showSaveSlots && (
         <SaveSlotPicker
           title="Save Game"
-          onSelect={handleSaveToSlot}
+          onSelect={(slotId) => void handleSaveToSlot(slotId)}
           onCancel={() => { setShowSaveSlots(false); setQuitAfterSave(false); }}
           confirmOverwrite
+          allowNewSlot
+          onNewSlot={() => void handleNewSlot()}
         />
       )}
       {showQuitConfirm && (

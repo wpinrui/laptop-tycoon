@@ -2,7 +2,8 @@ import { CSSProperties } from "react";
 import { useGame } from "../state/GameContext";
 import { formatCash } from "../utils/formatCash";
 import { tokens } from "./tokens";
-import { Calendar, Coins } from "lucide-react";
+import { Calendar, Coins, Save } from "lucide-react";
+import { useAutosaveIndicator } from "./AutosaveProvider";
 
 const baseStyle: CSSProperties = {
   height: 36,
@@ -44,6 +45,7 @@ const itemStyle: CSSProperties = {
 
 export function StatusBar({ variant = "embedded" }: { variant?: "embedded" | "fixed" }) {
   const { state } = useGame();
+  const { showIndicator } = useAutosaveIndicator();
 
   return (
     <div style={variant === "fixed" ? fixedStyle : embeddedStyle}>
@@ -58,6 +60,12 @@ export function StatusBar({ variant = "embedded" }: { variant?: "embedded" | "fi
         <Coins size={14} strokeWidth={2.5} />
         {formatCash(state.cash)}
       </span>
+      {showIndicator && (
+        <span style={{ ...itemStyle, color: tokens.colors.textMuted, marginLeft: "auto", opacity: 0.7 }}>
+          <Save size={12} strokeWidth={2} />
+          Autosaved
+        </span>
+      )}
     </div>
   );
 }
