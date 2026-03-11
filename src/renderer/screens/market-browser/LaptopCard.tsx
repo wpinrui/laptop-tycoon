@@ -163,14 +163,14 @@ export function LaptopCard({
     <div style={isPlayer ? playerCardStyle : cardStyle}>
       {/* Header: name + price + age */}
       <div style={cardHeaderStyle}>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm }}>
-            <span style={modelNameStyle}>{modelDisplayName(company.name, design.name)}</span>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={modelNameStyle}>{modelDisplayName(company.name, design.name)}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm, marginTop: 2 }}>
+            <span style={brandNameStyle}>{company.name} · {model.yearDesigned}</span>
             <span style={ageBadgeStyle(ageColor)}>{ageLabel}</span>
           </div>
-          <div style={brandNameStyle}>{company.name} · {model.yearDesigned}</div>
         </div>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: tokens.spacing.sm }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: tokens.spacing.sm, flexShrink: 0 }}>
           <div style={priceStyle}>${model.retailPrice!.toLocaleString()}</div>
           <button
             style={compareBtnStyle(isInCompare, compareDisabled && !isInCompare)}
