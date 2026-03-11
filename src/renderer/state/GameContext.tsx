@@ -221,22 +221,28 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           ),
         ),
       };
-    case "SET_MANUFACTURING_PLAN":
+    case "SET_MANUFACTURING_PLAN": {
+      const newCost = action.plan.manufacturing.totalCost + action.plan.marketing.cost;
       return {
         ...state,
         companies: updatePlayerModels(state.companies, (models) =>
-          models.map((m) =>
-            m.design.id === action.modelId
-              ? {
-                  ...m,
-                  manufacturingPlan: action.plan,
-                  retailPrice: action.plan.manufacturing.unitPrice,
-                  manufacturingQuantity: action.plan.manufacturing.unitsOrdered,
-                }
-              : m,
-          ),
+          models.map((m) => {
+            if (m.design.id !== action.modelId) return m;
+            // If editing an existing same-quarter plan, subtract the old cost first
+            const oldPlan = m.manufacturingPlan;
+            const isEdit = oldPlan && oldPlan.year === action.plan.year && oldPlan.quarter === action.plan.quarter;
+            const oldCost = isEdit ? oldPlan.manufacturing.totalCost + oldPlan.marketing.cost : 0;
+            return {
+              ...m,
+              manufacturingPlan: action.plan,
+              retailPrice: action.plan.manufacturing.unitPrice,
+              manufacturingQuantity: action.plan.manufacturing.unitsOrdered,
+              totalProductionSpend: (m.totalProductionSpend ?? 0) - oldCost + newCost,
+            };
+          }),
         ),
       };
+    }
     case "SET_RETAIL_PRICE":
       return {
         ...state,

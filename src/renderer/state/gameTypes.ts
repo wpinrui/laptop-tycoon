@@ -44,6 +44,8 @@ export interface LaptopModel {
   manufacturingPlan: FullManufacturingPlan | null;
   /** Unsold units carried forward from previous year(s). */
   unitsInStock: number;
+  /** Cumulative amount spent on manufacturing this model across all orders. */
+  totalProductionSpend: number;
 }
 
 /** Returns true if any component in the design has been discontinued by the given year. */

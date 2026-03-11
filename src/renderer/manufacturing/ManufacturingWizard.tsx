@@ -28,6 +28,11 @@ function isStepComplete(step: ManufacturingWizardStep, state: ManufacturingWizar
   }
 }
 
+/** Get visible wizard steps — additional orders skip press release and confirmation. */
+function getVisibleSteps(isAdditionalOrder: boolean): ManufacturingWizardStep[] {
+  return isAdditionalOrder ? ["manufacturing"] : MFG_WIZARD_STEPS;
+}
+
 function WizardContent() {
   const { state, dispatch } = useMfgWizard();
   const { state: gameState, dispatch: gameDispatch } = useGame();
@@ -35,20 +40,21 @@ function WizardContent() {
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [visitedConfirmation, setVisitedConfirmation] = useState(false);
 
-  const currentIdx = MFG_WIZARD_STEPS.indexOf(state.currentStep);
+  const visibleSteps = getVisibleSteps(state.isAdditionalOrder);
+  const currentIdx = visibleSteps.indexOf(state.currentStep);
   const isFirst = currentIdx === 0;
-  const isLast = state.currentStep === "confirmation";
+  const isLast = currentIdx === visibleSteps.length - 1;
 
   if (isLast && !visitedConfirmation) setVisitedConfirmation(true);
 
-  const allStepsComplete = MFG_WIZARD_STEPS.every((s) => isStepComplete(s, state));
+  const allStepsComplete = visibleSteps.every((s) => isStepComplete(s, state));
   const canAdvance = isStepComplete(state.currentStep, state);
 
   function canNavigateTo(step: ManufacturingWizardStep) {
-    const targetIdx = MFG_WIZARD_STEPS.indexOf(step);
+    const targetIdx = visibleSteps.indexOf(step);
     if (targetIdx <= currentIdx) return true;
     for (let i = 0; i < targetIdx; i++) {
-      if (!isStepComplete(MFG_WIZARD_STEPS[i], state)) return false;
+      if (!isStepComplete(visibleSteps[i], state)) return false;
     }
     return true;
   }
@@ -149,11 +155,13 @@ function WizardContent() {
         </button>
       </div>
 
-      <MfgStepIndicator
-        currentStep={state.currentStep}
-        onStepClick={(step) => dispatch({ type: "GO_TO_STEP", step })}
-        canNavigateTo={canNavigateTo}
-      />
+      {!state.isAdditionalOrder && (
+        <MfgStepIndicator
+          currentStep={state.currentStep}
+          onStepClick={(step) => dispatch({ type: "GO_TO_STEP", step })}
+          canNavigateTo={canNavigateTo}
+        />
+      )}
 
       <div
         style={{
@@ -187,7 +195,7 @@ function WizardContent() {
           }}
           style={{ fontSize: tokens.font.sizeBase }}
         >
-          Back
+          {isFirst ? "Cancel" : "Back"}
         </MenuButton>
         <div style={{ display: "flex", gap: tokens.spacing.sm }}>
           {!isLast && allStepsComplete && visitedConfirmation && (
