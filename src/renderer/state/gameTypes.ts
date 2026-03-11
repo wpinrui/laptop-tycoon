@@ -99,7 +99,8 @@ export function modelDisplayName(companyName: string, designName: string): strin
 }
 
 export const STARTING_CASH = 50_000_000;
-export const STARTING_YEAR = 2000;
+export const AI_STARTING_YEAR = 2000;
+export const STARTING_YEAR = AI_STARTING_YEAR + 1;
 
 const ZERO_DEMOGRAPHICS: Record<DemographicId, number> = {
   corporate: 0,
@@ -139,7 +140,7 @@ export function createInitialGameState(
   return {
     companies: [playerCompany, ...aiCompanies],
     companyLogo,
-    year: STARTING_YEAR,
+    year: AI_STARTING_YEAR,
     quarter: 1 as Quarter,
     quarterSimulated: false,
     cash: STARTING_CASH,

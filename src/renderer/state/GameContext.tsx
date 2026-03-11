@@ -3,9 +3,11 @@ import { DemographicId } from "../../data/types";
 import { GameState, Quarter, LaptopDesign, LaptopModel, ModelStatus, CompanyState, createInitialGameState, hasDiscontinuedComponents } from "./gameTypes";
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { QuarterSimulationResult } from "../../simulation/salesTypes";
-import { clearProjectionCache } from "../../simulation/salesEngine";
+import { clearProjectionCache, simulateQuarter } from "../../simulation/salesEngine";
 import { updateBrandReach, updateCompetitorBrandReach, applySingleQuarterPerception } from "../../simulation/brandProgression";
 import { applyDeathSpiralPrevention } from "../../simulation/deathSpiralPrevention";
+import { generateCompetitorModels } from "../../simulation/competitorAI";
+import { COMPETITORS } from "../../data/competitors";
 import { LaptopReview, Award, applyAwardBonuses } from "../../simulation/reviewsAwards";
 import { SPONSORSHIPS, getSponsorshipCost } from "../../data/sponsorships";
 import { PERCEPTION_MEANINGFUL_DELTA } from "../../simulation/tunables";
@@ -57,11 +59,60 @@ function updatePlayerModels(
   return updatePlayer(companies, (p) => ({ ...p, models: modelUpdater(p.models) }));
 }
 
+/**
+ * Pre-simulate one full year of AI-only play.
+ * Generates competitor models, runs 4 quarters of simulation, updates brand
+ * reach/perception, then advances the year — so the player starts with an
+ * established market.
+ */
+function preSimulateAIYear(initial: GameState): GameState {
+  let s = initial;
+
+  // Generate AI models for this year
+  const generated = generateCompetitorModels(s.year, COMPETITORS, s.companies);
+  const modelByCompetitor = new Map(COMPETITORS.map((c, i) => [c.id, generated[i]]));
+  s = {
+    ...s,
+    companies: s.companies.map((comp) => {
+      if (comp.isPlayer) return comp;
+      const model = modelByCompetitor.get(comp.id);
+      return model ? { ...comp, models: [...comp.models, model] } : comp;
+    }),
+  };
+
+  // Simulate all 4 quarters
+  for (let q = 1; q <= 4; q++) {
+    s = { ...s, quarter: q as Quarter };
+    const result = simulateQuarter(s);
+
+    // Update competitor brand reach & perception (same as APPLY_QUARTER_RESULT)
+    s = {
+      ...s,
+      companies: s.companies.map((comp) => {
+        if (comp.isPlayer) return comp;
+        return {
+          ...comp,
+          brandReach: updateCompetitorBrandReach(comp, result),
+          brandPerception: applySingleQuarterPerception(comp, result.laptopResults),
+        };
+      }),
+    };
+  }
+
+  // Advance to next year Q1
+  return {
+    ...s,
+    year: s.year + 1,
+    quarter: 1 as Quarter,
+    quarterSimulated: false,
+  };
+}
+
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case "NEW_GAME":
       clearProjectionCache();
-      return createInitialGameState(action.companyName, action.companyLogo);
+      return preSimulateAIYear(createInitialGameState(action.companyName, action.companyLogo));
     case "LOAD_GAME":
       clearProjectionCache();
       return action.state;
