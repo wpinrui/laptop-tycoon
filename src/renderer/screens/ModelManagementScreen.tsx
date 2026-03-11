@@ -315,23 +315,28 @@ function ModelCard({
         )}
       </div>
 
-      {((manufacturingQuantity !== null && hasCurrentQuarterPlan && !quarterSimulated) || model.unitsInStock > 0) && (
-        <div style={{ marginTop: tokens.spacing.sm, paddingTop: tokens.spacing.sm, borderTop: `1px solid ${tokens.colors.panelBorder}` }}>
-          {hasCurrentQuarterPlan && !quarterSimulated && manufacturingQuantity !== null && (
-            <SpecRow label="Producing" value={`${manufacturingQuantity.toLocaleString()} units`} />
-          )}
-          {model.unitsInStock > 0 && (
-            <SpecRow label="In Stock" value={`${model.unitsInStock.toLocaleString()} units`} />
-          )}
-          {hasCurrentQuarterPlan && !quarterSimulated && (manufacturingQuantity ?? 0) > 0 && model.unitsInStock > 0 && (
-            <SpecRow
-              label="Total Available"
-              value={`${((manufacturingQuantity ?? 0) + model.unitsInStock).toLocaleString()} units`}
-              highlight
-            />
-          )}
-        </div>
-      )}
+      {(() => {
+        // "Producing" only shows when there's a current-quarter plan that hasn't been simulated yet
+        // (no results on the plan = not yet simulated)
+        const isPendingProduction = hasCurrentQuarterPlan && !quarterSimulated && !manufacturingPlan?.results && manufacturingQuantity !== null;
+        return (isPendingProduction || model.unitsInStock > 0) && (
+          <div style={{ marginTop: tokens.spacing.sm, paddingTop: tokens.spacing.sm, borderTop: `1px solid ${tokens.colors.panelBorder}` }}>
+            {isPendingProduction && (
+              <SpecRow label="Producing" value={`${manufacturingQuantity!.toLocaleString()} units`} />
+            )}
+            {model.unitsInStock > 0 && (
+              <SpecRow label="In Stock" value={`${model.unitsInStock.toLocaleString()} units`} />
+            )}
+            {isPendingProduction && (manufacturingQuantity ?? 0) > 0 && model.unitsInStock > 0 && (
+              <SpecRow
+                label="Total Available"
+                value={`${((manufacturingQuantity ?? 0) + model.unitsInStock).toLocaleString()} units`}
+                highlight
+              />
+            )}
+          </div>
+        );
+      })()}
 
       {isRetailOnly && model.unitsInStock > 0 && (
         <div style={{
