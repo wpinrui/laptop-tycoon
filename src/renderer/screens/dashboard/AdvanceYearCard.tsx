@@ -89,7 +89,7 @@ export function AdvanceYearCard() {
         <p style={cardBodyStyle}>
           {isQ1
             ? `All models ready. Simulate ${quarterLabel} ${state.year}.`
-            : `Simulate ${quarterLabel} ${state.year}. Adjust prices, order more units, or run new campaigns from Model Management.`
+            : `Simulate ${quarterLabel} ${state.year}. You can place additional manufacturing orders or adjust pricing from Model Management.`
           }
         </p>
       )}

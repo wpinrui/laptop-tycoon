@@ -83,4 +83,6 @@ export interface ManufacturingWizardState {
   pressReleasePromptIds: number[];
   pressReleaseResponses: Record<number, string>;
   noiseMargin: number;
+  /** True when placing an additional order on a model that already has a prior-quarter plan this year. */
+  isAdditionalOrder: boolean;
 }

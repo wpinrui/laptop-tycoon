@@ -3,7 +3,7 @@ import { ManufacturingWizardState, ManufacturingWizardStep, MFG_WIZARD_STEPS, Fu
 import { DEMAND_NOISE_MIN, DEMAND_NOISE_MAX, ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST } from "./utils/constants";
 
 type MfgWizardAction =
-  | { type: "INIT"; modelId: string; promptIds: number[]; baseBomCost: number }
+  | { type: "INIT"; modelId: string; promptIds: number[]; baseBomCost: number; isAdditionalOrder?: boolean }
   | { type: "LOAD_PLAN"; modelId: string; plan: FullManufacturingPlan }
   | { type: "SET_CAMPAIGN"; campaignId: string | null }
   | { type: "SET_UNIT_PRICE"; unitPrice: number }
@@ -28,6 +28,7 @@ const INITIAL_STATE: ManufacturingWizardState = {
   pressReleasePromptIds: [],
   pressReleaseResponses: {},
   noiseMargin: generateNoiseMargin(),
+  isAdditionalOrder: false,
 };
 
 function mfgWizardReducer(state: ManufacturingWizardState, action: MfgWizardAction): ManufacturingWizardState {
@@ -41,6 +42,7 @@ function mfgWizardReducer(state: ManufacturingWizardState, action: MfgWizardActi
         unitPrice: defaultPrice,
         pressReleasePromptIds: action.promptIds,
         noiseMargin: generateNoiseMargin(),
+        isAdditionalOrder: action.isAdditionalOrder ?? false,
       };
     }
     case "LOAD_PLAN":
@@ -54,6 +56,7 @@ function mfgWizardReducer(state: ManufacturingWizardState, action: MfgWizardActi
         pressReleasePromptIds: action.plan.pressRelease.promptIds,
         pressReleaseResponses: { ...action.plan.pressRelease.responses },
         noiseMargin: generateNoiseMargin(),
+        isAdditionalOrder: false,
       };
     case "SET_CAMPAIGN":
       return { ...state, campaignId: action.campaignId };

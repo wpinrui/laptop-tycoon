@@ -21,6 +21,7 @@ import {
   ChevronDown,
   ChevronUp,
   CheckCircle,
+  AlertTriangle,
 } from "lucide-react";
 
 const panelStyle: CSSProperties = {
@@ -76,11 +77,23 @@ export function ModelManagementScreen() {
   }
 
   function handleManufacturing(model: LaptopModel) {
-    if (model.manufacturingPlan) {
-      mfgDispatch({ type: "LOAD_PLAN", modelId: model.design.id, plan: model.manufacturingPlan });
+    const plan = model.manufacturingPlan;
+    const isCurrentQuarterPlan = plan?.year === state.year && plan?.quarter === state.quarter;
+
+    if (plan && isCurrentQuarterPlan) {
+      // Editing same-quarter plan — load existing values
+      mfgDispatch({ type: "LOAD_PLAN", modelId: model.design.id, plan });
     } else {
+      // New order (first time, or additional order in a later quarter)
       const promptIds = selectPrompts(model.design.modelType, null);
-      mfgDispatch({ type: "INIT", modelId: model.design.id, promptIds, baseBomCost: model.design.unitCost });
+      const hasPriorOrder = plan?.year === state.year;
+      mfgDispatch({
+        type: "INIT",
+        modelId: model.design.id,
+        promptIds,
+        baseBomCost: model.design.unitCost,
+        isAdditionalOrder: hasPriorOrder ?? false,
+      });
     }
     navigateTo("manufacturingWizard");
   }
@@ -218,10 +231,22 @@ function ModelCard({
   gameQuarter: 1 | 2 | 3 | 4;
 }) {
   const { design, status, retailPrice, manufacturingQuantity, yearDesigned, manufacturingPlan } = model;
-  const hasPlan = manufacturingPlan !== null && manufacturingPlan.year === gameYear && manufacturingPlan.quarter === gameQuarter;
+  const hasCurrentQuarterPlan = manufacturingPlan !== null && manufacturingPlan.year === gameYear && manufacturingPlan.quarter === gameQuarter;
+  const hasPlanThisYear = manufacturingPlan !== null && manufacturingPlan.year === gameYear;
   const isRetailOnly = hasDiscontinuedComponents(design, gameYear);
   const displayStatus = getDisplayStatus(model, gameYear, gameQuarter);
   const statusStyle = STATUS_CONFIG[displayStatus];
+
+  // Out-of-stock warning: model is actively selling but has zero inventory and no pending production
+  const isSellingModel = status === "manufacturing" || status === "onSale";
+  const outOfStock = isSellingModel && !isRetailOnly && model.unitsInStock === 0 && !hasCurrentQuarterPlan;
+
+  // Button label logic
+  const getMfgButtonLabel = () => {
+    if (hasCurrentQuarterPlan) return "Edit Manufacturing Plan";
+    if (hasPlanThisYear) return "Order Additional Units";
+    return "Add Manufacturing Plan";
+  };
 
   return (
     <div style={{ ...modelCardStyle, opacity: disabled ? 0.5 : 1 }}>
@@ -255,13 +280,13 @@ function ModelCard({
 
       {((manufacturingQuantity !== null) || model.unitsInStock > 0) && (
         <div style={{ marginTop: tokens.spacing.sm, paddingTop: tokens.spacing.sm, borderTop: `1px solid ${tokens.colors.panelBorder}` }}>
-          {manufacturingQuantity !== null && (
+          {hasCurrentQuarterPlan && manufacturingQuantity !== null && (
             <SpecRow label="Producing" value={`${manufacturingQuantity.toLocaleString()} units`} />
           )}
           {model.unitsInStock > 0 && (
             <SpecRow label="In Stock" value={`${model.unitsInStock.toLocaleString()} units`} />
           )}
-          {hasPlan && (manufacturingQuantity ?? 0) > 0 && model.unitsInStock > 0 && (
+          {hasCurrentQuarterPlan && (manufacturingQuantity ?? 0) > 0 && model.unitsInStock > 0 && (
             <SpecRow
               label="Total Available"
               value={`${((manufacturingQuantity ?? 0) + model.unitsInStock).toLocaleString()} units`}
@@ -285,7 +310,21 @@ function ModelCard({
         </div>
       )}
 
-      {hasPlan && (
+      {outOfStock && (
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: tokens.spacing.xs,
+          marginTop: tokens.spacing.sm,
+          color: tokens.colors.warning,
+          fontSize: tokens.font.sizeSmall,
+          fontWeight: 600,
+        }}>
+          <AlertTriangle size={14} /> Out of stock — order more units or discontinue
+        </div>
+      )}
+
+      {hasPlanThisYear && (
         <div style={{
           display: "flex",
           alignItems: "center",
@@ -295,7 +334,10 @@ function ModelCard({
           fontSize: tokens.font.sizeSmall,
           fontWeight: 600,
         }}>
-          <CheckCircle size={14} /> Manufacturing plan confirmed
+          <CheckCircle size={14} />
+          {hasCurrentQuarterPlan
+            ? "Manufacturing plan confirmed"
+            : `Ordered ${(manufacturingPlan!.manufacturing.unitsOrdered).toLocaleString()} units in Q${manufacturingPlan!.quarter}`}
         </div>
       )}
 
@@ -334,7 +376,7 @@ function ModelCard({
                   style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
                 >
                   <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-                    <Factory size={14} /> {hasPlan ? "Edit Manufacturing Plan" : "Add Manufacturing Plan"}
+                    <Factory size={14} /> {getMfgButtonLabel()}
                   </span>
                 </MenuButton>
               )}
@@ -347,7 +389,7 @@ function ModelCard({
               style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
             >
               <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-                <Factory size={14} /> {hasPlan ? "Edit Manufacturing Plan" : "New Manufacturing Plan"}
+                <Factory size={14} /> {getMfgButtonLabel()}
               </span>
             </MenuButton>
           )}

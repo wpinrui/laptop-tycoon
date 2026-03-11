@@ -120,7 +120,7 @@ function WizardContent() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexShrink: 0 }}>
         <div>
           <h1 style={{ fontSize: tokens.font.sizeTitle, marginBottom: tokens.spacing.sm }}>
-            Manufacturing Plan
+            {state.isAdditionalOrder ? "Additional Manufacturing Order" : "Manufacturing Plan"}
           </h1>
           <p style={{ color: tokens.colors.textMuted, marginBottom: tokens.spacing.lg }}>
             {model ? `${modelDisplayName(player.name, model.design.name)} · Year ${gameState.year}` : ""}
