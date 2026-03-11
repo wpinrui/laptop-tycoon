@@ -41,6 +41,29 @@ export const MAX_COMPARE = 3;
 
 export const RADAR_COLORS = ["#4fc3f7", "#ffb74d", "#ce93d8"];
 
+/** How old a model is relative to the current game year. */
+export function getModelAge(yearDesigned: number, currentYear: number): number {
+  return currentYear - yearDesigned;
+}
+
+/** Human-readable age label. */
+export function getAgeLabel(yearDesigned: number, currentYear: number): string {
+  const age = getModelAge(yearDesigned, currentYear);
+  if (age <= 0) return "New";
+  if (age === 1) return "1 yr old";
+  return `${age} yrs old`;
+}
+
+/** Color for age badge — fresh models are green, aging ones fade to warning/danger. */
+export function getAgeColor(yearDesigned: number, currentYear: number): string {
+  const age = getModelAge(yearDesigned, currentYear);
+  if (age <= 0) return tokens.colors.success;
+  if (age === 1) return tokens.colors.accent;
+  if (age <= 2) return tokens.colors.textMuted;
+  if (age <= 3) return tokens.colors.warning;
+  return tokens.colors.danger;
+}
+
 // --- Helpers ---
 
 export function getMarketEntries(state: GameState): MarketEntry[] {
