@@ -43,9 +43,13 @@ export function ModelsCard() {
                   </div>
                 )}
                 <div style={{ fontSize: tokens.font.sizeBase, display: "flex", gap: tokens.spacing.md, marginTop: 2 }}>
-                  {model.manufacturingQuantity !== null && model.manufacturingQuantity > 0 && (
-                    <span style={{ color: tokens.colors.textMuted }}>Producing {model.manufacturingQuantity.toLocaleString()}</span>
-                  )}
+                  {(() => {
+                    const plan = model.manufacturingPlan;
+                    const isPending = plan && plan.year === state.year && plan.quarter === state.quarter && !plan.results && !state.quarterSimulated;
+                    return isPending && model.manufacturingQuantity !== null && model.manufacturingQuantity > 0 && (
+                      <span style={{ color: tokens.colors.textMuted }}>Producing {model.manufacturingQuantity.toLocaleString()}</span>
+                    );
+                  })()}
                   {model.unitsInStock > 0 && (
                     <span style={{ color: tokens.colors.textMuted }}>{model.unitsInStock.toLocaleString()} in stock</span>
                   )}
