@@ -156,8 +156,7 @@ export function LaptopCard({
 
   const allModelStats = ALL_STATS
     .map((stat) => ({ stat, label: STAT_LABELS[stat], value: stats[stat] ?? 0 }))
-    .filter((s) => s.value > 0)
-    .sort((a, b) => b.value - a.value);
+    .filter((s) => s.value > 0);
 
   return (
     <div style={isPlayer ? playerCardStyle : cardStyle}>
