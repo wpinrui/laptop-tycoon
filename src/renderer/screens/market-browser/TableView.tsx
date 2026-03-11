@@ -1,4 +1,5 @@
 import { CSSProperties, useMemo } from "react";
+import { modelDisplayName } from "../../state/gameTypes";
 import {
   MarketEntry,
   LaptopStat,
@@ -62,7 +63,7 @@ export function TableView({
       <thead>
         <tr>
           <th style={thBase}>Model</th>
-          <th style={thBase}>Brand</th>
+          <th style={thRight}>Year</th>
           <th style={thRight}>Price</th>
           <th style={thRight}>Screen</th>
           {statsToShow.map((stat) => (
@@ -77,9 +78,9 @@ export function TableView({
           return (
             <tr key={entry.model.design.id}>
               <td style={{ ...td, fontWeight: 600, color: rowColor }}>
-                {entry.model.design.name}
+                {modelDisplayName(entry.company.name, entry.model.design.name)}
               </td>
-              <td style={{ ...td, color: tokens.colors.textMuted }}>{entry.company.name}</td>
+              <td style={tdR}>{entry.model.yearDesigned}</td>
               <td style={tdR}>${entry.model.retailPrice!.toLocaleString()}</td>
               <td style={tdR}>{entry.model.design.screenSize}"</td>
               {statsToShow.map((stat) => {

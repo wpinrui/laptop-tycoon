@@ -1,5 +1,5 @@
 import { CSSProperties } from "react";
-import { LaptopModel } from "../../state/gameTypes";
+import { LaptopModel, modelDisplayName } from "../../state/gameTypes";
 import {
   MarketEntry,
   LaptopStat,
@@ -104,8 +104,8 @@ export function LaptopCard({
       {/* Header: name + price */}
       <div style={cardHeaderStyle}>
         <div>
-          <div style={modelNameStyle}>{design.name}</div>
-          <div style={brandNameStyle}>{company.name}</div>
+          <div style={modelNameStyle}>{modelDisplayName(company.name, design.name)}</div>
+          <div style={brandNameStyle}>{company.name} · {model.yearDesigned}</div>
         </div>
         <div style={priceStyle}>${model.retailPrice!.toLocaleString()}</div>
       </div>

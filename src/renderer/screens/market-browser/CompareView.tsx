@@ -1,5 +1,6 @@
 import { CSSProperties, useState, useMemo, useRef, useCallback } from "react";
 import { X } from "lucide-react";
+import { modelDisplayName } from "../../state/gameTypes";
 import {
   MarketEntry,
   ALL_STATS,
@@ -69,8 +70,7 @@ export function CompareView({
     if (search.trim()) {
       const q = search.toLowerCase();
       available = available.filter((e) =>
-        e.model.design.name.toLowerCase().includes(q) ||
-        e.company.name.toLowerCase().includes(q),
+        modelDisplayName(e.company.name, e.model.design.name).toLowerCase().includes(q),
       );
     }
     return available;
@@ -188,8 +188,8 @@ export function CompareView({
                     onMouseLeave={(ev) => { ev.currentTarget.style.background = "transparent"; }}
                   >
                     <span>
-                      <span style={{ fontWeight: 600 }}>{e.model.design.name}</span>
-                      <span style={{ color: tokens.colors.textMuted, marginLeft: 6 }}>{e.company.name}</span>
+                      <span style={{ fontWeight: 600 }}>{modelDisplayName(e.company.name, e.model.design.name)}</span>
+                      <span style={{ color: tokens.colors.textMuted, marginLeft: 6 }}>{e.model.yearDesigned}</span>
                     </span>
                     <span style={{ color: tokens.colors.accent }}>${e.model.retailPrice!.toLocaleString()}</span>
                   </button>
@@ -217,9 +217,9 @@ export function CompareView({
                       <th key={entry.model.design.id} style={{ ...thBase, color: isPlayer ? tokens.colors.accent : tokens.colors.text }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4 }}>
                           <span style={{ width: 8, height: 8, borderRadius: "50%", background: RADAR_COLORS[idx % RADAR_COLORS.length], display: "inline-block", flexShrink: 0 }} />
-                          <span>{entry.model.design.name}</span>
+                          <span>{modelDisplayName(entry.company.name, entry.model.design.name)}</span>
                         </div>
-                        <div style={{ fontWeight: 400, color: tokens.colors.textMuted, fontSize: 11 }}>{entry.company.name}</div>
+                        <div style={{ fontWeight: 400, color: tokens.colors.textMuted, fontSize: 11 }}>{entry.model.yearDesigned}</div>
                         <button
                           onClick={() => onRemove(entry.model.design.id)}
                           title="Remove"
@@ -244,6 +244,12 @@ export function CompareView({
               </thead>
               <tbody>
                 {compareRow("Price", priceVals, false, (v) => `$${v.toLocaleString()}`)}
+                <tr>
+                  <td style={rowLabel}>Year</td>
+                  {allStats.map(({ entry }) => (
+                    <td key={entry.model.design.id} style={tdR}>{entry.model.yearDesigned}</td>
+                  ))}
+                </tr>
                 <tr>
                   <td style={rowLabel}>Screen</td>
                   {allStats.map(({ entry }) => (
@@ -286,7 +292,7 @@ export function CompareView({
             <RadarChart
               labels={ALL_STATS.map((s) => STAT_LABELS[s])}
               datasets={allStats.map(({ entry, stats }, idx) => ({
-                name: entry.model.design.name,
+                name: modelDisplayName(entry.company.name, entry.model.design.name),
                 color: RADAR_COLORS[idx % RADAR_COLORS.length],
                 values: ALL_STATS.map((s) => Math.round(stats[s] ?? 0)),
               }))}
