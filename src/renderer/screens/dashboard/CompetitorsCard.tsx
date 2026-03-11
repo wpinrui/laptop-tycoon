@@ -17,14 +17,30 @@ function PriceRangeBar({
   playerMax: number | null;
 }) {
   const range = marketMax - marketMin;
-  if (range <= 0) return null;
+  // If all laptops have the same price, show a full bar
+  if (range <= 0) {
+    return (
+      <div style={{ fontSize: tokens.font.sizeSmall }}>
+        <div style={{ color: tokens.colors.textMuted, marginBottom: 3 }}>
+          All models at ${marketMin.toLocaleString()}
+        </div>
+        <div style={{
+          height: 8,
+          background: playerMin !== null ? tokens.colors.accent : tokens.colors.surface,
+          borderRadius: 4,
+        }} />
+      </div>
+    );
+  }
 
   const pctLeft = playerMin !== null ? ((playerMin - marketMin) / range) * 100 : 0;
   const pctRight = playerMax !== null ? ((playerMax - marketMin) / range) * 100 : 0;
+  // Ensure the segment is at least 6% wide so it's visible even for a single price point
+  const segmentWidth = Math.max(pctRight - pctLeft, 6);
 
   return (
     <div style={{ fontSize: tokens.font.sizeSmall }}>
-      <div style={{ display: "flex", justifyContent: "space-between", color: tokens.colors.textMuted, marginBottom: 3 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", color: tokens.colors.textMuted, marginBottom: 4 }}>
         <span>${marketMin.toLocaleString()}</span>
         <span>${marketMax.toLocaleString()}</span>
       </div>
@@ -39,19 +55,13 @@ function PriceRangeBar({
           <div style={{
             position: "absolute",
             left: `${pctLeft}%`,
-            width: `${Math.max(pctRight - pctLeft, 2)}%`,
+            width: `${segmentWidth}%`,
             height: "100%",
             background: tokens.colors.accent,
             borderRadius: 4,
           }} />
         )}
       </div>
-      {playerMin !== null && playerMax !== null && (
-        <div style={{ color: tokens.colors.accent, marginTop: 3, fontSize: 11 }}>
-          You: ${playerMin.toLocaleString()}
-          {playerMin !== playerMax && ` – $${playerMax.toLocaleString()}`}
-        </div>
-      )}
     </div>
   );
 }
@@ -92,10 +102,10 @@ export function CompetitorsCard() {
 
   return (
     <BentoCard title="Market" icon={Monitor} screen="marketBrowser">
-      <div style={{ display: "flex", flexDirection: "column", gap: tokens.spacing.sm }}>
-        {/* Model counts — subtitle-weight */}
+      <div style={{ display: "flex", flexDirection: "column", gap: tokens.spacing.md }}>
+        {/* Model counts */}
         <div style={{ fontSize: 11, color: tokens.colors.textMuted }}>
-          {playerEntries.length} yours / {competitorCount} competitors
+          {playerEntries.length} model{playerEntries.length !== 1 ? "s" : ""} vs {competitorCount} competitors
         </div>
 
         {/* Price range bar */}
@@ -112,9 +122,9 @@ export function CompetitorsCard() {
         {topSeller && (
           <div style={{
             borderTop: `1px solid ${tokens.colors.panelBorder}`,
-            paddingTop: tokens.spacing.xs,
+            paddingTop: tokens.spacing.sm,
           }}>
-            <div style={{ fontSize: 11, color: tokens.colors.textMuted, marginBottom: 2 }}>
+            <div style={{ fontSize: 11, color: tokens.colors.textMuted, marginBottom: 4 }}>
               Top seller last quarter
             </div>
             <div style={{
@@ -128,6 +138,7 @@ export function CompetitorsCard() {
               fontSize: tokens.font.sizeSmall,
               color: topSeller.isPlayer ? tokens.colors.accent : tokens.colors.text,
               fontWeight: 600,
+              marginTop: 2,
             }}>
               {topSeller.units.toLocaleString()} units
             </div>
@@ -135,9 +146,9 @@ export function CompetitorsCard() {
               <div style={{
                 fontSize: 11,
                 color: tokens.colors.textMuted,
-                marginTop: 3,
+                marginTop: 4,
               }}>
-                Your best: {playerBest.name} ({playerBest.units.toLocaleString()})
+                Your best: {playerBest.name} — {playerBest.units.toLocaleString()} units
               </div>
             )}
           </div>
