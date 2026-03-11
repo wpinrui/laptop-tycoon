@@ -111,30 +111,20 @@ export function LaptopCard({
       </div>
 
       {/* Quick facts */}
-      <div style={specRowStyle}>
-        <span style={specLabelStyle}>Screen</span>
-        <span style={specValueStyle}>{design.screenSize}"</span>
-      </div>
-      <div style={specRowStyle}>
-        <span style={specLabelStyle}>Thickness</span>
-        <span style={specValueStyle}>{design.thicknessCm.toFixed(1)} cm</span>
-      </div>
-      <div style={specRowStyle}>
-        <span style={specLabelStyle}>Battery</span>
-        <span style={specValueStyle}>{design.batteryCapacityWh} Wh</span>
-      </div>
-      <div style={specRowStyle}>
-        <span style={specLabelStyle}>Colours</span>
-        <span style={specValueStyle}>{design.selectedColours.length}</span>
-      </div>
-      {lastQuarterSales !== null && (
-        <div style={specRowStyle}>
-          <span style={specLabelStyle}>Last quarter sales</span>
-          <span style={{ ...specValueStyle, fontWeight: 600 }}>
-            {lastQuarterSales.toLocaleString()} units
-          </span>
+      {[
+        { label: "Screen", value: `${design.screenSize}"` },
+        { label: "Thickness", value: `${design.thicknessCm.toFixed(1)} cm` },
+        { label: "Battery", value: `${design.batteryCapacityWh} Wh` },
+        { label: "Colours", value: String(design.selectedColours.length) },
+        ...(lastQuarterSales !== null
+          ? [{ label: "Last quarter sales", value: `${lastQuarterSales.toLocaleString()} units`, bold: true }]
+          : []),
+      ].map(({ label, value, bold }) => (
+        <div key={label} style={specRowStyle}>
+          <span style={specLabelStyle}>{label}</span>
+          <span style={bold ? { ...specValueStyle, fontWeight: 600 } : specValueStyle}>{value}</span>
         </div>
-      )}
+      ))}
 
       {/* Hardware specs */}
       <SpecSection title="PROCESSING" slots={SPEC_SLOTS} design={design} />
@@ -144,30 +134,19 @@ export function LaptopCard({
       {/* Chassis */}
       <div style={sectionStyle}>
         <div style={sectionTitleStyle}>CHASSIS</div>
-        {design.chassis.material && (
-          <div style={specRowStyle}>
-            <span style={specLabelStyle}>Material</span>
-            <span style={specValueStyle}>{design.chassis.material.name}</span>
-          </div>
-        )}
-        {design.chassis.coolingSolution && (
-          <div style={specRowStyle}>
-            <span style={specLabelStyle}>Cooling</span>
-            <span style={specValueStyle}>{design.chassis.coolingSolution.name}</span>
-          </div>
-        )}
-        {design.chassis.keyboardFeature && (
-          <div style={specRowStyle}>
-            <span style={specLabelStyle}>Keyboard</span>
-            <span style={specValueStyle}>{design.chassis.keyboardFeature.name}</span>
-          </div>
-        )}
-        {design.chassis.trackpadFeature && (
-          <div style={specRowStyle}>
-            <span style={specLabelStyle}>Trackpad</span>
-            <span style={specValueStyle}>{design.chassis.trackpadFeature.name}</span>
-          </div>
-        )}
+        {[
+          { label: "Material", value: design.chassis.material?.name },
+          { label: "Cooling", value: design.chassis.coolingSolution?.name },
+          { label: "Keyboard", value: design.chassis.keyboardFeature?.name },
+          { label: "Trackpad", value: design.chassis.trackpadFeature?.name },
+        ]
+          .filter((r): r is { label: string; value: string } => !!r.value)
+          .map(({ label, value }) => (
+            <div key={label} style={specRowStyle}>
+              <span style={specLabelStyle}>{label}</span>
+              <span style={specValueStyle}>{value}</span>
+            </div>
+          ))}
       </div>
 
       {/* Ports */}
