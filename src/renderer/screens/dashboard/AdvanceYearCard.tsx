@@ -136,8 +136,7 @@ export function AdvanceYearCard() {
           let totalMfgSpend = 0;
           for (const model of activeModels) {
             if (hasCurrentQuarterPlan(model)) {
-              totalMfgSpend += model.manufacturingPlan!.manufacturing.totalCost
-                + model.manufacturingPlan!.marketing.cost;
+              totalMfgSpend += model.manufacturingPlan!.manufacturing.totalCost;
             }
           }
           const cashAfterManufacturing = state.cash - totalMfgSpend;

@@ -31,7 +31,7 @@ export interface DemographicSalesBreakdown {
   priceScore: number;
   /** Screen size fit penalty (0.05–1.0) */
   screenPenalty: number;
-  /** Combined perception modifier % (brand + campaign) */
+  /** Brand perception modifier (%) */
   perceptionMod: number;
   /** Normalised stats (0–1 per stat, 1 = theoretical max for this year) */
   normalizedStats: Record<LaptopStat, number>;
@@ -47,8 +47,6 @@ export interface LaptopSalesResult {
   revenue: number;
   manufacturingCost: number;
   profit: number;
-  /** Sampled campaign perception modifier (%) applied to this laptop's biased VP */
-  campaignPerceptionMod: number;
   demographicBreakdown: DemographicSalesBreakdown[];
 }
 

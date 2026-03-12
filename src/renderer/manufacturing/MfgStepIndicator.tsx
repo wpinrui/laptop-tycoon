@@ -1,10 +1,9 @@
 import { Fragment, useRef, useEffect } from "react";
-import { Megaphone, Factory, Newspaper, ClipboardCheck, Check, LucideIcon } from "lucide-react";
+import { Factory, Newspaper, ClipboardCheck, Check, LucideIcon } from "lucide-react";
 import { ManufacturingWizardStep, MFG_WIZARD_STEPS, MFG_STEP_LABELS } from "./types";
 import { tokens } from "../shell/tokens";
 
 const STEP_ICONS: Record<ManufacturingWizardStep, LucideIcon> = {
-  marketing: Megaphone,
   manufacturing: Factory,
   pressRelease: Newspaper,
   confirmation: ClipboardCheck,

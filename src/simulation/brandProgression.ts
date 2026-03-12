@@ -13,8 +13,6 @@ import {
   S_CURVE_MIDPOINT,
   AWARENESS_DIVISOR,
   WOM_DIVISOR,
-  CAMPAIGN_DIVISOR,
-  CAMPAIGN_IMMEDIATE_REACH_DIVISOR,
   PERCEPTION_CONTRIBUTION_SCALE,
   REACH_INACTIVITY_DECAY,
   COMPETITOR_TIME_IN_MARKET_BONUS,
@@ -37,33 +35,10 @@ function sCurveGrowthFactor(currentReach: number): number {
   return S_CURVE_STEEPNESS * expTerm / Math.pow(1 + expTerm, 2);
 }
 
-/** Sum marketing campaign spend across all player laptops for the current year */
-function getTotalCampaignSpend(state: GameState): number {
-  const player = getPlayerCompany(state);
-  let total = 0;
-  for (const model of player.models) {
-    const plan = model.manufacturingPlan;
-    if (plan && plan.year === state.year && plan.marketing.cost > 0) {
-      total += plan.marketing.cost;
-    }
-  }
-  return total;
-}
-
 /** Average reach across all demographics */
 export function averageReach(reach: Record<DemographicId, number>): number {
   const values = Object.values(reach);
   return values.reduce((s, v) => s + v, 0) / values.length;
-}
-
-/**
- * Compute the immediate (same-year) reach boost from marketing campaign spend.
- * This is a flat addition (not S-curved) so it works even at 0% reach.
- * Used by simulateQuarter and projectDemandRange to gate demand.
- * @param extraSpend Additional campaign spend not yet committed to state (e.g. from wizard)
- */
-export function getCampaignReachBoost(state: GameState, extraSpend: number = 0): number {
-  return (getTotalCampaignSpend(state) + extraSpend) / CAMPAIGN_IMMEDIATE_REACH_DIVISOR;
 }
 
 /**
@@ -90,8 +65,6 @@ export function updateBrandReach(
     }
   }
 
-  const totalCampaignSpend = getTotalCampaignSpend(state);
-
   for (const dem of DEMOGRAPHICS) {
     const demId = dem.id;
     const current = oldReach[demId] ?? 0;
@@ -115,9 +88,6 @@ export function updateBrandReach(
     const unitsSold = unitsByDemographic[demId] ?? 0;
     const perception = player.brandPerception[demId] ?? 0;
     rawGrowth += (unitsSold / WOM_DIVISOR) * (1 + perception / 100);
-
-    // 4. Marketing campaigns — secondary reach from ad spend (uniform, quarterly)
-    rawGrowth += (totalCampaignSpend / CAMPAIGN_DIVISOR) / 4;
 
     // Apply S-curve: growth is modulated by current reach position
     const growth = rawGrowth * sCurveGrowthFactor(current) * 100;

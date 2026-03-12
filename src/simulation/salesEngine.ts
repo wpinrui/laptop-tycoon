@@ -34,11 +34,9 @@ import {
   QUARTER_SHARES_SUM,
   PERCEPTION_MEANINGFUL_DELTA,
 } from "./tunables";
-import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
-import { sampleCampaignOutcome } from "../renderer/manufacturing/utils/skewNormal";
 import { generateCompetitorModels } from "./competitorAI";
 import { COMPETITORS } from "../data/competitors";
-import { averageReach, getCampaignReachBoost, applySingleQuarterPerception } from "./brandProgression";
+import { averageReach, applySingleQuarterPerception } from "./brandProgression";
 import { getTheoreticalMaxima, getPriceScaleFactor, clearTheoreticalMaxCache } from "./theoreticalMax";
 
 // Cache synthetic competitor models per year for stable demand projections
@@ -86,7 +84,7 @@ function buildMarketLaptops(state: GameState): MarketLaptop[] {
     if (totalAvailable <= 0) continue;
 
     const totalMfgCost = isCurrentQuarterPlan
-      ? plan.manufacturing.totalCost + plan.marketing.cost
+      ? plan.manufacturing.totalCost
       : 0; // Inventory-only or previous quarter: no new manufacturing cost
 
     laptops.push({
@@ -170,34 +168,13 @@ function calculatePriceScore(retailPrice: number, year: number): number {
 }
 
 /**
- * Sample campaign perception modifier from distribution.
- * Returns a percentage modifier to laptop perceived value (laptop_perception_mod).
- */
-function sampleCampaignPerception(campaignId: string | null): number {
-  if (!campaignId || campaignId === "no_campaign") return 0;
-  const campaign = AD_CAMPAIGNS.find((c) => c.id === campaignId);
-  if (!campaign) return 0;
-
-  const { mean, stdDev, skew, min, max } = campaign.distribution;
-  return sampleCampaignOutcome(mean, stdDev, skew, min, max);
-}
-
-/** Get laptop-specific campaign perception modifier */
-function getLaptopCampaignPerception(laptop: MarketLaptop, playerId: string): number {
-  if (laptop.owner !== playerId) return 0;
-  const plan = laptop.model.manufacturingPlan;
-  if (!plan) return 0;
-  return sampleCampaignPerception(plan.marketing.campaignId);
-}
-
-/**
  * Calculate biased value proposition for a laptop against a demographic.
  *
  * Step 1 – Raw VP:
  *   raw_vp = (dot_product(normalised_stats, stat_weights) + price_score × price_weight) × screen_penalty
  *
  * Step 2 – Biased VP:
- *   biased_vp = raw_vp × (1 + brand_perception_mod / 100) × (1 + laptop_perception_mod / 100)
+ *   biased_vp = raw_vp × (1 + brand_perception_mod / 100)
  *
  * Note: reach is NOT applied here — it multiplies effective VP in simulateQuarter.
  */
@@ -207,7 +184,7 @@ interface VPComponents {
   weightedStatScore: number;
   priceScore: number;
   screenPenalty: number;
-  /** Combined brand + campaign perception modifier (%) */
+  /** Brand perception modifier (%) */
   perceptionMod: number;
 }
 
@@ -216,7 +193,6 @@ function calculateBiasedVP(
   normalisedStats: Record<LaptopStat, number>,
   demographic: Demographic,
   state: GameState,
-  campaignPerception: number,
 ): VPComponents {
   const weightedStatScore = calculateWeightedStatScore(normalisedStats, demographic);
   const priceScore = calculatePriceScore(laptop.retailPrice, state.year);
@@ -227,12 +203,9 @@ function calculateBiasedVP(
   const totalScore = weightedStatScore + priceScore * demographic.priceWeight;
   const rawVP = totalScore * screenPenalty;
 
-  // Step 2: biased_vp = raw_vp × (1 + brand_perception_mod / 100) × (1 + laptop_perception_mod / 100)
+  // Step 2: biased_vp = raw_vp × (1 + brand_perception_mod / 100)
   const company = state.companies.find((c) => c.id === laptop.owner);
-  const brandPerceptionMod = company ? (company.brandPerception[demographic.id] ?? 0) : 0;
-
-  const laptopPerceptionMod = campaignPerception;
-  const perceptionMod = ((1 + brandPerceptionMod / 100) * (1 + laptopPerceptionMod / 100) - 1) * 100;
+  const perceptionMod = company ? (company.brandPerception[demographic.id] ?? 0) : 0;
 
   const biasedVP = rawVP * (1 + perceptionMod / 100);
   return { biasedVP: Math.max(0, biasedVP), rawVP, weightedStatScore, priceScore, screenPenalty, perceptionMod };
@@ -269,19 +242,10 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
     };
   }
 
-  // Immediate reach boost from marketing campaign spend (flat, not S-curved)
-  const campaignReachBoost = getCampaignReachBoost(state);
-
   // Pre-compute normalised stats for all laptops
   const normalisedStatsMap = new Map<string, Record<LaptopStat, number>>();
   for (const laptop of allLaptops) {
     normalisedStatsMap.set(laptop.id, normaliseStats(laptop, year));
-  }
-
-  // Pre-sample campaign perception modifiers (once per laptop, consistent across demographics)
-  const campaignPerceptions = new Map<string, number>();
-  for (const laptop of allLaptops) {
-    campaignPerceptions.set(laptop.id, getLaptopCampaignPerception(laptop, player.id));
   }
 
   // For each laptop, accumulate demand across all demographics
@@ -309,15 +273,10 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
 
     for (const laptop of allLaptops) {
       const normStats = normalisedStatsMap.get(laptop.id)!;
-      const campPerc = campaignPerceptions.get(laptop.id)!;
-      const vp = calculateBiasedVP(laptop, normStats, demographic, state, campPerc);
+      const vp = calculateBiasedVP(laptop, normStats, demographic, state);
 
       const company = state.companies.find((c) => c.id === laptop.owner);
-      let reach = company ? (company.brandReach[demId] ?? 0) : 0;
-      if (company?.isPlayer) {
-        reach += campaignReachBoost;
-      }
-      reach = Math.min(reach, 100);
+      const reach = Math.min(company ? (company.brandReach[demId] ?? 0) : 0, 100);
       const effectiveVP = vp.biasedVP * (reach / 100);
 
       vpEntries.push({ laptopId: laptop.id, vp, effectiveVP });
@@ -370,7 +329,6 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
       revenue,
       manufacturingCost: laptop.totalManufacturingCost,
       profit,
-      campaignPerceptionMod: campaignPerceptions.get(laptop.id) ?? 0,
       demographicBreakdown: demand.breakdown,
     };
     laptopResults.push(result);
@@ -488,7 +446,6 @@ export function projectDemandRange(
   state: GameState,
   modelId: string,
   retailPrice: number,
-  uncommittedCampaignSpend: number = 0,
 ): DemandProjection {
   const year = state.year;
   const player = getPlayerCompany(state);
@@ -557,9 +514,6 @@ export function projectDemandRange(
     normalisedStatsMap.set(laptop.id, normaliseStats(laptop, year));
   }
 
-  // Immediate reach boost from marketing campaign spend (committed + uncommitted from wizard)
-  const campaignReachBoost = getCampaignReachBoost(state, uncommittedCampaignSpend);
-
   // Sum demand across demographics for our model
   let totalExpected = 0;
   for (const demographic of DEMOGRAPHICS) {
@@ -576,15 +530,11 @@ export function projectDemandRange(
 
     for (const laptop of allLaptops) {
       const normStats = normalisedStatsMap.get(laptop.id)!;
-      const { biasedVP: vp } = calculateBiasedVP(laptop, normStats, demographic, state, 0);
+      const { biasedVP: vp } = calculateBiasedVP(laptop, normStats, demographic, state);
 
       // effective_vp = biased_vp × (reach / 100)
       const company = state.companies.find((c) => c.id === laptop.owner);
-      let reach = company ? (company.brandReach[demId] ?? 0) : 0;
-      if (company?.isPlayer) {
-        reach += campaignReachBoost;
-      }
-      reach = Math.min(reach, 100);
+      const reach = Math.min(company ? (company.brandReach[demId] ?? 0) : 0, 100);
       const effectiveVP = vp * (reach / 100);
 
       totalEffectiveVP += effectiveVP;
