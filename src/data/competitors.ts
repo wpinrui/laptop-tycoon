@@ -54,7 +54,7 @@ export const COMPETITORS: CompetitorDefinition[] = [
       high: [],
       low: ["buildQuality", "design", "display"],
     },
-    pricingStrategy: { marginMultiplier: 1.05 },
+    pricingStrategy: { marginMultiplier: 1.15 },
     screenSizePreference: [14, 15],
     chassisPreferences: {
       materialTier: "low",
@@ -91,7 +91,7 @@ export const COMPETITORS: CompetitorDefinition[] = [
       high: ["design", "display", "buildQuality", "keyboard"],
       low: [],
     },
-    pricingStrategy: { marginMultiplier: 1.15 },
+    pricingStrategy: { marginMultiplier: 1.40 },
     screenSizePreference: [13, 14, 15],
     chassisPreferences: {
       materialTier: "high",
@@ -128,7 +128,7 @@ export const COMPETITORS: CompetitorDefinition[] = [
       high: [],
       low: [],
     },
-    pricingStrategy: { marginMultiplier: 1.0 },
+    pricingStrategy: { marginMultiplier: 1.25 },
     screenSizePreference: [14, 15, 16],
     chassisPreferences: {
       materialTier: "mid",
