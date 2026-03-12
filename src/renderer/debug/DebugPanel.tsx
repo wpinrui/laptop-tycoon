@@ -265,8 +265,7 @@ function LaptopStatsRow({ model, year, companyName }: { model: LaptopModel; year
         <div style={{ color: "#888", fontSize: 10, marginTop: 2 }}>
           Sold: {model.manufacturingPlan.results.unitsSold.toLocaleString()} |
           Rev: ${(model.manufacturingPlan.results.revenue / 1e6).toFixed(2)}M |
-          Profit: ${(model.manufacturingPlan.results.profit / 1e6).toFixed(2)}M |
-          Campaign mod: {(model.manufacturingPlan.results.campaignPerceptionMod * 100).toFixed(1)}%
+          Profit: ${(model.manufacturingPlan.results.profit / 1e6).toFixed(2)}M
         </div>
       )}
     </div>
@@ -386,8 +385,7 @@ function computeVPForLaptop(laptop: MarketEntry, ctx: VPComputeContext) {
 
   const company = companies.find((c) => c.id === laptop.owner);
   const brandPerception = company ? (company.brandPerception[selectedDemo] ?? 0) : 0;
-  const campaignPerception = 0; // Can't know sampled value; show 0 as baseline
-  const perceptionMod = ((1 + brandPerception / 100) * (1 + campaignPerception / 100) - 1) * 100;
+  const perceptionMod = brandPerception;
   const biasedVP = Math.max(0, rawVP * (1 + perceptionMod / 100));
 
   const reach = company ? Math.min(company.brandReach[selectedDemo] ?? 0, 100) : 0;
@@ -396,7 +394,7 @@ function computeVPForLaptop(laptop: MarketEntry, ctx: VPComputeContext) {
   return {
     laptop, normalised, weightedPerStat, weightedStatScore,
     priceScore, screenPenalty, rawVP,
-    brandPerception, campaignPerception, perceptionMod,
+    brandPerception, perceptionMod,
     biasedVP, reach, effectiveVP,
   };
 }
@@ -665,9 +663,6 @@ function SimulationTab() {
                 ],
               }))}
             />
-            <div style={{ ...labelS, marginTop: 4 }}>
-              Note: Campaign perception is sampled at simulation time. Shown as 0 here (baseline).
-            </div>
           </div>
         )}
 

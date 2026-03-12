@@ -41,7 +41,6 @@ export interface FullManufacturingPlan {
   manufacturing: ManufacturingPlan;
   pressRelease: PressRelease;
   results?: {
-    campaignPerceptionMod: number;
     unitsSold: number;
     revenue: number;
     profit: number;

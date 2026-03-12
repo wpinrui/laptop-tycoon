@@ -329,7 +329,6 @@ function gameReducer(state: GameState, action: GameAction): GameState {
                 manufacturingPlan: {
                   ...m.manufacturingPlan,
                   results: {
-                    campaignPerceptionMod: sim.campaignPerceptionMod,
                     unitsSold: (existingResults?.unitsSold ?? 0) + sim.unitsSold,
                     revenue: (existingResults?.revenue ?? 0) + sim.revenue,
                     profit: (existingResults?.profit ?? 0) + sim.profit,

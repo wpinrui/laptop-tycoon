@@ -57,12 +57,12 @@ export const PRICE_INFLATION_RATE = 1.03;
 /** Baseline year for inflation calculations */
 export const PRICE_BASE_YEAR = 2000;
 
-// ==================== Campaign Costs ====================
+// ==================== Cost Inflation ====================
 
-/** Annual scaling for campaign and sponsorship costs */
-export const CAMPAIGN_COST_INFLATION = 1.03;
-/** Base year for campaign cost inflation */
-export const CAMPAIGN_BASE_YEAR = 2000;
+/** Annual scaling for sponsorship costs */
+export const COST_INFLATION = 1.03;
+/** Base year for cost inflation */
+export const COST_BASE_YEAR = 2000;
 
 // ==================== Manufacturing ====================
 

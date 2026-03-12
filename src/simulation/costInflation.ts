@@ -1,10 +1,10 @@
-import { CAMPAIGN_COST_INFLATION, CAMPAIGN_BASE_YEAR } from "./tunables";
+import { COST_INFLATION, COST_BASE_YEAR } from "./tunables";
 
 /**
  * Apply annual cost inflation to a base cost.
- * Formula: base_cost × CAMPAIGN_COST_INFLATION ^ (year - CAMPAIGN_BASE_YEAR)
+ * Formula: base_cost × COST_INFLATION ^ (year - COST_BASE_YEAR)
  */
 export function getInflatedCost(baseCost: number, year: number): number {
-  const yearsElapsed = year - CAMPAIGN_BASE_YEAR;
-  return Math.round(baseCost * Math.pow(CAMPAIGN_COST_INFLATION, yearsElapsed));
+  const yearsElapsed = year - COST_BASE_YEAR;
+  return Math.round(baseCost * Math.pow(COST_INFLATION, yearsElapsed));
 }

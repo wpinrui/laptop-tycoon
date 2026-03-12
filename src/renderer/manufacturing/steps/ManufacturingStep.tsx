@@ -232,8 +232,8 @@ export function ManufacturingStep() {
     unitsOrdered: effectiveQty,
   });
 
-  // Demand projection from sales simulation engine (no campaign modifier)
-  const projection = projectDemandRange(gameState, state.modelId, effectivePrice, 0);
+  // Demand projection from sales simulation engine
+  const projection = projectDemandRange(gameState, state.modelId, effectivePrice);
   const projections = {
     displayLower: Math.max(0, Math.round(projection.low)),
     displayUpper: Math.round(projection.high),

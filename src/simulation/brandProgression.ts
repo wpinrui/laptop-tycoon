@@ -42,14 +42,6 @@ export function averageReach(reach: Record<DemographicId, number>): number {
 }
 
 /**
- * Compute the immediate (same-year) reach boost from marketing campaign spend.
- * Campaigns are currently disabled — always returns 0.
- */
-export function getCampaignReachBoost(_state: GameState, _extraSpend: number = 0): number {
-  return 0;
-}
-
-/**
  * Update per-demographic brand reach for the player (quarterly).
  * Growth sources are divided by 4 for quarterly application.
  */
