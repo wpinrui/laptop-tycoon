@@ -13,6 +13,7 @@ import { DEMOGRAPHICS } from "../../data/demographics";
 import { SPONSORSHIPS, getSponsorshipCost } from "../../data/sponsorships";
 import { DemographicId } from "../../data/types";
 import { PerceptionChange } from "../../simulation/salesTypes";
+import { SidebarHeading } from "../wizard/LaptopEstimateSidebar";
 import { PERCEPTION_MEANINGFUL_DELTA } from "../../simulation/tunables";
 
 const BUDGET_PRESETS = [0, 100_000, 250_000, 500_000, 1_000_000, 2_000_000];
@@ -271,10 +272,3 @@ export function BrandDetailScreen() {
   );
 }
 
-function SidebarHeading({ children }: { children: string }) {
-  return (
-    <div style={{ color: tokens.colors.textMuted, fontSize: "0.6875rem", marginBottom: 10, fontWeight: "bold", letterSpacing: "0.5px" }}>
-      {children}
-    </div>
-  );
-}
