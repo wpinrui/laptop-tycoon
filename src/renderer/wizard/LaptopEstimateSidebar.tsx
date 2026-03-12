@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { tokens } from "../shell/tokens";
 import { useWizard } from "./WizardContext";
 import { LaptopStat, StatVector } from "../../data/types";
 import {
@@ -198,7 +199,7 @@ export function WizardSidebar({
 
 export function SidebarHeading({ children }: { children: string }) {
   return (
-    <div style={{ color: "#888", fontSize: "0.6875rem", marginBottom: "10px", fontWeight: "bold", letterSpacing: "0.5px" }}>
+    <div style={{ color: tokens.colors.textMuted, fontSize: "0.6875rem", marginBottom: 10, fontWeight: "bold", letterSpacing: "0.5px" }}>
       {children}
     </div>
   );
