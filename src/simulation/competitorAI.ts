@@ -5,7 +5,7 @@ import {
   LaptopStat,
 } from "../data/types";
 import { CompetitorArchetype, CompetitorDefinition } from "../data/competitors";
-import { LaptopDesign, LaptopModel, CompanyState } from "../renderer/state/gameTypes";
+import { LaptopDesign, LaptopModel, CompanyState, ModelType } from "../renderer/state/gameTypes";
 import {
   getAvailableComponents,
   getAvailableChassisOptions,
@@ -36,6 +36,9 @@ import {
   CERTIFICATION_COST,
   AI_ORDER_MULTIPLIER,
   MIN_BATCH_SIZE,
+  AI_OLD_INVENTORY_DISCOUNT,
+  AI_SUCCESSOR_THRESHOLD,
+  AI_SPEC_BUMP_THRESHOLD,
 } from "./tunables";
 import { estimateAnnualDemand } from "./salesEngine";
 
@@ -335,6 +338,193 @@ function computeAIRetailPrice(
   );
 }
 
+/**
+ * Apply old-inventory discount to an AI model's retail price.
+ * Floor = variable cost / (1 - channel margin) so AI never sells at a loss.
+ */
+export function discountOldInventoryPrice(model: LaptopModel): number {
+  const currentPrice = model.retailPrice ?? 0;
+  const variableCost = model.design.unitCost + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST;
+  const breakEvenPrice = Math.ceil(variableCost / (1 - CHANNEL_MARGIN_RATE));
+  const discounted = Math.round(currentPrice * (1 - AI_OLD_INVENTORY_DISCOUNT));
+  return Math.max(discounted, breakEvenPrice);
+}
+
+/**
+ * Decide model type for a new AI model based on previous model sell-through.
+ */
+function decideModelType(
+  previousModels: LaptopModel[],
+): { modelType: ModelType; predecessor: LaptopModel | null } {
+  if (previousModels.length === 0) {
+    return { modelType: "brandNew", predecessor: null };
+  }
+
+  // Find the most recent model
+  const sorted = [...previousModels].sort((a, b) => b.yearDesigned - a.yearDesigned);
+  const latest = sorted[0];
+
+  const totalProduced = latest.manufacturingQuantity ?? 0;
+  if (totalProduced <= 0) {
+    return { modelType: "brandNew", predecessor: null };
+  }
+
+  const unitsSold = totalProduced - latest.unitsInStock;
+  const sellThrough = unitsSold / totalProduced;
+
+  if (sellThrough >= AI_SUCCESSOR_THRESHOLD) {
+    return { modelType: "successor", predecessor: latest };
+  }
+  if (sellThrough >= AI_SPEC_BUMP_THRESHOLD) {
+    return { modelType: "specBump", predecessor: latest };
+  }
+  return { modelType: "brandNew", predecessor: null };
+}
+
+/**
+ * Generate a successor model — inherits body/chassis from predecessor, fresh components.
+ */
+function generateSuccessorModel(
+  year: number,
+  competitor: CompetitorDefinition,
+  predecessor: LaptopModel,
+  totalPlayerCount: number,
+  engineeringBonus: number,
+): LaptopModel {
+  const { archetype } = competitor;
+  const prevDesign = predecessor.design;
+
+  // Fresh components for the new year
+  const components: Partial<Record<ComponentSlot, Component>> = {};
+  let totalPowerW = 0;
+  for (const slot of COMPONENT_SLOTS) {
+    const comp = pickComponent(slot, year, competitor, engineeringBonus);
+    if (comp) {
+      components[slot] = comp;
+      totalPowerW += comp.powerDrawW;
+    }
+  }
+
+  // Inherit chassis but pick new cooling for updated power draw
+  const cooling = pickCooling(year, totalPowerW, archetype);
+
+  const chassis = {
+    material: prevDesign.chassis.material,
+    coolingSolution: cooling,
+    keyboardFeature: prevDesign.chassis.keyboardFeature,
+    trackpadFeature: prevDesign.chassis.trackpadFeature,
+  };
+
+  const totals = computeLaptopTotals(
+    components, prevDesign.ports, chassis,
+    prevDesign.batteryCapacityWh, prevDesign.selectedColours,
+    prevDesign.screenSize, prevDesign.bezelMm, prevDesign.thicknessCm, year,
+  );
+
+  const designId = crypto.randomUUID();
+  const design: LaptopDesign = {
+    id: designId,
+    name: `${competitor.productLine} ${year}`,
+    modelType: "successor",
+    predecessorId: prevDesign.id,
+    screenSize: prevDesign.screenSize,
+    components,
+    ports: prevDesign.ports,
+    batteryCapacityWh: prevDesign.batteryCapacityWh,
+    thicknessCm: prevDesign.thicknessCm,
+    bezelMm: prevDesign.bezelMm,
+    chassis,
+    selectedColours: prevDesign.selectedColours,
+    unitCost: totals.totalCost,
+  };
+
+  const totalDemand = Object.values(STARTING_DEMAND_POOL).reduce((sum, v) => sum + v, 0);
+  const brandFactor = averageReach(competitor.brandReach) / 100;
+  const competitorShare = 1 / totalPlayerCount;
+  const manufacturingQuantity = Math.round(totalDemand * competitorShare * brandFactor * (0.8 + Math.random() * 0.4));
+
+  const retailPrice = computeAIRetailPrice(design, manufacturingQuantity, competitor);
+
+  return {
+    design,
+    status: "onSale",
+    retailPrice,
+    manufacturingQuantity,
+    yearDesigned: year,
+    manufacturingPlan: null,
+    unitsInStock: manufacturingQuantity,
+    totalProductionSpend: 0,
+    totalUnitsOrdered: 0,
+  };
+}
+
+/**
+ * Generate a spec bump — inherits everything from predecessor except components.
+ */
+function generateSpecBumpModel(
+  year: number,
+  competitor: CompetitorDefinition,
+  predecessor: LaptopModel,
+  totalPlayerCount: number,
+  engineeringBonus: number,
+): LaptopModel {
+  const prevDesign = predecessor.design;
+
+  // Fresh components only
+  const components: Partial<Record<ComponentSlot, Component>> = {};
+  for (const slot of COMPONENT_SLOTS) {
+    const comp = pickComponent(slot, year, competitor, engineeringBonus);
+    if (comp) {
+      components[slot] = comp;
+    }
+  }
+
+  // Keep same cooling — spec bump doesn't change the body
+  const chassis = { ...prevDesign.chassis };
+
+  const totals = computeLaptopTotals(
+    components, prevDesign.ports, chassis,
+    prevDesign.batteryCapacityWh, prevDesign.selectedColours,
+    prevDesign.screenSize, prevDesign.bezelMm, prevDesign.thicknessCm, year,
+  );
+
+  const designId = crypto.randomUUID();
+  const design: LaptopDesign = {
+    id: designId,
+    name: `${competitor.productLine} ${year}`,
+    modelType: "specBump",
+    predecessorId: prevDesign.id,
+    screenSize: prevDesign.screenSize,
+    components,
+    ports: prevDesign.ports,
+    batteryCapacityWh: prevDesign.batteryCapacityWh,
+    thicknessCm: prevDesign.thicknessCm,
+    bezelMm: prevDesign.bezelMm,
+    chassis,
+    selectedColours: prevDesign.selectedColours,
+    unitCost: totals.totalCost,
+  };
+
+  const totalDemand = Object.values(STARTING_DEMAND_POOL).reduce((sum, v) => sum + v, 0);
+  const brandFactor = averageReach(competitor.brandReach) / 100;
+  const competitorShare = 1 / totalPlayerCount;
+  const manufacturingQuantity = Math.round(totalDemand * competitorShare * brandFactor * (0.8 + Math.random() * 0.4));
+
+  const retailPrice = computeAIRetailPrice(design, manufacturingQuantity, competitor);
+
+  return {
+    design,
+    status: "onSale",
+    retailPrice,
+    manufacturingQuantity,
+    yearDesigned: year,
+    manufacturingPlan: null,
+    unitsInStock: manufacturingQuantity,
+    totalProductionSpend: 0,
+    totalUnitsOrdered: 0,
+  };
+}
+
 export function generateCompetitorModels(
   year: number,
   competitors: CompetitorDefinition[],
@@ -342,10 +532,20 @@ export function generateCompetitorModels(
 ): LaptopModel[] {
   const totalPlayerCount = competitors.length + 1; // +1 for human player
 
-  // Pass 1: generate designs with heuristic quantities and initial pricing
+  // Pass 1: generate designs — choose model type based on previous model sell-through
   const models = competitors.map((competitor) => {
     const companyState = companies?.find((c) => c.id === competitor.id);
     const bonus = companyState?.engineeringBonus ?? competitor.engineeringBonus;
+    const previousModels = companyState?.models ?? [];
+
+    const { modelType, predecessor } = decideModelType(previousModels);
+
+    if (modelType === "successor" && predecessor) {
+      return generateSuccessorModel(year, competitor, predecessor, totalPlayerCount, bonus);
+    }
+    if (modelType === "specBump" && predecessor) {
+      return generateSpecBumpModel(year, competitor, predecessor, totalPlayerCount, bonus);
+    }
     return generateSingleModel(year, competitor, totalPlayerCount, bonus);
   });
 

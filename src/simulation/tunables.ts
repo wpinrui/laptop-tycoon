@@ -136,6 +136,17 @@ export const AI_ORDER_MULTIPLIER: Record<CompetitorArchetype, number> = {
   premium: 1.00,
 };
 
+// ==================== AI Old Inventory & Model Continuity ====================
+
+/** Per-year price discount applied to AI models at year transition */
+export const AI_OLD_INVENTORY_DISCOUNT = 0.25;
+/** Maximum age (years) before an AI model is auto-discontinued */
+export const AI_MAX_MODEL_AGE = 3;
+/** Sell-through above this → successor (successful product, iterate) */
+export const AI_SUCCESSOR_THRESHOLD = 0.80;
+/** Sell-through above this (but below successor) → spec bump */
+export const AI_SPEC_BUMP_THRESHOLD = 0.50;
+
 // ==================== AI Death Spiral Prevention ====================
 
 /** Minimum annual unit sales before an AI competitor is considered "struggling" */

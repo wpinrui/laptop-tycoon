@@ -6,11 +6,11 @@ import { QuarterSimulationResult } from "../../simulation/salesTypes";
 import { clearProjectionCache, simulateQuarter } from "../../simulation/salesEngine";
 import { updateBrandReach, updateCompetitorBrandReach, applySingleQuarterPerception } from "../../simulation/brandProgression";
 import { applyDeathSpiralPrevention } from "../../simulation/deathSpiralPrevention";
-import { generateCompetitorModels } from "../../simulation/competitorAI";
+import { generateCompetitorModels, discountOldInventoryPrice } from "../../simulation/competitorAI";
 import { COMPETITORS } from "../../data/competitors";
 import { LaptopReview, Award, applyAwardBonuses } from "../../simulation/reviewsAwards";
 import { SPONSORSHIPS, getSponsorshipCost } from "../../data/sponsorships";
-import { PERCEPTION_MEANINGFUL_DELTA } from "../../simulation/tunables";
+import { PERCEPTION_MEANINGFUL_DELTA, AI_MAX_MODEL_AGE } from "../../simulation/tunables";
 
 export interface CompetitorModelEntry {
   competitorId: string;
@@ -109,19 +109,30 @@ function preSimulateAIYear(initial: GameState): GameState {
     };
   }
 
-  // Clean up AI models with no remaining stock before advancing
+  // Clean up AI models: drop depleted/old, discount surviving old inventory
+  const nextPreSimYear = s.year + 1;
   s = {
     ...s,
     companies: s.companies.map((comp) => {
       if (comp.isPlayer) return comp;
-      return { ...comp, models: comp.models.filter((m) => m.unitsInStock > 0) };
+      return {
+        ...comp,
+        models: comp.models
+          .filter((m) => m.unitsInStock > 0 && nextPreSimYear - m.yearDesigned < AI_MAX_MODEL_AGE)
+          .map((m) => {
+            if (m.yearDesigned < nextPreSimYear) {
+              return { ...m, retailPrice: discountOldInventoryPrice(m) };
+            }
+            return m;
+          }),
+      };
     }),
   };
 
   // Advance to next year Q1
   return {
     ...s,
-    year: s.year + 1,
+    year: nextPreSimYear,
     quarter: 1 as Quarter,
     quarterSimulated: false,
   };
@@ -170,10 +181,17 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         sponsorships: [],
         companies: companiesAfterSpiral.map((comp) => {
           if (!comp.isPlayer) {
-            // AI companies: drop models with no remaining stock to prevent state bloat
+            // AI companies: drop depleted/old models, discount surviving old inventory
             return {
               ...comp,
-              models: comp.models.filter((m) => m.unitsInStock > 0),
+              models: comp.models
+                .filter((m) => m.unitsInStock > 0 && nextYear - m.yearDesigned < AI_MAX_MODEL_AGE)
+                .map((m) => {
+                  if (m.yearDesigned < nextYear) {
+                    return { ...m, retailPrice: discountOldInventoryPrice(m) };
+                  }
+                  return m;
+                }),
             };
           }
           return {
