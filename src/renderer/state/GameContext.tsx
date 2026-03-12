@@ -109,6 +109,15 @@ function preSimulateAIYear(initial: GameState): GameState {
     };
   }
 
+  // Clean up AI models with no remaining stock before advancing
+  s = {
+    ...s,
+    companies: s.companies.map((comp) => {
+      if (comp.isPlayer) return comp;
+      return { ...comp, models: comp.models.filter((m) => m.unitsInStock > 0) };
+    }),
+  };
+
   // Advance to next year Q1
   return {
     ...s,
@@ -159,37 +168,47 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         currentYearAwards: [],
         brandAwarenessBudget: 0,
         sponsorships: [],
-        companies: updatePlayerModels(companiesAfterSpiral, (models) =>
-          models.map((m) => {
-            if (m.status === "discontinued") return m;
+        companies: companiesAfterSpiral.map((comp) => {
+          if (!comp.isPlayer) {
+            // AI companies: drop models with no remaining stock to prevent state bloat
+            return {
+              ...comp,
+              models: comp.models.filter((m) => m.unitsInStock > 0),
+            };
+          }
+          return {
+            ...comp,
+            models: comp.models.map((m) => {
+              if (m.status === "discontinued") return m;
 
-            // Auto-discontinue drafts/designed models whose components are now obsolete
-            if ((m.status === "draft" || m.status === "designed") && hasDiscontinuedComponents(m.design, nextYear)) {
-              return { ...m, status: "discontinued" as const, manufacturingPlan: null, manufacturingQuantity: null };
-            }
-
-            // Find sim results for this model to get unsold units
-            const simResult = lastSim?.laptopResults.find((r) => r.laptopId === m.design.id);
-            const newStock = simResult ? simResult.unsoldUnits : m.unitsInStock;
-
-            // Models that were manufacturing/onSale transition to onSale
-            if (m.status === "manufacturing" || m.status === "onSale") {
-              const discontinued = hasDiscontinuedComponents(m.design, nextYear);
-
-              if (discontinued && newStock <= 0) {
-                return { ...m, status: "discontinued" as const, unitsInStock: 0, manufacturingPlan: null, manufacturingQuantity: null };
+              // Auto-discontinue drafts/designed models whose components are now obsolete
+              if ((m.status === "draft" || m.status === "designed") && hasDiscontinuedComponents(m.design, nextYear)) {
+                return { ...m, status: "discontinued" as const, manufacturingPlan: null, manufacturingQuantity: null };
               }
 
-              return {
-                ...m,
-                status: "onSale" as const,
-                unitsInStock: newStock,
-              };
-            }
+              // Find sim results for this model to get unsold units
+              const simResult = lastSim?.laptopResults.find((r) => r.laptopId === m.design.id);
+              const newStock = simResult ? simResult.unsoldUnits : m.unitsInStock;
 
-            return m;
-          }),
-        ),
+              // Models that were manufacturing/onSale transition to onSale
+              if (m.status === "manufacturing" || m.status === "onSale") {
+                const discontinued = hasDiscontinuedComponents(m.design, nextYear);
+
+                if (discontinued && newStock <= 0) {
+                  return { ...m, status: "discontinued" as const, unitsInStock: 0, manufacturingPlan: null, manufacturingQuantity: null };
+                }
+
+                return {
+                  ...m,
+                  status: "onSale" as const,
+                  unitsInStock: newStock,
+                };
+              }
+
+              return m;
+            }),
+          };
+        }),
       };
     }
     case "ADD_MODEL":

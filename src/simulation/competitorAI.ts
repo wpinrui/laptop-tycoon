@@ -34,7 +34,10 @@ import {
   RD_COST,
   TOOLING_COST,
   CERTIFICATION_COST,
+  AI_ORDER_MULTIPLIER,
+  MIN_BATCH_SIZE,
 } from "./tunables";
+import { estimateAnnualDemand } from "./salesEngine";
 
 const COMPONENT_SLOTS: ComponentSlot[] = [
   "cpu", "gpu", "ram", "storage",
@@ -295,24 +298,13 @@ function generateSingleModel(
     unitCost: totals.totalCost,
   };
 
-  // Manufacturing quantity heuristic: base pool size scaled by average brand reach
+  // Preliminary manufacturing quantity (heuristic, used for initial EoS pricing)
   const totalDemand = Object.values(STARTING_DEMAND_POOL).reduce((sum, v) => sum + v, 0);
   const brandFactor = averageReach(competitor.brandReach) / 100;
   const competitorShare = 1 / totalPlayerCount;
   const manufacturingQuantity = Math.round(totalDemand * competitorShare * brandFactor * (0.8 + Math.random() * 0.4));
 
-  // Fully loaded cost: BOM after EoS + assembly + packaging + amortised fixed costs
-  const bomAfterEos = calculateBomUnitCost(totals.totalCost, manufacturingQuantity);
-  const variableCost = bomAfterEos + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST;
-  const modelType = design.modelType;
-  const fixedCosts = RD_COST[modelType] + TOOLING_COST[modelType] + CERTIFICATION_COST[modelType];
-  const amortizedFixed = fixedCosts / manufacturingQuantity;
-  const fullyLoadedCost = variableCost + amortizedFixed;
-
-  // Price covers all costs after retailer takes their 20% cut, times margin
-  const retailPrice = Math.round(
-    (fullyLoadedCost / (1 - CHANNEL_MARGIN_RATE)) * competitor.pricingStrategy.marginMultiplier
-  );
+  const retailPrice = computeAIRetailPrice(design, manufacturingQuantity, competitor);
 
   return {
     design,
@@ -327,16 +319,52 @@ function generateSingleModel(
   };
 }
 
+/** Compute retail price for an AI model given a production quantity. */
+function computeAIRetailPrice(
+  design: LaptopDesign,
+  quantity: number,
+  competitor: CompetitorDefinition,
+): number {
+  const bomAfterEos = calculateBomUnitCost(design.unitCost, quantity);
+  const variableCost = bomAfterEos + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST;
+  const fixedCosts = RD_COST[design.modelType] + TOOLING_COST[design.modelType] + CERTIFICATION_COST[design.modelType];
+  const amortizedFixed = fixedCosts / quantity;
+  const fullyLoadedCost = variableCost + amortizedFixed;
+  return Math.round(
+    (fullyLoadedCost / (1 - CHANNEL_MARGIN_RATE)) * competitor.pricingStrategy.marginMultiplier
+  );
+}
+
 export function generateCompetitorModels(
   year: number,
   competitors: CompetitorDefinition[],
   companies?: CompanyState[],
 ): LaptopModel[] {
   const totalPlayerCount = competitors.length + 1; // +1 for human player
-  return competitors.map((competitor) => {
-    // Read live engineeringBonus from CompanyState (updated by death spiral prevention)
+
+  // Pass 1: generate designs with heuristic quantities and initial pricing
+  const models = competitors.map((competitor) => {
     const companyState = companies?.find((c) => c.id === competitor.id);
     const bonus = companyState?.engineeringBonus ?? competitor.engineeringBonus;
     return generateSingleModel(year, competitor, totalPlayerCount, bonus);
   });
+
+  // Pass 2: if live game context available, refine quantities using VP-based demand
+  if (companies) {
+    const extraModels = competitors.map((c, i) => ({ owner: c.id, model: models[i] }));
+    const demandMap = estimateAnnualDemand({ year, companies }, extraModels);
+
+    for (let i = 0; i < models.length; i++) {
+      const model = models[i];
+      const competitor = competitors[i];
+      const expectedDemand = demandMap.get(model.design.id) ?? model.manufacturingQuantity ?? 0;
+      const quantity = Math.max(MIN_BATCH_SIZE, Math.round(expectedDemand * AI_ORDER_MULTIPLIER[competitor.archetype]));
+
+      model.manufacturingQuantity = quantity;
+      model.unitsInStock = quantity;
+      model.retailPrice = computeAIRetailPrice(model.design, quantity, competitor);
+    }
+  }
+
+  return models;
 }
