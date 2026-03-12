@@ -524,7 +524,6 @@ export function ManufacturingStep() {
               {cost.toolingCost > 0 && <DetailRow label="Body R&D / tooling" value={fmt(cost.toolingCost)} />}
               {cost.certificationCost > 0 && <DetailRow label="Certification" value={fmt(cost.certificationCost)} />}
               {cost.multiModelOverhead > 0 && <DetailRow label="Multi-model overhead" value={fmt(cost.multiModelOverhead)} />}
-              <DetailRow label="Advertising" value={fmt(cost.adCost)} />
               <DetailRow label="Fixed cost / unit (amortised)" value={fmt(cost.fixedCostPerUnit)} />
             </div>
           )}

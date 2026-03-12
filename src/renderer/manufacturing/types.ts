@@ -15,20 +15,6 @@ export const MFG_STEP_LABELS: Record<ManufacturingWizardStep, string> = {
   confirmation: "Confirm",
 };
 
-export interface AdCampaign {
-  id: string;
-  name: string;
-  description: string;
-  baseCost: number;
-  distribution: {
-    mean: number;
-    stdDev: number;
-    skew: number;
-    min: number;
-    max: number;
-  };
-}
-
 export interface ManufacturingPlan {
   unitPrice: number;
   unitsOrdered: number;

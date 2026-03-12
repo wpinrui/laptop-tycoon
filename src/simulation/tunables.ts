@@ -17,10 +17,6 @@ export const S_CURVE_MIDPOINT = 50;
 export const AWARENESS_DIVISOR = 500_000;
 /** Word-of-mouth divisor — every X units sold contributes 1 raw reach point */
 export const WOM_DIVISOR = 5_000;
-/** Marketing campaign divisor — every $X of campaign spend contributes 1 raw reach point (S-curve, year-over-year) */
-export const CAMPAIGN_DIVISOR = 2_000_000;
-/** Immediate reach divisor — every $X of campaign spend gives 1% immediate reach (flat, same-year) */
-export const CAMPAIGN_IMMEDIATE_REACH_DIVISOR = 500_000;
 /** Reach decay rate when no products on sale (proportional, per year) */
 export const REACH_INACTIVITY_DECAY = 0.10;
 /** Competitor time-in-market reach growth (raw reach points per year just for existing) */

@@ -29,7 +29,6 @@ export interface CostBreakdown {
   toolingCost: number;
   certificationCost: number;
   multiModelOverhead: number;
-  adCost: number;
   totalFixedCosts: number;
 
   // Amortised
@@ -50,12 +49,11 @@ export function calculateCostBreakdown(params: {
   toolingCost: number;
   certificationCost: number;
   multiModelOverhead: number;
-  adCost: number;
 }): CostBreakdown {
   const {
     baseBomCost, unitsOrdered, retailPrice,
     assemblyQa, packagingLogistics, channelMarginRate,
-    toolingCost, certificationCost, multiModelOverhead, adCost,
+    toolingCost, certificationCost, multiModelOverhead,
   } = params;
 
   const bomAfterEos = calculateBomUnitCost(baseBomCost, unitsOrdered);
@@ -66,7 +64,7 @@ export function calculateCostBreakdown(params: {
   const revenuePerUnit = retailPrice - channelMargin;
   const totalCostPerUnit = manufacturingCostPerUnit;
 
-  const totalFixedCosts = toolingCost + certificationCost + multiModelOverhead + adCost;
+  const totalFixedCosts = toolingCost + certificationCost + multiModelOverhead;
   const fixedCostPerUnit = unitsOrdered > 0 ? totalFixedCosts / unitsOrdered : 0;
   const fullyLoadedCostPerUnit = totalCostPerUnit + fixedCostPerUnit;
 
@@ -85,7 +83,6 @@ export function calculateCostBreakdown(params: {
     toolingCost,
     certificationCost,
     multiModelOverhead,
-    adCost,
     totalFixedCosts,
     fixedCostPerUnit,
     fullyLoadedCostPerUnit,
@@ -113,7 +110,6 @@ export function buildCostBreakdown(gameState: GameState, wizardState: Pick<Manuf
     toolingCost: orderingNew ? TOOLING_COST[modelType] : 0,
     certificationCost: orderingNew ? CERTIFICATION_COST[modelType] : 0,
     multiModelOverhead: orderingNew ? overhead : 0,
-    adCost: 0,
   });
 
   return { cost };
