@@ -13,6 +13,7 @@ import {
 import { getScreenSizeDef } from "../../data/screenSizes";
 import { getAllChassisOptions } from "./types";
 import { STAT_CONFIG, computeStatTotals, getStatColor } from "./StatBar";
+import { DemographicHints } from "./DemographicHints";
 
 export function WizardSidebar({
   showChassisTotals,
@@ -185,6 +186,9 @@ export function WizardSidebar({
           })}
         </div>
       ))}
+
+      {/* Demographic Hints */}
+      <DemographicHints />
 
       {/* Laptop Estimate */}
       {estimateSection}
