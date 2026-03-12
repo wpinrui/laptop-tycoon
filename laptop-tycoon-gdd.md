@@ -12,15 +12,15 @@ A text-driven tycoon game where the player runs a laptop company from 2000 onwar
 
 ## Core Loop
 
-1. **Start of year:** Design laptop(s) via design wizard (only available at year start)
-2. **Each quarter (Q1–Q4):**
-   a. Manufacturing wizard available — set/adjust price, order units
-   b. Purchase sponsorships, set awareness budget
-   c. Sales simulation runs for that quarter's buyer pool
-   d. Revenue collected, cash balance updated
-   e. After Q1: laptop reviews are published
-   f. After Q4: year-end awards, annual perception/reach update, advance to next year
-3. **Repeat** — new components unlock, new year begins, design wizard available again
+1. **Each quarter (Q1–Q4):**
+   a. Design wizard available — design new laptop(s) if model slots are open (available any quarter before simulation runs)
+   b. Manufacturing wizard available — set/adjust price, order units
+   c. Purchase sponsorships, set awareness budget
+   d. Sales simulation runs for that quarter's buyer pool
+   e. Revenue collected, cash balance updated
+   f. After Q1: laptop reviews are published
+   g. After Q4: year-end awards, annual perception/reach update, advance to next year
+2. **Repeat** — new components unlock as years progress
 
 ---
 
@@ -164,7 +164,7 @@ Unsold units carry over as inventory to the next year. If you order 50,000 and s
 
 ### Cash Flow
 
-Costs are deducted when a manufacturing order is placed (at any quarter). The player can go negative at this point. Revenue is collected quarterly as units sell.
+Costs are deducted when a manufacturing order is placed (at any quarter). The player can go negative at this point. Revenue is collected quarterly as units sell, minus a **20% channel margin** (retailer cut). The company receives 80% of the retail price per unit sold.
 
 Game over check occurs at the end of Q4 only. The player has the full year to recover from a bad quarter. If cash balance is negative after Q4 revenue is collected, the game is over.
 
@@ -208,10 +208,10 @@ Q4: 1/15 (~7%)
 This rewards getting the launch right — the majority of sales happen in Q1. The player can react to poor Q1 results by adjusting price or ordering more units in Q2–Q4, but most of the opportunity has already passed.
 
 Each quarter, the player may:
+- Design new laptops (if model slots are open, before the quarter is simulated)
 - Reopen the manufacturing wizard for existing designs (adjust price, order additional manufacturing runs)
 - Purchase sponsorships
 - Adjust the general awareness budget
-- NOT design new laptops (locked until next year's start)
 
 Additional manufacturing orders placed in Q2+ are calculated with their own independent economies-of-scale discount. They do not pool with the Q1 order. This creates a natural cost penalty for not forecasting correctly at launch.
 
@@ -291,9 +291,12 @@ Reach is a multiplier on competitive strength, not a gate on pool size. Low reac
 ### Step 4: Sales Noise
 
 ```
-actual_sales = units_sold × random_factor
-random_factor sampled uniformly from [0.85, 1.15]  (±15% variance)
+noise_percent = uniform_random(10, 15)
+direction = random_sign()  (50% chance +1, 50% chance -1)
+actual_sales = units_sold × (1 + direction × noise_percent / 100)
 ```
+
+Bimodal noise: each demographic's demand is nudged either up or down by 10–15%. This avoids clustering near the mean and creates more varied outcomes than uniform noise.
 
 ### Market Size (shown in manufacturing wizard)
 
@@ -323,13 +326,13 @@ The percentage of a demographic that has heard of your company. Acts as a multip
 
 **Starting values:**
 - Player: 0% across all demographics. Must be bootstrapped through sponsorships and awareness budget.
-- AI competitors: Pre-set per archetype (e.g., ValueTech 70% uniform, Prestige Computing 60% uniform, OmniBook 75% uniform).
+- AI competitors: Pre-set per demographic to reflect each archetype's niche (e.g., ValueTech has 50% Budget Buyer but only 5% Creative Professional; Prestige Computing has 60% Creative Professional but only 10% Budget Buyer; OmniBook is broadly 25–40% across all demographics).
 
 **Growth sources (per demographic, per year):**
 
 | Source | Calculation | Notes |
 |--------|------------|-------|
-| Word of mouth | units_sold_to_this_demographic / WOM_DIVISOR | Only per-demographic organic source. Creates natural flywheel. |
+| Word of mouth | (units_sold_to_this_demographic / WOM_DIVISOR) × (1 + perception / 100) | Per-demographic organic source. Positive perception amplifies WOM; negative perception dampens it. Creates natural flywheel. |
 | Sponsorships | Fixed bonuses per sponsorship option | Targeted to specific demographics. Primary mechanism for directed reach growth. |
 | General awareness budget | annual_awareness_spend / AWARENESS_DIVISOR | Uniform across all demographics. |
 
@@ -433,7 +436,7 @@ perception_contribution = experience × volume_weight × negativity_multiplier
 new_perception = old_perception × (DECAY ^ 0.25) + perception_contribution
 ```
 
-Using DECAY^0.25 per quarter produces the same annual decay as DECAY over 4 quarters. E.g., if DECAY = 0.5, quarterly decay factor = 0.5^0.25 ≈ 0.84.
+Using DECAY^0.25 per quarter produces the same annual decay as DECAY over 4 quarters. With DECAY = 0.75, quarterly decay factor = 0.75^0.25 ≈ 0.93.
 
 Clamp to [-50, +50].
 
@@ -498,7 +501,7 @@ Each has an archetype, a niche focus, and simple decision rules for generating 1
 
 | Competitor | Archetype | Strategy |
 |-----------|-----------|----------|
-| Budget Brand | Aggressive pricing, low quality | Targets Student and Budget Buyer. Lower quartile on build quality, design, support. Upper quartile on price competitiveness. |
+| Budget Brand | Aggressive pricing, low quality | Targets Student and Budget Buyer. Lower quartile on build quality, design. Upper quartile on price competitiveness. |
 | Premium Brand | High quality, overpriced | Targets Business Professional and Creative. Upper quartile on design, display, build quality. Consistently overprices by 10–15%. |
 | Generalist | Middle of the road | Targets General Consumer. Never leads on any stat. Competitive pricing. |
 
@@ -539,12 +542,13 @@ Both player and AI competitors use this interface. The simulation iterates over 
 | Constant | Starting Value | Notes |
 |----------|---------------|-------|
 | PRICE_WEIGHT | Varies per demographic stat weight vector | Weight on price_score in VP dot product; higher = more price-sensitive |
-| WOM_DIVISOR | TBD | Units sold per 1 raw reach point from word of mouth |
+| WOM_DIVISOR | 5,000 | Units sold per 1 raw reach point from word of mouth |
 | AWARENESS_DIVISOR | 500,000 | Awareness budget spend per 1 raw reach point |
-| PERCEPTION_DECAY | 0.5–0.6 | Yearly decay on brand perception |
+| PERCEPTION_DECAY | 0.75 | Yearly decay on brand perception (25% fade per year) |
 | NEGATIVITY_MULTIPLIER | 1.5 | Bad experiences hit 1.5× harder |
 | S_CURVE_L | TBD | Max reach growth per year |
 | S_CURVE_K | TBD | S-curve steepness |
+| CHANNEL_MARGIN_RATE | 0.20 | Retailer takes 20% of retail price; company receives 80% |
 | COST_INFLATION | 1.03 | Annual scaling for sponsorship costs |
 | REPLACEMENT_CYCLE_TECH_ENTHUSIAST | 2 | Years between upgrades |
 | REPLACEMENT_CYCLE_BUSINESS_PRO | 3 | |
