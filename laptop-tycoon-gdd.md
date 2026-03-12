@@ -112,16 +112,9 @@ Full stat block with both raw specs and market-relative scores. Estimated cost p
 | Material / Build Quality | Material + structural rigidity setting |
 | Keyboard | Keyboard feature selections |
 | Trackpad | Trackpad feature selections |
-| Maintenance / Repairability | Chassis design choices (screws vs glue, modular vs soldered) |
 | Weight | Chassis + all component weights + material density |
 | Thinness | Thickness target setting |
 | Thermals | Derived from cooling headroom ratio (effectiveCooling / totalPower). Scales linearly up to 1.5× headroom = max score, capped at 2×. When cooling < power, performance and gaming performance are proportionally throttled. |
-
-### Spending-Driven
-
-| Stat | Derived From |
-|------|-------------|
-| Support & Service | Money allocated per unit per year × number of years of support commitment |
 
 ### Stat Display
 
@@ -192,7 +185,7 @@ Each buyer type has:
 
 | Demographic | Key Stats Valued | Price Sensitivity | Notes |
 |-------------|-----------------|-------------------|-------|
-| Corporate / Enterprise | Keyboard, support, build quality, reliability | Low (per unit), bulk orders | Values long support windows. Steady presence. |
+| Corporate / Enterprise | Keyboard, build quality, reliability | Low (per unit), bulk orders | Steady presence. |
 | Business Professional | Design, portability, keyboard, performance | Moderate | Grows as laptops replace desktops. |
 | Student | Price, battery, portability, performance | Very high | Large population throughout. |
 | Creative Professional | Display, performance, build quality, design | Low | Small but high margin. Grows significantly post-2010. |
@@ -490,7 +483,7 @@ The primary feedback mechanism for understanding sales performance. Available ev
 **Stats shown change per demographic** based on their weight vector:
 - Students see: price, battery life, portability, performance
 - Gamers see: gaming performance, thermals, display, performance
-- Corporate sees: keyboard, support, build quality, reliability
+- Corporate sees: keyboard, build quality, reliability
 - etc.
 
 **Design rationale:** No computed "loss reasons" or appeal score decomposition. The sales formula is multiplicative (stats × screen penalty × perception / price^sensitivity), so decomposing it into independent factors is inherently approximate. Instead, show the player what each demographic sees — the specs they care about, the price, and who won — and let them draw their own conclusions. Brand perception and reach are visible on the brand management screen for cross-referencing.
@@ -607,12 +600,12 @@ Determined by highest scorer in each relevant stat/segment combination. Player a
 
 | Category | Count |
 |----------|-------|
-| Stat commentary (16 stats × 3 sentiments × 4 variants) | ~192 |
+| Stat commentary (14 stats × 3 sentiments × 4 variants) | ~168 |
 | Structural (intro/outro/comparison/verdict × 4 variants) | ~40 |
 | Award announcements (8 categories × 4 variants) | ~32 |
 | Award scene-setting intros | ~10 |
-| **Subtotal** | **~274** |
-| **×2 for comfortable non-repetition** | **~550** |
+| **Subtotal** | **~250** |
+| **×2 for comfortable non-repetition** | **~500** |
 
 Templates are stored in a JSON file. Can be batch-written and refined for voice consistency.
 
@@ -660,7 +653,7 @@ Post-year, the player can pay for a detailed demographic breakdown: which buyer 
 - [ ] General awareness budget slider
 - [ ] Laptop reviews (2 per model, template-driven, published after Q1)
 - [ ] Year-end awards (after Q4)
-- [ ] ~550 sentence templates for reviews and awards
+- [ ] ~500 sentence templates for reviews and awards
 - [ ] Press release prompts (3 per model from pool of 12, feeds into reviews)
 - [ ] Unsold inventory carried over
 - [ ] Game over on negative cash after Q4
