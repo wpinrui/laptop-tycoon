@@ -14,7 +14,7 @@ A text-driven tycoon game where the player runs a laptop company from 2000 onwar
 
 1. **Start of year:** Design laptop(s) via design wizard (only available at year start)
 2. **Each quarter (Q1–Q4):**
-   a. Manufacturing wizard available — set/adjust price, order units, run campaigns
+   a. Manufacturing wizard available — set/adjust price, order units
    b. Purchase sponsorships, set awareness budget
    c. Sales simulation runs for that quarter's buyer pool
    d. Revenue collected, cash balance updated
@@ -212,10 +212,10 @@ Q3: 2/15 (~13%)
 Q4: 1/15 (~7%)
 ```
 
-This rewards getting the launch right — the majority of sales happen in Q1. The player can react to poor Q1 results by adjusting price, ordering more units, or running new campaigns in Q2–Q4, but most of the opportunity has already passed.
+This rewards getting the launch right — the majority of sales happen in Q1. The player can react to poor Q1 results by adjusting price or ordering more units in Q2–Q4, but most of the opportunity has already passed.
 
 Each quarter, the player may:
-- Reopen the manufacturing wizard for existing designs (adjust price, order additional manufacturing runs, select new ad campaigns)
+- Reopen the manufacturing wizard for existing designs (adjust price, order additional manufacturing runs)
 - Purchase sponsorships
 - Adjust the general awareness budget
 - NOT design new laptops (locked until next year's start)
@@ -256,8 +256,7 @@ This ensures the optimiser (and sales engine) naturally land in sensible ranges 
 
 ```
 brand_perception_mod = brand_perception[this_demographic] for this company  (-50 to +50)
-laptop_perception_mod = campaign result for this laptop
-biased_vp = raw_vp × (1 + brand_perception_mod / 100) × (1 + laptop_perception_mod / 100)
+biased_vp = raw_vp × (1 + brand_perception_mod / 100)
 ```
 
 ### Step 3: Demand Resolution
@@ -330,7 +329,7 @@ Three components, each serving a distinct role in the sales funnel.
 The percentage of a demographic that has heard of your company. Acts as a multiplier on your competitive strength within the shared demand pool. If your reach among Students is 20%, your effective value proposition is scaled to 20% — most students don't know you exist, so your pull on the pool is weak. A company with 0% reach gets 0 effective VP and sells nothing.
 
 **Starting values:**
-- Player: 0% across all demographics. Must be bootstrapped through marketing.
+- Player: 0% across all demographics. Must be bootstrapped through sponsorships and awareness budget.
 - AI competitors: Pre-set per archetype (e.g., ValueTech 70% uniform, Prestige Computing 60% uniform, OmniBook 75% uniform).
 
 **Growth sources (per demographic, per year):**
@@ -338,7 +337,6 @@ The percentage of a demographic that has heard of your company. Acts as a multip
 | Source | Calculation | Notes |
 |--------|------------|-------|
 | Word of mouth | units_sold_to_this_demographic / WOM_DIVISOR | Only per-demographic organic source. Creates natural flywheel. |
-| Campaign spend | total_campaign_spend / CAMPAIGN_DIVISOR | Uniform across all demographics. Small contribution. |
 | Sponsorships | Fixed bonuses per sponsorship option | Targeted to specific demographics. Primary mechanism for directed reach growth. |
 | General awareness budget | annual_awareness_spend / AWARENESS_DIVISOR | Uniform across all demographics. |
 
@@ -352,8 +350,6 @@ Where the midpoint shifts based on current reach, producing:
 - Slow growth at low reach (hard to get started)
 - Fast growth in the mid-range (momentum)
 - Plateauing at high reach (diminishing returns)
-
-**Campaign reach is applied before sales simulation runs in the same year.** This ensures a first-year player with 0% reach and a marketing campaign can still generate sales. The projection in the manufacturing wizard must include the prospective campaign's reach contribution.
 
 ### Brand Perception (per demographic, -50 to +50)
 
@@ -376,14 +372,6 @@ The accumulated sentiment a demographic has about your company, based on their p
 - *Company sells both ultraportable and gaming laptop:* Gamers buy the gaming laptop, business professionals buy the ultraportable. Each demographic's perception is shaped only by the product they bought. No cross-contamination.
 - *A few gamers accidentally buy the ultraportable:* Small negative experience (bad value for gamers), but volume_weight is tiny so the perception hit is negligible.
 
-### Laptop Perception (per model, from ad campaign)
-
-How a specific laptop is perceived due to its marketing campaign. This is a one-off modifier for that product in that year, not a persistent brand attribute.
-
-**Source:** The ad campaign selected in the manufacturing wizard. The campaign outcome is sampled from the campaign's distribution (skewed normal, as previously specified). The result is a percentage modifier to perceived value, not a direct sales modifier.
-
-**Range:** Depends on campaign type. Safe campaigns produce small positive modifiers. Risky campaigns can produce large positive or negative modifiers.
-
 ---
 
 ## Sponsorship / Partnership Options
@@ -400,47 +388,9 @@ Available as discrete purchases during the yearly planning phase. The player may
 | Airport/transit advertising | $250K | +2% Business Professional, +2% General Consumer |
 | TV commercial | $800K | +4% General Consumer, +2% Budget Buyer, +2% all others |
 
-Sponsorship costs should scale with a simple inflation factor per year (same as campaign costs).
+Sponsorship costs scale with a simple inflation factor per year (3% annually from base year 2000).
 
 A **general awareness budget** slider is also available — annual spend that provides a small uniform reach boost across all demographics, fed through the S-curve.
-
----
-
-## Marketing
-
-The player may select one ad campaign per model per quarter. Each campaign lasts one quarter only. The player can run a new campaign for the same model in subsequent quarters.
-
-### Ad Campaigns
-
-Five campaign tiers with increasing risk/reward:
-
-| Campaign | Base Cost | Risk | Perception Modifier Range |
-|----------|-----------|------|--------------------------|
-| No Campaign | Free | None | 0% (guaranteed) |
-| Product Showcase | $2,000,000 | Low | +1% to +10% |
-| Lifestyle Campaign | $1,200,000 | Medium | -3% to +20% |
-| Comparative Ad | $600,000 | High | -10% to +30% |
-| Stunt / Viral | $200,000 | Very High | -20% to +40% |
-
-Each campaign has a **skew-normal distribution** defining the probability of different perception modifier outcomes. Higher-risk campaigns are cheaper but have wider variance and negative skew (downside tail is fatter).
-
-### Campaign Cost Inflation
-
-Campaign costs inflate at **3% per year** from the base year (2000):
-
-```
-actual_cost = base_cost × 1.03^(current_year - 2000)
-```
-
-### Sales Impact
-
-The campaign's outcome is sampled from its distribution when the quarter simulates. The result is a **percentage modifier to perceived value** (laptop perception), not a direct sales modifier:
-
-```
-biased_vp = raw_vp × (1 + brand_perception_mod / 100) × (1 + laptop_perception_mod / 100)
-```
-
-The player sees the distribution shape (via a chart) and the min/mean/max range before choosing, but the actual outcome is only revealed after the quarter simulates.
 
 ---
 
@@ -473,7 +423,7 @@ Each manufacturing plan includes **3 press release prompts** randomly selected f
 
 ### Effect on Game
 
-Press release responses feed into the **review generation system**. Reviewer templates can quote the player's responses, creating a feedback loop between marketing claims and critical reception. Overpromising relative to actual specs risks negative review commentary.
+Press release responses feed into the **review generation system**. Reviewer templates can quote the player's responses, creating a feedback loop between launch claims and critical reception. Overpromising relative to actual specs risks negative review commentary.
 
 ---
 
@@ -499,7 +449,7 @@ Clamp to [-50, +50].
 Reach growth sources accumulate quarterly. Each quarter:
 
 ```
-raw_growth = word_of_mouth_this_quarter + (campaign_reach / 4)
+raw_growth = word_of_mouth_this_quarter
              + (sponsorship_reach if purchased this quarter)
              + (awareness_budget_reach / 4)
 new_reach = old_reach + S_curve(raw_growth, current_reach)
@@ -563,8 +513,6 @@ Each has an archetype, a niche focus, and simple decision rules for generating 1
 
 AI competitors use the exact same simulation pipeline as the player. Same perception feedback, same reach mechanics, same appeal formula. No special cases.
 
-**AI campaign selection:** Budget brand picks cheap/risky campaigns. Premium brand picks expensive/safe campaigns. Generalist picks mid-tier. Simple lookup per archetype, not a decision engine.
-
 **AI death spiral prevention:** The `engineeringBonus` field on competitor definitions serves as a safety valve. If an AI brand's total sales drop below a threshold for 2+ consecutive years, nudge their bonus up slightly to keep them competitive. This is a balance lever, not exposed to the player.
 
 **Visibility:** All competitor laptops are fully visible to the player — full stat blocks (raw + market-relative), price, screen size. No hidden information about the products themselves. The only hidden information is competitor sales figures (available via paid demographic breakdowns — post-MVP).
@@ -599,13 +547,12 @@ Both player and AI competitors use this interface. The simulation iterates over 
 |----------|---------------|-------|
 | PRICE_WEIGHT | Varies per demographic stat weight vector | Weight on price_score in VP dot product; higher = more price-sensitive |
 | WOM_DIVISOR | TBD | Units sold per 1 raw reach point from word of mouth |
-| CAMPAIGN_DIVISOR | 2,000,000 | Campaign spend per 1 raw reach point |
 | AWARENESS_DIVISOR | 500,000 | Awareness budget spend per 1 raw reach point |
 | PERCEPTION_DECAY | 0.5–0.6 | Yearly decay on brand perception |
 | NEGATIVITY_MULTIPLIER | 1.5 | Bad experiences hit 1.5× harder |
 | S_CURVE_L | TBD | Max reach growth per year |
 | S_CURVE_K | TBD | S-curve steepness |
-| CAMPAIGN_COST_INFLATION | 1.03 | Annual scaling for campaign and sponsorship costs |
+| COST_INFLATION | 1.03 | Annual scaling for sponsorship costs |
 | REPLACEMENT_CYCLE_TECH_ENTHUSIAST | 2 | Years between upgrades |
 | REPLACEMENT_CYCLE_BUSINESS_PRO | 3 | |
 | REPLACEMENT_CYCLE_STUDENT | 3 | |
@@ -702,19 +649,18 @@ Post-year, the player can pay for a detailed demographic breakdown: which buyer 
 - [ ] Market size display (total and per-demographic, per quarter)
 - [ ] Sales simulation with 8 buyer demographics
 - [ ] Quarterly game loop (Q1–Q4 per year, front-loaded buyer distribution)
-- [ ] Mid-year manufacturing wizard access (price adjustment, additional orders, new campaigns)
+- [ ] Mid-year manufacturing wizard access (price adjustment, additional orders)
 - [ ] Quarterly sales summaries
 - [ ] Independent EoS for mid-year manufacturing orders
 - [ ] Replacement cycle per demographic (active buyer pool sizing)
 - [ ] Momentum-based market weight shifting (annual, runs after Q4)
 - [ ] 3 AI competitors (budget, premium, generalist), 1 model each, full stats visible
-- [ ] Brand reach (per demographic) + brand perception (per demographic) + laptop perception (from campaigns)
+- [ ] Brand reach (per demographic) + brand perception (per demographic)
 - [ ] Sponsorship/partnership system (7 options, targeted reach per demographic)
 - [ ] General awareness budget slider
 - [ ] Laptop reviews (2 per model, template-driven, published after Q1)
 - [ ] Year-end awards (after Q4)
 - [ ] ~550 sentence templates for reviews and awards
-- [ ] Marketing campaigns (5 tiers, skew-normal distributions, cost inflation)
 - [ ] Press release prompts (3 per model from pool of 12, feeds into reviews)
 - [ ] Unsold inventory carried over
 - [ ] Game over on negative cash after Q4
