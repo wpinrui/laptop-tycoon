@@ -565,8 +565,6 @@ AI competitors use the exact same simulation pipeline as the player. Same percep
 
 **AI campaign selection:** Budget brand picks cheap/risky campaigns. Premium brand picks expensive/safe campaigns. Generalist picks mid-tier. Simple lookup per archetype, not a decision engine.
 
-**AI support budget:** Budget brand: minimal. Premium: generous. Generalist: moderate. Fixed per archetype.
-
 **AI death spiral prevention:** The `engineeringBonus` field on competitor definitions serves as a safety valve. If an AI brand's total sales drop below a threshold for 2+ consecutive years, nudge their bonus up slightly to keep them competitive. This is a balance lever, not exposed to the player.
 
 **Visibility:** All competitor laptops are fully visible to the player — full stat blocks (raw + market-relative), price, screen size. No hidden information about the products themselves. The only hidden information is competitor sales figures (available via paid demographic breakdowns — post-MVP).
