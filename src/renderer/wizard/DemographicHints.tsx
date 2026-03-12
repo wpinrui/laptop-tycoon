@@ -33,7 +33,7 @@ function getTopAndBottom(demId: DemographicId): { top: RankedStat[]; bottom: Ran
 }
 
 export function DemographicHints() {
-  const [selectedDem, setSelectedDem] = useState<DemographicId>("gamer");
+  const [selectedDem, setSelectedDem] = useState<DemographicId>(DEMOGRAPHICS[0].id);
   const [collapsed, setCollapsed] = useState(false);
 
   const { top, bottom } = useMemo(() => getTopAndBottom(selectedDem), [selectedDem]);
