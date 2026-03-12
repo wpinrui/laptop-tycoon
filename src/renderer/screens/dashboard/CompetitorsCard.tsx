@@ -101,7 +101,7 @@ export function CompetitorsCard() {
   }
 
   return (
-    <BentoCard title="Market" icon={Monitor} screen="marketBrowser">
+    <BentoCard title="Competitors" icon={Monitor} screen="marketBrowser">
       <div style={{ display: "flex", flexDirection: "column", gap: tokens.spacing.md }}>
         {/* Model counts */}
         <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
