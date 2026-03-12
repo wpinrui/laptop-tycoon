@@ -3,7 +3,6 @@ import { useMfgWizard } from "../ManufacturingWizardContext";
 import { useGame } from "../../state/GameContext";
 import { getPlayerCompany, modelDisplayName } from "../../state/gameTypes";
 import { tokens } from "../../shell/tokens";
-import { AD_CAMPAIGNS } from "../data/campaigns";
 import { buildCostBreakdown } from "../utils/economiesOfScale";
 import { PRESS_RELEASE_PROMPTS } from "../data/pressReleasePrompts";
 
@@ -29,8 +28,7 @@ export function ConfirmationStep() {
   const model = player.models.find((m) => m.design.id === state.modelId);
   if (!model) return <p>Model not found.</p>;
 
-  const campaign = AD_CAMPAIGNS.find((c) => c.id === state.campaignId) ?? AD_CAMPAIGNS[0];
-  const { cost, campaignCost } = buildCostBreakdown(gameState, state);
+  const { cost } = buildCostBreakdown(gameState, state);
   const cashAfter = gameState.cash - cost.totalManufacturingSpend;
 
   return (
@@ -41,31 +39,6 @@ export function ConfirmationStep() {
       <p style={{ color: tokens.colors.textMuted, margin: 0, marginBottom: tokens.spacing.lg }}>
         Review your plan for {modelDisplayName(player.name, model.design.name)}. You can edit this plan until you advance the year.
       </p>
-
-      {/* Marketing */}
-      <div style={sectionStyle}>
-        <h3 style={{ margin: 0, marginBottom: tokens.spacing.sm, fontSize: tokens.font.sizeLarge }}>
-          Marketing
-        </h3>
-        <div style={rowStyle}>
-          <span style={{ color: tokens.colors.textMuted }}>Campaign</span>
-          <span style={{ fontWeight: 600 }}>{campaign.name}</span>
-        </div>
-        <div style={rowStyle}>
-          <span style={{ color: tokens.colors.textMuted }}>Campaign cost</span>
-          <span style={{ fontWeight: 600 }}>
-            {campaignCost === 0 ? "Free" : `$${campaignCost.toLocaleString()}`}
-          </span>
-        </div>
-        {campaign.distribution.stdDev > 0 && (
-          <div style={rowStyle}>
-            <span style={{ color: tokens.colors.textMuted }}>Perceived value modifier</span>
-            <span style={{ fontWeight: 600 }}>
-              {campaign.distribution.min > 0 ? "+" : ""}{campaign.distribution.min}% to +{campaign.distribution.max}%
-            </span>
-          </div>
-        )}
-      </div>
 
       {/* Manufacturing */}
       <div style={sectionStyle}>

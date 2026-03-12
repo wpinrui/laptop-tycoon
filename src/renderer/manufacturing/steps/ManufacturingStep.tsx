@@ -4,8 +4,6 @@ import { useGame } from "../../state/GameContext";
 import { getPlayerCompany, modelDisplayName } from "../../state/gameTypes";
 import { tokens } from "../../shell/tokens";
 import { calculateBomUnitCost, buildCostBreakdown } from "../utils/economiesOfScale";
-import { AD_CAMPAIGNS, getCampaignCost } from "../data/campaigns";
-import { approxPercentile } from "../utils/skewNormal";
 import {
   MIN_BATCH_SIZE, MIN_PRICE_MULTIPLIER, DEFAULT_PRICE_MULTIPLIER, MAX_PRICE_MULTIPLIER,
   ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST, CHANNEL_MARGIN_RATE,
@@ -193,15 +191,12 @@ export function ManufacturingStep() {
   const modelType = model?.design.modelType ?? "brandNew";
   const activeModelCount = getActiveModels(gameState).length;
 
-  const campaign = AD_CAMPAIGNS.find((c) => c.id === state.campaignId) ?? AD_CAMPAIGNS[0];
-  const adCost = getCampaignCost(campaign, gameState.year);
-
   const toolingCost = TOOLING_COST[modelType];
   const certCost = CERTIFICATION_COST[modelType];
   const overhead = activeModelCount > 1 ? MULTI_MODEL_OVERHEAD : 0;
 
   // Fixed costs that must be paid regardless
-  const totalFixedCosts = toolingCost + certCost + overhead + adCost;
+  const totalFixedCosts = toolingCost + certCost + overhead;
 
   // Price slider: based on total cost per unit (BOM + assembly + packaging)
   const baseTotalPerUnit = getBaseCostPerUnit(baseBom);
@@ -237,15 +232,11 @@ export function ManufacturingStep() {
     unitsOrdered: effectiveQty,
   });
 
-  // Demand projection from sales simulation engine
-  const { distribution: dist } = campaign;
-
-  const projection = projectDemandRange(gameState, state.modelId, effectivePrice, adCost);
-  const lowerAdBonus = approxPercentile(dist.mean, dist.stdDev, dist.skew, dist.min, dist.max, 0.25);
-  const upperAdBonus = approxPercentile(dist.mean, dist.stdDev, dist.skew, dist.min, dist.max, 0.75);
+  // Demand projection from sales simulation engine (no campaign modifier)
+  const projection = projectDemandRange(gameState, state.modelId, effectivePrice, 0);
   const projections = {
-    displayLower: Math.max(0, Math.round(projection.low * (1 + lowerAdBonus / 100))),
-    displayUpper: Math.round(projection.high * (1 + upperAdBonus / 100)),
+    displayLower: Math.max(0, Math.round(projection.low)),
+    displayUpper: Math.round(projection.high),
   };
 
   // Other player models for price reference
@@ -274,7 +265,7 @@ export function ManufacturingStep() {
     // Check if we're editing an existing same-quarter plan — subtract its old cost/units
     const existingPlan = model.manufacturingPlan;
     const isEdit = existingPlan && existingPlan.year === gameState.year && existingPlan.quarter === gameState.quarter;
-    const oldPlanCost = isEdit ? existingPlan.manufacturing.totalCost + existingPlan.marketing.cost : 0;
+    const oldPlanCost = isEdit ? existingPlan.manufacturing.totalCost : 0;
     const oldPlanUnits = isEdit ? existingPlan.manufacturing.unitsOrdered : 0;
     const totalSpend = priorSpend - oldPlanCost + cost.totalManufacturingSpend;
     const totalUnits = priorUnits - oldPlanUnits + effectiveQty;

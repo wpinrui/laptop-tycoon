@@ -2,7 +2,6 @@ import {
   REFERENCE_QUANTITY, ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST,
   CHANNEL_MARGIN_RATE, TOOLING_COST, CERTIFICATION_COST, MULTI_MODEL_OVERHEAD,
 } from "./constants";
-import { AD_CAMPAIGNS, getCampaignCost } from "../data/campaigns";
 import { ManufacturingWizardState } from "../types";
 import { GameState, getPlayerCompany } from "../../state/gameTypes";
 import { getActiveModels } from "../../screens/dashboard/utils";
@@ -95,14 +94,12 @@ export function calculateCostBreakdown(params: {
 }
 
 /** Build cost breakdown from game + wizard state. Avoids repeating the same param construction. */
-export function buildCostBreakdown(gameState: GameState, wizardState: ManufacturingWizardState): { cost: CostBreakdown; campaignCost: number } {
+export function buildCostBreakdown(gameState: GameState, wizardState: Pick<ManufacturingWizardState, "modelId" | "unitPrice" | "unitsOrdered">): { cost: CostBreakdown } {
   const model = getPlayerCompany(gameState).models.find((m) => m.design.id === wizardState.modelId);
   const baseBomCost = model?.design.unitCost ?? 0;
   const modelType = model?.design.modelType ?? "brandNew";
   const activeModelCount = getActiveModels(gameState).length;
   const overhead = activeModelCount > 1 ? MULTI_MODEL_OVERHEAD : 0;
-  const campaign = AD_CAMPAIGNS.find((c) => c.id === wizardState.campaignId) ?? AD_CAMPAIGNS[0];
-  const campaignCost = getCampaignCost(campaign, gameState.year);
 
   // If ordering 0 new units (inventory-only), no manufacturing fixed costs apply
   const orderingNew = wizardState.unitsOrdered > 0;
@@ -116,8 +113,8 @@ export function buildCostBreakdown(gameState: GameState, wizardState: Manufactur
     toolingCost: orderingNew ? TOOLING_COST[modelType] : 0,
     certificationCost: orderingNew ? CERTIFICATION_COST[modelType] : 0,
     multiModelOverhead: orderingNew ? overhead : 0,
-    adCost: campaignCost,
+    adCost: 0,
   });
 
-  return { cost, campaignCost };
+  return { cost };
 }

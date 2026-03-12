@@ -1,12 +1,10 @@
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
 import { ManufacturingWizardState, ManufacturingWizardStep, MFG_WIZARD_STEPS, FullManufacturingPlan } from "./types";
 import { DEMAND_NOISE_MIN, DEMAND_NOISE_MAX, DEFAULT_PRICE_MULTIPLIER, MIN_RETAIL_PRICE, snapPrice, getBaseCostPerUnit } from "./utils/constants";
-import { AD_CAMPAIGNS } from "./data/campaigns";
 
 type MfgWizardAction =
   | { type: "INIT"; modelId: string; promptIds: number[]; baseBomCost: number; isAdditionalOrder?: boolean; existingRetailPrice?: number }
   | { type: "LOAD_PLAN"; modelId: string; plan: FullManufacturingPlan; isAdditionalOrder?: boolean }
-  | { type: "SET_CAMPAIGN"; campaignId: string | null }
   | { type: "SET_UNIT_PRICE"; unitPrice: number }
   | { type: "SET_UNITS_ORDERED"; unitsOrdered: number }
   | { type: "SET_PRESS_RESPONSE"; promptId: number; response: string }
@@ -18,12 +16,9 @@ function generateNoiseMargin(): number {
   return DEMAND_NOISE_MIN + Math.random() * (DEMAND_NOISE_MAX - DEMAND_NOISE_MIN);
 }
 
-const DEFAULT_CAMPAIGN_ID = AD_CAMPAIGNS[0].id;
-
 const INITIAL_STATE: ManufacturingWizardState = {
   currentStep: "manufacturing",
   modelId: "",
-  campaignId: DEFAULT_CAMPAIGN_ID,
   unitPrice: 0,
   unitsOrdered: 1000,
   pressReleasePromptIds: [],
@@ -50,7 +45,6 @@ function mfgWizardReducer(state: ManufacturingWizardState, action: MfgWizardActi
       return {
         ...INITIAL_STATE,
         modelId: action.modelId,
-        campaignId: action.plan.marketing.campaignId ?? DEFAULT_CAMPAIGN_ID,
         unitPrice: action.plan.manufacturing.unitPrice,
         unitsOrdered: action.plan.manufacturing.unitsOrdered,
         pressReleasePromptIds: action.plan.pressRelease.promptIds,
@@ -58,8 +52,6 @@ function mfgWizardReducer(state: ManufacturingWizardState, action: MfgWizardActi
         noiseMargin: generateNoiseMargin(),
         isAdditionalOrder: action.isAdditionalOrder ?? false,
       };
-    case "SET_CAMPAIGN":
-      return { ...state, campaignId: action.campaignId };
     case "SET_UNIT_PRICE":
       return { ...state, unitPrice: action.unitPrice };
     case "SET_UNITS_ORDERED":

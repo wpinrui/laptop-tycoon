@@ -34,8 +34,6 @@ import {
   QUARTER_SHARES_SUM,
   PERCEPTION_MEANINGFUL_DELTA,
 } from "./tunables";
-import { AD_CAMPAIGNS } from "../renderer/manufacturing/data/campaigns";
-import { sampleCampaignOutcome } from "../renderer/manufacturing/utils/skewNormal";
 import { generateCompetitorModels } from "./competitorAI";
 import { COMPETITORS } from "../data/competitors";
 import { averageReach, getCampaignReachBoost, applySingleQuarterPerception } from "./brandProgression";
@@ -86,7 +84,7 @@ function buildMarketLaptops(state: GameState): MarketLaptop[] {
     if (totalAvailable <= 0) continue;
 
     const totalMfgCost = isCurrentQuarterPlan
-      ? plan.manufacturing.totalCost + plan.marketing.cost
+      ? plan.manufacturing.totalCost
       : 0; // Inventory-only or previous quarter: no new manufacturing cost
 
     laptops.push({
@@ -169,25 +167,9 @@ function calculatePriceScore(retailPrice: number, year: number): number {
   return Math.exp(-retailPrice / scaleFactor);
 }
 
-/**
- * Sample campaign perception modifier from distribution.
- * Returns a percentage modifier to laptop perceived value (laptop_perception_mod).
- */
-function sampleCampaignPerception(campaignId: string | null): number {
-  if (!campaignId || campaignId === "no_campaign") return 0;
-  const campaign = AD_CAMPAIGNS.find((c) => c.id === campaignId);
-  if (!campaign) return 0;
-
-  const { mean, stdDev, skew, min, max } = campaign.distribution;
-  return sampleCampaignOutcome(mean, stdDev, skew, min, max);
-}
-
-/** Get laptop-specific campaign perception modifier */
-function getLaptopCampaignPerception(laptop: MarketLaptop, playerId: string): number {
-  if (laptop.owner !== playerId) return 0;
-  const plan = laptop.model.manufacturingPlan;
-  if (!plan) return 0;
-  return sampleCampaignPerception(plan.marketing.campaignId);
+/** Get laptop-specific campaign perception modifier (campaigns disabled — always 0) */
+function getLaptopCampaignPerception(_laptop: MarketLaptop, _playerId: string): number {
+  return 0;
 }
 
 /**

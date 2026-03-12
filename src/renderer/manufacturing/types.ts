@@ -1,10 +1,8 @@
 export type ManufacturingWizardStep =
-  | "marketing"
   | "manufacturing"
   | "pressRelease"
   | "confirmation";
 
-/** Visible wizard steps — marketing is hidden (auto-selected). */
 export const MFG_WIZARD_STEPS: ManufacturingWizardStep[] = [
   "manufacturing",
   "pressRelease",
@@ -12,7 +10,6 @@ export const MFG_WIZARD_STEPS: ManufacturingWizardStep[] = [
 ];
 
 export const MFG_STEP_LABELS: Record<ManufacturingWizardStep, string> = {
-  marketing: "Marketing",
   manufacturing: "Manufacturing & Pricing",
   pressRelease: "Press Release",
   confirmation: "Confirm",
@@ -30,11 +27,6 @@ export interface AdCampaign {
     min: number;
     max: number;
   };
-}
-
-export interface MarketingPlan {
-  campaignId: string | null;
-  cost: number;
 }
 
 export interface ManufacturingPlan {
@@ -60,7 +52,6 @@ export interface FullManufacturingPlan {
   laptopModelId: string;
   year: number;
   quarter: 1 | 2 | 3 | 4;
-  marketing: MarketingPlan;
   manufacturing: ManufacturingPlan;
   pressRelease: PressRelease;
   results?: {
@@ -75,7 +66,6 @@ export interface FullManufacturingPlan {
 export interface ManufacturingWizardState {
   currentStep: ManufacturingWizardStep;
   modelId: string;
-  campaignId: string | null;
   unitPrice: number;
   unitsOrdered: number;
   pressReleasePromptIds: number[];

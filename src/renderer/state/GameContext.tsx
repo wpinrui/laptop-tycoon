@@ -223,7 +223,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ),
       };
     case "SET_MANUFACTURING_PLAN": {
-      const newCost = action.plan.manufacturing.totalCost + action.plan.marketing.cost;
+      const newCost = action.plan.manufacturing.totalCost;
       return {
         ...state,
         companies: updatePlayerModels(state.companies, (models) =>
@@ -232,7 +232,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
             // If editing an existing same-quarter plan, subtract the old cost first
             const oldPlan = m.manufacturingPlan;
             const isEdit = oldPlan && oldPlan.year === action.plan.year && oldPlan.quarter === action.plan.quarter;
-            const oldCost = isEdit ? oldPlan.manufacturing.totalCost + oldPlan.marketing.cost : 0;
+            const oldCost = isEdit ? oldPlan.manufacturing.totalCost : 0;
             const oldUnits = isEdit ? oldPlan.manufacturing.unitsOrdered : 0;
             // Save the prior-quarter plan so it can be restored if the additional order is cancelled
             const previousPlan = !isEdit && oldPlan ? oldPlan : m.previousManufacturingPlan;
@@ -258,7 +258,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
             const plan = m.manufacturingPlan;
             if (!plan || plan.year !== state.year || plan.quarter !== state.quarter) return m;
             // Undo the cost/units that were accumulated when this plan was saved
-            const planCost = plan.manufacturing.totalCost + plan.marketing.cost;
+            const planCost = plan.manufacturing.totalCost;
             const restored = m.previousManufacturingPlan ?? null;
             return {
               ...m,

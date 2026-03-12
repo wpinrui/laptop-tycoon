@@ -5,7 +5,6 @@ import { getPlayerCompany, modelDisplayName } from "../state/gameTypes";
 import { useNavigation } from "../navigation/NavigationContext";
 import { MfgStepIndicator } from "./MfgStepIndicator";
 import { ManufacturingWizardStep, ManufacturingWizardState, MFG_WIZARD_STEPS, FullManufacturingPlan } from "./types";
-import { MarketingStep } from "./steps/MarketingStep";
 import { ManufacturingStep } from "./steps/ManufacturingStep";
 import { PressReleaseStep } from "./steps/PressReleaseStep";
 import { ConfirmationStep } from "./steps/ConfirmationStep";
@@ -17,8 +16,6 @@ import { StatusBar } from "../shell/StatusBar";
 
 function isStepComplete(step: ManufacturingWizardStep, state: ManufacturingWizardState): boolean {
   switch (step) {
-    case "marketing":
-      return state.campaignId !== null;
     case "manufacturing":
       return state.unitPrice > 0 && state.unitsOrdered >= 0;
     case "pressRelease":
@@ -74,16 +71,12 @@ function WizardContent() {
       return;
     }
 
-    const { cost, campaignCost } = buildCostBreakdown(gameState, state);
+    const { cost } = buildCostBreakdown(gameState, state);
 
     const plan: FullManufacturingPlan = {
       laptopModelId: state.modelId,
       year: gameState.year,
       quarter: gameState.quarter,
-      marketing: {
-        campaignId: state.campaignId,
-        cost: campaignCost,
-      },
       manufacturing: {
         unitPrice: state.unitPrice,
         unitsOrdered: state.unitsOrdered,
@@ -110,8 +103,6 @@ function WizardContent() {
 
   const stepContent = (() => {
     switch (state.currentStep) {
-      case "marketing":
-        return <MarketingStep />;
       case "manufacturing":
         return <ManufacturingStep />;
       case "pressRelease":
