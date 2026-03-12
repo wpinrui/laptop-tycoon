@@ -5,6 +5,7 @@
  */
 
 import { DemographicId } from "../data/types";
+import { CompetitorArchetype } from "../data/competitors";
 import { ModelType } from "../renderer/state/gameTypes";
 
 // ==================== Brand Reach ====================
@@ -125,6 +126,15 @@ export const QUARTER_SHARES = [8, 4, 2, 1] as const;
 
 /** Sum of all quarter shares for normalisation. */
 export const QUARTER_SHARES_SUM = QUARTER_SHARES.reduce<number>((s, v) => s + v, 0);
+
+// ==================== AI Production ====================
+
+/** Fraction of estimated annual demand each archetype orders */
+export const AI_ORDER_MULTIPLIER: Record<CompetitorArchetype, number> = {
+  budget: 0.80,
+  generalist: 0.90,
+  premium: 1.00,
+};
 
 // ==================== AI Death Spiral Prevention ====================
 

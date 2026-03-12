@@ -98,11 +98,10 @@ function buildMarketLaptops(state: GameState): MarketLaptop[] {
     });
   }
 
-  // Competitor models (current year only)
+  // Competitor models (any with remaining stock)
   for (const comp of state.companies) {
     if (comp.isPlayer) continue;
     for (const model of comp.models) {
-      if (model.yearDesigned !== state.year) continue;
       if (!model.retailPrice || model.unitsInStock <= 0) continue;
 
       const stats = computeStatsForDesign(model.design, state.year);
@@ -555,4 +554,112 @@ export function projectDemandRange(
   const high = Math.round(expected * (1 + variance));
 
   return { low, high, expected };
+}
+
+// --- Annual Demand Estimation (used by AI production planning) ---
+
+/** Minimal context needed for demand estimation (subset of GameState). */
+export interface DemandEstimationContext {
+  year: number;
+  companies: CompanyState[];
+}
+
+/**
+ * Estimate annual demand for every laptop in a market.
+ * Uses the exact VP formula from simulateQuarter (normalised stats, viability
+ * transforms, exponential price scoring, screen penalty, perception bias,
+ * reach multiplier), summed across all demographics and all 4 quarters.
+ * No noise or supply constraints — returns pure expected demand.
+ *
+ * @param ctx         Year and companies (provides brand reach/perception)
+ * @param extraModels Models not yet in ctx.companies (e.g. newly generated AI models)
+ * @returns Map from laptop design id → expected annual units demanded
+ */
+export function estimateAnnualDemand(
+  ctx: DemandEstimationContext,
+  extraModels: { owner: string; model: LaptopModel }[],
+): Map<string, number> {
+  const { year, companies } = ctx;
+  // calculateBiasedVP expects GameState but only reads .year and .companies
+  const stateProxy = ctx as unknown as GameState;
+
+  // Build market: existing models from state + extra models
+  const laptops: MarketLaptop[] = [];
+
+  for (const comp of companies) {
+    for (const model of comp.models) {
+      if (!model.retailPrice || model.unitsInStock <= 0) continue;
+      laptops.push({
+        id: model.design.id,
+        owner: comp.id,
+        model,
+        stats: computeStatsForDesign(model.design, year),
+        retailPrice: model.retailPrice,
+        manufacturingQuantity: model.unitsInStock,
+        totalManufacturingCost: 0,
+      });
+    }
+  }
+
+  for (const { owner, model } of extraModels) {
+    if (!model.retailPrice) continue;
+    laptops.push({
+      id: model.design.id,
+      owner,
+      model,
+      stats: computeStatsForDesign(model.design, year),
+      retailPrice: model.retailPrice,
+      manufacturingQuantity: model.manufacturingQuantity ?? 0,
+      totalManufacturingCost: 0,
+    });
+  }
+
+  if (laptops.length === 0) return new Map();
+
+  // Pre-compute normalised stats
+  const normalisedStatsMap = new Map<string, Record<LaptopStat, number>>();
+  for (const laptop of laptops) {
+    normalisedStatsMap.set(laptop.id, normaliseStats(laptop, year));
+  }
+
+  // Accumulate demand per laptop across all demographics and all 4 quarters
+  const demandMap = new Map<string, number>();
+  for (const laptop of laptops) {
+    demandMap.set(laptop.id, 0);
+  }
+
+  for (const demographic of DEMOGRAPHICS) {
+    const demId = demographic.id;
+    const basePool = STARTING_DEMAND_POOL[demId];
+    const demographicPopulation = getDemandPoolSize(demId, year, basePool);
+    const annualActiveBuyers = demographicPopulation / REPLACEMENT_CYCLE[demId];
+
+    // Compute effective VP for each laptop
+    let totalEffectiveVP = 0;
+    const vpEntries: { laptopId: string; effectiveVP: number }[] = [];
+
+    for (const laptop of laptops) {
+      const normStats = normalisedStatsMap.get(laptop.id)!;
+      const { biasedVP } = calculateBiasedVP(laptop, normStats, demographic, stateProxy);
+
+      const company = companies.find((c) => c.id === laptop.owner);
+      const reach = Math.min(company ? (company.brandReach[demId] ?? 0) : 0, 100);
+      const effectiveVP = biasedVP * (reach / 100);
+
+      vpEntries.push({ laptopId: laptop.id, effectiveVP });
+      totalEffectiveVP += effectiveVP;
+    }
+
+    for (const { laptopId, effectiveVP } of vpEntries) {
+      const share = totalEffectiveVP > 0 ? effectiveVP / totalEffectiveVP : 0;
+      demandMap.set(laptopId, demandMap.get(laptopId)! + annualActiveBuyers * share);
+    }
+  }
+
+  // Round to whole units
+  for (const [id, demand] of demandMap) {
+    demandMap.set(id, Math.round(demand));
+  }
+
+  return demandMap;
 }
