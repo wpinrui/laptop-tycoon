@@ -5,10 +5,9 @@ import { DemographicId, STAT_LABELS } from "../../data/types";
 import { CustomSelect, SelectOption } from "../shell/CustomSelect";
 import { Tooltip } from "./Tooltip";
 
-const DEMOGRAPHIC_OPTIONS: SelectOption<DemographicId>[] = DEMOGRAPHICS.map((d) => ({
-  value: d.id,
-  label: d.name,
-}));
+const DEMOGRAPHIC_OPTIONS: SelectOption<DemographicId>[] = DEMOGRAPHICS
+  .map((d) => ({ value: d.id, label: d.name }))
+  .sort((a, b) => a.label.localeCompare(b.label));
 
 interface RankedStat {
   label: string;
@@ -33,7 +32,7 @@ function getTopAndBottom(demId: DemographicId): { top: RankedStat[]; bottom: Ran
 }
 
 export function DemographicHints() {
-  const [selectedDem, setSelectedDem] = useState<DemographicId>(DEMOGRAPHICS[0].id);
+  const [selectedDem, setSelectedDem] = useState<DemographicId>(DEMOGRAPHIC_OPTIONS[0].value);
   const [collapsed, setCollapsed] = useState(false);
 
   const { top, bottom } = useMemo(() => getTopAndBottom(selectedDem), [selectedDem]);
