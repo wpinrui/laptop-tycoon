@@ -87,7 +87,10 @@ function preSimulateAIYear(initial: GameState): GameState {
     s = { ...s, quarter: q as Quarter };
     const result = simulateQuarter(s);
 
-    // Update competitor brand reach & perception (same as APPLY_QUARTER_RESULT)
+    // Update competitor brand reach, perception, and inventory (same as APPLY_QUARTER_RESULT)
+    const simByLaptop = new Map(
+      result.laptopResults.map((r) => [r.laptopId, r]),
+    );
     s = {
       ...s,
       companies: s.companies.map((comp) => {
@@ -96,6 +99,11 @@ function preSimulateAIYear(initial: GameState): GameState {
           ...comp,
           brandReach: updateCompetitorBrandReach(comp, result),
           brandPerception: applySingleQuarterPerception(comp, result.laptopResults),
+          models: comp.models.map((m) => {
+            const sim = simByLaptop.get(m.design.id);
+            if (!sim) return m;
+            return { ...m, unitsInStock: sim.unsoldUnits };
+          }),
         };
       }),
     };
@@ -301,6 +309,10 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       const simByLaptop = new Map(
         result.playerResults.map((r) => [r.laptopId, r]),
       );
+      // Build lookup for all laptops (including AI) to update inventory
+      const allSimByLaptop = new Map(
+        result.laptopResults.map((r) => [r.laptopId, r]),
+      );
 
       const newPlayerReach = updateBrandReach(state, result);
       const newPlayerPerception = Object.fromEntries(
@@ -339,11 +351,16 @@ function gameReducer(state: GameState, action: GameAction): GameState {
             }),
           };
         }
-        // Competitor: update brand reach & perception
+        // Competitor: update brand reach, perception, and inventory
         return {
           ...comp,
           brandReach: updateCompetitorBrandReach(comp, result),
           brandPerception: applySingleQuarterPerception(comp, result.laptopResults),
+          models: comp.models.map((m) => {
+            const sim = allSimByLaptop.get(m.design.id);
+            if (!sim) return m;
+            return { ...m, unitsInStock: sim.unsoldUnits };
+          }),
         };
       });
 

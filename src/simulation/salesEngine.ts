@@ -103,7 +103,7 @@ function buildMarketLaptops(state: GameState): MarketLaptop[] {
     if (comp.isPlayer) continue;
     for (const model of comp.models) {
       if (model.yearDesigned !== state.year) continue;
-      if (!model.retailPrice || !model.manufacturingQuantity) continue;
+      if (!model.retailPrice || model.unitsInStock <= 0) continue;
 
       const stats = computeStatsForDesign(model.design, state.year);
 
@@ -113,8 +113,8 @@ function buildMarketLaptops(state: GameState): MarketLaptop[] {
         model,
         stats,
         retailPrice: model.retailPrice,
-        manufacturingQuantity: model.manufacturingQuantity,
-        totalManufacturingCost: model.manufacturingQuantity * model.design.unitCost,
+        manufacturingQuantity: model.unitsInStock,
+        totalManufacturingCost: model.unitsInStock * model.design.unitCost,
       });
     }
   }

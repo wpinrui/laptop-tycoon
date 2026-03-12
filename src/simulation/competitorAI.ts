@@ -301,7 +301,7 @@ function generateSingleModel(
     manufacturingQuantity,
     yearDesigned: year,
     manufacturingPlan: null,
-    unitsInStock: 0,
+    unitsInStock: manufacturingQuantity,
     totalProductionSpend: 0,
     totalUnitsOrdered: 0,
   };
