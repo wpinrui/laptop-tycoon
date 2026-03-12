@@ -26,6 +26,15 @@ import { PORT_TYPES } from "../data/portTypes";
 import { COLOUR_OPTIONS } from "../data/colourOptions";
 import { STARTING_DEMAND_POOL } from "../data/startingDemand";
 import { averageReach } from "./brandProgression";
+import { calculateBomUnitCost } from "../renderer/manufacturing/utils/economiesOfScale";
+import {
+  ASSEMBLY_QA_COST,
+  PACKAGING_LOGISTICS_COST,
+  CHANNEL_MARGIN_RATE,
+  RD_COST,
+  TOOLING_COST,
+  CERTIFICATION_COST,
+} from "./tunables";
 
 const COMPONENT_SLOTS: ComponentSlot[] = [
   "cpu", "gpu", "ram", "storage",
@@ -286,13 +295,24 @@ function generateSingleModel(
     unitCost: totals.totalCost,
   };
 
-  const retailPrice = Math.round(totals.totalCost * competitor.pricingStrategy.marginMultiplier);
-
   // Manufacturing quantity heuristic: base pool size scaled by average brand reach
   const totalDemand = Object.values(STARTING_DEMAND_POOL).reduce((sum, v) => sum + v, 0);
   const brandFactor = averageReach(competitor.brandReach) / 100;
   const competitorShare = 1 / totalPlayerCount;
   const manufacturingQuantity = Math.round(totalDemand * competitorShare * brandFactor * (0.8 + Math.random() * 0.4));
+
+  // Fully loaded cost: BOM after EoS + assembly + packaging + amortised fixed costs
+  const bomAfterEos = calculateBomUnitCost(totals.totalCost, manufacturingQuantity);
+  const variableCost = bomAfterEos + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST;
+  const modelType = design.modelType;
+  const fixedCosts = RD_COST[modelType] + TOOLING_COST[modelType] + CERTIFICATION_COST[modelType];
+  const amortizedFixed = fixedCosts / manufacturingQuantity;
+  const fullyLoadedCost = variableCost + amortizedFixed;
+
+  // Price covers all costs after retailer takes their 20% cut, times margin
+  const retailPrice = Math.round(
+    (fullyLoadedCost / (1 - CHANNEL_MARGIN_RATE)) * competitor.pricingStrategy.marginMultiplier
+  );
 
   return {
     design,
