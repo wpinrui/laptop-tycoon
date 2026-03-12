@@ -28,6 +28,11 @@ function isStepComplete(step: ManufacturingWizardStep, state: ManufacturingWizar
   }
 }
 
+/** Get visible wizard steps — additional orders skip press release and confirmation. */
+function getVisibleSteps(isAdditionalOrder: boolean): ManufacturingWizardStep[] {
+  return isAdditionalOrder ? ["manufacturing"] : MFG_WIZARD_STEPS;
+}
+
 function WizardContent() {
   const { state, dispatch } = useMfgWizard();
   const { state: gameState, dispatch: gameDispatch } = useGame();
@@ -35,26 +40,40 @@ function WizardContent() {
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [visitedConfirmation, setVisitedConfirmation] = useState(false);
 
-  const currentIdx = MFG_WIZARD_STEPS.indexOf(state.currentStep);
+  const visibleSteps = getVisibleSteps(state.isAdditionalOrder);
+  const currentIdx = visibleSteps.indexOf(state.currentStep);
   const isFirst = currentIdx === 0;
-  const isLast = state.currentStep === "confirmation";
+  const isLast = currentIdx === visibleSteps.length - 1;
 
   if (isLast && !visitedConfirmation) setVisitedConfirmation(true);
 
-  const allStepsComplete = MFG_WIZARD_STEPS.every((s) => isStepComplete(s, state));
+  const allStepsComplete = visibleSteps.every((s) => isStepComplete(s, state));
   const canAdvance = isStepComplete(state.currentStep, state);
 
   function canNavigateTo(step: ManufacturingWizardStep) {
-    const targetIdx = MFG_WIZARD_STEPS.indexOf(step);
+    const targetIdx = visibleSteps.indexOf(step);
     if (targetIdx <= currentIdx) return true;
     for (let i = 0; i < targetIdx; i++) {
-      if (!isStepComplete(MFG_WIZARD_STEPS[i], state)) return false;
+      if (!isStepComplete(visibleSteps[i], state)) return false;
     }
     return true;
   }
 
   function handleConfirm() {
     if (!model) return;
+
+    // Additional order with 0 units = cancel the additional order
+    if (state.isAdditionalOrder && state.unitsOrdered === 0) {
+      // If we previously saved an additional order this quarter, revert it
+      const existingPlan = model.manufacturingPlan;
+      const hasSavedAdditionalOrder = existingPlan && existingPlan.year === gameState.year && existingPlan.quarter === gameState.quarter;
+      if (hasSavedAdditionalOrder) {
+        gameDispatch({ type: "CANCEL_CURRENT_QUARTER_PLAN", modelId: state.modelId });
+      }
+      navigateTo("modelManagement");
+      return;
+    }
+
     const { cost, campaignCost } = buildCostBreakdown(gameState, state);
 
     const plan: FullManufacturingPlan = {
@@ -70,7 +89,6 @@ function WizardContent() {
         unitsOrdered: state.unitsOrdered,
         unitCost: Math.round(cost.manufacturingCostPerUnit),
         totalCost: Math.round(cost.totalManufacturingSpend),
-        supportBudget: state.supportBudget,
       },
       pressRelease: {
         promptIds: state.pressReleasePromptIds,
@@ -120,7 +138,7 @@ function WizardContent() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexShrink: 0 }}>
         <div>
           <h1 style={{ fontSize: tokens.font.sizeTitle, marginBottom: tokens.spacing.sm }}>
-            Manufacturing Plan
+            {state.isAdditionalOrder ? "Additional Manufacturing Order" : "Manufacturing Plan"}
           </h1>
           <p style={{ color: tokens.colors.textMuted, marginBottom: tokens.spacing.lg }}>
             {model ? `${modelDisplayName(player.name, model.design.name)} · Year ${gameState.year}` : ""}
@@ -149,11 +167,13 @@ function WizardContent() {
         </button>
       </div>
 
-      <MfgStepIndicator
-        currentStep={state.currentStep}
-        onStepClick={(step) => dispatch({ type: "GO_TO_STEP", step })}
-        canNavigateTo={canNavigateTo}
-      />
+      {!state.isAdditionalOrder && (
+        <MfgStepIndicator
+          currentStep={state.currentStep}
+          onStepClick={(step) => dispatch({ type: "GO_TO_STEP", step })}
+          canNavigateTo={canNavigateTo}
+        />
+      )}
 
       <div
         style={{
@@ -187,7 +207,7 @@ function WizardContent() {
           }}
           style={{ fontSize: tokens.font.sizeBase }}
         >
-          Back
+          {isFirst ? "Cancel" : "Back"}
         </MenuButton>
         <div style={{ display: "flex", gap: tokens.spacing.sm }}>
           {!isLast && allStepsComplete && visitedConfirmation && (
@@ -196,7 +216,7 @@ function WizardContent() {
               onClick={handleConfirm}
               style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}
             >
-              Confirm Manufacturing Plan
+              {state.isAdditionalOrder ? "Confirm Order" : "Confirm Manufacturing Plan"}
             </MenuButton>
           )}
           <MenuButton
@@ -211,7 +231,7 @@ function WizardContent() {
             disabled={isLast ? !allStepsComplete : !canAdvance}
             style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}
           >
-            {isLast ? "Confirm Manufacturing Plan" : "Next"}
+            {isLast ? (state.isAdditionalOrder ? "Confirm Order" : "Confirm Manufacturing Plan") : "Next"}
           </MenuButton>
         </div>
       </div>

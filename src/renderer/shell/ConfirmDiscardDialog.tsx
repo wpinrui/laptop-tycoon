@@ -7,9 +7,11 @@ interface ConfirmDiscardDialogProps {
   message: string;
   onConfirm: () => void;
   onCancel: () => void;
+  confirmLabel?: string;
+  cancelLabel?: string;
 }
 
-export function ConfirmDiscardDialog({ title, message, onConfirm, onCancel }: ConfirmDiscardDialogProps) {
+export function ConfirmDiscardDialog({ title, message, onConfirm, onCancel, confirmLabel = "Discard", cancelLabel = "Keep Editing" }: ConfirmDiscardDialogProps) {
   return (
     <div
       style={overlayStyle}
@@ -26,10 +28,10 @@ export function ConfirmDiscardDialog({ title, message, onConfirm, onCancel }: Co
         </p>
         <div style={{ display: "flex", gap: tokens.spacing.sm }}>
           <MenuButton onClick={onCancel} style={{ flex: 1 }}>
-            Keep Editing
+            {cancelLabel}
           </MenuButton>
           <MenuButton variant="danger" onClick={onConfirm} style={{ flex: 1 }}>
-            Discard
+            {confirmLabel}
           </MenuButton>
         </div>
       </ContentPanel>

@@ -4,8 +4,8 @@ export type ManufacturingWizardStep =
   | "pressRelease"
   | "confirmation";
 
+/** Visible wizard steps — marketing is hidden (auto-selected). */
 export const MFG_WIZARD_STEPS: ManufacturingWizardStep[] = [
-  "marketing",
   "manufacturing",
   "pressRelease",
   "confirmation",
@@ -42,7 +42,6 @@ export interface ManufacturingPlan {
   unitsOrdered: number;
   unitCost: number;
   totalCost: number;
-  supportBudget: number;
 }
 
 export interface PressReleasePrompt {
@@ -79,8 +78,9 @@ export interface ManufacturingWizardState {
   campaignId: string | null;
   unitPrice: number;
   unitsOrdered: number;
-  supportBudget: number;
   pressReleasePromptIds: number[];
   pressReleaseResponses: Record<number, string>;
   noiseMargin: number;
+  /** True when placing an additional order on a model that already has a prior-quarter plan this year. */
+  isAdditionalOrder: boolean;
 }

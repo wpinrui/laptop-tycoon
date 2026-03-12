@@ -331,6 +331,8 @@ function WizardContent() {
           yearDesigned: gameState.year,
           manufacturingPlan: null,
           unitsInStock: 0,
+          totalProductionSpend: 0,
+          totalUnitsOrdered: 0,
         },
       });
     }
@@ -354,6 +356,8 @@ function WizardContent() {
           yearDesigned: gameState.year,
           manufacturingPlan: null,
           unitsInStock: 0,
+          totalProductionSpend: 0,
+          totalUnitsOrdered: 0,
         },
       });
     }

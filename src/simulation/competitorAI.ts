@@ -302,6 +302,8 @@ function generateSingleModel(
     yearDesigned: year,
     manufacturingPlan: null,
     unitsInStock: 0,
+    totalProductionSpend: 0,
+    totalUnitsOrdered: 0,
   };
 }
 

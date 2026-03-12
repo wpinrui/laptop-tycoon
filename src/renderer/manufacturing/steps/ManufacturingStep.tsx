@@ -7,10 +7,10 @@ import { calculateBomUnitCost, buildCostBreakdown } from "../utils/economiesOfSc
 import { AD_CAMPAIGNS, getCampaignCost } from "../data/campaigns";
 import { approxPercentile } from "../utils/skewNormal";
 import {
-  MIN_BATCH_SIZE, MAX_PRICE_MULTIPLIER,
+  MIN_BATCH_SIZE, MIN_PRICE_MULTIPLIER, DEFAULT_PRICE_MULTIPLIER, MAX_PRICE_MULTIPLIER,
   ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST, CHANNEL_MARGIN_RATE,
-  SUPPORT_BUDGET_MIN, SUPPORT_BUDGET_MAX,
   TOOLING_COST, CERTIFICATION_COST, MULTI_MODEL_OVERHEAD,
+  MIN_RETAIL_PRICE, snapPrice, getBaseCostPerUnit,
 } from "../utils/constants";
 import { getActiveModels } from "../../screens/dashboard/utils";
 import { projectDemandRange } from "../../../simulation/salesEngine";
@@ -180,11 +180,6 @@ function DetailRow({ label, value, color }: { label: string; value: string; colo
 
 // projectDemandRange provides real simulation-backed demand estimates
 
-/** Snap price to nearest $50 ending in 9, e.g. $449, $499, $549 */
-function snapPrice(raw: number): number {
-  return Math.round(raw / 50) * 50 - 1;
-}
-
 export function ManufacturingStep() {
   const { state, dispatch } = useMfgWizard();
   const { state: gameState } = useGame();
@@ -208,20 +203,20 @@ export function ManufacturingStep() {
   // Fixed costs that must be paid regardless
   const totalFixedCosts = toolingCost + certCost + overhead + adCost;
 
-  // Price slider: based on total cost per unit (BOM + assembly + packaging + support)
-  const baseTotalPerUnit = baseBom + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST + state.supportBudget;
-  const minPrice = Math.max(snapPrice(baseTotalPerUnit * 0.5), 49);
+  // Price slider: based on total cost per unit (BOM + assembly + packaging)
+  const baseTotalPerUnit = getBaseCostPerUnit(baseBom);
+  const minPrice = Math.max(snapPrice(baseTotalPerUnit * MIN_PRICE_MULTIPLIER), MIN_RETAIL_PRICE);
   const maxPrice = snapPrice(baseTotalPerUnit * MAX_PRICE_MULTIPLIER);
 
   // Quantity slider: binary search for max affordable
   const cashForManufacturing = Math.max(0, gameState.cash - totalFixedCosts);
-  const minPerUnit = calculateBomUnitCost(baseBom, 10_000_000) + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST + state.supportBudget;
+  const minPerUnit = calculateBomUnitCost(baseBom, 10_000_000) + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST;
   const maxQuantity = (() => {
     let lo = MIN_BATCH_SIZE;
     let hi = Math.max(MIN_BATCH_SIZE, Math.floor(cashForManufacturing / Math.max(1, minPerUnit)));
     while (lo < hi) {
       const mid = Math.ceil((lo + hi) / 2);
-      const mfgPerUnit = calculateBomUnitCost(baseBom, mid) + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST + state.supportBudget;
+      const mfgPerUnit = calculateBomUnitCost(baseBom, mid) + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST;
       if (mfgPerUnit * mid <= cashForManufacturing) {
         lo = mid;
       } else {
@@ -232,7 +227,7 @@ export function ManufacturingStep() {
   })();
 
   // Effective values
-  const effectivePrice = state.unitPrice || snapPrice(baseTotalPerUnit * 1.5);
+  const effectivePrice = state.unitPrice || snapPrice(baseTotalPerUnit * DEFAULT_PRICE_MULTIPLIER);
   const effectiveQty = state.unitsOrdered;
 
   // Full cost breakdown — uses effective values for price/qty
@@ -271,7 +266,22 @@ export function ManufacturingStep() {
   const optimisticProfit = optimisticSold * cost.revenuePerUnit - cost.totalManufacturingSpend;
   const cashAfter = gameState.cash - cost.totalManufacturingSpend;
 
-  const marginPerUnit = cost.revenuePerUnit - cost.fullyLoadedCostPerUnit;
+  // For additional orders, compute blended break-even cost across all orders
+  const blendedCostPerUnit = (() => {
+    if (!state.isAdditionalOrder || !model) return cost.fullyLoadedCostPerUnit;
+    const priorSpend = model.totalProductionSpend ?? 0;
+    const priorUnits = model.totalUnitsOrdered ?? 0;
+    // Check if we're editing an existing same-quarter plan — subtract its old cost/units
+    const existingPlan = model.manufacturingPlan;
+    const isEdit = existingPlan && existingPlan.year === gameState.year && existingPlan.quarter === gameState.quarter;
+    const oldPlanCost = isEdit ? existingPlan.manufacturing.totalCost + existingPlan.marketing.cost : 0;
+    const oldPlanUnits = isEdit ? existingPlan.manufacturing.unitsOrdered : 0;
+    const totalSpend = priorSpend - oldPlanCost + cost.totalManufacturingSpend;
+    const totalUnits = priorUnits - oldPlanUnits + effectiveQty;
+    return totalUnits > 0 ? totalSpend / totalUnits : cost.fullyLoadedCostPerUnit;
+  })();
+
+  const marginPerUnit = cost.revenuePerUnit - blendedCostPerUnit;
   const marginPct = effectivePrice > 0 ? (marginPerUnit / effectivePrice) * 100 : 0;
 
   const profitable = marginPerUnit > 0;
@@ -386,31 +396,6 @@ export function ManufacturingStep() {
             )}
           </div>
 
-          <div style={panelStyle}>
-            <div style={sliderLabelStyle}>
-              <span style={{ fontWeight: 600 }}>Support Budget</span>
-              <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
-                per unit
-              </span>
-            </div>
-            <div style={bigValueStyle}>
-              {fmt(state.supportBudget)} / unit
-            </div>
-            <input
-              type="range"
-              min={SUPPORT_BUDGET_MIN}
-              max={SUPPORT_BUDGET_MAX}
-              step={1}
-              value={state.supportBudget}
-              onChange={(e) => dispatch({ type: "SET_SUPPORT_BUDGET", supportBudget: Number(e.target.value) })}
-              style={{ width: "100%", accentColor: tokens.colors.interactiveAccent }}
-            />
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
-              <span>{fmt(SUPPORT_BUDGET_MIN)}</span>
-              <span>{fmt(SUPPORT_BUDGET_MAX)}</span>
-            </div>
-          </div>
-
           {otherPlayerModels.length > 0 && (
             <div style={panelStyle}>
               <div style={{ fontWeight: 600, marginBottom: tokens.spacing.sm }}>Your Other Models</div>
@@ -433,7 +418,7 @@ export function ManufacturingStep() {
             gap: tokens.spacing.sm,
           }}>
             <MetricCard
-              label="Margin / unit"
+              label={state.isAdditionalOrder ? "Blended margin / unit" : "Margin / unit"}
               value={`${fmt(marginPerUnit)} (${Math.round(marginPct)}%)`}
               color={profitColor}
               bgColor={profitBg}
@@ -540,7 +525,6 @@ export function ManufacturingStep() {
               <DetailRow label="Component cost (BOM)" value={fmt(cost.bomCost)} />
               <DetailRow label="Assembly & QA" value={fmt(cost.assemblyQa)} />
               <DetailRow label="Packaging & logistics" value={fmt(cost.packagingLogistics)} />
-              <DetailRow label="Support reserve" value={fmt(cost.supportBudget)} />
               {cost.eosDiscount < 0 && (
                 <DetailRow label="Economies of scale" value={`-${fmt(Math.abs(cost.eosDiscount))}`} color={tokens.colors.success} />
               )}

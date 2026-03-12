@@ -12,6 +12,8 @@ import { tokens } from "../shell/tokens";
 import { StatusBar } from "../shell/StatusBar";
 import { getActiveModels, MAX_MODELS } from "./dashboard/utils";
 import { STATUS_CONFIG, getDisplayStatus } from "../statusConfig";
+import { ChangePricingDialog } from "../manufacturing/components/ChangePricingDialog";
+import { ConfirmDiscardDialog } from "../shell/ConfirmDiscardDialog";
 import {
   Laptop,
   Plus,
@@ -21,6 +23,8 @@ import {
   ChevronDown,
   ChevronUp,
   CheckCircle,
+  AlertTriangle,
+  DollarSign,
 } from "lucide-react";
 
 const panelStyle: CSSProperties = {
@@ -54,6 +58,7 @@ const actionBarStyle: CSSProperties = {
   marginTop: tokens.spacing.md,
   borderTop: `1px solid ${tokens.colors.panelBorder}`,
   paddingTop: tokens.spacing.md,
+  flexWrap: "wrap",
 };
 
 export function ModelManagementScreen() {
@@ -61,8 +66,9 @@ export function ModelManagementScreen() {
   const { navigateTo } = useNavigation();
   const { dispatch: wizardDispatch } = useWizard();
   const { dispatch: mfgDispatch } = useMfgWizard();
-  const [confirmScrapId, setConfirmScrapId] = useState<string | null>(null);
+  const [discontinueModel, setDiscontinueModel] = useState<LaptopModel | null>(null);
   const [showDiscontinued, setShowDiscontinued] = useState(false);
+  const [pricingModel, setPricingModel] = useState<LaptopModel | null>(null);
 
   const player = getPlayerCompany(state);
   const activeModels = getActiveModels(state);
@@ -76,18 +82,32 @@ export function ModelManagementScreen() {
   }
 
   function handleManufacturing(model: LaptopModel) {
-    if (model.manufacturingPlan) {
-      mfgDispatch({ type: "LOAD_PLAN", modelId: model.design.id, plan: model.manufacturingPlan });
+    const plan = model.manufacturingPlan;
+    const isCurrentQuarterPlan = plan?.year === state.year && plan?.quarter === state.quarter;
+    const isAdditional = model.status === "manufacturing" || model.status === "onSale";
+
+    if (plan && isCurrentQuarterPlan) {
+      // Editing same-quarter plan — load existing values
+      mfgDispatch({ type: "LOAD_PLAN", modelId: model.design.id, plan, isAdditionalOrder: isAdditional });
     } else {
+      // New order (first time, or additional order in a later quarter)
       const promptIds = selectPrompts(model.design.modelType, null);
-      mfgDispatch({ type: "INIT", modelId: model.design.id, promptIds, baseBomCost: model.design.unitCost });
+      const hasPriorOrder = plan?.year === state.year;
+      mfgDispatch({
+        type: "INIT",
+        modelId: model.design.id,
+        promptIds,
+        baseBomCost: model.design.unitCost,
+        isAdditionalOrder: hasPriorOrder,
+        existingRetailPrice: model.retailPrice ?? undefined,
+      });
     }
     navigateTo("manufacturingWizard");
   }
 
   function handleScrap(modelId: string) {
     dispatch({ type: "UPDATE_MODEL_STATUS", modelId, status: "discontinued" });
-    setConfirmScrapId(null);
+    setDiscontinueModel(null);
   }
 
   return (
@@ -133,14 +153,13 @@ export function ModelManagementScreen() {
             key={model.design.id}
             model={model}
             companyName={player.name}
-            confirmScrap={confirmScrapId === model.design.id}
             onEdit={canDesignNew ? () => handleEdit(model) : undefined}
             onAddManufacturing={() => handleManufacturing(model)}
-            onScrapClick={() => setConfirmScrapId(model.design.id)}
-            onScrapConfirm={() => handleScrap(model.design.id)}
-            onScrapCancel={() => setConfirmScrapId(null)}
+            onChangePricing={() => setPricingModel(model)}
+            onDiscontinue={() => setDiscontinueModel(model)}
             gameYear={state.year}
             gameQuarter={state.quarter}
+            quarterSimulated={state.quarterSimulated}
           />
         ))
       )}
@@ -172,13 +191,10 @@ export function ModelManagementScreen() {
                   key={model.design.id}
                   model={model}
                   companyName={player.name}
-                  confirmScrap={false}
-                  onScrapClick={() => {}}
-                  onScrapConfirm={() => {}}
-                  onScrapCancel={() => {}}
                   disabled
                   gameYear={state.year}
                   gameQuarter={state.quarter}
+                  quarterSimulated={state.quarterSimulated}
                 />
               ))}
             </div>
@@ -188,6 +204,38 @@ export function ModelManagementScreen() {
       <div style={{ flexShrink: 0, height: tokens.spacing.lg }} />
       </div>
       <StatusBar />
+
+      {discontinueModel && (
+        <ConfirmDiscardDialog
+          title={discontinueModel.status === "draft" ? "Scrap Model?" : "Discontinue Model?"}
+          message={
+            discontinueModel.status === "draft"
+              ? `Are you sure you want to scrap ${modelDisplayName(player.name, discontinueModel.design.name)}? This cannot be undone.`
+              : `Are you sure you want to discontinue ${modelDisplayName(player.name, discontinueModel.design.name)}?${discontinueModel.unitsInStock > 0 ? ` ${discontinueModel.unitsInStock.toLocaleString()} units in stock will be lost.` : ""}`
+          }
+          confirmLabel={discontinueModel.status === "draft" ? "Scrap" : "Discontinue"}
+          cancelLabel="Cancel"
+          onConfirm={() => handleScrap(discontinueModel.design.id)}
+          onCancel={() => setDiscontinueModel(null)}
+        />
+      )}
+
+      {pricingModel && pricingModel.retailPrice !== null && (
+        <ChangePricingDialog
+          modelName={modelDisplayName(player.name, pricingModel.design.name)}
+          currentPrice={pricingModel.retailPrice}
+          baseBomCost={pricingModel.design.unitCost}
+          onConfirm={(newPrice) => {
+            dispatch({ type: "SET_RETAIL_PRICE", modelId: pricingModel.design.id, retailPrice: newPrice });
+            setPricingModel(null);
+          }}
+          onCancel={() => setPricingModel(null)}
+          onOpenFullWizard={() => {
+            setPricingModel(null);
+            handleManufacturing(pricingModel);
+          }}
+        />
+      )}
     </ContentPanel>
   );
 }
@@ -195,33 +243,54 @@ export function ModelManagementScreen() {
 function ModelCard({
   model,
   companyName,
-  confirmScrap,
   onEdit,
   onAddManufacturing,
-  onScrapClick,
-  onScrapConfirm,
-  onScrapCancel,
+  onChangePricing,
+  onDiscontinue,
   disabled,
   gameYear,
   gameQuarter,
+  quarterSimulated,
 }: {
   model: LaptopModel;
   companyName: string;
-  confirmScrap: boolean;
   onEdit?: () => void;
   onAddManufacturing?: () => void;
-  onScrapClick: () => void;
-  onScrapConfirm: () => void;
-  onScrapCancel: () => void;
+  onChangePricing?: () => void;
+  onDiscontinue?: () => void;
   disabled?: boolean;
   gameYear: number;
   gameQuarter: 1 | 2 | 3 | 4;
+  quarterSimulated: boolean;
 }) {
   const { design, status, retailPrice, manufacturingQuantity, yearDesigned, manufacturingPlan } = model;
-  const hasPlan = manufacturingPlan !== null && manufacturingPlan.year === gameYear && manufacturingPlan.quarter === gameQuarter;
+  const hasCurrentQuarterPlan = manufacturingPlan !== null && manufacturingPlan.year === gameYear && manufacturingPlan.quarter === gameQuarter;
+  const hasPlanThisYear = manufacturingPlan !== null && manufacturingPlan.year === gameYear;
   const isRetailOnly = hasDiscontinuedComponents(design, gameYear);
   const displayStatus = getDisplayStatus(model, gameYear, gameQuarter);
   const statusStyle = STATUS_CONFIG[displayStatus];
+
+  // Out-of-stock warning: model is actively selling but has zero inventory and no pending production
+  const isSellingModel = status === "manufacturing" || status === "onSale";
+  const outOfStock = isSellingModel && !isRetailOnly && model.unitsInStock === 0 && !hasCurrentQuarterPlan;
+
+  // An additional order is a current-quarter plan on a model that was already manufacturing/selling
+  const isAdditionalOrder = hasCurrentQuarterPlan && (status === "manufacturing" || status === "onSale");
+
+  // Button label logic
+  const getMfgButtonLabel = () => {
+    if (isAdditionalOrder) return "Modify Additional Order";
+    if (hasCurrentQuarterPlan) return "Edit Manufacturing Plan";
+    if (hasPlanThisYear) return "Order Additional Units";
+    return "Add Manufacturing Plan";
+  };
+
+  // Show "Change Pricing" for models that already have a price set and aren't in the first manufacturing plan flow
+  const canChangePricing = retailPrice !== null && hasPlanThisYear && !isRetailOnly && (!hasCurrentQuarterPlan || isAdditionalOrder);
+
+  // "Producing" only shows when there's a current-quarter plan that hasn't been simulated yet
+  const isPendingProduction = hasCurrentQuarterPlan && !quarterSimulated && !manufacturingPlan?.results && manufacturingQuantity !== null;
+  const showInventorySection = isPendingProduction || model.unitsInStock > 0;
 
   return (
     <div style={{ ...modelCardStyle, opacity: disabled ? 0.5 : 1 }}>
@@ -253,15 +322,15 @@ function ModelCard({
         )}
       </div>
 
-      {((manufacturingQuantity !== null) || model.unitsInStock > 0) && (
+      {showInventorySection && (
         <div style={{ marginTop: tokens.spacing.sm, paddingTop: tokens.spacing.sm, borderTop: `1px solid ${tokens.colors.panelBorder}` }}>
-          {manufacturingQuantity !== null && (
-            <SpecRow label="Producing" value={`${manufacturingQuantity.toLocaleString()} units`} />
+          {isPendingProduction && (
+            <SpecRow label="Producing" value={`${manufacturingQuantity!.toLocaleString()} units`} />
           )}
           {model.unitsInStock > 0 && (
             <SpecRow label="In Stock" value={`${model.unitsInStock.toLocaleString()} units`} />
           )}
-          {hasPlan && (manufacturingQuantity ?? 0) > 0 && model.unitsInStock > 0 && (
+          {isPendingProduction && (manufacturingQuantity ?? 0) > 0 && model.unitsInStock > 0 && (
             <SpecRow
               label="Total Available"
               value={`${((manufacturingQuantity ?? 0) + model.unitsInStock).toLocaleString()} units`}
@@ -285,7 +354,21 @@ function ModelCard({
         </div>
       )}
 
-      {hasPlan && (
+      {outOfStock && (
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: tokens.spacing.xs,
+          marginTop: tokens.spacing.sm,
+          color: tokens.colors.warning,
+          fontSize: tokens.font.sizeSmall,
+          fontWeight: 600,
+        }}>
+          <AlertTriangle size={14} /> Out of stock — order more units or discontinue
+        </div>
+      )}
+
+      {hasPlanThisYear && (
         <div style={{
           display: "flex",
           alignItems: "center",
@@ -295,129 +378,62 @@ function ModelCard({
           fontSize: tokens.font.sizeSmall,
           fontWeight: 600,
         }}>
-          <CheckCircle size={14} /> Manufacturing plan confirmed
+          <CheckCircle size={14} />
+          {hasCurrentQuarterPlan
+            ? "Manufacturing plan confirmed"
+            : `Ordered ${(manufacturingPlan!.manufacturing.unitsOrdered).toLocaleString()} units in Q${manufacturingPlan!.quarter}`}
         </div>
       )}
 
       {!disabled && (
         <div style={actionBarStyle}>
-          {status === "draft" && (
-            <>
-              {onEdit && (
-                <MenuButton
-                  onClick={onEdit}
-                  style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
-                >
-                  <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-                    <Pencil size={14} /> Edit Design
-                  </span>
-                </MenuButton>
-              )}
-            </>
+          {(status === "draft" || status === "designed") && onEdit && (
+            <MenuButton
+              onClick={onEdit}
+              style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
+                <Pencil size={14} /> {status === "draft" ? "Edit Design" : "Redesign"}
+              </span>
+            </MenuButton>
           )}
-          {status === "designed" && (
-            <>
-              {onEdit && (
-                <MenuButton
-                  onClick={onEdit}
-                  style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
-                >
-                  <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-                    <Pencil size={14} /> Redesign
-                  </span>
-                </MenuButton>
-              )}
-              {onAddManufacturing && (
-                <MenuButton
-                  variant="accent"
-                  onClick={onAddManufacturing}
-                  style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
-                >
-                  <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-                    <Factory size={14} /> {hasPlan ? "Edit Manufacturing Plan" : "Add Manufacturing Plan"}
-                  </span>
-                </MenuButton>
-              )}
-            </>
-          )}
-          {(status === "onSale" || status === "manufacturing") && !isRetailOnly && onAddManufacturing && (
+          {(status === "designed" || ((status === "onSale" || status === "manufacturing") && !isRetailOnly)) && onAddManufacturing && (
             <MenuButton
               variant="accent"
               onClick={onAddManufacturing}
               style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
             >
               <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-                <Factory size={14} /> {hasPlan ? "Edit Manufacturing Plan" : "New Manufacturing Plan"}
+                <Factory size={14} /> {getMfgButtonLabel()}
               </span>
             </MenuButton>
           )}
-          <InlineConfirm
-            label={status === "draft" ? "Scrap" : "Discontinue"}
-            confirmMessage={status === "draft" ? "Scrap this model?" : "Discontinue this model?"}
-            isConfirming={confirmScrap}
-            onTrigger={onScrapClick}
-            onConfirm={onScrapConfirm}
-            onCancel={onScrapCancel}
-          />
+          {(status === "onSale" || status === "manufacturing") && !isRetailOnly && canChangePricing && onChangePricing && (
+            <MenuButton
+              onClick={onChangePricing}
+              style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
+                <DollarSign size={14} /> Change Pricing
+              </span>
+            </MenuButton>
+          )}
+          {onDiscontinue && (
+            <MenuButton
+              onClick={onDiscontinue}
+              style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
+                <Trash2 size={14} /> {status === "draft" ? "Scrap" : "Discontinue"}
+              </span>
+            </MenuButton>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-function InlineConfirm({
-  label,
-  confirmMessage,
-  isConfirming,
-  onTrigger,
-  onConfirm,
-  onCancel,
-}: {
-  label: string;
-  confirmMessage: string;
-  isConfirming: boolean;
-  onTrigger: () => void;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  if (isConfirming) {
-    return (
-      <div style={{ display: "flex", gap: tokens.spacing.xs, alignItems: "center" }}>
-        <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.danger }}>{confirmMessage}</span>
-        <MenuButton
-          onClick={onConfirm}
-          style={{
-            fontSize: tokens.font.sizeSmall,
-            padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
-            background: tokens.colors.danger,
-            color: "#fff",
-          }}
-        >
-          Yes
-        </MenuButton>
-        <MenuButton
-          onClick={onCancel}
-          style={{
-            fontSize: tokens.font.sizeSmall,
-            padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
-          }}
-        >
-          No
-        </MenuButton>
-      </div>
-    );
-  }
-  return (
-    <MenuButton
-      onClick={onTrigger}
-      style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
-    >
-      <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-        <Trash2 size={14} /> {label}
-      </span>
-    </MenuButton>
-  );
-}
 
 function SpecRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (

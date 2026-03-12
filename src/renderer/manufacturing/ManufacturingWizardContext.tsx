@@ -1,14 +1,14 @@
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
 import { ManufacturingWizardState, ManufacturingWizardStep, MFG_WIZARD_STEPS, FullManufacturingPlan } from "./types";
-import { DEMAND_NOISE_MIN, DEMAND_NOISE_MAX, ASSEMBLY_QA_COST, PACKAGING_LOGISTICS_COST } from "./utils/constants";
+import { DEMAND_NOISE_MIN, DEMAND_NOISE_MAX, DEFAULT_PRICE_MULTIPLIER, MIN_RETAIL_PRICE, snapPrice, getBaseCostPerUnit } from "./utils/constants";
+import { AD_CAMPAIGNS } from "./data/campaigns";
 
 type MfgWizardAction =
-  | { type: "INIT"; modelId: string; promptIds: number[]; baseBomCost: number }
-  | { type: "LOAD_PLAN"; modelId: string; plan: FullManufacturingPlan }
+  | { type: "INIT"; modelId: string; promptIds: number[]; baseBomCost: number; isAdditionalOrder?: boolean; existingRetailPrice?: number }
+  | { type: "LOAD_PLAN"; modelId: string; plan: FullManufacturingPlan; isAdditionalOrder?: boolean }
   | { type: "SET_CAMPAIGN"; campaignId: string | null }
   | { type: "SET_UNIT_PRICE"; unitPrice: number }
   | { type: "SET_UNITS_ORDERED"; unitsOrdered: number }
-  | { type: "SET_SUPPORT_BUDGET"; supportBudget: number }
   | { type: "SET_PRESS_RESPONSE"; promptId: number; response: string }
   | { type: "GO_TO_STEP"; step: ManufacturingWizardStep }
   | { type: "NEXT_STEP" }
@@ -18,42 +18,45 @@ function generateNoiseMargin(): number {
   return DEMAND_NOISE_MIN + Math.random() * (DEMAND_NOISE_MAX - DEMAND_NOISE_MIN);
 }
 
+const DEFAULT_CAMPAIGN_ID = AD_CAMPAIGNS[0].id;
+
 const INITIAL_STATE: ManufacturingWizardState = {
-  currentStep: "marketing",
+  currentStep: "manufacturing",
   modelId: "",
-  campaignId: null,
+  campaignId: DEFAULT_CAMPAIGN_ID,
   unitPrice: 0,
   unitsOrdered: 1000,
-  supportBudget: 15,
   pressReleasePromptIds: [],
   pressReleaseResponses: {},
   noiseMargin: generateNoiseMargin(),
+  isAdditionalOrder: false,
 };
 
 function mfgWizardReducer(state: ManufacturingWizardState, action: MfgWizardAction): ManufacturingWizardState {
   switch (action.type) {
     case "INIT": {
-      const baseTotalPerUnit = action.baseBomCost + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST + INITIAL_STATE.supportBudget;
-      const defaultPrice = Math.max(49, Math.round(baseTotalPerUnit * 1.5 / 50) * 50 - 1);
+      const baseTotalPerUnit = getBaseCostPerUnit(action.baseBomCost);
+      const defaultPrice = action.existingRetailPrice ?? Math.max(MIN_RETAIL_PRICE, snapPrice(baseTotalPerUnit * DEFAULT_PRICE_MULTIPLIER));
       return {
         ...INITIAL_STATE,
         modelId: action.modelId,
         unitPrice: defaultPrice,
         pressReleasePromptIds: action.promptIds,
         noiseMargin: generateNoiseMargin(),
+        isAdditionalOrder: action.isAdditionalOrder ?? false,
       };
     }
     case "LOAD_PLAN":
       return {
         ...INITIAL_STATE,
         modelId: action.modelId,
-        campaignId: action.plan.marketing.campaignId,
+        campaignId: action.plan.marketing.campaignId ?? DEFAULT_CAMPAIGN_ID,
         unitPrice: action.plan.manufacturing.unitPrice,
         unitsOrdered: action.plan.manufacturing.unitsOrdered,
-        supportBudget: action.plan.manufacturing.supportBudget,
         pressReleasePromptIds: action.plan.pressRelease.promptIds,
         pressReleaseResponses: { ...action.plan.pressRelease.responses },
         noiseMargin: generateNoiseMargin(),
+        isAdditionalOrder: action.isAdditionalOrder ?? false,
       };
     case "SET_CAMPAIGN":
       return { ...state, campaignId: action.campaignId };
@@ -61,8 +64,6 @@ function mfgWizardReducer(state: ManufacturingWizardState, action: MfgWizardActi
       return { ...state, unitPrice: action.unitPrice };
     case "SET_UNITS_ORDERED":
       return { ...state, unitsOrdered: action.unitsOrdered };
-    case "SET_SUPPORT_BUDGET":
-      return { ...state, supportBudget: action.supportBudget };
     case "SET_PRESS_RESPONSE":
       return {
         ...state,
