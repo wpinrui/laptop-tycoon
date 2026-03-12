@@ -196,7 +196,7 @@ export function WizardSidebar({
   );
 }
 
-function SidebarHeading({ children }: { children: string }) {
+export function SidebarHeading({ children }: { children: string }) {
   return (
     <div style={{ color: "#888", fontSize: "0.6875rem", marginBottom: "10px", fontWeight: "bold", letterSpacing: "0.5px" }}>
       {children}
@@ -204,7 +204,7 @@ function SidebarHeading({ children }: { children: string }) {
   );
 }
 
-function SidebarDivider() {
+export function SidebarDivider() {
   return <div style={{ borderTop: "1px solid #333", margin: "12px 0" }} />;
 }
 

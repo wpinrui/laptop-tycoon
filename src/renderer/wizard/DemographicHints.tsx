@@ -4,6 +4,7 @@ import { DEMOGRAPHICS } from "../../data/demographics";
 import { DemographicId, STAT_LABELS } from "../../data/types";
 import { CustomSelect, SelectOption } from "../shell/CustomSelect";
 import { Tooltip } from "./Tooltip";
+import { SidebarDivider } from "./LaptopEstimateSidebar";
 
 const DEMOGRAPHIC_OPTIONS: SelectOption<DemographicId>[] = DEMOGRAPHICS
   .map((d) => ({ value: d.id, label: d.name }))
@@ -31,6 +32,32 @@ function getTopAndBottom(demId: DemographicId): { top: RankedStat[]; bottom: Ran
   };
 }
 
+function StatRankList({ title, color, stats }: { title: string; color: string; stats: RankedStat[] }) {
+  return (
+    <div style={{ marginBottom: "6px" }}>
+      <div style={{ color, fontSize: "0.6875rem", fontWeight: "bold", marginBottom: "4px" }}>
+        {title}
+      </div>
+      {stats.map((s) => (
+        <div
+          key={s.label}
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: "0.75rem",
+            color: "#e0e0e0",
+            marginBottom: "2px",
+            paddingLeft: "4px",
+          }}
+        >
+          <span>{s.label}</span>
+          <span style={{ color: "#888" }}>{Math.round(s.weight * 100)}%</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function DemographicHints() {
   const [selectedDem, setSelectedDem] = useState<DemographicId>(DEMOGRAPHIC_OPTIONS[0].value);
   const [collapsed, setCollapsed] = useState(false);
@@ -39,7 +66,7 @@ export function DemographicHints() {
 
   return (
     <>
-      <div style={{ borderTop: "1px solid #333", margin: "12px 0" }} />
+      <SidebarDivider />
       <div
         style={{
           display: "flex",
@@ -83,49 +110,8 @@ export function DemographicHints() {
             />
           </div>
 
-          <div style={{ marginBottom: "6px" }}>
-            <div style={{ color: "#66bb6a", fontSize: "0.6875rem", fontWeight: "bold", marginBottom: "4px" }}>
-              Prioritises
-            </div>
-            {top.map((s) => (
-              <div
-                key={s.label}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: "0.75rem",
-                  color: "#e0e0e0",
-                  marginBottom: "2px",
-                  paddingLeft: "4px",
-                }}
-              >
-                <span>{s.label}</span>
-                <span style={{ color: "#888" }}>{Math.round(s.weight * 100)}%</span>
-              </div>
-            ))}
-          </div>
-
-          <div>
-            <div style={{ color: "#ef5350", fontSize: "0.6875rem", fontWeight: "bold", marginBottom: "4px" }}>
-              Ignores
-            </div>
-            {bottom.map((s) => (
-              <div
-                key={s.label}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: "0.75rem",
-                  color: "#e0e0e0",
-                  marginBottom: "2px",
-                  paddingLeft: "4px",
-                }}
-              >
-                <span>{s.label}</span>
-                <span style={{ color: "#888" }}>{Math.round(s.weight * 100)}%</span>
-              </div>
-            ))}
-          </div>
+          <StatRankList title="Prioritises" color="#66bb6a" stats={top} />
+          <StatRankList title="Ignores" color="#ef5350" stats={bottom} />
         </>
       )}
     </>
