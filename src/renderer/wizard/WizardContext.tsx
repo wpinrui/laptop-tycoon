@@ -54,6 +54,21 @@ export function isStepLockedBySpecBump(step: WizardStep, state: WizardState): bo
     && (step === "screenSize" || step === "body");
 }
 
+/** Merge components from a source design into existing state, keeping player selections and skipping discontinued parts. */
+function mergeComponents(
+  existing: WizardState["components"],
+  source: LaptopDesign["components"],
+  gameYear: number,
+): WizardState["components"] {
+  const merged: typeof existing = { ...existing };
+  for (const [slot, component] of Object.entries(source)) {
+    if (component && component.yearDiscontinued >= gameYear && !existing[slot as ComponentSlot]) {
+      merged[slot as ComponentSlot] = component;
+    }
+  }
+  return merged;
+}
+
 function wizardReducer(state: WizardState, action: WizardAction): WizardState {
   switch (action.type) {
     case "SET_NAME":
@@ -70,13 +85,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       const d = action.predecessorDesign;
       const year = action.gameYear ?? 9999;
 
-      // Merge components: keep player's existing selections, fill empty slots from predecessor (skip discontinued)
-      const mergedComponents: typeof state.components = { ...state.components };
-      for (const [slot, component] of Object.entries(d.components)) {
-        if (component && component.yearDiscontinued >= year && !state.components[slot as ComponentSlot]) {
-          mergedComponents[slot as ComponentSlot] = component;
-        }
-      }
+      const mergedComponents = mergeComponents(state.components, d.components, year);
 
       if (state.modelType === "specBump") {
         // Spec bump: lock screen size, body, chassis, colours, ports; merge components
@@ -174,13 +183,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       const d = action.design;
       const year = action.gameYear;
 
-      // Merge components: keep player's existing selections, fill empty slots (skip discontinued)
-      const mergedComponents: typeof state.components = { ...state.components };
-      for (const [slot, component] of Object.entries(d.components)) {
-        if (component && component.yearDiscontinued >= year && !state.components[slot as ComponentSlot]) {
-          mergedComponents[slot as ComponentSlot] = component;
-        }
-      }
+      const mergedComponents = mergeComponents(state.components, d.components, year);
 
       return {
         ...state,
