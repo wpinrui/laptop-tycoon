@@ -96,3 +96,10 @@ export const kpiValueStyle: CSSProperties = {
   fontWeight: 700,
   lineHeight: 1.1,
 };
+
+export const kpiDeltaStyle: CSSProperties = {
+  margin: 0,
+  marginTop: tokens.spacing.xs,
+  fontSize: tokens.font.sizeSmall,
+  fontWeight: 600,
+};

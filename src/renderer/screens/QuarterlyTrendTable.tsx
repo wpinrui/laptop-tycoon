@@ -23,46 +23,10 @@ export function QuarterlyTrendTable({ quarters, year }: QuarterlyTrendTableProps
   const totalRevenue = quarterData.reduce((s, q) => s + q.revenue, 0);
   const totalProfit = quarterData.reduce((s, q) => s + q.profit, 0);
 
-  // Simple ASCII-style bar chart for units sold
-  const maxUnits = Math.max(...quarterData.map((q) => q.unitsSold), 1);
-
   return (
     <div>
       <h3 style={sectionHeadingStyle}>Quarterly Trend — {year}</h3>
 
-      {/* Visual bar chart */}
-      <div style={{ marginBottom: tokens.spacing.md }}>
-        {quarterData.map((q) => {
-          const barWidth = (q.unitsSold / maxUnits) * 100;
-          return (
-            <div key={q.quarter} style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm, marginBottom: tokens.spacing.xs }}>
-              <span style={{ width: 24, textAlign: "right", fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
-                {QUARTER_LABELS[q.quarter - 1]}
-              </span>
-              <div style={{
-                flex: 1,
-                height: 16,
-                background: tokens.colors.surface,
-                borderRadius: tokens.borderRadius.sm,
-                overflow: "hidden",
-              }}>
-                <div style={{
-                  width: `${barWidth}%`,
-                  height: "100%",
-                  background: tokens.colors.accent,
-                  borderRadius: tokens.borderRadius.sm,
-                  transition: "width 0.3s ease",
-                }} />
-              </div>
-              <span style={{ width: 60, textAlign: "right", fontSize: tokens.font.sizeSmall }}>
-                {formatNumber(q.unitsSold)}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Data table */}
       <table style={tableStyle}>
         <thead>
           <tr>
