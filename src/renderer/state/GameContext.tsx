@@ -61,6 +61,24 @@ function updatePlayerModels(
   return updatePlayer(companies, (p) => ({ ...p, models: modelUpdater(p.models) }));
 }
 
+/** Drop depleted/old AI models and discount surviving old inventory. */
+function cleanupAIModels(companies: CompanyState[], nextYear: number): CompanyState[] {
+  return companies.map((comp) => {
+    if (comp.isPlayer) return comp;
+    return {
+      ...comp,
+      models: comp.models
+        .filter((m) => m.unitsInStock > 0 && nextYear - m.yearDesigned < AI_MAX_MODEL_AGE)
+        .map((m) => {
+          if (m.yearDesigned < nextYear) {
+            return { ...m, retailPrice: discountOldInventoryPrice(m) };
+          }
+          return m;
+        }),
+    };
+  });
+}
+
 /**
  * Pre-simulate one full year of AI-only play.
  * Generates competitor models, runs 4 quarters of simulation, updates brand
@@ -111,23 +129,7 @@ function preSimulateAIYear(initial: GameState): GameState {
 
   // Clean up AI models: drop depleted/old, discount surviving old inventory
   const nextPreSimYear = s.year + 1;
-  s = {
-    ...s,
-    companies: s.companies.map((comp) => {
-      if (comp.isPlayer) return comp;
-      return {
-        ...comp,
-        models: comp.models
-          .filter((m) => m.unitsInStock > 0 && nextPreSimYear - m.yearDesigned < AI_MAX_MODEL_AGE)
-          .map((m) => {
-            if (m.yearDesigned < nextPreSimYear) {
-              return { ...m, retailPrice: discountOldInventoryPrice(m) };
-            }
-            return m;
-          }),
-      };
-    }),
-  };
+  s = { ...s, companies: cleanupAIModels(s.companies, nextPreSimYear) };
 
   // Advance to next year Q1
   return {
@@ -179,21 +181,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         currentYearAwards: [],
         brandAwarenessBudget: 0,
         sponsorships: [],
-        companies: companiesAfterSpiral.map((comp) => {
-          if (!comp.isPlayer) {
-            // AI companies: drop depleted/old models, discount surviving old inventory
-            return {
-              ...comp,
-              models: comp.models
-                .filter((m) => m.unitsInStock > 0 && nextYear - m.yearDesigned < AI_MAX_MODEL_AGE)
-                .map((m) => {
-                  if (m.yearDesigned < nextYear) {
-                    return { ...m, retailPrice: discountOldInventoryPrice(m) };
-                  }
-                  return m;
-                }),
-            };
-          }
+        companies: cleanupAIModels(companiesAfterSpiral, nextYear).map((comp) => {
+          if (!comp.isPlayer) return comp;
           return {
             ...comp,
             models: comp.models.map((m) => {

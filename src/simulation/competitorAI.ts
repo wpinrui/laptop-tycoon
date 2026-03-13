@@ -237,6 +237,39 @@ function pickBezel(archetype: CompetitorArchetype, year: number): number {
   return Math.max(minBezel, 15) + Math.floor(Math.random() * 10);
 }
 
+/** Heuristic manufacturing quantity before VP-based refinement. */
+function computeHeuristicQuantity(
+  competitor: CompetitorDefinition,
+  totalPlayerCount: number,
+): number {
+  const totalDemand = Object.values(STARTING_DEMAND_POOL).reduce((sum, v) => sum + v, 0);
+  const brandFactor = averageReach(competitor.brandReach) / 100;
+  const competitorShare = 1 / totalPlayerCount;
+  return Math.round(totalDemand * competitorShare * brandFactor * (0.8 + Math.random() * 0.4));
+}
+
+/** Build a LaptopModel from a design + heuristic quantity. */
+function buildAIModel(
+  design: LaptopDesign,
+  year: number,
+  competitor: CompetitorDefinition,
+  totalPlayerCount: number,
+): LaptopModel {
+  const manufacturingQuantity = computeHeuristicQuantity(competitor, totalPlayerCount);
+  const retailPrice = computeAIRetailPrice(design, manufacturingQuantity, competitor);
+  return {
+    design,
+    status: "onSale",
+    retailPrice,
+    manufacturingQuantity,
+    yearDesigned: year,
+    manufacturingPlan: null,
+    unitsInStock: manufacturingQuantity,
+    totalProductionSpend: 0,
+    totalUnitsOrdered: 0,
+  };
+}
+
 function generateSingleModel(
   year: number,
   competitor: CompetitorDefinition,
@@ -284,9 +317,8 @@ function generateSingleModel(
     screenSize, bezelMm, thicknessCm, year,
   );
 
-  const designId = crypto.randomUUID();
   const design: LaptopDesign = {
-    id: designId,
+    id: crypto.randomUUID(),
     name: `${competitor.productLine} ${year}`,
     modelType: "brandNew",
     predecessorId: null,
@@ -301,25 +333,7 @@ function generateSingleModel(
     unitCost: totals.totalCost,
   };
 
-  // Preliminary manufacturing quantity (heuristic, used for initial EoS pricing)
-  const totalDemand = Object.values(STARTING_DEMAND_POOL).reduce((sum, v) => sum + v, 0);
-  const brandFactor = averageReach(competitor.brandReach) / 100;
-  const competitorShare = 1 / totalPlayerCount;
-  const manufacturingQuantity = Math.round(totalDemand * competitorShare * brandFactor * (0.8 + Math.random() * 0.4));
-
-  const retailPrice = computeAIRetailPrice(design, manufacturingQuantity, competitor);
-
-  return {
-    design,
-    status: "onSale",
-    retailPrice,
-    manufacturingQuantity,
-    yearDesigned: year,
-    manufacturingPlan: null,
-    unitsInStock: manufacturingQuantity,
-    totalProductionSpend: 0,
-    totalUnitsOrdered: 0,
-  };
+  return buildAIModel(design, year, competitor, totalPlayerCount);
 }
 
 /** Compute retail price for an AI model given a production quantity. */
@@ -381,6 +395,24 @@ function decideModelType(
   return { modelType: "brandNew", predecessor: null };
 }
 
+/** Pick fresh components for a given year/competitor. */
+function pickFreshComponents(
+  year: number,
+  competitor: CompetitorDefinition,
+  engineeringBonus: number,
+): { components: Partial<Record<ComponentSlot, Component>>; totalPowerW: number } {
+  const components: Partial<Record<ComponentSlot, Component>> = {};
+  let totalPowerW = 0;
+  for (const slot of COMPONENT_SLOTS) {
+    const comp = pickComponent(slot, year, competitor, engineeringBonus);
+    if (comp) {
+      components[slot] = comp;
+      totalPowerW += comp.powerDrawW;
+    }
+  }
+  return { components, totalPowerW };
+}
+
 /**
  * Generate a successor model — inherits body/chassis from predecessor, fresh components.
  */
@@ -391,23 +423,11 @@ function generateSuccessorModel(
   totalPlayerCount: number,
   engineeringBonus: number,
 ): LaptopModel {
-  const { archetype } = competitor;
   const prevDesign = predecessor.design;
-
-  // Fresh components for the new year
-  const components: Partial<Record<ComponentSlot, Component>> = {};
-  let totalPowerW = 0;
-  for (const slot of COMPONENT_SLOTS) {
-    const comp = pickComponent(slot, year, competitor, engineeringBonus);
-    if (comp) {
-      components[slot] = comp;
-      totalPowerW += comp.powerDrawW;
-    }
-  }
+  const { components, totalPowerW } = pickFreshComponents(year, competitor, engineeringBonus);
 
   // Inherit chassis but pick new cooling for updated power draw
-  const cooling = pickCooling(year, totalPowerW, archetype);
-
+  const cooling = pickCooling(year, totalPowerW, competitor.archetype);
   const chassis = {
     material: prevDesign.chassis.material,
     coolingSolution: cooling,
@@ -421,9 +441,8 @@ function generateSuccessorModel(
     prevDesign.screenSize, prevDesign.bezelMm, prevDesign.thicknessCm, year,
   );
 
-  const designId = crypto.randomUUID();
   const design: LaptopDesign = {
-    id: designId,
+    id: crypto.randomUUID(),
     name: `${competitor.productLine} ${year}`,
     modelType: "successor",
     predecessorId: prevDesign.id,
@@ -438,24 +457,7 @@ function generateSuccessorModel(
     unitCost: totals.totalCost,
   };
 
-  const totalDemand = Object.values(STARTING_DEMAND_POOL).reduce((sum, v) => sum + v, 0);
-  const brandFactor = averageReach(competitor.brandReach) / 100;
-  const competitorShare = 1 / totalPlayerCount;
-  const manufacturingQuantity = Math.round(totalDemand * competitorShare * brandFactor * (0.8 + Math.random() * 0.4));
-
-  const retailPrice = computeAIRetailPrice(design, manufacturingQuantity, competitor);
-
-  return {
-    design,
-    status: "onSale",
-    retailPrice,
-    manufacturingQuantity,
-    yearDesigned: year,
-    manufacturingPlan: null,
-    unitsInStock: manufacturingQuantity,
-    totalProductionSpend: 0,
-    totalUnitsOrdered: 0,
-  };
+  return buildAIModel(design, year, competitor, totalPlayerCount);
 }
 
 /**
@@ -469,15 +471,7 @@ function generateSpecBumpModel(
   engineeringBonus: number,
 ): LaptopModel {
   const prevDesign = predecessor.design;
-
-  // Fresh components only
-  const components: Partial<Record<ComponentSlot, Component>> = {};
-  for (const slot of COMPONENT_SLOTS) {
-    const comp = pickComponent(slot, year, competitor, engineeringBonus);
-    if (comp) {
-      components[slot] = comp;
-    }
-  }
+  const { components } = pickFreshComponents(year, competitor, engineeringBonus);
 
   // Keep same cooling — spec bump doesn't change the body
   const chassis = { ...prevDesign.chassis };
@@ -488,9 +482,8 @@ function generateSpecBumpModel(
     prevDesign.screenSize, prevDesign.bezelMm, prevDesign.thicknessCm, year,
   );
 
-  const designId = crypto.randomUUID();
   const design: LaptopDesign = {
-    id: designId,
+    id: crypto.randomUUID(),
     name: `${competitor.productLine} ${year}`,
     modelType: "specBump",
     predecessorId: prevDesign.id,
@@ -505,24 +498,7 @@ function generateSpecBumpModel(
     unitCost: totals.totalCost,
   };
 
-  const totalDemand = Object.values(STARTING_DEMAND_POOL).reduce((sum, v) => sum + v, 0);
-  const brandFactor = averageReach(competitor.brandReach) / 100;
-  const competitorShare = 1 / totalPlayerCount;
-  const manufacturingQuantity = Math.round(totalDemand * competitorShare * brandFactor * (0.8 + Math.random() * 0.4));
-
-  const retailPrice = computeAIRetailPrice(design, manufacturingQuantity, competitor);
-
-  return {
-    design,
-    status: "onSale",
-    retailPrice,
-    manufacturingQuantity,
-    yearDesigned: year,
-    manufacturingPlan: null,
-    unitsInStock: manufacturingQuantity,
-    totalProductionSpend: 0,
-    totalUnitsOrdered: 0,
-  };
+  return buildAIModel(design, year, competitor, totalPlayerCount);
 }
 
 export function generateCompetitorModels(
