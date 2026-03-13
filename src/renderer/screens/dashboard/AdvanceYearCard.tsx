@@ -119,13 +119,12 @@ export function AdvanceYearCard() {
             dispatch({ type: "ADD_COMPETITOR_MODELS", models: competitorModels });
           }
 
-          // Q1: transition active models with current-year plans to "manufacturing"
+          // Transition active models with current-year plans to "manufacturing"
+          // (applies in any quarter — models designed mid-year need this too)
           const hasCurrentPlan = (m: LaptopModel) => m.manufacturingPlan?.year === state.year;
-          if (isQ1) {
-            for (const model of activeModels) {
-              if (hasCurrentPlan(model)) {
-                dispatch({ type: "UPDATE_MODEL_STATUS", modelId: model.design.id, status: "manufacturing" });
-              }
+          for (const model of activeModels) {
+            if (hasCurrentPlan(model) && model.status === "designed") {
+              dispatch({ type: "UPDATE_MODEL_STATUS", modelId: model.design.id, status: "manufacturing" });
             }
           }
 
@@ -143,28 +142,28 @@ export function AdvanceYearCard() {
 
           // Build state for simulation
           const stateForSim = (() => {
-            if (isQ1) {
-              const byCompetitorId = new Map(COMPETITORS.map((c, i) => [c.id, generated[i]]));
-              return {
-                ...state,
-                cash: cashAfterManufacturing,
-                companies: state.companies.map((comp) => {
-                  if (comp.isPlayer) {
-                    return {
-                      ...comp,
-                      models: comp.models.map((m) =>
-                        activeModels.some((am) => am.design.id === m.design.id && hasCurrentPlan(am))
-                          ? { ...m, status: "manufacturing" as const }
-                          : m,
-                      ),
-                    };
-                  }
-                  const newModel = byCompetitorId.get(comp.id);
-                  return newModel ? { ...comp, models: [...comp.models, newModel] } : comp;
-                }),
-              };
-            }
-            return { ...state, cash: cashAfterManufacturing };
+            const byCompetitorId = isQ1
+              ? new Map(COMPETITORS.map((c, i) => [c.id, generated[i]]))
+              : new Map<string, (typeof generated)[0]>();
+            return {
+              ...state,
+              cash: cashAfterManufacturing,
+              companies: state.companies.map((comp) => {
+                if (comp.isPlayer) {
+                  return {
+                    ...comp,
+                    models: comp.models.map((m) =>
+                      m.status === "designed" &&
+                      activeModels.some((am) => am.design.id === m.design.id && hasCurrentPlan(am))
+                        ? { ...m, status: "manufacturing" as const }
+                        : m,
+                    ),
+                  };
+                }
+                const newModel = byCompetitorId.get(comp.id);
+                return newModel ? { ...comp, models: [...comp.models, newModel] } : comp;
+              }),
+            };
           })();
 
           const result = simulateQuarter(stateForSim);
