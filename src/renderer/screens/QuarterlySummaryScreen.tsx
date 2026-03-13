@@ -6,7 +6,7 @@ import { MenuButton } from "../shell/MenuButton";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
 import { formatCurrency, formatNumber, QUARTER_LABELS } from "../utils/formatCash";
-import { titleStyle, sectionHeadingStyle, tableStyle, thStyle, tdStyle, tdRight, summaryRowStyle, cardStyle, twoColumnLayout } from "./summaryStyles";
+import { titleStyle, sectionHeadingStyle, tableStyle, thStyle, tdStyle, tdRight, summaryRowStyle, cardStyle, twoColumnLayout, warningBannerStyle } from "./summaryStyles";
 import { reviewScoreColor } from "../utils/reviewScoreColor";
 import { DemographicDetailSection } from "./DemographicDetailSection";
 import { HeroKPIBar } from "./HeroKPIBar";
@@ -32,6 +32,7 @@ export function QuarterlySummaryScreen() {
   const playerResults = result.playerResults;
   const totalSold = playerResults.reduce((s, r) => s + r.unitsSold, 0);
   const totalAvailable = playerResults.reduce((s, r) => s + r.unitsSold + r.unsoldUnits, 0);
+  const totalUnsold = playerResults.reduce((s, r) => s + r.unsoldUnits, 0);
 
   // Cumulative YTD from quarterHistory
   const ytdByModel = new Map<string, { unitsSold: number; revenue: number }>();
@@ -53,6 +54,7 @@ export function QuarterlySummaryScreen() {
   const prevIdx = state.quarterHistory.length - 2;
   const prevQ = prevIdx >= 0 ? state.quarterHistory[prevIdx] : null;
   const prevSold = prevQ ? prevQ.playerResults.reduce((s, r) => s + r.unitsSold, 0) : null;
+  const prevAvailable = prevQ ? prevQ.playerResults.reduce((s, r) => s + r.unitsSold + r.unsoldUnits, 0) : null;
 
   return (
     <ContentPanel maxWidth={tokens.layout.panelMaxWidth} style={{ display: "flex", flexDirection: "column", overflow: "hidden", height: tokens.layout.panelHeight, width: tokens.layout.panelWidth }}>
@@ -67,6 +69,7 @@ export function QuarterlySummaryScreen() {
           profit={result.totalProfit}
           cash={result.cashAfterResolution}
           prevUnitsSold={prevSold}
+          prevTotalAvailable={prevAvailable}
           prevRevenue={prevQ?.totalRevenue}
           prevProfit={prevQ?.totalProfit}
           prevCash={prevQ?.cashAfterResolution}
@@ -136,24 +139,21 @@ export function QuarterlySummaryScreen() {
               </div>
             )}
 
-            {/* Financial detail */}
+            {/* YTD revenue (not shown in KPI bar) */}
             <div style={cardStyle}>
-              <h3 style={sectionHeadingStyle}>Financial Details</h3>
-              <div style={summaryRowStyle}>
-                <span>Revenue This Quarter</span>
-                <span>{formatCurrency(result.totalRevenue)}</span>
-              </div>
-              <div style={summaryRowStyle}>
+              <div style={{ ...summaryRowStyle, fontWeight: 600 }}>
                 <span>Revenue Year-to-Date</span>
                 <span>{formatCurrency(ytdRevenue)}</span>
               </div>
-              <div style={{ ...summaryRowStyle, borderTop: `1px solid ${tokens.colors.panelBorder}`, paddingTop: tokens.spacing.sm, fontWeight: 700 }}>
-                <span>Cash Balance</span>
-                <span style={{ color: result.cashAfterResolution >= 0 ? tokens.colors.success : tokens.colors.danger }}>
-                  {formatCurrency(result.cashAfterResolution)}
-                </span>
-              </div>
             </div>
+
+            {/* Unsold inventory warning */}
+            {totalUnsold > 0 && (
+              <div style={warningBannerStyle}>
+                <span>Unsold (carried to inventory)</span>
+                <span>{formatNumber(totalUnsold)}</span>
+              </div>
+            )}
           </div>
         </div>
 

@@ -103,3 +103,16 @@ export const kpiDeltaStyle: CSSProperties = {
   fontSize: tokens.font.sizeSmall,
   fontWeight: 600,
 };
+
+/** Warning banner for unsold inventory, etc. */
+export const warningBannerStyle: CSSProperties = {
+  padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+  background: "rgba(255, 170, 0, 0.08)",
+  border: "1px solid rgba(255, 170, 0, 0.25)",
+  borderRadius: tokens.borderRadius.sm,
+  color: tokens.colors.warning,
+  fontSize: tokens.font.sizeSmall,
+  fontWeight: 600,
+  display: "flex",
+  justifyContent: "space-between",
+};

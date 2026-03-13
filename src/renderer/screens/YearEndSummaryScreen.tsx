@@ -7,7 +7,7 @@ import { MenuButton } from "../shell/MenuButton";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
 import { formatCurrency, formatNumber } from "../utils/formatCash";
-import { titleStyle, sectionHeadingStyle, tableStyle, thStyle, tdStyle, tdRight, summaryRowStyle, cardStyle, twoColumnLayout } from "./summaryStyles";
+import { titleStyle, sectionHeadingStyle, tableStyle, thStyle, tdStyle, tdRight, cardStyle, twoColumnLayout, warningBannerStyle } from "./summaryStyles";
 import { AwardsTable } from "./AwardsTable";
 import { AWARD_PERCEPTION_BONUS, AWARD_REACH_BONUS } from "../../simulation/tunables";
 import { DemographicDetailSection } from "./DemographicDetailSection";
@@ -51,6 +51,7 @@ export function YearEndSummaryScreen() {
   const prevQ4Result = prevQ4Idx >= 0 ? state.quarterHistory[prevQ4Idx] : null;
   const prev = isAnnual ? prevYearResult : prevQ4Result;
   const prevSold = prev ? prev.playerResults.reduce((s, r) => s + r.unitsSold, 0) : null;
+  const prevAvailable = prev ? prev.playerResults.reduce((s, r) => s + r.unitsSold + r.unsoldUnits, 0) : null;
 
   return (
     <ContentPanel maxWidth={tokens.layout.panelMaxWidth} style={{ display: "flex", flexDirection: "column", overflow: "hidden", height: tokens.layout.panelHeight, width: tokens.layout.panelWidth }}>
@@ -92,6 +93,7 @@ export function YearEndSummaryScreen() {
           profit={result.totalProfit}
           cash={result.cashAfterResolution}
           prevUnitsSold={prevSold}
+          prevTotalAvailable={prevAvailable}
           prevRevenue={prev?.totalRevenue}
           prevProfit={prev?.totalProfit}
           prevCash={prev?.cashAfterResolution}
@@ -165,40 +167,13 @@ export function YearEndSummaryScreen() {
               </div>
             )}
 
-            {/* Financial detail */}
-            <div style={cardStyle}>
-              <h3 style={sectionHeadingStyle}>Financial Details</h3>
-              <div style={summaryRowStyle}>
-                <span>Total Units Available</span>
-                <span>{formatNumber(totalAvailable)}</span>
+            {/* Unsold inventory warning */}
+            {totalUnsold > 0 && (
+              <div style={warningBannerStyle}>
+                <span>Unsold (carried to inventory)</span>
+                <span>{formatNumber(totalUnsold)}</span>
               </div>
-              <div style={summaryRowStyle}>
-                <span>Total Units Sold</span>
-                <span>{formatNumber(totalSold)}</span>
-              </div>
-              {totalUnsold > 0 && (
-                <div style={summaryRowStyle}>
-                  <span style={{ color: tokens.colors.warning }}>Unsold (carried to inventory)</span>
-                  <span style={{ color: tokens.colors.warning }}>{formatNumber(totalUnsold)}</span>
-                </div>
-              )}
-              <div style={{ ...summaryRowStyle, borderTop: `1px solid ${tokens.colors.panelBorder}`, paddingTop: tokens.spacing.sm }}>
-                <span>Total Revenue</span>
-                <span>{formatCurrency(result.totalRevenue)}</span>
-              </div>
-              <div style={summaryRowStyle}>
-                <span>Total Profit</span>
-                <span style={{ color: result.totalProfit >= 0 ? tokens.colors.success : tokens.colors.danger }}>
-                  {formatCurrency(result.totalProfit)}
-                </span>
-              </div>
-              <div style={{ ...summaryRowStyle, borderTop: `1px solid ${tokens.colors.panelBorder}`, paddingTop: tokens.spacing.sm, fontWeight: 700 }}>
-                <span>Cash Balance</span>
-                <span style={{ color: result.cashAfterResolution >= 0 ? tokens.colors.success : tokens.colors.danger }}>
-                  {formatCurrency(result.cashAfterResolution)}
-                </span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
