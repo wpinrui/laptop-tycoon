@@ -63,6 +63,16 @@ const demographicTagStyle: CSSProperties = {
   marginTop: 4,
 };
 
+const nicheLinkButtonStyle: CSSProperties = {
+  background: "none",
+  border: "none",
+  color: tokens.colors.accent,
+  fontSize: tokens.font.sizeSmall,
+  cursor: "pointer",
+  padding: 0,
+  marginTop: tokens.spacing.xs,
+};
+
 const nicheSectionHeadingStyle: CSSProperties = {
   fontSize: tokens.font.sizeSmall,
   fontWeight: 700,
@@ -288,24 +298,12 @@ export function BrandDetailScreen() {
             <ReachRow key={dem.id} dem={dem} reach={Math.round(player.brandReach[dem.id] ?? 0)} />
           ))}
           {hiddenNicheCount > 0 && (
-            <button
-              onClick={() => setShowAllNiches(true)}
-              style={{
-                background: "none", border: "none", color: tokens.colors.accent, fontSize: tokens.font.sizeSmall,
-                cursor: "pointer", padding: 0, marginTop: tokens.spacing.xs,
-              }}
-            >
+            <button onClick={() => setShowAllNiches(true)} style={nicheLinkButtonStyle}>
               Show {hiddenNicheCount} more niche segments
             </button>
           )}
           {showAllNiches && visibleNiches.length === NICHES.length && (
-            <button
-              onClick={() => setShowAllNiches(false)}
-              style={{
-                background: "none", border: "none", color: tokens.colors.accent, fontSize: tokens.font.sizeSmall,
-                cursor: "pointer", padding: 0, marginTop: tokens.spacing.xs,
-              }}
-            >
+            <button onClick={() => setShowAllNiches(false)} style={nicheLinkButtonStyle}>
               Hide inactive niches
             </button>
           )}
