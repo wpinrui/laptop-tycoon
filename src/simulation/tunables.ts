@@ -109,6 +109,7 @@ export const CERTIFICATION_COST: Record<ModelType, number> = {
 
 /** Years between upgrades, per demographic */
 export const REPLACEMENT_CYCLE: Record<DemographicId, number> = {
+  // Generalist
   techEnthusiast: 2,
   businessProfessional: 3,
   student: 3,
@@ -117,6 +118,19 @@ export const REPLACEMENT_CYCLE: Record<DemographicId, number> = {
   generalConsumer: 3,
   corporate: 4,
   budgetBuyer: 5,
+  developer: 2,
+  educationK12: 4,
+  // Niche
+  videoEditor: 3,
+  threeDArtist: 3,
+  musicProducer: 3,
+  esportsPro: 2,
+  streamer: 2,
+  digitalNomad: 3,
+  fieldWorker: 4,
+  writer: 4,
+  dayTrader: 3,
+  desktopReplacement: 4,
 };
 
 // ==================== Quarterly Distribution ====================

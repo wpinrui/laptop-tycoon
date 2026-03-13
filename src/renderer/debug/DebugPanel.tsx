@@ -14,6 +14,7 @@ import { tokens } from "../shell/tokens";
 const DEMOGRAPHIC_IDS = DEMOGRAPHICS.map((d) => d.id);
 
 const DEMO_SHORT: Record<DemographicId, string> = {
+  // Generalist
   corporate: "Corp",
   businessProfessional: "BizPro",
   student: "Stud",
@@ -22,6 +23,19 @@ const DEMO_SHORT: Record<DemographicId, string> = {
   techEnthusiast: "TechEn",
   generalConsumer: "GenCon",
   budgetBuyer: "Budget",
+  developer: "Dev",
+  educationK12: "K-12",
+  // Niche
+  videoEditor: "VidEd",
+  threeDArtist: "3DArt",
+  musicProducer: "Music",
+  esportsPro: "Esport",
+  streamer: "Stream",
+  digitalNomad: "Nomad",
+  fieldWorker: "Field",
+  writer: "Writer",
+  dayTrader: "Trader",
+  desktopReplacement: "DskRep",
 };
 
 const STAT_SHORT: Record<LaptopStat, string> = {
