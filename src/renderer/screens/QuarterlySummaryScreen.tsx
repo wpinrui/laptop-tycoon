@@ -136,22 +136,11 @@ export function QuarterlySummaryScreen() {
               </div>
             )}
 
-            {/* Financial detail */}
+            {/* YTD revenue (not shown in KPI bar) */}
             <div style={cardStyle}>
-              <h3 style={sectionHeadingStyle}>Financial Details</h3>
-              <div style={summaryRowStyle}>
-                <span>Revenue This Quarter</span>
-                <span>{formatCurrency(result.totalRevenue)}</span>
-              </div>
-              <div style={summaryRowStyle}>
+              <div style={{ ...summaryRowStyle, fontWeight: 600 }}>
                 <span>Revenue Year-to-Date</span>
                 <span>{formatCurrency(ytdRevenue)}</span>
-              </div>
-              <div style={{ ...summaryRowStyle, borderTop: `1px solid ${tokens.colors.panelBorder}`, paddingTop: tokens.spacing.sm, fontWeight: 700 }}>
-                <span>Cash Balance</span>
-                <span style={{ color: result.cashAfterResolution >= 0 ? tokens.colors.success : tokens.colors.danger }}>
-                  {formatCurrency(result.cashAfterResolution)}
-                </span>
               </div>
             </div>
           </div>

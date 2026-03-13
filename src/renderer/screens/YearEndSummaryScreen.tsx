@@ -165,40 +165,15 @@ export function YearEndSummaryScreen() {
               </div>
             )}
 
-            {/* Financial detail */}
-            <div style={cardStyle}>
-              <h3 style={sectionHeadingStyle}>Financial Details</h3>
-              <div style={summaryRowStyle}>
-                <span>Total Units Available</span>
-                <span>{formatNumber(totalAvailable)}</span>
-              </div>
-              <div style={summaryRowStyle}>
-                <span>Total Units Sold</span>
-                <span>{formatNumber(totalSold)}</span>
-              </div>
-              {totalUnsold > 0 && (
-                <div style={summaryRowStyle}>
-                  <span style={{ color: tokens.colors.warning }}>Unsold (carried to inventory)</span>
-                  <span style={{ color: tokens.colors.warning }}>{formatNumber(totalUnsold)}</span>
+            {/* Unsold inventory warning */}
+            {totalUnsold > 0 && (
+              <div style={cardStyle}>
+                <div style={{ ...summaryRowStyle, fontWeight: 600, color: tokens.colors.warning }}>
+                  <span>Unsold (carried to inventory)</span>
+                  <span>{formatNumber(totalUnsold)}</span>
                 </div>
-              )}
-              <div style={{ ...summaryRowStyle, borderTop: `1px solid ${tokens.colors.panelBorder}`, paddingTop: tokens.spacing.sm }}>
-                <span>Total Revenue</span>
-                <span>{formatCurrency(result.totalRevenue)}</span>
               </div>
-              <div style={summaryRowStyle}>
-                <span>Total Profit</span>
-                <span style={{ color: result.totalProfit >= 0 ? tokens.colors.success : tokens.colors.danger }}>
-                  {formatCurrency(result.totalProfit)}
-                </span>
-              </div>
-              <div style={{ ...summaryRowStyle, borderTop: `1px solid ${tokens.colors.panelBorder}`, paddingTop: tokens.spacing.sm, fontWeight: 700 }}>
-                <span>Cash Balance</span>
-                <span style={{ color: result.cashAfterResolution >= 0 ? tokens.colors.success : tokens.colors.danger }}>
-                  {formatCurrency(result.cashAfterResolution)}
-                </span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
