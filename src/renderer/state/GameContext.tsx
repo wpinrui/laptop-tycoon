@@ -366,10 +366,23 @@ function gameReducer(state: GameState, action: GameAction): GameState {
               if (!sim || !m.manufacturingPlan) return m;
 
               const existingResults = m.manufacturingPlan.results;
+              const updatedStock = sim.unsoldUnits;
+
+              // Auto-discontinue retail-only models that have sold out
+              if (updatedStock <= 0 && hasDiscontinuedComponents(m.design, state.year)) {
+                return {
+                  ...m,
+                  status: "discontinued" as const,
+                  unitsInStock: 0,
+                  manufacturingPlan: null,
+                  manufacturingQuantity: null,
+                };
+              }
+
               return {
                 ...m,
                 // Update units in stock after quarter sales
-                unitsInStock: sim.unsoldUnits,
+                unitsInStock: updatedStock,
                 manufacturingPlan: {
                   ...m.manufacturingPlan,
                   results: {
