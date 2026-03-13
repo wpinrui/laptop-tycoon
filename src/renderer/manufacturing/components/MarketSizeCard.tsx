@@ -4,9 +4,16 @@ import { DEMOGRAPHICS } from "../../../data/demographics";
 import { getQuarterlyBuyers } from "../../../simulation/demographicData";
 import { averageReach } from "../../../simulation/brandProgression";
 import { tokens } from "../../shell/tokens";
-import { CustomSelect } from "../../shell/CustomSelect";
+import { CustomSelect, SelectGroup } from "../../shell/CustomSelect";
 import { Quarter, getPlayerCompany } from "../../state/gameTypes";
 import { useGame } from "../../state/GameContext";
+
+const generalists = DEMOGRAPHICS.filter((d) => d.tier === "generalist");
+const niches = DEMOGRAPHICS.filter((d) => d.tier === "niche");
+
+function getBuyersForDemos(demoIds: DemographicId[], year: number, quarter: Quarter): number {
+  return demoIds.reduce((sum, id) => sum + getQuarterlyBuyers(id, year, quarter), 0);
+}
 
 function getTotalQuarterlyBuyers(year: number, quarter: Quarter): number {
   return DEMOGRAPHICS.reduce((sum, d) => sum + getQuarterlyBuyers(d.id, year, quarter), 0);
@@ -20,11 +27,25 @@ const cardStyle: CSSProperties = {
   textAlign: "center",
 };
 
-type DemoValue = DemographicId | "all";
+type DemoValue = DemographicId | "all" | "allGeneralist" | "allNiche";
 
-const OPTIONS: { value: DemoValue; label: string }[] = [
-  { value: "all", label: "All Demographics" },
-  ...DEMOGRAPHICS.map((d) => ({ value: d.id as DemoValue, label: d.name })),
+const OPTIONS: SelectGroup<DemoValue>[] = [
+  {
+    label: "Aggregate",
+    options: [
+      { value: "all", label: "All Demographics" },
+      { value: "allGeneralist", label: "All Generalist" },
+      { value: "allNiche", label: "All Niche" },
+    ],
+  },
+  {
+    label: "Generalist",
+    options: generalists.map((d) => ({ value: d.id as DemoValue, label: d.name })),
+  },
+  {
+    label: "Niche",
+    options: niches.map((d) => ({ value: d.id as DemoValue, label: d.name })),
+  },
 ];
 
 
@@ -69,12 +90,21 @@ export function MarketSizeCard({ year, quarter }: { year: number; quarter: Quart
   const marketSize =
     selectedDemographic === "all"
       ? getTotalQuarterlyBuyers(year, quarter)
-      : getQuarterlyBuyers(selectedDemographic, year, quarter);
+      : selectedDemographic === "allGeneralist"
+        ? getBuyersForDemos(generalists.map((d) => d.id), year, quarter)
+        : selectedDemographic === "allNiche"
+          ? getBuyersForDemos(niches.map((d) => d.id), year, quarter)
+          : getQuarterlyBuyers(selectedDemographic, year, quarter);
 
   // Brand reach as a fraction (0–1): how much of this market the player can access
-  const reachFraction = selectedDemographic === "all"
-    ? averageReach(player.brandReach) / 100
-    : (player.brandReach[selectedDemographic] ?? 0) / 100;
+  const reachFraction =
+    selectedDemographic === "all"
+      ? averageReach(player.brandReach) / 100
+      : selectedDemographic === "allGeneralist"
+        ? generalists.reduce((sum, d) => sum + (player.brandReach[d.id] ?? 0), 0) / generalists.length / 100
+        : selectedDemographic === "allNiche"
+          ? niches.reduce((sum, d) => sum + (player.brandReach[d.id] ?? 0), 0) / niches.length / 100
+          : (player.brandReach[selectedDemographic] ?? 0) / 100;
   const reachableBuyers = Math.round(marketSize * reachFraction);
 
   return (
@@ -97,22 +127,27 @@ export function MarketSizeCard({ year, quarter }: { year: number; quarter: Quart
       }}>
         Est. brand reach: <span style={{ color: tokens.colors.text, fontWeight: 600 }}>{reachableBuyers.toLocaleString()}</span>
       </div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: tokens.spacing.xs }}>
-        <ArrowButton direction="left" onClick={() => {
-          const idx = OPTIONS.findIndex((o) => o.value === selectedDemographic);
-          setSelectedDemographic(OPTIONS[(idx - 1 + OPTIONS.length) % OPTIONS.length].value);
-        }} />
-        <CustomSelect
-          value={selectedDemographic}
-          onChange={setSelectedDemographic}
-          options={OPTIONS}
-          size="md"
-        />
-        <ArrowButton direction="right" onClick={() => {
-          const idx = OPTIONS.findIndex((o) => o.value === selectedDemographic);
-          setSelectedDemographic(OPTIONS[(idx + 1) % OPTIONS.length].value);
-        }} />
-      </div>
+      {(() => {
+        const flat = OPTIONS.flatMap((g) => g.options);
+        return (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: tokens.spacing.xs }}>
+            <ArrowButton direction="left" onClick={() => {
+              const idx = flat.findIndex((o) => o.value === selectedDemographic);
+              setSelectedDemographic(flat[(idx - 1 + flat.length) % flat.length].value);
+            }} />
+            <CustomSelect
+              value={selectedDemographic}
+              onChange={setSelectedDemographic}
+              options={OPTIONS}
+              size="md"
+            />
+            <ArrowButton direction="right" onClick={() => {
+              const idx = flat.findIndex((o) => o.value === selectedDemographic);
+              setSelectedDemographic(flat[(idx + 1) % flat.length].value);
+            }} />
+          </div>
+        );
+      })()}
     </div>
   );
 }

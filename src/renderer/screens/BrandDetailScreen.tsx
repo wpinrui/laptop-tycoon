@@ -63,10 +63,14 @@ const demographicTagStyle: CSSProperties = {
   marginTop: 4,
 };
 
+const generalists = DEMOGRAPHICS.filter((d) => d.tier === "generalist");
+const niches = DEMOGRAPHICS.filter((d) => d.tier === "niche");
+
 export function BrandDetailScreen() {
   const { state, dispatch } = useGame();
   const player = getPlayerCompany(state);
   const [hoveredSponsorship, setHoveredSponsorship] = useState<string | null>(null);
+  const [showAllNiches, setShowAllNiches] = useState(false);
 
   // Get the most recent perception changes: current year's quarters, or last completed year
   const latestPerceptionChanges = useMemo(() => {
@@ -212,7 +216,7 @@ export function BrandDetailScreen() {
           }}
         >
           <SidebarHeading>BRAND REACH</SidebarHeading>
-          {DEMOGRAPHICS.map((dem) => {
+          {generalists.map((dem) => {
             const reach = Math.round(player.brandReach[dem.id] ?? 0);
             return (
               <div key={dem.id} style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs, marginBottom: 6 }}>
@@ -222,6 +226,53 @@ export function BrandDetailScreen() {
               </div>
             );
           })}
+          {(() => {
+            const visibleNiches = showAllNiches
+              ? niches
+              : niches.filter((d) => (player.brandReach[d.id] ?? 0) > 0 || (player.brandPerception[d.id] ?? 0) !== 0);
+            const hiddenCount = niches.length - visibleNiches.length;
+            return (
+              <>
+                {visibleNiches.length > 0 && (
+                  <div style={{ fontSize: 10, fontWeight: 700, color: tokens.colors.textMuted, letterSpacing: 0.5, textTransform: "uppercase" as const, margin: `${tokens.spacing.sm}px 0 ${tokens.spacing.xs}px` }}>
+                    Niche
+                  </div>
+                )}
+                {visibleNiches.map((dem) => {
+                  const reach = Math.round(player.brandReach[dem.id] ?? 0);
+                  return (
+                    <div key={dem.id} style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs, marginBottom: 6 }}>
+                      <span style={{ flex: 1, fontSize: tokens.font.sizeSmall, color: tokens.colors.text }}>{dem.name}</span>
+                      <ProgressBar value={reach} height={6} />
+                      <span style={{ minWidth: 32, textAlign: "right", fontSize: tokens.font.sizeSmall, color: tokens.colors.text }}>{reach}%</span>
+                    </div>
+                  );
+                })}
+                {hiddenCount > 0 && (
+                  <button
+                    onClick={() => setShowAllNiches(true)}
+                    style={{
+                      background: "none", border: "none", color: tokens.colors.accent, fontSize: tokens.font.sizeSmall,
+                      cursor: "pointer", padding: 0, marginTop: tokens.spacing.xs,
+                    }}
+                  >
+                    Show {hiddenCount} more niche segments
+                  </button>
+                )}
+                {showAllNiches && visibleNiches.length === niches.length && (
+                  <button
+                    onClick={() => setShowAllNiches(false)}
+                    style={{
+                      background: "none", border: "none", color: tokens.colors.accent, fontSize: tokens.font.sizeSmall,
+                      cursor: "pointer", padding: 0, marginTop: tokens.spacing.xs,
+                    }}
+                  >
+                    Hide inactive niches
+                  </button>
+                )}
+              </>
+            );
+          })()}
           <p style={{ fontSize: "0.6875rem", color: tokens.colors.textMuted, marginTop: tokens.spacing.xs }}>
             % of each demographic that has heard of your company.
           </p>
@@ -229,39 +280,57 @@ export function BrandDetailScreen() {
           <div style={{ borderTop: `1px solid ${tokens.colors.panelBorder}`, margin: `${tokens.spacing.md}px 0` }} />
 
           <SidebarHeading>BRAND PERCEPTION</SidebarHeading>
-          {DEMOGRAPHICS.map((dem) => {
-            const perception = formatPerception(player.brandPerception[dem.id] ?? 0);
-            const change = latestPerceptionChanges.get(dem.id);
-            const hasMeaningfulChange = change && Math.abs(change.delta) >= PERCEPTION_MEANINGFUL_DELTA;
-            return (
-              <div key={dem.id} style={{ marginBottom: hasMeaningfulChange ? 10 : 6 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.text }}>{dem.name}</span>
-                  <span>
-                    {hasMeaningfulChange && (
-                      <span style={{
-                        fontSize: "0.6875rem",
-                        fontWeight: 600,
-                        color: change.delta > 0 ? tokens.colors.success : tokens.colors.danger,
-                        marginRight: 4,
-                      }}>
-                        {change.delta > 0 ? "+" : ""}{change.delta.toFixed(1)}
+          {(() => {
+            const visibleNichesPerception = showAllNiches
+              ? niches
+              : niches.filter((d) => (player.brandReach[d.id] ?? 0) > 0 || (player.brandPerception[d.id] ?? 0) !== 0);
+
+            const renderPerceptionRow = (dem: typeof DEMOGRAPHICS[number]) => {
+              const perception = formatPerception(player.brandPerception[dem.id] ?? 0);
+              const change = latestPerceptionChanges.get(dem.id);
+              const hasMeaningfulChange = change && Math.abs(change.delta) >= PERCEPTION_MEANINGFUL_DELTA;
+              return (
+                <div key={dem.id} style={{ marginBottom: hasMeaningfulChange ? 10 : 6 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.text }}>{dem.name}</span>
+                    <span>
+                      {hasMeaningfulChange && (
+                        <span style={{
+                          fontSize: "0.6875rem",
+                          fontWeight: 600,
+                          color: change.delta > 0 ? tokens.colors.success : tokens.colors.danger,
+                          marginRight: 4,
+                        }}>
+                          {change.delta > 0 ? "+" : ""}{change.delta.toFixed(1)}
+                        </span>
+                      )}
+                      <span style={{ fontWeight: 600, fontSize: tokens.font.sizeSmall, color: perception.color }}>
+                        {perception.sign}{perception.value}
                       </span>
-                    )}
-                    <span style={{ fontWeight: 600, fontSize: tokens.font.sizeSmall, color: perception.color }}>
-                      {perception.sign}{perception.value}
+                      <span style={{ color: tokens.colors.textMuted, fontSize: "0.6875rem" }}> / 50</span>
                     </span>
-                    <span style={{ color: tokens.colors.textMuted, fontSize: "0.6875rem" }}> / 50</span>
-                  </span>
+                  </div>
+                  {hasMeaningfulChange && (
+                    <p style={{ margin: 0, marginTop: 2, fontSize: "0.6875rem", color: tokens.colors.textMuted }}>
+                      {change.reason}
+                    </p>
+                  )}
                 </div>
-                {hasMeaningfulChange && (
-                  <p style={{ margin: 0, marginTop: 2, fontSize: "0.6875rem", color: tokens.colors.textMuted }}>
-                    {change.reason}
-                  </p>
+              );
+            };
+
+            return (
+              <>
+                {generalists.map(renderPerceptionRow)}
+                {visibleNichesPerception.length > 0 && (
+                  <div style={{ fontSize: 10, fontWeight: 700, color: tokens.colors.textMuted, letterSpacing: 0.5, textTransform: "uppercase" as const, margin: `${tokens.spacing.sm}px 0 ${tokens.spacing.xs}px` }}>
+                    Niche
+                  </div>
                 )}
-              </div>
+                {visibleNichesPerception.map(renderPerceptionRow)}
+              </>
             );
-          })}
+          })()}
           <p style={{ fontSize: "0.6875rem", color: tokens.colors.textMuted, marginTop: tokens.spacing.xs }}>
             Sentiment from quality &amp; value. Decays 25%/yr.
           </p>

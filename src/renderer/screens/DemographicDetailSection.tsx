@@ -270,6 +270,36 @@ export function DemographicDetailSection({ allLaptopResults, playerResults, perc
             </div>
           );
         })}
+        {hasMore && !showAll && (() => {
+          const otherDemos = sortedDemographics.slice(TOP_DEMOGRAPHICS_COUNT);
+          const otherUnits = otherDemos.reduce((sum, dem) =>
+            sum + playerResults.reduce((s, lr) => {
+              const db = lr.demographicBreakdown.find((b) => b.demographicId === dem.id);
+              return s + (db?.unitsDemanded ?? 0);
+            }, 0), 0);
+          const otherTotalUnits = otherDemos.reduce((sum, dem) =>
+            sum + allLaptopResults.reduce((s, lr) => {
+              const db = lr.demographicBreakdown.find((b) => b.demographicId === dem.id);
+              return s + (db?.unitsDemanded ?? 0);
+            }, 0), 0);
+          return (
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+              border: `1px solid ${tokens.colors.panelBorder}`,
+              borderRadius: tokens.borderRadius.sm,
+              marginBottom: tokens.spacing.xs,
+              fontSize: tokens.font.sizeBase,
+              color: tokens.colors.textMuted,
+            }}>
+              <span>Other segments ({otherDemos.length})</span>
+              <span style={{ fontSize: tokens.font.sizeSmall }}>
+                {formatNumber(otherUnits)} sold · {otherTotalUnits > 0 ? (otherUnits / otherTotalUnits * 100).toFixed(1) : "0.0"}% share
+              </span>
+            </div>
+          );
+        })()}
         {hasMore && (
           <button
             onClick={() => setShowAll(!showAll)}
