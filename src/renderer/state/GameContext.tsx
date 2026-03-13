@@ -363,9 +363,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
             brandPerception: newPlayerPerception,
             models: comp.models.map((m) => {
               const sim = simByLaptop.get(m.design.id);
-              if (!sim || !m.manufacturingPlan) return m;
+              if (!sim) return m;
 
-              const existingResults = m.manufacturingPlan.results;
               const updatedStock = sim.unsoldUnits;
 
               // Auto-discontinue retail-only models that have sold out
@@ -379,6 +378,12 @@ function gameReducer(state: GameState, action: GameAction): GameState {
                 };
               }
 
+              // No manufacturing plan — just update stock (retail-only clearance sales)
+              if (!m.manufacturingPlan) {
+                return { ...m, unitsInStock: updatedStock };
+              }
+
+              const existingResults = m.manufacturingPlan.results;
               return {
                 ...m,
                 // Update units in stock after quarter sales
