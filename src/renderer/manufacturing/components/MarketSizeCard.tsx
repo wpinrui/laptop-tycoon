@@ -12,13 +12,9 @@ function getBuyersForDemos(demoIds: DemographicId[], year: number, quarter: Quar
   return demoIds.reduce((sum, id) => sum + getQuarterlyBuyers(id, year, quarter), 0);
 }
 
-function getTotalQuarterlyBuyers(year: number, quarter: Quarter): number {
-  return DEMOGRAPHICS.reduce((sum, d) => sum + getQuarterlyBuyers(d.id, year, quarter), 0);
-}
-
 function getMarketSize(selected: DemoValue, year: number, quarter: Quarter): number {
   switch (selected) {
-    case "all": return getTotalQuarterlyBuyers(year, quarter);
+    case "all": return getBuyersForDemos(DEMOGRAPHICS.map((d) => d.id), year, quarter);
     case "allGeneralist": return getBuyersForDemos(GENERALISTS.map((d) => d.id), year, quarter);
     case "allNiche": return getBuyersForDemos(NICHES.map((d) => d.id), year, quarter);
     default: return getQuarterlyBuyers(selected, year, quarter);
