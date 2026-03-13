@@ -186,17 +186,22 @@ export function ModelManagementScreen() {
           </button>
           {showDiscontinued && (
             <div style={{ marginTop: tokens.spacing.sm }}>
-              {discontinuedModels.map((model) => (
-                <ModelCard
-                  key={model.design.id}
-                  model={model}
-                  companyName={player.name}
-                  disabled
-                  gameYear={state.year}
-                  gameQuarter={state.quarter}
-                  quarterSimulated={state.quarterSimulated}
-                />
-              ))}
+              {discontinuedModels.map((model) => {
+                const canReprice = model.unitsInStock > 0 && model.retailPrice !== null
+                  && !hasDiscontinuedComponents(model.design, state.year);
+                return (
+                  <ModelCard
+                    key={model.design.id}
+                    model={model}
+                    companyName={player.name}
+                    disabled={!canReprice}
+                    onChangePricing={canReprice ? () => setPricingModel(model) : undefined}
+                    gameYear={state.year}
+                    gameQuarter={state.quarter}
+                    quarterSimulated={state.quarterSimulated}
+                  />
+                );
+              })}
             </div>
           )}
         </div>
@@ -230,10 +235,10 @@ export function ModelManagementScreen() {
             setPricingModel(null);
           }}
           onCancel={() => setPricingModel(null)}
-          onOpenFullWizard={() => {
+          onOpenFullWizard={pricingModel.status !== "discontinued" ? () => {
             setPricingModel(null);
             handleManufacturing(pricingModel);
-          }}
+          } : undefined}
         />
       )}
     </ContentPanel>
@@ -286,7 +291,11 @@ function ModelCard({
   };
 
   // Show "Change Pricing" for models that already have a price set and aren't in the first manufacturing plan flow
-  const canChangePricing = retailPrice !== null && hasPlanThisYear && !isRetailOnly && (!hasCurrentQuarterPlan || isAdditionalOrder);
+  // Also allow pricing changes on discontinued models that still have inventory (clearance sales)
+  const canChangePricing = retailPrice !== null && !isRetailOnly && (
+    (hasPlanThisYear && (!hasCurrentQuarterPlan || isAdditionalOrder)) ||
+    (status === "discontinued" && model.unitsInStock > 0)
+  );
 
   // "Producing" only shows when there's a current-quarter plan that hasn't been simulated yet
   const isPendingProduction = hasCurrentQuarterPlan && !quarterSimulated && !manufacturingPlan?.results && manufacturingQuantity !== null;
@@ -408,7 +417,7 @@ function ModelCard({
               </span>
             </MenuButton>
           )}
-          {(status === "onSale" || status === "manufacturing") && !isRetailOnly && canChangePricing && onChangePricing && (
+          {canChangePricing && onChangePricing && (
             <MenuButton
               onClick={onChangePricing}
               style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
