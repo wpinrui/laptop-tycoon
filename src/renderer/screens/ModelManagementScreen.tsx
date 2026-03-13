@@ -187,14 +187,15 @@ export function ModelManagementScreen() {
           {showDiscontinued && (
             <div style={{ marginTop: tokens.spacing.sm }}>
               {discontinuedModels.map((model) => {
-                const hasStock = model.unitsInStock > 0;
+                const canReprice = model.unitsInStock > 0 && model.retailPrice !== null
+                  && !hasDiscontinuedComponents(model.design, state.year);
                 return (
                   <ModelCard
                     key={model.design.id}
                     model={model}
                     companyName={player.name}
-                    disabled={!hasStock}
-                    onChangePricing={hasStock ? () => setPricingModel(model) : undefined}
+                    disabled={!canReprice}
+                    onChangePricing={canReprice ? () => setPricingModel(model) : undefined}
                     gameYear={state.year}
                     gameQuarter={state.quarter}
                     quarterSimulated={state.quarterSimulated}
