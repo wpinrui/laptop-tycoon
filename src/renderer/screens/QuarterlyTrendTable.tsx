@@ -1,7 +1,7 @@
 import { QuarterSimulationResult } from "../../simulation/salesTypes";
 import { tokens } from "../shell/tokens";
 import { formatNumber, formatCurrency, QUARTER_LABELS } from "../utils/formatCash";
-import { sectionStyle, tableStyle, thStyle, tdStyle, tdRight, sectionHeadingStyle } from "./summaryStyles";
+import { tableStyle, thStyle, tdStyle, tdRight, sectionHeadingStyle } from "./summaryStyles";
 
 interface QuarterlyTrendTableProps {
   quarters: QuarterSimulationResult[];
@@ -27,7 +27,7 @@ export function QuarterlyTrendTable({ quarters, year }: QuarterlyTrendTableProps
   const maxUnits = Math.max(...quarterData.map((q) => q.unitsSold), 1);
 
   return (
-    <div style={sectionStyle}>
+    <div>
       <h3 style={sectionHeadingStyle}>Quarterly Trend — {year}</h3>
 
       {/* Visual bar chart */}
