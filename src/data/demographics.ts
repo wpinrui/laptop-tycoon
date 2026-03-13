@@ -589,3 +589,6 @@ export const DEMOGRAPHICS: Demographic[] = [
     },
   },
 ];
+
+export const GENERALISTS = DEMOGRAPHICS.filter((d) => d.tier === "generalist");
+export const NICHES = DEMOGRAPHICS.filter((d) => d.tier === "niche");

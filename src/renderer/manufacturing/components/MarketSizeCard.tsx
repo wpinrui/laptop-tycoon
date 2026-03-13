@@ -1,15 +1,12 @@
 import { CSSProperties, useState } from "react";
 import { DemographicId } from "../../../data/types";
-import { DEMOGRAPHICS } from "../../../data/demographics";
+import { DEMOGRAPHICS, GENERALISTS, NICHES } from "../../../data/demographics";
 import { getQuarterlyBuyers } from "../../../simulation/demographicData";
 import { averageReach } from "../../../simulation/brandProgression";
 import { tokens } from "../../shell/tokens";
 import { CustomSelect, SelectGroup } from "../../shell/CustomSelect";
 import { Quarter, getPlayerCompany } from "../../state/gameTypes";
 import { useGame } from "../../state/GameContext";
-
-const generalists = DEMOGRAPHICS.filter((d) => d.tier === "generalist");
-const niches = DEMOGRAPHICS.filter((d) => d.tier === "niche");
 
 function getBuyersForDemos(demoIds: DemographicId[], year: number, quarter: Quarter): number {
   return demoIds.reduce((sum, id) => sum + getQuarterlyBuyers(id, year, quarter), 0);
@@ -40,11 +37,11 @@ const OPTIONS: SelectGroup<DemoValue>[] = [
   },
   {
     label: "Generalist",
-    options: generalists.map((d) => ({ value: d.id as DemoValue, label: d.name })),
+    options: GENERALISTS.map((d) => ({ value: d.id as DemoValue, label: d.name })),
   },
   {
     label: "Niche",
-    options: niches.map((d) => ({ value: d.id as DemoValue, label: d.name })),
+    options: NICHES.map((d) => ({ value: d.id as DemoValue, label: d.name })),
   },
 ];
 
@@ -91,9 +88,9 @@ export function MarketSizeCard({ year, quarter }: { year: number; quarter: Quart
     selectedDemographic === "all"
       ? getTotalQuarterlyBuyers(year, quarter)
       : selectedDemographic === "allGeneralist"
-        ? getBuyersForDemos(generalists.map((d) => d.id), year, quarter)
+        ? getBuyersForDemos(GENERALISTS.map((d) => d.id), year, quarter)
         : selectedDemographic === "allNiche"
-          ? getBuyersForDemos(niches.map((d) => d.id), year, quarter)
+          ? getBuyersForDemos(NICHES.map((d) => d.id), year, quarter)
           : getQuarterlyBuyers(selectedDemographic, year, quarter);
 
   // Brand reach as a fraction (0–1): how much of this market the player can access
@@ -101,9 +98,9 @@ export function MarketSizeCard({ year, quarter }: { year: number; quarter: Quart
     selectedDemographic === "all"
       ? averageReach(player.brandReach) / 100
       : selectedDemographic === "allGeneralist"
-        ? generalists.reduce((sum, d) => sum + (player.brandReach[d.id] ?? 0), 0) / generalists.length / 100
+        ? GENERALISTS.reduce((sum, d) => sum + (player.brandReach[d.id] ?? 0), 0) / GENERALISTS.length / 100
         : selectedDemographic === "allNiche"
-          ? niches.reduce((sum, d) => sum + (player.brandReach[d.id] ?? 0), 0) / niches.length / 100
+          ? NICHES.reduce((sum, d) => sum + (player.brandReach[d.id] ?? 0), 0) / NICHES.length / 100
           : (player.brandReach[selectedDemographic] ?? 0) / 100;
   const reachableBuyers = Math.round(marketSize * reachFraction);
 

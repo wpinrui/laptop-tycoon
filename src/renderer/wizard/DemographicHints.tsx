@@ -30,8 +30,8 @@ function getTopAndBottom(demId: DemographicId): { top: RankedStat[]; bottom: Ran
 
 function StatRankList({ title, color, stats }: { title: string; color: string; stats: RankedStat[] }) {
   return (
-    <div style={{ marginBottom: "6px" }}>
-      <div style={{ color, fontSize: "0.6875rem", fontWeight: "bold", marginBottom: "4px" }}>
+    <div style={{ marginBottom: 6 }}>
+      <div style={{ color, fontSize: tokens.font.sizeSmall, fontWeight: "bold", marginBottom: 4 }}>
         {title}
       </div>
       {stats.map((s) => (
@@ -40,14 +40,14 @@ function StatRankList({ title, color, stats }: { title: string; color: string; s
           style={{
             display: "flex",
             justifyContent: "space-between",
-            fontSize: "0.75rem",
-            color: "#e0e0e0",
-            marginBottom: "2px",
-            paddingLeft: "4px",
+            fontSize: tokens.font.sizeSmall,
+            color: tokens.colors.text,
+            marginBottom: 2,
+            paddingLeft: 4,
           }}
         >
           <span>{s.label}</span>
-          <span style={{ color: "#888" }}>{Math.round(s.weight * 100)}%</span>
+          <span style={{ color: tokens.colors.textMuted }}>{Math.round(s.weight * 100)}%</span>
         </div>
       ))}
     </div>
@@ -99,22 +99,22 @@ export function DemographicHints() {
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "6px",
-          marginBottom: collapsed ? 0 : "10px",
+          gap: 6,
+          marginBottom: collapsed ? 0 : 10,
         }}
       >
         <div
           onClick={() => setCollapsed(!collapsed)}
           style={{
-            color: "#888",
-            fontSize: "0.6875rem",
+            color: tokens.colors.textMuted,
+            fontSize: tokens.font.sizeSmall,
             fontWeight: "bold",
-            letterSpacing: "0.5px",
+            letterSpacing: 0.5,
             cursor: "pointer",
             userSelect: "none",
             display: "flex",
             alignItems: "center",
-            gap: "4px",
+            gap: 4,
           }}
         >
           <span style={{ fontSize: "0.5rem", display: "inline-block", transform: collapsed ? "rotate(-90deg)" : "none", transition: "transform 0.15s" }}>
@@ -123,14 +123,14 @@ export function DemographicHints() {
           DEMOGRAPHIC FIT
         </div>
         <Tooltip content="Ranks demographics by how well your current design matches their priorities. Click a demographic to see what it values.">
-          <Info size={12} color="#888" style={{ cursor: "help" }} />
+          <Info size={12} color={tokens.colors.textMuted} style={{ cursor: "help" }} />
         </Tooltip>
       </div>
 
       {!collapsed && (
         <>
           {!hasDesignStats ? (
-            <div style={{ fontSize: "0.75rem", color: "#888" }}>
+            <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
               Add components to see demographic fit rankings.
             </div>
           ) : (
@@ -144,18 +144,18 @@ export function DemographicHints() {
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: "6px",
-                      marginBottom: "4px",
+                      gap: 6,
+                      marginBottom: 4,
                       cursor: "pointer",
                       padding: "2px 4px",
-                      borderRadius: "4px",
+                      borderRadius: 4,
                       background: isSelected ? tokens.colors.surface : "transparent",
                     }}
                   >
-                    <span style={{ fontSize: "0.625rem", color: "#666", width: 14, textAlign: "right", flexShrink: 0 }}>
+                    <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, width: 14, textAlign: "right", flexShrink: 0 }}>
                       {i + 1}
                     </span>
-                    <span style={{ flex: 1, fontSize: "0.75rem", color: isSelected ? tokens.colors.accent : "#e0e0e0" }}>
+                    <span style={{ flex: 1, fontSize: tokens.font.sizeSmall, color: isSelected ? tokens.colors.accent : tokens.colors.text }}>
                       {dem.shortName}
                     </span>
                     <div style={{ width: 50, height: 4, background: "#333", borderRadius: 2, flexShrink: 0 }}>
@@ -176,10 +176,10 @@ export function DemographicHints() {
                     background: "none",
                     border: "none",
                     color: tokens.colors.accent,
-                    fontSize: "0.6875rem",
+                    fontSize: tokens.font.sizeSmall,
                     cursor: "pointer",
                     padding: "2px 0",
-                    marginTop: "2px",
+                    marginTop: 2,
                   }}
                 >
                   {showAll ? "Show top 10" : `Show all ${ranked.length}`}
@@ -189,9 +189,9 @@ export function DemographicHints() {
           )}
 
           {detail && (
-            <div style={{ marginTop: "8px" }}>
-              <StatRankList title="Prioritises" color="#66bb6a" stats={detail.top} />
-              <StatRankList title="Ignores" color="#ef5350" stats={detail.bottom} />
+            <div style={{ marginTop: 8 }}>
+              <StatRankList title="Prioritises" color={tokens.colors.success} stats={detail.top} />
+              <StatRankList title="Ignores" color={tokens.colors.danger} stats={detail.bottom} />
             </div>
           )}
         </>
