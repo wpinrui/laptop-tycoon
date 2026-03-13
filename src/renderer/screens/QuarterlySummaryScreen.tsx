@@ -6,9 +6,10 @@ import { MenuButton } from "../shell/MenuButton";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
 import { formatCurrency, formatNumber, QUARTER_LABELS } from "../utils/formatCash";
-import { titleStyle, sectionStyle, tableStyle, thStyle, tdStyle, tdRight, summaryRowStyle, sectionHeadingStyle } from "./summaryStyles";
+import { titleStyle, sectionHeadingStyle, tableStyle, thStyle, tdStyle, tdRight, summaryRowStyle, cardStyle, twoColumnLayout } from "./summaryStyles";
 import { reviewScoreColor } from "../utils/reviewScoreColor";
 import { DemographicDetailSection } from "./DemographicDetailSection";
+import { HeroKPIBar } from "./HeroKPIBar";
 
 export function QuarterlySummaryScreen() {
   const { state, dispatch } = useGame();
@@ -29,6 +30,8 @@ export function QuarterlySummaryScreen() {
 
   // This quarter's results
   const playerResults = result.playerResults;
+  const totalSold = playerResults.reduce((s, r) => s + r.unitsSold, 0);
+  const totalAvailable = playerResults.reduce((s, r) => s + r.unitsSold + r.unsoldUnits, 0);
 
   // Cumulative YTD from quarterHistory
   const ytdByModel = new Map<string, { unitsSold: number; revenue: number }>();
@@ -51,97 +54,101 @@ export function QuarterlySummaryScreen() {
       <h1 style={{ ...titleStyle, flexShrink: 0 }}>{quarterLabel} {result.year} Results</h1>
 
       <div className="content-panel hide-scrollbar" style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
-      {/* Per-model breakdown */}
-      <div style={sectionStyle}>
-        <h3 style={sectionHeadingStyle}>
-          Sales This Quarter
-        </h3>
-        <table style={tableStyle}>
-          <thead>
-            <tr>
-              <th style={thStyle}>Model</th>
-              <th style={{ ...thStyle, textAlign: "right" }}>Sold (Q)</th>
-              <th style={{ ...thStyle, textAlign: "right" }}>Sold (YTD)</th>
-              <th style={{ ...thStyle, textAlign: "right" }}>Revenue (Q)</th>
-              <th style={{ ...thStyle, textAlign: "right" }}>Remaining Stock</th>
-            </tr>
-          </thead>
-          <tbody>
-            {playerResults.map((r) => {
-              const model = player.models.find((m) => m.design.id === r.laptopId);
-              const ytd = ytdByModel.get(r.laptopId);
-              return (
-                <tr key={r.laptopId}>
-                  <td style={tdStyle}>{model ? modelDisplayName(player.name, model.design.name) : "Unknown"}</td>
-                  <td style={tdRight}>{formatNumber(r.unitsSold)}</td>
-                  <td style={tdRight}>{formatNumber(ytd?.unitsSold ?? r.unitsSold)}</td>
-                  <td style={tdRight}>{formatCurrency(r.revenue)}</td>
-                  <td style={{ ...tdRight, color: r.unsoldUnits > 0 ? tokens.colors.warning : undefined }}>
-                    {formatNumber(r.unsoldUnits)}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+        {/* Hero KPI bar */}
+        <HeroKPIBar
+          unitsSold={totalSold}
+          totalAvailable={totalAvailable}
+          revenue={result.totalRevenue}
+          profit={result.totalProfit}
+          cash={result.cashAfterResolution}
+        />
 
-      {/* Demographic detail: comparison tables, perception */}
-      <DemographicDetailSection
-        allLaptopResults={result.laptopResults}
-        playerResults={result.playerResults}
-        perceptionChanges={result.perceptionChanges}
-      />
+        {/* Two-column layout */}
+        <div style={twoColumnLayout}>
+          {/* Left column: detailed tables */}
+          <div>
+            {/* Per-model breakdown */}
+            <div style={cardStyle}>
+              <h3 style={sectionHeadingStyle}>Sales This Quarter</h3>
+              <table style={tableStyle}>
+                <thead>
+                  <tr>
+                    <th style={thStyle}>Model</th>
+                    <th style={{ ...thStyle, textAlign: "right" }}>Sold (Q)</th>
+                    <th style={{ ...thStyle, textAlign: "right" }}>Sold (YTD)</th>
+                    <th style={{ ...thStyle, textAlign: "right" }}>Revenue (Q)</th>
+                    <th style={{ ...thStyle, textAlign: "right" }}>Remaining Stock</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {playerResults.map((r) => {
+                    const model = player.models.find((m) => m.design.id === r.laptopId);
+                    const ytd = ytdByModel.get(r.laptopId);
+                    return (
+                      <tr key={r.laptopId}>
+                        <td style={tdStyle}>{model ? modelDisplayName(player.name, model.design.name) : "Unknown"}</td>
+                        <td style={tdRight}>{formatNumber(r.unitsSold)}</td>
+                        <td style={tdRight}>{formatNumber(ytd?.unitsSold ?? r.unitsSold)}</td>
+                        <td style={tdRight}>{formatCurrency(r.revenue)}</td>
+                        <td style={{ ...tdRight, color: r.unsoldUnits > 0 ? tokens.colors.warning : undefined }}>
+                          {formatNumber(r.unsoldUnits)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-      {/* Reviews published after Q1 */}
-      {result.quarter === 1 && state.currentYearReviews.length > 0 && (
-        <div style={{
-          ...sectionStyle,
-          padding: tokens.spacing.md,
-          background: tokens.colors.surface,
-          borderRadius: tokens.borderRadius.md,
-        }}>
-          <h3 style={sectionHeadingStyle}>Reviews Published</h3>
-          {state.currentYearReviews
-            .filter((r) => r.owner === "player")
-            .map((r) => (
-              <div key={`${r.laptopId}-${r.outlet}`} style={{ ...summaryRowStyle }}>
-                <span>{r.outletName}: {r.laptopName}</span>
-                <span style={{ fontWeight: 700, color: reviewScoreColor(r.score) }}>
-                  {r.score}/10
+            {/* Demographic detail: comparison tables, perception */}
+            <DemographicDetailSection
+              allLaptopResults={result.laptopResults}
+              playerResults={result.playerResults}
+              perceptionChanges={result.perceptionChanges}
+            />
+          </div>
+
+          {/* Right column: summaries */}
+          <div>
+            {/* Reviews published after Q1 */}
+            {result.quarter === 1 && state.currentYearReviews.length > 0 && (
+              <div style={cardStyle}>
+                <h3 style={sectionHeadingStyle}>Reviews Published</h3>
+                {state.currentYearReviews
+                  .filter((r) => r.owner === "player")
+                  .map((r) => (
+                    <div key={`${r.laptopId}-${r.outlet}`} style={{ ...summaryRowStyle }}>
+                      <span>{r.outletName}: {r.laptopName}</span>
+                      <span style={{ fontWeight: 700, color: reviewScoreColor(r.score) }}>
+                        {r.score}/10
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            )}
+
+            {/* Financial detail */}
+            <div style={cardStyle}>
+              <h3 style={sectionHeadingStyle}>Financial Details</h3>
+              <div style={summaryRowStyle}>
+                <span>Revenue This Quarter</span>
+                <span>{formatCurrency(result.totalRevenue)}</span>
+              </div>
+              <div style={summaryRowStyle}>
+                <span>Revenue Year-to-Date</span>
+                <span>{formatCurrency(ytdRevenue)}</span>
+              </div>
+              <div style={{ ...summaryRowStyle, borderTop: `1px solid ${tokens.colors.panelBorder}`, paddingTop: tokens.spacing.sm, fontWeight: 700 }}>
+                <span>Cash Balance</span>
+                <span style={{ color: result.cashAfterResolution >= 0 ? tokens.colors.success : tokens.colors.danger }}>
+                  {formatCurrency(result.cashAfterResolution)}
                 </span>
               </div>
-            ))}
+            </div>
+          </div>
         </div>
-      )}
 
-      {/* Financial summary */}
-      <div style={{
-        ...sectionStyle,
-        padding: tokens.spacing.md,
-        background: tokens.colors.surface,
-        borderRadius: tokens.borderRadius.md,
-      }}>
-        <h3 style={sectionHeadingStyle}>
-          Financial Summary
-        </h3>
-        <div style={summaryRowStyle}>
-          <span>Revenue This Quarter</span>
-          <span>{formatCurrency(result.totalRevenue)}</span>
-        </div>
-        <div style={summaryRowStyle}>
-          <span>Revenue Year-to-Date</span>
-          <span>{formatCurrency(ytdRevenue)}</span>
-        </div>
-        <div style={{ ...summaryRowStyle, borderTop: `1px solid ${tokens.colors.panelBorder}`, paddingTop: tokens.spacing.sm, fontWeight: 700 }}>
-          <span>Cash Balance</span>
-          <span style={{ color: result.cashAfterResolution >= 0 ? tokens.colors.success : tokens.colors.danger }}>
-            {formatCurrency(result.cashAfterResolution)}
-          </span>
-        </div>
-      </div>
-
-      <div style={{ flexShrink: 0, height: tokens.spacing.lg }} />
+        <div style={{ height: tokens.spacing.lg }} />
       </div>
       <MenuButton
         variant="accent"
