@@ -117,7 +117,7 @@ export function QuarterlySummaryScreen() {
                 {state.currentYearReviews
                   .filter((r) => r.owner === "player")
                   .map((r) => (
-                    <div key={`${r.laptopId}-${r.outlet}`} style={{ ...summaryRowStyle }}>
+                    <div key={`${r.laptopId}-${r.outlet}`} style={summaryRowStyle}>
                       <span>{r.outletName}: {r.laptopName}</span>
                       <span style={{ fontWeight: 700, color: reviewScoreColor(r.score) }}>
                         {r.score}/10

@@ -4,7 +4,7 @@ import { LaptopStat, ALL_STATS, DemographicId, Demographic, STAT_LABELS } from "
 import { LaptopSalesResult, PerceptionChange } from "../../simulation/salesTypes";
 import { tokens } from "../shell/tokens";
 import { formatNumber } from "../utils/formatCash";
-import { sectionStyle, tableStyle, thStyle, tdStyle, tdRight, sectionHeadingStyle, cardStyle } from "./summaryStyles";
+import { tableStyle, thStyle, tdStyle, tdRight, sectionHeadingStyle, cardStyle } from "./summaryStyles";
 import { useGame } from "../state/GameContext";
 import { CompanyState, modelDisplayName } from "../state/gameTypes";
 
@@ -197,7 +197,7 @@ export function DemographicDetailSection({ allLaptopResults, playerResults, perc
   return (
     <>
       {/* Per-Demographic Comparison Tables */}
-      <div style={{ ...sectionStyle, ...cardStyle }}>
+      <div style={cardStyle}>
         <h3 style={sectionHeadingStyle}>Demographic Comparison</h3>
         <p style={{ margin: 0, marginBottom: tokens.spacing.sm, color: tokens.colors.textMuted, fontSize: tokens.font.sizeSmall }}>
           Scores are market-relative (1–100). Click a demographic to expand.
@@ -255,7 +255,7 @@ export function DemographicDetailSection({ allLaptopResults, playerResults, perc
 
       {/* Perception Changes */}
       {perceptionChanges && perceptionChanges.some((pc) => Math.abs(pc.delta) >= 0.1) && (
-        <div style={{ ...sectionStyle, ...cardStyle }}>
+        <div style={cardStyle}>
           <h3 style={sectionHeadingStyle}>Brand Perception Changes</h3>
           <table style={tableStyle}>
             <thead>
