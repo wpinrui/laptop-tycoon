@@ -17,7 +17,7 @@ import { getTheoreticalMaxima } from "../../simulation/theoreticalMax";
 import { ComponentSlot, LaptopStat, Demographic, ScreenSizeInches, STAT_LABELS } from "../../data/types";
 import { useGame } from "../state/GameContext";
 import { useNavigation } from "../navigation/NavigationContext";
-import { LaptopDesign } from "../state/gameTypes";
+import { LaptopDesign, getPlayerCompany } from "../state/gameTypes";
 import { MenuButton } from "../shell/MenuButton";
 import { tokens, wizardShellStyle } from "../shell/tokens";
 import { ConfirmDiscardDialog } from "../shell/ConfirmDiscardDialog";
@@ -168,6 +168,36 @@ function wizardStateToDesign(state: WizardState, year: number): LaptopDesign {
 }
 
 
+/** Returns true if any engineering fields differ between the wizard state and the saved design. */
+function hasEngineeringChanges(state: WizardState, original: LaptopDesign): boolean {
+  if (state.screenSize !== original.screenSize) return true;
+  if (state.batteryCapacityWh !== original.batteryCapacityWh) return true;
+  if (state.thicknessCm !== original.thicknessCm) return true;
+  if (state.bezelMm !== original.bezelMm) return true;
+  if (state.modelType !== original.modelType) return true;
+  if (state.predecessorId !== original.predecessorId) return true;
+
+  // Components
+  const allSlots = new Set([...Object.keys(state.components), ...Object.keys(original.components)]);
+  for (const slot of allSlots) {
+    if (state.components[slot as ComponentSlot]?.id !== original.components[slot as ComponentSlot]?.id) return true;
+  }
+
+  // Ports
+  const allPorts = new Set([...Object.keys(state.ports), ...Object.keys(original.ports)]);
+  for (const port of allPorts) {
+    if ((state.ports[port] ?? 0) !== (original.ports[port] ?? 0)) return true;
+  }
+
+  // Chassis
+  if (state.chassis.material?.id !== original.chassis.material?.id) return true;
+  if (state.chassis.coolingSolution?.id !== original.chassis.coolingSolution?.id) return true;
+  if (state.chassis.keyboardFeature?.id !== original.chassis.keyboardFeature?.id) return true;
+  if (state.chassis.trackpadFeature?.id !== original.chassis.trackpadFeature?.id) return true;
+
+  return false;
+}
+
 const toolbarBtnStyle: React.CSSProperties = {
   background: "none",
   border: `1px solid ${tokens.colors.panelBorder}`,
@@ -312,17 +342,26 @@ function WizardContent() {
     && (state.currentStep !== "body" || state.selectedColours.length > 0)
     && (!isLast || allStepsComplete);
 
+  // When editing a non-draft model, skip R&D if only cosmetic fields changed (name, colours)
+  const editingModel = state.editingModelId
+    ? getPlayerCompany(gameState).models.find((m) => m.design.id === state.editingModelId)
+    : null;
+  const cosmeticOnly = editingModel && editingModel.status !== "draft"
+    && !hasEngineeringChanges(state, editingModel.design);
+  const effectiveRdCost = cosmeticOnly ? 0 : RD_COST[state.modelType];
+
   function handleFinalize() {
     const design = wizardStateToDesign(state, gameState.year);
-    const rdCost = RD_COST[state.modelType];
     if (state.editingModelId) {
-      gameDispatch({ type: "SET_CASH", cash: gameState.cash - rdCost });
+      if (effectiveRdCost > 0) {
+        gameDispatch({ type: "SET_CASH", cash: gameState.cash - effectiveRdCost });
+      }
       gameDispatch({ type: "UPDATE_MODEL_DESIGN", modelId: state.editingModelId, design });
       gameDispatch({ type: "UPDATE_MODEL_STATUS", modelId: state.editingModelId, status: "designed" });
     } else {
       gameDispatch({
         type: "ADD_MODEL",
-        rdCost,
+        rdCost: effectiveRdCost,
         model: {
           design,
           status: "designed",
@@ -405,7 +444,7 @@ function WizardContent() {
       case "review":
         return <ReviewStep />;
       case "complete":
-        return <CompleteStep onFinalize={handleFinalize} onSaveAsDraft={handleSaveAsDraft} />;
+        return <CompleteStep onFinalize={handleFinalize} onSaveAsDraft={handleSaveAsDraft} rdCost={effectiveRdCost} />;
     }
   })();
 
