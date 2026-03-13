@@ -186,17 +186,21 @@ export function ModelManagementScreen() {
           </button>
           {showDiscontinued && (
             <div style={{ marginTop: tokens.spacing.sm }}>
-              {discontinuedModels.map((model) => (
-                <ModelCard
-                  key={model.design.id}
-                  model={model}
-                  companyName={player.name}
-                  disabled
-                  gameYear={state.year}
-                  gameQuarter={state.quarter}
-                  quarterSimulated={state.quarterSimulated}
-                />
-              ))}
+              {discontinuedModels.map((model) => {
+                const hasStock = model.unitsInStock > 0;
+                return (
+                  <ModelCard
+                    key={model.design.id}
+                    model={model}
+                    companyName={player.name}
+                    disabled={!hasStock}
+                    onChangePricing={hasStock ? () => setPricingModel(model) : undefined}
+                    gameYear={state.year}
+                    gameQuarter={state.quarter}
+                    quarterSimulated={state.quarterSimulated}
+                  />
+                );
+              })}
             </div>
           )}
         </div>
@@ -286,7 +290,11 @@ function ModelCard({
   };
 
   // Show "Change Pricing" for models that already have a price set and aren't in the first manufacturing plan flow
-  const canChangePricing = retailPrice !== null && hasPlanThisYear && !isRetailOnly && (!hasCurrentQuarterPlan || isAdditionalOrder);
+  // Also allow pricing changes on discontinued models that still have inventory (clearance sales)
+  const canChangePricing = retailPrice !== null && !isRetailOnly && (
+    (hasPlanThisYear && (!hasCurrentQuarterPlan || isAdditionalOrder)) ||
+    (status === "discontinued" && model.unitsInStock > 0)
+  );
 
   // "Producing" only shows when there's a current-quarter plan that hasn't been simulated yet
   const isPendingProduction = hasCurrentQuarterPlan && !quarterSimulated && !manufacturingPlan?.results && manufacturingQuantity !== null;
@@ -408,7 +416,7 @@ function ModelCard({
               </span>
             </MenuButton>
           )}
-          {(status === "onSale" || status === "manufacturing") && !isRetailOnly && canChangePricing && onChangePricing && (
+          {(status === "onSale" || status === "manufacturing" || status === "discontinued") && !isRetailOnly && canChangePricing && onChangePricing && (
             <MenuButton
               onClick={onChangePricing}
               style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
