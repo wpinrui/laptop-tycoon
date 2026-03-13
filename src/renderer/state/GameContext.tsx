@@ -205,10 +205,16 @@ function gameReducer(state: GameState, action: GameAction): GameState {
                   return { ...m, status: "discontinued" as const, unitsInStock: 0, manufacturingPlan: null, manufacturingQuantity: null };
                 }
 
+                // Auto-carry-forward manufacturing plan for non-discontinued models
+                const carriedPlan = !discontinued && m.manufacturingPlan
+                  ? { ...m.manufacturingPlan, year: nextYear, quarter: 1 as const }
+                  : null;
+
                 return {
                   ...m,
                   status: "onSale" as const,
                   unitsInStock: newStock,
+                  manufacturingPlan: carriedPlan,
                 };
               }
 
