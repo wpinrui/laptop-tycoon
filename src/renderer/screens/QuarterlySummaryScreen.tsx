@@ -6,7 +6,7 @@ import { MenuButton } from "../shell/MenuButton";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
 import { formatCurrency, formatNumber, QUARTER_LABELS } from "../utils/formatCash";
-import { titleStyle, sectionHeadingStyle, tableStyle, thStyle, tdStyle, tdRight, summaryRowStyle, cardStyle, twoColumnLayout } from "./summaryStyles";
+import { titleStyle, sectionHeadingStyle, tableStyle, thStyle, tdStyle, tdRight, summaryRowStyle, cardStyle, twoColumnLayout, warningBannerStyle } from "./summaryStyles";
 import { reviewScoreColor } from "../utils/reviewScoreColor";
 import { DemographicDetailSection } from "./DemographicDetailSection";
 import { HeroKPIBar } from "./HeroKPIBar";
@@ -149,8 +149,8 @@ export function QuarterlySummaryScreen() {
 
             {/* Unsold inventory warning */}
             {totalUnsold > 0 && (
-              <div style={{ padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`, background: "rgba(255, 170, 0, 0.08)", border: `1px solid rgba(255, 170, 0, 0.25)`, borderRadius: tokens.borderRadius.sm, color: tokens.colors.warning, fontSize: tokens.font.sizeSmall, fontWeight: 600, display: "flex", justifyContent: "space-between" }}>
-                <span>Unsold stock remaining</span>
+              <div style={warningBannerStyle}>
+                <span>Unsold (carried to inventory)</span>
                 <span>{formatNumber(totalUnsold)}</span>
               </div>
             )}

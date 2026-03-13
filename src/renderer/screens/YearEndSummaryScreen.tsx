@@ -7,7 +7,7 @@ import { MenuButton } from "../shell/MenuButton";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
 import { formatCurrency, formatNumber } from "../utils/formatCash";
-import { titleStyle, sectionHeadingStyle, tableStyle, thStyle, tdStyle, tdRight, cardStyle, twoColumnLayout } from "./summaryStyles";
+import { titleStyle, sectionHeadingStyle, tableStyle, thStyle, tdStyle, tdRight, cardStyle, twoColumnLayout, warningBannerStyle } from "./summaryStyles";
 import { AwardsTable } from "./AwardsTable";
 import { AWARD_PERCEPTION_BONUS, AWARD_REACH_BONUS } from "../../simulation/tunables";
 import { DemographicDetailSection } from "./DemographicDetailSection";
@@ -169,7 +169,7 @@ export function YearEndSummaryScreen() {
 
             {/* Unsold inventory warning */}
             {totalUnsold > 0 && (
-              <div style={{ padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`, background: "rgba(255, 170, 0, 0.08)", border: `1px solid rgba(255, 170, 0, 0.25)`, borderRadius: tokens.borderRadius.sm, color: tokens.colors.warning, fontSize: tokens.font.sizeSmall, fontWeight: 600, display: "flex", justifyContent: "space-between" }}>
+              <div style={warningBannerStyle}>
                 <span>Unsold (carried to inventory)</span>
                 <span>{formatNumber(totalUnsold)}</span>
               </div>

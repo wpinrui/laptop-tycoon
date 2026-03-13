@@ -49,7 +49,7 @@ export function HeroKPIBar({ unitsSold, totalAvailable, revenue, profit, cash, p
     if (Math.abs(diff) >= 0.5) {
       const sign = diff > 0 ? "▲" : "▼";
       const color = diff > 0 ? tokens.colors.success : tokens.colors.danger;
-      sellThroughDelta = { text: `${sign} ${Math.abs(diff).toFixed(0)}pp`, color };
+      sellThroughDelta = { text: `${sign} ${Math.abs(diff).toFixed(0)}%`, color };
     }
   }
 
