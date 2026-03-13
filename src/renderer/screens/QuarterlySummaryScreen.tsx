@@ -32,6 +32,7 @@ export function QuarterlySummaryScreen() {
   const playerResults = result.playerResults;
   const totalSold = playerResults.reduce((s, r) => s + r.unitsSold, 0);
   const totalAvailable = playerResults.reduce((s, r) => s + r.unitsSold + r.unsoldUnits, 0);
+  const totalUnsold = playerResults.reduce((s, r) => s + r.unsoldUnits, 0);
 
   // Cumulative YTD from quarterHistory
   const ytdByModel = new Map<string, { unitsSold: number; revenue: number }>();
@@ -53,6 +54,7 @@ export function QuarterlySummaryScreen() {
   const prevIdx = state.quarterHistory.length - 2;
   const prevQ = prevIdx >= 0 ? state.quarterHistory[prevIdx] : null;
   const prevSold = prevQ ? prevQ.playerResults.reduce((s, r) => s + r.unitsSold, 0) : null;
+  const prevAvailable = prevQ ? prevQ.playerResults.reduce((s, r) => s + r.unitsSold + r.unsoldUnits, 0) : null;
 
   return (
     <ContentPanel maxWidth={tokens.layout.panelMaxWidth} style={{ display: "flex", flexDirection: "column", overflow: "hidden", height: tokens.layout.panelHeight, width: tokens.layout.panelWidth }}>
@@ -67,6 +69,7 @@ export function QuarterlySummaryScreen() {
           profit={result.totalProfit}
           cash={result.cashAfterResolution}
           prevUnitsSold={prevSold}
+          prevTotalAvailable={prevAvailable}
           prevRevenue={prevQ?.totalRevenue}
           prevProfit={prevQ?.totalProfit}
           prevCash={prevQ?.cashAfterResolution}
@@ -143,6 +146,14 @@ export function QuarterlySummaryScreen() {
                 <span>{formatCurrency(ytdRevenue)}</span>
               </div>
             </div>
+
+            {/* Unsold inventory warning */}
+            {totalUnsold > 0 && (
+              <div style={{ padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`, background: "rgba(255, 170, 0, 0.08)", border: `1px solid rgba(255, 170, 0, 0.25)`, borderRadius: tokens.borderRadius.sm, color: tokens.colors.warning, fontSize: tokens.font.sizeSmall, fontWeight: 600, display: "flex", justifyContent: "space-between" }}>
+                <span>Unsold stock remaining</span>
+                <span>{formatNumber(totalUnsold)}</span>
+              </div>
+            )}
           </div>
         </div>
 

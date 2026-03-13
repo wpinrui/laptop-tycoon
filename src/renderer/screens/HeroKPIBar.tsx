@@ -31,18 +31,34 @@ export interface HeroKPIBarProps {
   profit: number;
   cash: number;
   prevUnitsSold?: number | null;
+  prevTotalAvailable?: number | null;
   prevRevenue?: number | null;
   prevProfit?: number | null;
   prevCash?: number | null;
 }
 
-export function HeroKPIBar({ unitsSold, totalAvailable, revenue, profit, cash, prevUnitsSold, prevRevenue, prevProfit, prevCash }: HeroKPIBarProps) {
+export function HeroKPIBar({ unitsSold, totalAvailable, revenue, profit, cash, prevUnitsSold, prevTotalAvailable, prevRevenue, prevProfit, prevCash }: HeroKPIBarProps) {
+  const sellThrough = totalAvailable > 0 ? (unitsSold / totalAvailable) * 100 : 0;
+  const prevSellThrough = prevUnitsSold != null && prevTotalAvailable && prevTotalAvailable > 0
+    ? (prevUnitsSold / prevTotalAvailable) * 100
+    : null;
+
+  let sellThroughDelta: Delta | null = null;
+  if (prevSellThrough != null) {
+    const diff = sellThrough - prevSellThrough;
+    if (Math.abs(diff) >= 0.5) {
+      const sign = diff > 0 ? "▲" : "▼";
+      const color = diff > 0 ? tokens.colors.success : tokens.colors.danger;
+      sellThroughDelta = { text: `${sign} ${Math.abs(diff).toFixed(0)}pp`, color };
+    }
+  }
+
   const kpis: KPI[] = [
     {
       label: "Sell-Through",
-      value: totalAvailable > 0 ? `${Math.round((unitsSold / totalAvailable) * 100)}%` : "—",
+      value: totalAvailable > 0 ? `${Math.round(sellThrough)}%` : "—",
       subtitle: `${formatNumber(unitsSold)} of ${formatNumber(totalAvailable)} units`,
-      delta: prevUnitsSold != null ? deltaIndicator(unitsSold, prevUnitsSold) : null,
+      delta: sellThroughDelta,
     },
     {
       label: "Revenue",
