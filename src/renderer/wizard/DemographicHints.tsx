@@ -9,6 +9,8 @@ import { computeStatTotals } from "./StatBar";
 import { tokens } from "../shell/tokens";
 
 const TOP_COUNT = 10;
+const TOP_TIER_COUNT = 3;
+const MID_TIER_COUNT = 7;
 
 interface RankedStat {
   label: string;
@@ -158,11 +160,11 @@ export function DemographicHints() {
                     <span style={{ flex: 1, fontSize: tokens.font.sizeSmall, color: isSelected ? tokens.colors.accent : tokens.colors.text }}>
                       {dem.shortName}
                     </span>
-                    <div style={{ width: 50, height: 4, background: "#333", borderRadius: 2, flexShrink: 0 }}>
+                    <div style={{ width: 50, height: 4, background: tokens.colors.surface, borderRadius: 2, flexShrink: 0 }}>
                       <div style={{
                         width: `${Math.round(dem.normalizedScore * 100)}%`,
                         height: "100%",
-                        background: i < 3 ? tokens.colors.success : i < 7 ? tokens.colors.accent : tokens.colors.textMuted,
+                        background: i < TOP_TIER_COUNT ? tokens.colors.success : i < MID_TIER_COUNT ? tokens.colors.accent : tokens.colors.textMuted,
                         borderRadius: 2,
                       }} />
                     </div>

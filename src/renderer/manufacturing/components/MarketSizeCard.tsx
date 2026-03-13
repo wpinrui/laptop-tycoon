@@ -16,6 +16,24 @@ function getTotalQuarterlyBuyers(year: number, quarter: Quarter): number {
   return DEMOGRAPHICS.reduce((sum, d) => sum + getQuarterlyBuyers(d.id, year, quarter), 0);
 }
 
+function getMarketSize(selected: DemoValue, year: number, quarter: Quarter): number {
+  switch (selected) {
+    case "all": return getTotalQuarterlyBuyers(year, quarter);
+    case "allGeneralist": return getBuyersForDemos(GENERALISTS.map((d) => d.id), year, quarter);
+    case "allNiche": return getBuyersForDemos(NICHES.map((d) => d.id), year, quarter);
+    default: return getQuarterlyBuyers(selected, year, quarter);
+  }
+}
+
+function getReachFraction(selected: DemoValue, brandReach: Record<string, number>): number {
+  switch (selected) {
+    case "all": return averageReach(brandReach) / 100;
+    case "allGeneralist": return GENERALISTS.reduce((sum, d) => sum + (brandReach[d.id] ?? 0), 0) / GENERALISTS.length / 100;
+    case "allNiche": return NICHES.reduce((sum, d) => sum + (brandReach[d.id] ?? 0), 0) / NICHES.length / 100;
+    default: return (brandReach[selected] ?? 0) / 100;
+  }
+}
+
 const cardStyle: CSSProperties = {
   background: tokens.colors.background,
   border: `1px solid ${tokens.colors.panelBorder}`,
@@ -45,6 +63,7 @@ const OPTIONS: SelectGroup<DemoValue>[] = [
   },
 ];
 
+const FLAT_OPTIONS = OPTIONS.flatMap((g) => g.options);
 
 function ArrowButton({ direction, onClick }: { direction: "left" | "right"; onClick: () => void }) {
   return (
@@ -84,24 +103,9 @@ export function MarketSizeCard({ year, quarter }: { year: number; quarter: Quart
   const { state: gameState } = useGame();
   const player = getPlayerCompany(gameState);
 
-  const marketSize =
-    selectedDemographic === "all"
-      ? getTotalQuarterlyBuyers(year, quarter)
-      : selectedDemographic === "allGeneralist"
-        ? getBuyersForDemos(GENERALISTS.map((d) => d.id), year, quarter)
-        : selectedDemographic === "allNiche"
-          ? getBuyersForDemos(NICHES.map((d) => d.id), year, quarter)
-          : getQuarterlyBuyers(selectedDemographic, year, quarter);
-
+  const marketSize = getMarketSize(selectedDemographic, year, quarter);
   // Brand reach as a fraction (0–1): how much of this market the player can access
-  const reachFraction =
-    selectedDemographic === "all"
-      ? averageReach(player.brandReach) / 100
-      : selectedDemographic === "allGeneralist"
-        ? GENERALISTS.reduce((sum, d) => sum + (player.brandReach[d.id] ?? 0), 0) / GENERALISTS.length / 100
-        : selectedDemographic === "allNiche"
-          ? NICHES.reduce((sum, d) => sum + (player.brandReach[d.id] ?? 0), 0) / NICHES.length / 100
-          : (player.brandReach[selectedDemographic] ?? 0) / 100;
+  const reachFraction = getReachFraction(selectedDemographic, player.brandReach);
   const reachableBuyers = Math.round(marketSize * reachFraction);
 
   return (
@@ -124,27 +128,22 @@ export function MarketSizeCard({ year, quarter }: { year: number; quarter: Quart
       }}>
         Est. brand reach: <span style={{ color: tokens.colors.text, fontWeight: 600 }}>{reachableBuyers.toLocaleString()}</span>
       </div>
-      {(() => {
-        const flat = OPTIONS.flatMap((g) => g.options);
-        return (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: tokens.spacing.xs }}>
-            <ArrowButton direction="left" onClick={() => {
-              const idx = flat.findIndex((o) => o.value === selectedDemographic);
-              setSelectedDemographic(flat[(idx - 1 + flat.length) % flat.length].value);
-            }} />
-            <CustomSelect
-              value={selectedDemographic}
-              onChange={setSelectedDemographic}
-              options={OPTIONS}
-              size="md"
-            />
-            <ArrowButton direction="right" onClick={() => {
-              const idx = flat.findIndex((o) => o.value === selectedDemographic);
-              setSelectedDemographic(flat[(idx + 1) % flat.length].value);
-            }} />
-          </div>
-        );
-      })()}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: tokens.spacing.xs }}>
+        <ArrowButton direction="left" onClick={() => {
+          const idx = FLAT_OPTIONS.findIndex((o) => o.value === selectedDemographic);
+          setSelectedDemographic(FLAT_OPTIONS[(idx - 1 + FLAT_OPTIONS.length) % FLAT_OPTIONS.length].value);
+        }} />
+        <CustomSelect
+          value={selectedDemographic}
+          onChange={setSelectedDemographic}
+          options={OPTIONS}
+          size="md"
+        />
+        <ArrowButton direction="right" onClick={() => {
+          const idx = FLAT_OPTIONS.findIndex((o) => o.value === selectedDemographic);
+          setSelectedDemographic(FLAT_OPTIONS[(idx + 1) % FLAT_OPTIONS.length].value);
+        }} />
+      </div>
     </div>
   );
 }

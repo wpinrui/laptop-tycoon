@@ -72,6 +72,16 @@ const nicheSectionHeadingStyle: CSSProperties = {
   margin: `${tokens.spacing.sm}px 0 ${tokens.spacing.xs}px`,
 };
 
+function ReachRow({ dem, reach }: { dem: Demographic; reach: number }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs, marginBottom: 6 }}>
+      <span style={{ flex: 1, fontSize: tokens.font.sizeSmall, color: tokens.colors.text }}>{dem.name}</span>
+      <ProgressBar value={reach} height={6} />
+      <span style={{ minWidth: 32, textAlign: "right", fontSize: tokens.font.sizeSmall, color: tokens.colors.text }}>{reach}%</span>
+    </div>
+  );
+}
+
 function PerceptionRow({ dem, player, latestPerceptionChanges }: {
   dem: Demographic;
   player: ReturnType<typeof getPlayerCompany>;
@@ -268,29 +278,15 @@ export function BrandDetailScreen() {
           }}
         >
           <SidebarHeading>BRAND REACH</SidebarHeading>
-          {GENERALISTS.map((dem) => {
-            const reach = Math.round(player.brandReach[dem.id] ?? 0);
-            return (
-              <div key={dem.id} style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs, marginBottom: 6 }}>
-                <span style={{ flex: 1, fontSize: tokens.font.sizeSmall, color: tokens.colors.text }}>{dem.name}</span>
-                <ProgressBar value={reach} height={6} />
-                <span style={{ minWidth: 32, textAlign: "right", fontSize: tokens.font.sizeSmall, color: tokens.colors.text }}>{reach}%</span>
-              </div>
-            );
-          })}
+          {GENERALISTS.map((dem) => (
+            <ReachRow key={dem.id} dem={dem} reach={Math.round(player.brandReach[dem.id] ?? 0)} />
+          ))}
           {visibleNiches.length > 0 && (
             <div style={nicheSectionHeadingStyle}>Niche</div>
           )}
-          {visibleNiches.map((dem) => {
-            const reach = Math.round(player.brandReach[dem.id] ?? 0);
-            return (
-              <div key={dem.id} style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs, marginBottom: 6 }}>
-                <span style={{ flex: 1, fontSize: tokens.font.sizeSmall, color: tokens.colors.text }}>{dem.name}</span>
-                <ProgressBar value={reach} height={6} />
-                <span style={{ minWidth: 32, textAlign: "right", fontSize: tokens.font.sizeSmall, color: tokens.colors.text }}>{reach}%</span>
-              </div>
-            );
-          })}
+          {visibleNiches.map((dem) => (
+            <ReachRow key={dem.id} dem={dem} reach={Math.round(player.brandReach[dem.id] ?? 0)} />
+          ))}
           {hiddenNicheCount > 0 && (
             <button
               onClick={() => setShowAllNiches(true)}
