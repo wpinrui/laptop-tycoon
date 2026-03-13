@@ -280,15 +280,7 @@ function generateSingleModel(
   const screenSize = pickRandom(competitor.screenSizePreference);
 
   // Pick components
-  const components: Partial<Record<ComponentSlot, Component>> = {};
-  let totalPowerW = 0;
-  for (const slot of COMPONENT_SLOTS) {
-    const comp = pickComponent(slot, year, competitor, engineeringBonus);
-    if (comp) {
-      components[slot] = comp;
-      totalPowerW += comp.powerDrawW;
-    }
-  }
+  const { components, totalPowerW } = pickFreshComponents(year, competitor, engineeringBonus);
 
   // Chassis
   const material = pickChassisOption(MATERIALS, year, competitor.chassisPreferences.materialTier);
@@ -414,9 +406,12 @@ function pickFreshComponents(
 }
 
 /**
- * Generate a successor model — inherits body/chassis from predecessor, fresh components.
+ * Generate a successor or spec-bump model from a predecessor.
+ * Successor: fresh components + new cooling for updated power draw.
+ * Spec bump: fresh components, same chassis (including cooling).
  */
-function generateSuccessorModel(
+function generateDerivedModel(
+  modelType: "successor" | "specBump",
   year: number,
   competitor: CompetitorDefinition,
   predecessor: LaptopModel,
@@ -426,14 +421,15 @@ function generateSuccessorModel(
   const prevDesign = predecessor.design;
   const { components, totalPowerW } = pickFreshComponents(year, competitor, engineeringBonus);
 
-  // Inherit chassis but pick new cooling for updated power draw
-  const cooling = pickCooling(year, totalPowerW, competitor.archetype);
-  const chassis = {
-    material: prevDesign.chassis.material,
-    coolingSolution: cooling,
-    keyboardFeature: prevDesign.chassis.keyboardFeature,
-    trackpadFeature: prevDesign.chassis.trackpadFeature,
-  };
+  // Successor picks new cooling for updated power; spec bump keeps same chassis
+  const chassis = modelType === "successor"
+    ? {
+        material: prevDesign.chassis.material,
+        coolingSolution: pickCooling(year, totalPowerW, competitor.archetype),
+        keyboardFeature: prevDesign.chassis.keyboardFeature,
+        trackpadFeature: prevDesign.chassis.trackpadFeature,
+      }
+    : { ...prevDesign.chassis };
 
   const totals = computeLaptopTotals(
     components, prevDesign.ports, chassis,
@@ -444,48 +440,7 @@ function generateSuccessorModel(
   const design: LaptopDesign = {
     id: crypto.randomUUID(),
     name: `${competitor.productLine} ${year}`,
-    modelType: "successor",
-    predecessorId: prevDesign.id,
-    screenSize: prevDesign.screenSize,
-    components,
-    ports: prevDesign.ports,
-    batteryCapacityWh: prevDesign.batteryCapacityWh,
-    thicknessCm: prevDesign.thicknessCm,
-    bezelMm: prevDesign.bezelMm,
-    chassis,
-    selectedColours: prevDesign.selectedColours,
-    unitCost: totals.totalCost,
-  };
-
-  return buildAIModel(design, year, competitor, totalPlayerCount);
-}
-
-/**
- * Generate a spec bump — inherits everything from predecessor except components.
- */
-function generateSpecBumpModel(
-  year: number,
-  competitor: CompetitorDefinition,
-  predecessor: LaptopModel,
-  totalPlayerCount: number,
-  engineeringBonus: number,
-): LaptopModel {
-  const prevDesign = predecessor.design;
-  const { components } = pickFreshComponents(year, competitor, engineeringBonus);
-
-  // Keep same cooling — spec bump doesn't change the body
-  const chassis = { ...prevDesign.chassis };
-
-  const totals = computeLaptopTotals(
-    components, prevDesign.ports, chassis,
-    prevDesign.batteryCapacityWh, prevDesign.selectedColours,
-    prevDesign.screenSize, prevDesign.bezelMm, prevDesign.thicknessCm, year,
-  );
-
-  const design: LaptopDesign = {
-    id: crypto.randomUUID(),
-    name: `${competitor.productLine} ${year}`,
-    modelType: "specBump",
+    modelType,
     predecessorId: prevDesign.id,
     screenSize: prevDesign.screenSize,
     components,
@@ -516,11 +471,8 @@ export function generateCompetitorModels(
 
     const { modelType, predecessor } = decideModelType(previousModels);
 
-    if (modelType === "successor" && predecessor) {
-      return generateSuccessorModel(year, competitor, predecessor, totalPlayerCount, bonus);
-    }
-    if (modelType === "specBump" && predecessor) {
-      return generateSpecBumpModel(year, competitor, predecessor, totalPlayerCount, bonus);
+    if ((modelType === "successor" || modelType === "specBump") && predecessor) {
+      return generateDerivedModel(modelType, year, competitor, predecessor, totalPlayerCount, bonus);
     }
     return generateSingleModel(year, competitor, totalPlayerCount, bonus);
   });
