@@ -80,6 +80,7 @@ function scoreColor(value: number, allValues: number[], higherIsBetter: boolean)
 
 const MAX_COLUMNS = 5;
 const TOP_STATS_COUNT = 5;
+const TOP_DEMOGRAPHICS_COUNT = 3;
 
 const rowLabelStyle: CSSProperties = { ...tdStyle, fontWeight: 600, fontSize: tokens.font.sizeSmall };
 
@@ -209,9 +210,8 @@ export function DemographicDetailSection({ allLaptopResults, playerResults, perc
 
   if (playerResults.length === 0) return null;
 
-  const TOP_COUNT = 3;
-  const hasMore = sortedDemographics.length > TOP_COUNT;
-  const visibleDemographics = showAll ? sortedDemographics : sortedDemographics.slice(0, TOP_COUNT);
+  const hasMore = sortedDemographics.length > TOP_DEMOGRAPHICS_COUNT;
+  const visibleDemographics = showAll ? sortedDemographics : sortedDemographics.slice(0, TOP_DEMOGRAPHICS_COUNT);
 
   return (
     <>
