@@ -10,7 +10,7 @@ interface ChangePricingDialogProps {
   baseBomCost: number;
   onConfirm: (newPrice: number) => void;
   onCancel: () => void;
-  onOpenFullWizard: () => void;
+  onOpenFullWizard?: () => void;
 }
 
 export function ChangePricingDialog({
@@ -92,24 +92,26 @@ export function ChangePricingDialog({
           </MenuButton>
         </div>
 
-        <button
-          onClick={onOpenFullWizard}
-          style={{
-            background: "none",
-            border: "none",
-            color: tokens.colors.accent,
-            cursor: "pointer",
-            fontSize: tokens.font.sizeSmall,
-            fontFamily: tokens.font.family,
-            textDecoration: "underline",
-            marginTop: tokens.spacing.md,
-            padding: 0,
-            width: "100%",
-            textAlign: "center",
-          }}
-        >
-          Open full manufacturing wizard
-        </button>
+        {onOpenFullWizard && (
+          <button
+            onClick={onOpenFullWizard}
+            style={{
+              background: "none",
+              border: "none",
+              color: tokens.colors.accent,
+              cursor: "pointer",
+              fontSize: tokens.font.sizeSmall,
+              fontFamily: tokens.font.family,
+              textDecoration: "underline",
+              marginTop: tokens.spacing.md,
+              padding: 0,
+              width: "100%",
+              textAlign: "center",
+            }}
+          >
+            Open full manufacturing wizard
+          </button>
+        )}
       </ContentPanel>
     </div>
   );

@@ -235,10 +235,10 @@ export function ModelManagementScreen() {
             setPricingModel(null);
           }}
           onCancel={() => setPricingModel(null)}
-          onOpenFullWizard={() => {
+          onOpenFullWizard={pricingModel.status !== "discontinued" ? () => {
             setPricingModel(null);
             handleManufacturing(pricingModel);
-          }}
+          } : undefined}
         />
       )}
     </ContentPanel>
@@ -417,7 +417,7 @@ function ModelCard({
               </span>
             </MenuButton>
           )}
-          {(status === "onSale" || status === "manufacturing" || status === "discontinued") && !isRetailOnly && canChangePricing && onChangePricing && (
+          {canChangePricing && onChangePricing && (
             <MenuButton
               onClick={onChangePricing}
               style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
