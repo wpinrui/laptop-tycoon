@@ -9,7 +9,11 @@ interface Delta {
 
 function deltaIndicator(current: number, previous: number): Delta | null {
   if (previous === 0 && current === 0) return null;
-  if (previous === 0) return { text: "▲ New", color: tokens.colors.success };
+  if (previous === 0) {
+    const sign = current > 0 ? "▲" : "▼";
+    const color = current > 0 ? tokens.colors.success : tokens.colors.danger;
+    return { text: `${sign} New`, color };
+  }
   const pct = ((current - previous) / Math.abs(previous)) * 100;
   if (Math.abs(pct) < 0.1) return null;
   const sign = pct > 0 ? "▲" : "▼";
