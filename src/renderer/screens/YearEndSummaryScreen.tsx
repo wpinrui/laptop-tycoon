@@ -45,6 +45,13 @@ export function YearEndSummaryScreen() {
   const isAnnual = viewMode === "annual";
   const periodLabel = isAnnual ? `Year ${yearResult!.year}` : `Q4 ${yearResult!.year}`;
 
+  // Prior period for delta indicators
+  const prevYearResult = state.yearHistory.length >= 2 ? state.yearHistory[state.yearHistory.length - 2] : null;
+  const prevQ4Idx = state.quarterHistory.length - 2;
+  const prevQ4Result = prevQ4Idx >= 0 ? state.quarterHistory[prevQ4Idx] : null;
+  const prev = isAnnual ? prevYearResult : prevQ4Result;
+  const prevSold = prev ? prev.playerResults.reduce((s, r) => s + r.unitsSold, 0) : null;
+
   return (
     <ContentPanel maxWidth={tokens.layout.panelMaxWidth} style={{ display: "flex", flexDirection: "column", overflow: "hidden", height: tokens.layout.panelHeight, width: tokens.layout.panelWidth }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: tokens.spacing.lg, flexShrink: 0 }}>
@@ -84,6 +91,10 @@ export function YearEndSummaryScreen() {
           revenue={result.totalRevenue}
           profit={result.totalProfit}
           cash={result.cashAfterResolution}
+          prevUnitsSold={prevSold}
+          prevRevenue={prev?.totalRevenue}
+          prevProfit={prev?.totalProfit}
+          prevCash={prev?.cashAfterResolution}
         />
 
         {/* Two-column layout */}

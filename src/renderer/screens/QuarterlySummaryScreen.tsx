@@ -49,6 +49,11 @@ export function QuarterlySummaryScreen() {
 
   const ytdRevenue = Array.from(ytdByModel.values()).reduce((s, v) => s + v.revenue, 0);
 
+  // Prior quarter for delta indicators
+  const prevIdx = state.quarterHistory.length - 2;
+  const prevQ = prevIdx >= 0 ? state.quarterHistory[prevIdx] : null;
+  const prevSold = prevQ ? prevQ.playerResults.reduce((s, r) => s + r.unitsSold, 0) : null;
+
   return (
     <ContentPanel maxWidth={tokens.layout.panelMaxWidth} style={{ display: "flex", flexDirection: "column", overflow: "hidden", height: tokens.layout.panelHeight, width: tokens.layout.panelWidth }}>
       <h1 style={{ ...titleStyle, flexShrink: 0 }}>{quarterLabel} {result.year} Results</h1>
@@ -61,6 +66,10 @@ export function QuarterlySummaryScreen() {
           revenue={result.totalRevenue}
           profit={result.totalProfit}
           cash={result.cashAfterResolution}
+          prevUnitsSold={prevSold}
+          prevRevenue={prevQ?.totalRevenue}
+          prevProfit={prevQ?.totalProfit}
+          prevCash={prevQ?.cashAfterResolution}
         />
 
         {/* Two-column layout */}
