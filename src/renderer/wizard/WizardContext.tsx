@@ -8,6 +8,11 @@ import {
   COMPONENT_STEP_SLOTS,
 } from "./types";
 import {
+  MIN_BATTERY_WH,
+  THICKNESS_DEFAULT_CM,
+  BEZEL_DEFAULT_MM,
+} from "../../data/designConstants";
+import {
   ScreenSizeInches,
   ComponentSlot,
   Component,
@@ -39,6 +44,7 @@ type WizardAction =
   | { type: "PREV_STEP" }
   | { type: "RESET" }
   | { type: "LOAD_DESIGN"; design: LaptopDesign }
+  | { type: "PREFILL_FROM_MODEL"; design: LaptopDesign; gameYear: number }
   | { type: "DEBUG_AUTOFILL"; year: number }
   | { type: "DEBUG_OPTIMISE"; demographic: Demographic; year: number };
 
@@ -64,19 +70,19 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       const d = action.predecessorDesign;
       const year = action.gameYear ?? 9999;
 
-      // Prefill components from predecessor, skipping discontinued ones
-      const prefillComponents: typeof state.components = {};
+      // Merge components: keep player's existing selections, fill empty slots from predecessor (skip discontinued)
+      const mergedComponents: typeof state.components = { ...state.components };
       for (const [slot, component] of Object.entries(d.components)) {
-        if (component && component.yearDiscontinued >= year) {
-          prefillComponents[slot as ComponentSlot] = component;
+        if (component && component.yearDiscontinued >= year && !state.components[slot as ComponentSlot]) {
+          mergedComponents[slot as ComponentSlot] = component;
         }
       }
 
       if (state.modelType === "specBump") {
-        // Spec bump: lock screen size, body, ports + prefill components
+        // Spec bump: lock screen size, body, chassis, colours, ports; merge components
         return {
           ...base,
-          components: prefillComponents,
+          components: mergedComponents,
           screenSize: d.screenSize,
           thicknessCm: d.thicknessCm,
           bezelMm: d.bezelMm,
@@ -86,12 +92,15 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         };
       }
 
-      // Successor: prefill components only (body/screen can be changed)
+      // Successor: screen size + body sliders always from predecessor; other fields only fill if unchanged
       return {
         ...base,
-        components: prefillComponents,
-        batteryCapacityWh: d.batteryCapacityWh,
-        ports: { ...d.ports },
+        components: mergedComponents,
+        screenSize: d.screenSize,
+        thicknessCm: d.thicknessCm,
+        bezelMm: d.bezelMm,
+        ...(Object.keys(state.ports).length === 0 ? { ports: { ...d.ports } } : {}),
+        ...(state.batteryCapacityWh === MIN_BATTERY_WH ? { batteryCapacityWh: d.batteryCapacityWh } : {}),
       };
     }
     case "SET_SCREEN_SIZE":
@@ -160,6 +169,35 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         }
       }
       return state;
+    }
+    case "PREFILL_FROM_MODEL": {
+      const d = action.design;
+      const year = action.gameYear;
+
+      // Merge components: keep player's existing selections, fill empty slots (skip discontinued)
+      const mergedComponents: typeof state.components = { ...state.components };
+      for (const [slot, component] of Object.entries(d.components)) {
+        if (component && component.yearDiscontinued >= year && !state.components[slot as ComponentSlot]) {
+          mergedComponents[slot as ComponentSlot] = component;
+        }
+      }
+
+      return {
+        ...state,
+        components: mergedComponents,
+        ...(state.screenSize === INITIAL_WIZARD_STATE.screenSize ? { screenSize: d.screenSize } : {}),
+        ...(state.thicknessCm === THICKNESS_DEFAULT_CM ? { thicknessCm: d.thicknessCm } : {}),
+        ...(state.bezelMm === BEZEL_DEFAULT_MM ? { bezelMm: d.bezelMm } : {}),
+        ...(Object.keys(state.ports).length === 0 ? { ports: { ...d.ports } } : {}),
+        ...(state.batteryCapacityWh === MIN_BATTERY_WH ? { batteryCapacityWh: d.batteryCapacityWh } : {}),
+        chassis: {
+          material: state.chassis.material ?? d.chassis.material,
+          coolingSolution: state.chassis.coolingSolution ?? d.chassis.coolingSolution,
+          keyboardFeature: state.chassis.keyboardFeature ?? d.chassis.keyboardFeature,
+          trackpadFeature: state.chassis.trackpadFeature ?? d.chassis.trackpadFeature,
+        },
+        ...(state.selectedColours.length === 0 ? { selectedColours: [...d.selectedColours] } : {}),
+      };
     }
     case "RESET":
       return INITIAL_WIZARD_STATE;

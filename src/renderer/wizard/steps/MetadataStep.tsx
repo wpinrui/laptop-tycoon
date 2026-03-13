@@ -1,8 +1,10 @@
+import { useState, useRef, useCallback } from "react";
 import { useWizard } from "../WizardContext";
 import { useGame } from "../../state/GameContext";
 import { getPlayerCompany, modelDisplayName } from "../../state/gameTypes";
 import { ModelType } from "../types";
 import { tokens } from "../../shell/tokens";
+import { useClickOutside } from "../../hooks/useClickOutside";
 
 const MODEL_TYPE_OPTIONS: { value: ModelType; label: string; description: string }[] = [
   { value: "brandNew", label: "Brand New", description: "Fresh design from scratch. Highest R&D cost." },
@@ -128,6 +130,108 @@ export function MetadataStep() {
           )}
         </div>
       )}
+
+      {predecessorModels.length > 0 && (
+        <LoadFromModelPicker
+          models={predecessorModels}
+          onSelect={(modelId) => {
+            const model = getPlayerCompany(gameState).models.find((m) => m.design.id === modelId);
+            if (model) {
+              dispatch({ type: "PREFILL_FROM_MODEL", design: model.design, gameYear });
+            }
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function LoadFromModelPicker({
+  models,
+  onSelect,
+}: {
+  models: { id: string; name: string; year: number }[];
+  onSelect: (modelId: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const close = useCallback(() => setOpen(false), []);
+  useClickOutside(ref, close, open);
+
+  return (
+    <div>
+      <label style={{ display: "block", color: "#aaa", marginBottom: "8px", fontSize: "0.875rem" }}>
+        Load from existing model
+      </label>
+      <div ref={ref} style={{ position: "relative", maxWidth: "400px" }}>
+        <button
+          onClick={() => setOpen(!open)}
+          style={{
+            width: "100%",
+            padding: "10px 12px",
+            background: "#2a2a2a",
+            border: "1px solid #444",
+            borderRadius: "6px",
+            color: "#888",
+            fontSize: "0.875rem",
+            fontFamily: "inherit",
+            cursor: "pointer",
+            textAlign: "left",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <span>Copy options from a previous model...</span>
+          <span style={{ fontSize: "0.6em" }}>{open ? "\u25B2" : "\u25BC"}</span>
+        </button>
+        {open && (
+          <div
+            style={{
+              position: "absolute",
+              top: "100%",
+              left: 0,
+              right: 0,
+              marginTop: 4,
+              background: tokens.colors.cardBg,
+              border: `1px solid ${tokens.colors.panelBorder}`,
+              borderRadius: "6px",
+              overflow: "hidden",
+              overflowY: "auto",
+              maxHeight: 240,
+              zIndex: 10,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+            }}
+          >
+            {models.map((model) => (
+              <div
+                key={model.id}
+                onClick={() => {
+                  onSelect(model.id);
+                  setOpen(false);
+                }}
+                style={{
+                  padding: "10px 12px",
+                  cursor: "pointer",
+                  fontSize: "0.875rem",
+                  color: tokens.colors.text,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = tokens.colors.background;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                }}
+              >
+                {model.name} ({model.year})
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <p style={{ color: "#666", fontSize: "0.75rem", marginTop: "6px" }}>
+        Fills in options you haven't already selected. Discontinued parts are skipped.
+      </p>
     </div>
   );
 }
