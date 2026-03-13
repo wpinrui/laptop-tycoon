@@ -18,6 +18,8 @@ export const SPONSORSHIPS: Sponsorship[] = [
     reachBonus: {
       gamer: 5,
       techEnthusiast: 2,
+      esportsPro: 3,
+      streamer: 2,
     },
   },
   {
@@ -27,6 +29,7 @@ export const SPONSORSHIPS: Sponsorship[] = [
     baseCost: 300_000,
     reachBonus: {
       student: 6,
+      educationK12: 2,
     },
   },
   {
@@ -37,6 +40,7 @@ export const SPONSORSHIPS: Sponsorship[] = [
     reachBonus: {
       corporate: 5,
       businessProfessional: 3,
+      dayTrader: 2,
     },
   },
   {
@@ -47,6 +51,8 @@ export const SPONSORSHIPS: Sponsorship[] = [
     reachBonus: {
       techEnthusiast: 4,
       gamer: 2,
+      developer: 3,
+      streamer: 1,
     },
   },
   {
@@ -63,6 +69,18 @@ export const SPONSORSHIPS: Sponsorship[] = [
       techEnthusiast: 3,
       generalConsumer: 3,
       budgetBuyer: 3,
+      developer: 3,
+      educationK12: 3,
+      videoEditor: 3,
+      threeDArtist: 3,
+      musicProducer: 3,
+      esportsPro: 3,
+      streamer: 3,
+      digitalNomad: 3,
+      fieldWorker: 3,
+      writer: 3,
+      dayTrader: 3,
+      desktopReplacement: 3,
     },
   },
   {
@@ -73,6 +91,7 @@ export const SPONSORSHIPS: Sponsorship[] = [
     reachBonus: {
       businessProfessional: 2,
       generalConsumer: 2,
+      digitalNomad: 3,
     },
   },
   {
@@ -89,6 +108,18 @@ export const SPONSORSHIPS: Sponsorship[] = [
       techEnthusiast: 2,
       generalConsumer: 4,
       budgetBuyer: 2,
+      developer: 2,
+      educationK12: 2,
+      videoEditor: 2,
+      threeDArtist: 2,
+      musicProducer: 2,
+      esportsPro: 2,
+      streamer: 2,
+      digitalNomad: 2,
+      fieldWorker: 2,
+      writer: 2,
+      dayTrader: 2,
+      desktopReplacement: 2,
     },
   },
 ];

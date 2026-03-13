@@ -163,7 +163,10 @@ export interface BatteryEraConfig {
 
 // --- Demographics ---
 
+export type DemographicTier = "generalist" | "niche";
+
 export type DemographicId =
+  // Generalist (10)
   | "corporate"
   | "businessProfessional"
   | "student"
@@ -171,7 +174,20 @@ export type DemographicId =
   | "gamer"
   | "techEnthusiast"
   | "generalConsumer"
-  | "budgetBuyer";
+  | "budgetBuyer"
+  | "developer"
+  | "educationK12"
+  // Niche (10)
+  | "videoEditor"
+  | "threeDArtist"
+  | "musicProducer"
+  | "esportsPro"
+  | "streamer"
+  | "digitalNomad"
+  | "fieldWorker"
+  | "writer"
+  | "dayTrader"
+  | "desktopReplacement";
 
 export interface ScreenSizePreference {
   preferredMin: ScreenSizeInches;
@@ -182,6 +198,9 @@ export interface ScreenSizePreference {
 export interface Demographic {
   id: DemographicId;
   name: string;
+  /** Compact display name for tight UI spaces. */
+  shortName: string;
+  tier: DemographicTier;
   screenSizePreference: ScreenSizePreference;
   /** Weights across all 14 laptop stats. statWeights + priceWeight must sum to 1.0. */
   statWeights: Record<LaptopStat, number>;

@@ -109,6 +109,7 @@ export const AI_STARTING_YEAR = 2000;
 export const STARTING_YEAR = AI_STARTING_YEAR + 1;
 
 const ZERO_DEMOGRAPHICS: Record<DemographicId, number> = {
+  // Generalist
   corporate: 0,
   businessProfessional: 0,
   student: 0,
@@ -117,6 +118,19 @@ const ZERO_DEMOGRAPHICS: Record<DemographicId, number> = {
   techEnthusiast: 0,
   generalConsumer: 0,
   budgetBuyer: 0,
+  developer: 0,
+  educationK12: 0,
+  // Niche
+  videoEditor: 0,
+  threeDArtist: 0,
+  musicProducer: 0,
+  esportsPro: 0,
+  streamer: 0,
+  digitalNomad: 0,
+  fieldWorker: 0,
+  writer: 0,
+  dayTrader: 0,
+  desktopReplacement: 0,
 };
 
 export function createInitialGameState(
