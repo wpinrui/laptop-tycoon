@@ -2,7 +2,12 @@ import { tokens } from "../shell/tokens";
 import { formatCurrency, formatNumber } from "../utils/formatCash";
 import { kpiRowStyle, kpiCardStyle, kpiLabelStyle, kpiValueStyle, kpiDeltaStyle } from "./summaryStyles";
 
-function deltaIndicator(current: number, previous: number): { text: string; color: string } | null {
+interface Delta {
+  text: string;
+  color: string;
+}
+
+function deltaIndicator(current: number, previous: number): Delta | null {
   if (previous === 0 && current === 0) return null;
   if (previous === 0) return { text: "▲ New", color: tokens.colors.success };
   const pct = ((current - previous) / Math.abs(previous)) * 100;
@@ -10,6 +15,13 @@ function deltaIndicator(current: number, previous: number): { text: string; colo
   const sign = pct > 0 ? "▲" : "▼";
   const color = pct > 0 ? tokens.colors.success : tokens.colors.danger;
   return { text: `${sign} ${Math.abs(pct).toFixed(1)}%`, color };
+}
+
+interface KPI {
+  label: string;
+  value: string;
+  color?: string;
+  delta: Delta | null;
 }
 
 export interface HeroKPIBarProps {
@@ -25,17 +37,15 @@ export interface HeroKPIBarProps {
 }
 
 export function HeroKPIBar({ unitsSold, totalAvailable, revenue, profit, cash, prevUnitsSold, prevRevenue, prevProfit, prevCash }: HeroKPIBarProps) {
-  const kpis = [
+  const kpis: KPI[] = [
     {
       label: "Units Sold",
       value: `${formatNumber(unitsSold)} / ${formatNumber(totalAvailable)}`,
-      color: undefined as string | undefined,
       delta: prevUnitsSold != null ? deltaIndicator(unitsSold, prevUnitsSold) : null,
     },
     {
       label: "Revenue",
       value: formatCurrency(revenue),
-      color: undefined as string | undefined,
       delta: prevRevenue != null ? deltaIndicator(revenue, prevRevenue) : null,
     },
     {

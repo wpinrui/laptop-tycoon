@@ -187,26 +187,27 @@ export function DemographicDetailSection({ allLaptopResults, playerResults, perc
   const [expandedDem, setExpandedDem] = useState<DemographicId | null>(null);
   const [showAll, setShowAll] = useState(false);
 
-  if (playerResults.length === 0) return null;
-
-  const activeDemographics = DEMOGRAPHICS.filter((dem) => {
-    return allLaptopResults.some((lr) =>
-      lr.demographicBreakdown.some((b) => b.demographicId === dem.id && b.unitsDemanded > 0),
+  // Sort active demographics by player market share (descending) so the most relevant are first
+  const sortedDemographics = useMemo(() => {
+    const active = DEMOGRAPHICS.filter((dem) =>
+      allLaptopResults.some((lr) =>
+        lr.demographicBreakdown.some((b) => b.demographicId === dem.id && b.unitsDemanded > 0),
+      ),
     );
-  });
+    return active.sort((a, b) => {
+      const shareA = playerResults.reduce((sum, lr) => {
+        const db = lr.demographicBreakdown.find((d) => d.demographicId === a.id);
+        return sum + (db?.marketShare ?? 0);
+      }, 0);
+      const shareB = playerResults.reduce((sum, lr) => {
+        const db = lr.demographicBreakdown.find((d) => d.demographicId === b.id);
+        return sum + (db?.marketShare ?? 0);
+      }, 0);
+      return shareB - shareA;
+    });
+  }, [allLaptopResults, playerResults]);
 
-  // Sort by player market share (descending) so the most relevant demographics are first
-  const sortedDemographics = [...activeDemographics].sort((a, b) => {
-    const shareA = playerResults.reduce((sum, lr) => {
-      const db = lr.demographicBreakdown.find((d) => d.demographicId === a.id);
-      return sum + (db?.marketShare ?? 0);
-    }, 0);
-    const shareB = playerResults.reduce((sum, lr) => {
-      const db = lr.demographicBreakdown.find((d) => d.demographicId === b.id);
-      return sum + (db?.marketShare ?? 0);
-    }, 0);
-    return shareB - shareA;
-  });
+  if (playerResults.length === 0) return null;
 
   const TOP_COUNT = 3;
   const hasMore = sortedDemographics.length > TOP_COUNT;
