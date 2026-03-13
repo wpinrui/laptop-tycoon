@@ -185,6 +185,7 @@ function DemographicComparisonTable({
 export function DemographicDetailSection({ allLaptopResults, playerResults, perceptionChanges }: DemographicDetailProps) {
   const { state } = useGame();
   const [expandedDem, setExpandedDem] = useState<DemographicId | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   if (playerResults.length === 0) return null;
 
@@ -194,6 +195,23 @@ export function DemographicDetailSection({ allLaptopResults, playerResults, perc
     );
   });
 
+  // Sort by player market share (descending) so the most relevant demographics are first
+  const sortedDemographics = [...activeDemographics].sort((a, b) => {
+    const shareA = playerResults.reduce((sum, lr) => {
+      const db = lr.demographicBreakdown.find((d) => d.demographicId === a.id);
+      return sum + (db?.marketShare ?? 0);
+    }, 0);
+    const shareB = playerResults.reduce((sum, lr) => {
+      const db = lr.demographicBreakdown.find((d) => d.demographicId === b.id);
+      return sum + (db?.marketShare ?? 0);
+    }, 0);
+    return shareB - shareA;
+  });
+
+  const TOP_COUNT = 3;
+  const hasMore = sortedDemographics.length > TOP_COUNT;
+  const visibleDemographics = showAll ? sortedDemographics : sortedDemographics.slice(0, TOP_COUNT);
+
   return (
     <>
       {/* Per-Demographic Comparison Tables */}
@@ -202,7 +220,7 @@ export function DemographicDetailSection({ allLaptopResults, playerResults, perc
         <p style={{ margin: 0, marginBottom: tokens.spacing.sm, color: tokens.colors.textMuted, fontSize: tokens.font.sizeSmall }}>
           Scores are market-relative (1–100). Click a demographic to expand.
         </p>
-        {activeDemographics.map((dem) => {
+        {visibleDemographics.map((dem) => {
           const isExpanded = expandedDem === dem.id;
           const playerUnits = playerResults.reduce((sum, lr) => {
             const db = lr.demographicBreakdown.find((b) => b.demographicId === dem.id);
@@ -251,6 +269,26 @@ export function DemographicDetailSection({ allLaptopResults, playerResults, perc
             </div>
           );
         })}
+        {hasMore && (
+          <button
+            onClick={() => setShowAll(!showAll)}
+            style={{
+              display: "block",
+              width: "100%",
+              padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+              background: "transparent",
+              color: tokens.colors.accent,
+              border: `1px solid ${tokens.colors.panelBorder}`,
+              borderRadius: tokens.borderRadius.sm,
+              cursor: "pointer",
+              fontSize: tokens.font.sizeSmall,
+              fontWeight: 600,
+              marginTop: tokens.spacing.xs,
+            }}
+          >
+            {showAll ? "Show fewer" : `Show all ${sortedDemographics.length} demographics`}
+          </button>
+        )}
       </div>
 
       {/* Perception Changes */}
