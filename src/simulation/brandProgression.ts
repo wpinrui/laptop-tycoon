@@ -24,14 +24,21 @@ import {
 // ==================== Brand Reach ====================
 
 /**
- * Logistic S-curve growth factor.
+ * Logistic S-curve growth factor with permeability floor.
  * Low reach → slow growth (cold start), mid reach → fast growth, high reach → plateaus.
+ * Permeability sets a minimum growth factor so permeable demographics (e.g. tech enthusiasts)
+ * still grow meaningfully even at 0% reach, while mass market demographics stay punishing.
  */
-function sCurveGrowthFactor(currentReach: number): number {
+function sCurveGrowthFactor(currentReach: number, permeability: number): number {
   const x = currentReach;
   const expTerm = Math.exp(-S_CURVE_STEEPNESS * (x - S_CURVE_MIDPOINT));
   // Derivative of logistic: peaks at midpoint, low at extremes
-  return S_CURVE_STEEPNESS * expTerm / Math.pow(1 + expTerm, 2);
+  const baseFactor = S_CURVE_STEEPNESS * expTerm / Math.pow(1 + expTerm, 2);
+  // Peak of the logistic derivative (at midpoint) = steepness / 4
+  const peakFactor = S_CURVE_STEEPNESS / 4;
+  // Permeability floor: fraction of peak growth always available
+  const floor = permeability * peakFactor;
+  return Math.max(baseFactor, floor);
 }
 
 /** Average reach across all demographics */
@@ -88,8 +95,8 @@ export function updateBrandReach(
     const perception = player.brandPerception[demId] ?? 0;
     rawGrowth += (unitsSold / WOM_DIVISOR) * (1 + perception / 100);
 
-    // Apply S-curve: growth is modulated by current reach position
-    const growth = rawGrowth * sCurveGrowthFactor(current) * 100;
+    // Apply S-curve: growth is modulated by current reach position + permeability
+    const growth = rawGrowth * sCurveGrowthFactor(current, dem.permeability) * 100;
 
     // Decay if no products on sale (quarterly portion)
     const decay = !hasProductsOnSale ? current * (REACH_INACTIVITY_DECAY / 4) : 0;
@@ -134,7 +141,7 @@ export function updateCompetitorBrandReach(
     const perception = comp.brandPerception[demId] ?? 0;
     const rawGrowth = (unitsSold / WOM_DIVISOR) * (1 + perception / 100);
 
-    const growth = rawGrowth * sCurveGrowthFactor(current) * 100;
+    const growth = rawGrowth * sCurveGrowthFactor(current, dem.permeability) * 100;
 
     // Decay if no products on sale (quarterly portion)
     const decay = !hasProductsOnSale ? current * (REACH_INACTIVITY_DECAY / 4) : 0;
