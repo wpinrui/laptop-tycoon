@@ -82,6 +82,43 @@ const MAX_COLUMNS = 5;
 const TOP_STATS_COUNT = 5;
 const TOP_DEMOGRAPHICS_COUNT = 3;
 
+function sumUnitsForDemographic(results: LaptopSalesResult[], demId: DemographicId): number {
+  return results.reduce((sum, lr) => {
+    const db = lr.demographicBreakdown.find((b) => b.demographicId === demId);
+    return sum + (db?.unitsDemanded ?? 0);
+  }, 0);
+}
+
+function OtherSegmentsSummary({
+  otherDemos,
+  playerResults,
+  allLaptopResults,
+}: {
+  otherDemos: Demographic[];
+  playerResults: LaptopSalesResult[];
+  allLaptopResults: LaptopSalesResult[];
+}) {
+  const otherUnits = otherDemos.reduce((sum, dem) => sum + sumUnitsForDemographic(playerResults, dem.id), 0);
+  const otherTotalUnits = otherDemos.reduce((sum, dem) => sum + sumUnitsForDemographic(allLaptopResults, dem.id), 0);
+  return (
+    <div style={{
+      display: "flex",
+      justifyContent: "space-between",
+      padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+      border: `1px solid ${tokens.colors.panelBorder}`,
+      borderRadius: tokens.borderRadius.sm,
+      marginBottom: tokens.spacing.xs,
+      fontSize: tokens.font.sizeBase,
+      color: tokens.colors.textMuted,
+    }}>
+      <span>Other segments ({otherDemos.length})</span>
+      <span style={{ fontSize: tokens.font.sizeSmall }}>
+        {formatNumber(otherUnits)} sold · {otherTotalUnits > 0 ? (otherUnits / otherTotalUnits * 100).toFixed(1) : "0.0"}% share
+      </span>
+    </div>
+  );
+}
+
 const rowLabelStyle: CSSProperties = { ...tdStyle, fontWeight: 600, fontSize: tokens.font.sizeSmall };
 
 interface DemographicDetailProps {
@@ -223,14 +260,8 @@ export function DemographicDetailSection({ allLaptopResults, playerResults, perc
         </p>
         {visibleDemographics.map((dem) => {
           const isExpanded = expandedDem === dem.id;
-          const playerUnits = playerResults.reduce((sum, lr) => {
-            const db = lr.demographicBreakdown.find((b) => b.demographicId === dem.id);
-            return sum + (db?.unitsDemanded ?? 0);
-          }, 0);
-          const totalUnits = allLaptopResults.reduce((sum, lr) => {
-            const db = lr.demographicBreakdown.find((b) => b.demographicId === dem.id);
-            return sum + (db?.unitsDemanded ?? 0);
-          }, 0);
+          const playerUnits = sumUnitsForDemographic(playerResults, dem.id);
+          const totalUnits = sumUnitsForDemographic(allLaptopResults, dem.id);
           const share = totalUnits > 0 ? (playerUnits / totalUnits * 100).toFixed(1) : "0.0";
 
           return (
@@ -270,6 +301,13 @@ export function DemographicDetailSection({ allLaptopResults, playerResults, perc
             </div>
           );
         })}
+        {hasMore && !showAll && (
+          <OtherSegmentsSummary
+            otherDemos={sortedDemographics.slice(TOP_DEMOGRAPHICS_COUNT)}
+            playerResults={playerResults}
+            allLaptopResults={allLaptopResults}
+          />
+        )}
         {hasMore && (
           <button
             onClick={() => setShowAll(!showAll)}

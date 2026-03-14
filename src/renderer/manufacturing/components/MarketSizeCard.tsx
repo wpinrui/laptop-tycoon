@@ -1,15 +1,33 @@
 import { CSSProperties, useState } from "react";
 import { DemographicId } from "../../../data/types";
-import { DEMOGRAPHICS } from "../../../data/demographics";
+import { DEMOGRAPHICS, GENERALISTS, NICHES } from "../../../data/demographics";
 import { getQuarterlyBuyers } from "../../../simulation/demographicData";
 import { averageReach } from "../../../simulation/brandProgression";
 import { tokens } from "../../shell/tokens";
-import { CustomSelect } from "../../shell/CustomSelect";
+import { CustomSelect, SelectGroup } from "../../shell/CustomSelect";
 import { Quarter, getPlayerCompany } from "../../state/gameTypes";
 import { useGame } from "../../state/GameContext";
 
-function getTotalQuarterlyBuyers(year: number, quarter: Quarter): number {
-  return DEMOGRAPHICS.reduce((sum, d) => sum + getQuarterlyBuyers(d.id, year, quarter), 0);
+function getBuyersForDemos(demoIds: DemographicId[], year: number, quarter: Quarter): number {
+  return demoIds.reduce((sum, id) => sum + getQuarterlyBuyers(id, year, quarter), 0);
+}
+
+function getMarketSize(selected: DemoValue, year: number, quarter: Quarter): number {
+  switch (selected) {
+    case "all": return getBuyersForDemos(DEMOGRAPHICS.map((d) => d.id), year, quarter);
+    case "allGeneralist": return getBuyersForDemos(GENERALISTS.map((d) => d.id), year, quarter);
+    case "allNiche": return getBuyersForDemos(NICHES.map((d) => d.id), year, quarter);
+    default: return getQuarterlyBuyers(selected, year, quarter);
+  }
+}
+
+function getReachFraction(selected: DemoValue, brandReach: Record<string, number>): number {
+  switch (selected) {
+    case "all": return averageReach(brandReach) / 100;
+    case "allGeneralist": return GENERALISTS.reduce((sum, d) => sum + (brandReach[d.id] ?? 0), 0) / GENERALISTS.length / 100;
+    case "allNiche": return NICHES.reduce((sum, d) => sum + (brandReach[d.id] ?? 0), 0) / NICHES.length / 100;
+    default: return (brandReach[selected] ?? 0) / 100;
+  }
 }
 
 const cardStyle: CSSProperties = {
@@ -20,13 +38,28 @@ const cardStyle: CSSProperties = {
   textAlign: "center",
 };
 
-type DemoValue = DemographicId | "all";
+type DemoValue = DemographicId | "all" | "allGeneralist" | "allNiche";
 
-const OPTIONS: { value: DemoValue; label: string }[] = [
-  { value: "all", label: "All Demographics" },
-  ...DEMOGRAPHICS.map((d) => ({ value: d.id as DemoValue, label: d.name })),
+const OPTIONS: SelectGroup<DemoValue>[] = [
+  {
+    label: "Aggregate",
+    options: [
+      { value: "all", label: "All Demographics" },
+      { value: "allGeneralist", label: "All Generalist" },
+      { value: "allNiche", label: "All Niche" },
+    ],
+  },
+  {
+    label: "Generalist",
+    options: GENERALISTS.map((d) => ({ value: d.id as DemoValue, label: d.name })),
+  },
+  {
+    label: "Niche",
+    options: NICHES.map((d) => ({ value: d.id as DemoValue, label: d.name })),
+  },
 ];
 
+const FLAT_OPTIONS = OPTIONS.flatMap((g) => g.options);
 
 function ArrowButton({ direction, onClick }: { direction: "left" | "right"; onClick: () => void }) {
   return (
@@ -66,15 +99,9 @@ export function MarketSizeCard({ year, quarter }: { year: number; quarter: Quart
   const { state: gameState } = useGame();
   const player = getPlayerCompany(gameState);
 
-  const marketSize =
-    selectedDemographic === "all"
-      ? getTotalQuarterlyBuyers(year, quarter)
-      : getQuarterlyBuyers(selectedDemographic, year, quarter);
-
+  const marketSize = getMarketSize(selectedDemographic, year, quarter);
   // Brand reach as a fraction (0–1): how much of this market the player can access
-  const reachFraction = selectedDemographic === "all"
-    ? averageReach(player.brandReach) / 100
-    : (player.brandReach[selectedDemographic] ?? 0) / 100;
+  const reachFraction = getReachFraction(selectedDemographic, player.brandReach);
   const reachableBuyers = Math.round(marketSize * reachFraction);
 
   return (
@@ -99,8 +126,8 @@ export function MarketSizeCard({ year, quarter }: { year: number; quarter: Quart
       </div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: tokens.spacing.xs }}>
         <ArrowButton direction="left" onClick={() => {
-          const idx = OPTIONS.findIndex((o) => o.value === selectedDemographic);
-          setSelectedDemographic(OPTIONS[(idx - 1 + OPTIONS.length) % OPTIONS.length].value);
+          const idx = FLAT_OPTIONS.findIndex((o) => o.value === selectedDemographic);
+          setSelectedDemographic(FLAT_OPTIONS[(idx - 1 + FLAT_OPTIONS.length) % FLAT_OPTIONS.length].value);
         }} />
         <CustomSelect
           value={selectedDemographic}
@@ -109,8 +136,8 @@ export function MarketSizeCard({ year, quarter }: { year: number; quarter: Quart
           size="md"
         />
         <ArrowButton direction="right" onClick={() => {
-          const idx = OPTIONS.findIndex((o) => o.value === selectedDemographic);
-          setSelectedDemographic(OPTIONS[(idx + 1) % OPTIONS.length].value);
+          const idx = FLAT_OPTIONS.findIndex((o) => o.value === selectedDemographic);
+          setSelectedDemographic(FLAT_OPTIONS[(idx + 1) % FLAT_OPTIONS.length].value);
         }} />
       </div>
     </div>
