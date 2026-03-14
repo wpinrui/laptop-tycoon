@@ -15,7 +15,6 @@ import {
   WOM_DIVISOR,
   PERCEPTION_CONTRIBUTION_SCALE,
   REACH_INACTIVITY_DECAY,
-  COMPETITOR_TIME_IN_MARKET_BONUS,
   PERCEPTION_DECAY,
   NEGATIVITY_MULTIPLIER,
   PERCEPTION_MIN,
@@ -103,7 +102,8 @@ export function updateBrandReach(
 
 /**
  * Update per-demographic brand reach for a competitor (quarterly).
- * Competitors grow reach from sales volume + time-in-market (simplified).
+ * Uses the same formula as player reach: WoM from sales (perception-amplified).
+ * No time-in-market bonus — AI competitors use the exact same pipeline as the player.
  */
 export function updateCompetitorBrandReach(
   comp: CompanyState,
@@ -111,6 +111,9 @@ export function updateCompetitorBrandReach(
 ): Record<DemographicId, number> {
   const oldReach = comp.brandReach;
   const newReach = { ...oldReach };
+  const hasProductsOnSale = comp.models.some(
+    (m) => m.status === "manufacturing" || m.status === "onSale",
+  );
 
   // Build per-demographic units sold
   const compResults = result.laptopResults.filter((r) => r.owner === comp.id);
@@ -126,12 +129,17 @@ export function updateCompetitorBrandReach(
     const demId = dem.id;
     const current = oldReach[demId] ?? 0;
 
-    // Competitor reach growth from sales + time-in-market (quarterly)
+    // Word of mouth — same formula as player (perception-amplified)
     const unitsSold = unitsByDemographic[demId] ?? 0;
-    const rawGrowth = unitsSold / WOM_DIVISOR + (COMPETITOR_TIME_IN_MARKET_BONUS / 4);
+    const perception = comp.brandPerception[demId] ?? 0;
+    const rawGrowth = (unitsSold / WOM_DIVISOR) * (1 + perception / 100);
+
     const growth = rawGrowth * sCurveGrowthFactor(current) * 100;
 
-    newReach[demId] = Math.max(0, Math.min(100, current + growth));
+    // Decay if no products on sale (quarterly portion)
+    const decay = !hasProductsOnSale ? current * (REACH_INACTIVITY_DECAY / 4) : 0;
+
+    newReach[demId] = Math.max(0, Math.min(100, current + growth - decay));
   }
 
   return newReach;
