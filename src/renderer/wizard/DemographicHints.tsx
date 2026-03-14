@@ -58,7 +58,6 @@ function StatRankList({ title, color, stats }: { title: string; color: string; s
 
 interface RankedDemographic {
   id: DemographicId;
-  name: string;
   shortName: string;
   score: number;
   normalizedScore: number;
@@ -79,12 +78,12 @@ export function DemographicHints() {
       for (const stat of ALL_STATS) {
         score += (dem.statWeights[stat] ?? 0) * (statTotals[stat] ?? 0);
       }
-      return { id: dem.id, name: dem.name, shortName: dem.shortName, score, normalizedScore: 0 };
+      return { id: dem.id, shortName: dem.shortName, score, normalizedScore: 0 };
     });
     scores.sort((a, b) => b.score - a.score);
     const maxScore = scores[0]?.score || 1;
     for (const s of scores) {
-      s.normalizedScore = maxScore > 0 ? s.score / maxScore : 0;
+      s.normalizedScore = s.score / maxScore;
     }
     return scores;
   }, [statTotals]);

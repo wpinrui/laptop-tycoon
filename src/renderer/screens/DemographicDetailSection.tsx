@@ -82,6 +82,13 @@ const MAX_COLUMNS = 5;
 const TOP_STATS_COUNT = 5;
 const TOP_DEMOGRAPHICS_COUNT = 3;
 
+function sumUnitsForDemographic(results: LaptopSalesResult[], demId: DemographicId): number {
+  return results.reduce((sum, lr) => {
+    const db = lr.demographicBreakdown.find((b) => b.demographicId === demId);
+    return sum + (db?.unitsDemanded ?? 0);
+  }, 0);
+}
+
 function OtherSegmentsSummary({
   otherDemos,
   playerResults,
@@ -91,16 +98,8 @@ function OtherSegmentsSummary({
   playerResults: LaptopSalesResult[];
   allLaptopResults: LaptopSalesResult[];
 }) {
-  const otherUnits = otherDemos.reduce((sum, dem) =>
-    sum + playerResults.reduce((s, lr) => {
-      const db = lr.demographicBreakdown.find((b) => b.demographicId === dem.id);
-      return s + (db?.unitsDemanded ?? 0);
-    }, 0), 0);
-  const otherTotalUnits = otherDemos.reduce((sum, dem) =>
-    sum + allLaptopResults.reduce((s, lr) => {
-      const db = lr.demographicBreakdown.find((b) => b.demographicId === dem.id);
-      return s + (db?.unitsDemanded ?? 0);
-    }, 0), 0);
+  const otherUnits = otherDemos.reduce((sum, dem) => sum + sumUnitsForDemographic(playerResults, dem.id), 0);
+  const otherTotalUnits = otherDemos.reduce((sum, dem) => sum + sumUnitsForDemographic(allLaptopResults, dem.id), 0);
   return (
     <div style={{
       display: "flex",
@@ -261,14 +260,8 @@ export function DemographicDetailSection({ allLaptopResults, playerResults, perc
         </p>
         {visibleDemographics.map((dem) => {
           const isExpanded = expandedDem === dem.id;
-          const playerUnits = playerResults.reduce((sum, lr) => {
-            const db = lr.demographicBreakdown.find((b) => b.demographicId === dem.id);
-            return sum + (db?.unitsDemanded ?? 0);
-          }, 0);
-          const totalUnits = allLaptopResults.reduce((sum, lr) => {
-            const db = lr.demographicBreakdown.find((b) => b.demographicId === dem.id);
-            return sum + (db?.unitsDemanded ?? 0);
-          }, 0);
+          const playerUnits = sumUnitsForDemographic(playerResults, dem.id);
+          const totalUnits = sumUnitsForDemographic(allLaptopResults, dem.id);
           const share = totalUnits > 0 ? (playerUnits / totalUnits * 100).toFixed(1) : "0.0";
 
           return (
