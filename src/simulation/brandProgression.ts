@@ -41,6 +41,32 @@ function sCurveGrowthFactor(currentReach: number, permeability: number): number 
   return Math.max(baseFactor, floor);
 }
 
+/** Aggregate units sold per demographic from laptop results */
+function buildUnitsByDemographic(
+  results: LaptopSalesResult[],
+): Partial<Record<DemographicId, number>> {
+  const units: Partial<Record<DemographicId, number>> = {};
+  for (const r of results) {
+    for (const db of r.demographicBreakdown) {
+      const demId = db.demographicId;
+      units[demId] = (units[demId] ?? 0) + db.unitsDemanded;
+    }
+  }
+  return units;
+}
+
+/** Apply S-curve growth, inactivity decay, and clamp reach to [0, 100] */
+function applyReachGrowth(
+  current: number,
+  rawGrowth: number,
+  permeability: number,
+  hasProductsOnSale: boolean,
+): number {
+  const growth = rawGrowth * sCurveGrowthFactor(current, permeability) * 100;
+  const decay = !hasProductsOnSale ? current * (REACH_INACTIVITY_DECAY / 4) : 0;
+  return Math.max(0, Math.min(100, current + growth - decay));
+}
+
 /** Average reach across all demographics */
 export function averageReach(reach: Record<DemographicId, number>): number {
   const values = Object.values(reach);
@@ -63,13 +89,7 @@ export function updateBrandReach(
   );
 
   // Build per-demographic units sold from player results
-  const unitsByDemographic: Partial<Record<DemographicId, number>> = {};
-  for (const pr of result.playerResults) {
-    for (const db of pr.demographicBreakdown) {
-      const demId = db.demographicId;
-      unitsByDemographic[demId] = (unitsByDemographic[demId] ?? 0) + db.unitsDemanded;
-    }
-  }
+  const unitsByDemographic = buildUnitsByDemographic(result.playerResults);
 
   for (const dem of DEMOGRAPHICS) {
     const demId = dem.id;
@@ -95,13 +115,8 @@ export function updateBrandReach(
     const perception = player.brandPerception[demId] ?? 0;
     rawGrowth += (unitsSold / WOM_DIVISOR) * (1 + perception / 100);
 
-    // Apply S-curve: growth is modulated by current reach position + permeability
-    const growth = rawGrowth * sCurveGrowthFactor(current, dem.permeability) * 100;
-
-    // Decay if no products on sale (quarterly portion)
-    const decay = !hasProductsOnSale ? current * (REACH_INACTIVITY_DECAY / 4) : 0;
-
-    newReach[demId] = Math.max(0, Math.min(100, current + growth - decay));
+    // Apply S-curve growth + decay (same formula as competitors)
+    newReach[demId] = applyReachGrowth(current, rawGrowth, dem.permeability, hasProductsOnSale);
   }
 
   return newReach;
@@ -124,13 +139,7 @@ export function updateCompetitorBrandReach(
 
   // Build per-demographic units sold
   const compResults = result.laptopResults.filter((r) => r.owner === comp.id);
-  const unitsByDemographic: Partial<Record<DemographicId, number>> = {};
-  for (const cr of compResults) {
-    for (const db of cr.demographicBreakdown) {
-      const demId = db.demographicId;
-      unitsByDemographic[demId] = (unitsByDemographic[demId] ?? 0) + db.unitsDemanded;
-    }
-  }
+  const unitsByDemographic = buildUnitsByDemographic(compResults);
 
   for (const dem of DEMOGRAPHICS) {
     const demId = dem.id;
@@ -141,12 +150,7 @@ export function updateCompetitorBrandReach(
     const perception = comp.brandPerception[demId] ?? 0;
     const rawGrowth = (unitsSold / WOM_DIVISOR) * (1 + perception / 100);
 
-    const growth = rawGrowth * sCurveGrowthFactor(current, dem.permeability) * 100;
-
-    // Decay if no products on sale (quarterly portion)
-    const decay = !hasProductsOnSale ? current * (REACH_INACTIVITY_DECAY / 4) : 0;
-
-    newReach[demId] = Math.max(0, Math.min(100, current + growth - decay));
+    newReach[demId] = applyReachGrowth(current, rawGrowth, dem.permeability, hasProductsOnSale);
   }
 
   return newReach;
