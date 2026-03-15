@@ -13,7 +13,7 @@ import { DEMOGRAPHICS, GENERALISTS, NICHES } from "../../data/demographics";
 import { Demographic, DemographicId } from "../../data/types";
 import { PerceptionChange } from "../../simulation/salesTypes";
 import { SidebarHeading } from "../wizard/LaptopEstimateSidebar";
-import { PERCEPTION_MEANINGFUL_DELTA } from "../../simulation/tunables";
+import { PERCEPTION_MEANINGFUL_DELTA, PERCEPTION_CONTRIBUTION_SCALE, PERCEPTION_MIN, PERCEPTION_MAX } from "../../simulation/tunables";
 import {
   MARKETING_CHANNELS,
   MarketingChannel,
@@ -211,6 +211,59 @@ function ReachRow({ dem, reach }: { dem: Demographic; reach: number }) {
   );
 }
 
+/** Compute the running perception trajectory from a rolling history window. */
+function computePerceptionTrajectory(history: number[]): number[] {
+  if (history.length === 0) return [];
+  const trajectory: number[] = [];
+  let sum = 0;
+  for (let i = 0; i < history.length; i++) {
+    sum += history[i];
+    const mean = sum / (i + 1);
+    const perception = mean * PERCEPTION_CONTRIBUTION_SCALE;
+    trajectory.push(Math.max(PERCEPTION_MIN, Math.min(PERCEPTION_MAX, perception)));
+  }
+  return trajectory;
+}
+
+/** Inline SVG sparkline for perception trajectory. */
+function PerceptionSparkline({ trajectory }: { trajectory: number[] }) {
+  if (trajectory.length < 2) return null;
+  const width = 60;
+  const height = 16;
+  const padding = 1;
+  const min = Math.min(...trajectory, -5);
+  const max = Math.max(...trajectory, 5);
+  const range = max - min || 1;
+
+  const points = trajectory.map((v, i) => {
+    const x = padding + (i / (trajectory.length - 1)) * (width - 2 * padding);
+    const y = padding + (1 - (v - min) / range) * (height - 2 * padding);
+    return `${x},${y}`;
+  });
+
+  const lastVal = trajectory[trajectory.length - 1];
+  const color = lastVal > 1 ? tokens.colors.success : lastVal < -1 ? tokens.colors.danger : tokens.colors.textMuted;
+
+  return (
+    <svg width={width} height={height} style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }}>
+      {/* Zero line */}
+      <line
+        x1={padding} y1={padding + (1 - (0 - min) / range) * (height - 2 * padding)}
+        x2={width - padding} y2={padding + (1 - (0 - min) / range) * (height - 2 * padding)}
+        stroke={tokens.colors.panelBorder} strokeWidth={0.5}
+      />
+      <polyline
+        points={points.join(" ")}
+        fill="none"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function PerceptionRow({ dem, player, latestPerceptionChanges }: {
   dem: Demographic;
   player: ReturnType<typeof getPlayerCompany>;
@@ -219,11 +272,15 @@ function PerceptionRow({ dem, player, latestPerceptionChanges }: {
   const perception = formatPerception(player.brandPerception[dem.id] ?? 0);
   const change = latestPerceptionChanges.get(dem.id);
   const hasMeaningfulChange = change && Math.abs(change.delta) >= PERCEPTION_MEANINGFUL_DELTA;
+  const history = player.perceptionHistory?.[dem.id] ?? [];
+  const trajectory = useMemo(() => computePerceptionTrajectory(history), [history]);
+
   return (
     <div style={{ marginBottom: hasMeaningfulChange ? 10 : 6 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.text }}>{dem.name}</span>
-        <span>
+        <span style={{ display: "flex", alignItems: "center" }}>
+          {trajectory.length >= 2 && <PerceptionSparkline trajectory={trajectory} />}
           {hasMeaningfulChange && (
             <span style={{
               fontSize: tokens.font.sizeSmall,
