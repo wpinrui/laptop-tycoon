@@ -108,8 +108,8 @@ export function applyMarketingToReach(state: GameState): Record<DemographicId, n
     }
 
     if (rawGrowth > 0) {
-      const growth = rawGrowth * sCurveGrowthFactor(current, dem.permeability) * 100;
-      newReach[demId] = Math.max(0, Math.min(100, current + growth));
+      // Pass hasProductsOnSale=true to skip decay (decay belongs in post-sim WoM step)
+      newReach[demId] = applyReachGrowth(current, rawGrowth, dem.permeability, true);
     }
   }
 
