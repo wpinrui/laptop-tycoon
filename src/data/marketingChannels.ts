@@ -63,7 +63,7 @@ export function getAdjacencies(demId: DemographicId): { demographicId: Demograph
 
 /** Tier flavor labels for UI display. */
 export const TIER_LABELS: Record<MarketingTier, string> = {
-  1: "Founder Hustle",
+  1: "Grassroots",
   2: "Targeted Digital",
   3: "Professional",
   4: "Mass Market",

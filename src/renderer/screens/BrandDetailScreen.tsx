@@ -16,11 +16,14 @@ import { SidebarHeading } from "../wizard/LaptopEstimateSidebar";
 import { PERCEPTION_MEANINGFUL_DELTA, PERCEPTION_CONTRIBUTION_SCALE, PERCEPTION_MIN, PERCEPTION_MAX, TIER_ACQUISITIONS } from "../../simulation/tunables";
 import {
   getMaxTier,
+  getEffectiveReachCeiling,
   getCampaignCost,
   getAdjacencies,
   TIER_LABELS,
   CAMPAIGN_DESCRIPTIONS,
 } from "../../data/marketingChannels";
+import { getDemandPoolSize } from "../../simulation/demographicData";
+import { STARTING_DEMAND_POOL } from "../../data/startingDemand";
 import { formatCash } from "../utils/formatCash";
 import { CustomSelect, SelectOption, SelectGroup } from "../shell/CustomSelect";
 
@@ -30,12 +33,6 @@ const tierColor: Record<MarketingTier, string> = {
   3: "#c084fc",
   4: tokens.colors.warning,
   5: "#ef4444",
-};
-
-const hintStyle: CSSProperties = {
-  fontSize: tokens.font.sizeSmall,
-  color: tokens.colors.textMuted,
-  marginTop: tokens.spacing.xs,
 };
 
 const nicheSectionHeadingStyle: CSSProperties = {
@@ -78,6 +75,7 @@ function CampaignCard({
   campaign,
   year,
   demographic,
+  reach,
   onRemove,
   onTierChange,
   onTogglePause,
@@ -85,6 +83,7 @@ function CampaignCard({
   campaign: MarketingCampaign;
   year: number;
   demographic: Demographic;
+  reach: number;
   onRemove: () => void;
   onTierChange: (tier: MarketingTier) => void;
   onTogglePause: () => void;
@@ -94,6 +93,8 @@ function CampaignCard({
   const description = CAMPAIGN_DESCRIPTIONS[campaign.demographicId]?.[campaign.tier] ?? "";
   const adjacencies = getAdjacencies(campaign.demographicId);
   const tColor = tierColor[campaign.tier];
+  const poolSize = getDemandPoolSize(demographic.id, year, STARTING_DEMAND_POOL[demographic.id]);
+  const ceiling = getEffectiveReachCeiling(campaign.tier, maxTier);
 
   const cardStyle: CSSProperties = {
     background: campaign.paused ? tokens.colors.surface : tokens.colors.interactiveAccentBg,
@@ -128,7 +129,18 @@ function CampaignCard({
       </div>
 
       {/* Description */}
-      <p style={{ ...hintStyle, margin: `0 0 ${tokens.spacing.xs}px` }}>{description}</p>
+      <p style={{ fontSize: tokens.font.sizeBase, color: tokens.colors.textMuted, margin: `0 0 ${tokens.spacing.xs}px` }}>{description}</p>
+
+      {/* Reach + pool info */}
+      <div style={{ display: "flex", gap: tokens.spacing.md, marginBottom: tokens.spacing.xs, fontSize: tokens.font.sizeSmall }}>
+        <span style={{ color: tokens.colors.textMuted }}>
+          Reach: <span style={{ color: tokens.colors.text, fontWeight: 600 }}>{Math.round(reach)}%</span>
+          <span style={{ color: tokens.colors.textMuted }}> / {Math.round(ceiling)}% ceiling</span>
+        </span>
+        <span style={{ color: tokens.colors.textMuted }}>
+          Pool: <span style={{ color: tokens.colors.text, fontWeight: 600 }}>{poolSize.toLocaleString()}</span>
+        </span>
+      </div>
 
       {/* Spillover demographics */}
       {adjacencies.length > 0 && (
@@ -255,6 +267,8 @@ function AddCampaignPanel({
   const cost = getCampaignCost(effectiveTier, year);
   const description = CAMPAIGN_DESCRIPTIONS[selectedDemId]?.[effectiveTier] ?? "";
   const adjacencies = getAdjacencies(selectedDemId);
+  const poolSize = getDemandPoolSize(selectedDemId, year, STARTING_DEMAND_POOL[selectedDemId]);
+  const ceiling = getEffectiveReachCeiling(effectiveTier, maxTier);
 
   // Build grouped options for demographic selector
   const demOptions: SelectGroup<DemographicId>[] = [
@@ -330,7 +344,7 @@ function AddCampaignPanel({
         padding: tokens.spacing.sm,
         marginBottom: tokens.spacing.sm,
       }}>
-        <p style={{ margin: 0, fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
+        <p style={{ margin: 0, fontSize: tokens.font.sizeBase, color: tokens.colors.textMuted }}>
           {description}
         </p>
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: tokens.spacing.xs }}>
@@ -339,6 +353,14 @@ function AddCampaignPanel({
           </span>
           <span style={{ fontSize: tokens.font.sizeSmall, fontWeight: 600, color: tokens.colors.accent }}>
             {formatCash(cost)}/qtr
+          </span>
+        </div>
+        <div style={{ display: "flex", gap: tokens.spacing.md, marginTop: tokens.spacing.xs, fontSize: tokens.font.sizeSmall }}>
+          <span style={{ color: tokens.colors.textMuted }}>
+            Pool: <span style={{ color: tokens.colors.text, fontWeight: 600 }}>{poolSize.toLocaleString()}</span>
+          </span>
+          <span style={{ color: tokens.colors.textMuted }}>
+            Reach ceiling: <span style={{ color: tokens.colors.text, fontWeight: 600 }}>{Math.round(ceiling)}%</span>
           </span>
         </div>
         {adjacencies.length > 0 && (
@@ -597,6 +619,7 @@ export function BrandDetailScreen() {
                 campaign={campaign}
                 year={state.year}
                 demographic={dem}
+                reach={player.brandReach[campaign.demographicId] ?? 0}
                 onRemove={() => dispatch({ type: "REMOVE_CAMPAIGN", demographicId: campaign.demographicId })}
                 onTierChange={(tier) => dispatch({ type: "UPDATE_CAMPAIGN_TIER", demographicId: campaign.demographicId, tier })}
                 onTogglePause={() => dispatch({ type: "TOGGLE_CAMPAIGN_PAUSE", demographicId: campaign.demographicId })}
