@@ -485,7 +485,7 @@ const AWARD_OUTLET_AFFINITY: Record<AwardCategory, ReviewOutlet | "both"> = {
 type DemographicAffinity = "primary" | "secondary";
 
 /** Demographics that care about tech-focused review outlets */
-const TECH_OUTLET_DEMOGRAPHICS: Record<string, DemographicAffinity> = {
+const TECH_OUTLET_DEMOGRAPHICS: Partial<Record<DemographicId, DemographicAffinity>> = {
   techEnthusiast: "primary",
   gamer: "primary",
   developer: "primary",
@@ -498,7 +498,7 @@ const TECH_OUTLET_DEMOGRAPHICS: Record<string, DemographicAffinity> = {
 };
 
 /** Demographics that care about mainstream review outlets */
-const MAINSTREAM_OUTLET_DEMOGRAPHICS: Record<string, DemographicAffinity> = {
+const MAINSTREAM_OUTLET_DEMOGRAPHICS: Partial<Record<DemographicId, DemographicAffinity>> = {
   generalConsumer: "primary",
   student: "primary",
   budgetBuyer: "primary",

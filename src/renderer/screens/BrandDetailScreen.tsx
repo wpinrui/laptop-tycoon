@@ -417,7 +417,7 @@ export function BrandDetailScreen() {
                   </span>
                   <span style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}>{tierLabel[tier]}</span>
                   <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
-                    ({channels[0].targetDemographics.length}–{channels[channels.length - 1].targetDemographics.length} demographics)
+                    ({Math.min(...channels.map((c) => c.targetDemographics.length))}–{Math.max(...channels.map((c) => c.targetDemographics.length))} demographics)
                   </span>
                 </div>
                 {channels.map((ch) => (

@@ -450,7 +450,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       // Activate with default aggressive mode
       return {
         ...state,
-        activeMarketingChannels: [...state.activeMarketingChannels, { channelId: action.channelId, mode: "aggressive" as MarketingMode }],
+        activeMarketingChannels: [...state.activeMarketingChannels, { channelId: action.channelId, mode: "aggressive" satisfies MarketingMode }],
       };
     }
     case "SET_MARKETING_MODE": {
