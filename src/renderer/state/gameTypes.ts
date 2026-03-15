@@ -66,6 +66,8 @@ export interface CompanyState {
   isPlayer: boolean;
   brandReach: Record<DemographicId, number>;
   brandPerception: Record<DemographicId, number>;
+  /** Rolling window of per-demographic quarterly experience scores (last 12 quarters). */
+  perceptionHistory: Record<DemographicId, number[]>;
   models: LaptopModel[];
   archetype?: CompetitorArchetype;
   engineeringBonus?: number;
@@ -104,6 +106,23 @@ export function modelDisplayName(companyName: string, designName: string): strin
   return `${companyName} ${designName}`;
 }
 
+/**
+ * Create initial perception history from starting perception values.
+ * Seeds 12 quarters so that mean(history) * PERCEPTION_CONTRIBUTION_SCALE = initialPerception.
+ */
+function initPerceptionHistory(
+  perception: Record<DemographicId, number>,
+): Record<DemographicId, number[]> {
+  const WINDOW = 12;
+  // Must match PERCEPTION_CONTRIBUTION_SCALE in tunables.ts
+  const SCALE = 5;
+  const history: Partial<Record<DemographicId, number[]>> = {};
+  for (const [demId, p] of Object.entries(perception)) {
+    history[demId as DemographicId] = Array(WINDOW).fill(p / SCALE);
+  }
+  return history as Record<DemographicId, number[]>;
+}
+
 export const STARTING_CASH = 50_000_000;
 export const AI_STARTING_YEAR = 2000;
 export const STARTING_YEAR = AI_STARTING_YEAR + 1;
@@ -137,12 +156,14 @@ export function createInitialGameState(
   companyName: string,
   companyLogo: string | null,
 ): GameState {
+  const playerPerception = { ...ZERO_DEMOGRAPHICS };
   const playerCompany: CompanyState = {
     id: "player",
     name: companyName,
     isPlayer: true,
     brandReach: { ...ZERO_DEMOGRAPHICS },
-    brandPerception: { ...ZERO_DEMOGRAPHICS },
+    brandPerception: playerPerception,
+    perceptionHistory: initPerceptionHistory(playerPerception),
     models: [],
   };
 
@@ -152,6 +173,7 @@ export function createInitialGameState(
     isPlayer: false,
     brandReach: { ...c.brandReach },
     brandPerception: { ...c.brandPerception },
+    perceptionHistory: initPerceptionHistory(c.brandPerception),
     models: [],
     archetype: c.archetype,
     engineeringBonus: c.engineeringBonus,

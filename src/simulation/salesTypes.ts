@@ -93,6 +93,8 @@ export interface QuarterSimulationResult {
   cashAfterResolution: number;
   /** Per-demographic perception changes for the player this quarter */
   perceptionChanges: PerceptionChange[];
+  /** Updated rolling-window perception history for the player this quarter */
+  playerPerceptionHistory: Record<DemographicId, number[]>;
 }
 
 export interface YearSimulationResult {

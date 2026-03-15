@@ -14,8 +14,8 @@ import {
   AWARENESS_DIVISOR,
   WOM_DIVISOR,
   PERCEPTION_CONTRIBUTION_SCALE,
+  PERCEPTION_WINDOW_SIZE,
   REACH_INACTIVITY_DECAY,
-  PERCEPTION_DECAY,
   NEGATIVITY_MULTIPLIER,
   PERCEPTION_MIN,
   PERCEPTION_MAX,
@@ -156,30 +156,33 @@ export function updateCompetitorBrandReach(
   return newReach;
 }
 
-// ==================== Brand Perception ====================
+// ==================== Brand Perception (Rolling Window) ====================
 
-const QUARTERLY_DECAY = Math.pow(PERCEPTION_DECAY, 0.25);
+export interface PerceptionUpdateResult {
+  perception: Record<DemographicId, number>;
+  history: Record<DemographicId, number[]>;
+}
 
 /**
- * Apply a single quarter of perception update for a company.
+ * Apply a single quarter of perception update for a company using a rolling window.
  *
- * Per quarter:
- *   experience = company_laptop_raw_vp - mean(raw_vp of all purchased laptops in this demographic)
- *   perception_contribution = experience × volume_weight × negativity_multiplier
- *   new_perception = old_perception × (DECAY ^ 0.25) + perception_contribution / 4
+ * Each quarter, compute the experience score (company rawVP - market average rawVP).
+ * Push it into the per-demographic history window (or 0 if no sales).
+ * Perception = mean(window) × PERCEPTION_CONTRIBUTION_SCALE, clamped to [min, max].
  *
- * Only purchasers affect perception — demographics that didn't buy stay at 0/neutral.
+ * No exponential decay — perception is purely a function of recent experience.
  */
 function applyOneQuarterPerception(
-  oldPerception: Record<DemographicId, number>,
+  oldHistory: Record<DemographicId, number[]>,
   allLaptopResults: LaptopSalesResult[],
   companyResults: LaptopSalesResult[],
-): Record<DemographicId, number> {
-  const newPerception = { ...oldPerception };
+): PerceptionUpdateResult {
+  const newPerception: Partial<Record<DemographicId, number>> = {};
+  const newHistory: Partial<Record<DemographicId, number[]>> = {};
 
   for (const dem of DEMOGRAPHICS) {
     const demId = dem.id;
-    const old = oldPerception[demId] ?? 0;
+    const history = [...(oldHistory[demId] ?? [])];
 
     const meanRawVP = marketAverageRawVP(demId, allLaptopResults);
 
@@ -196,32 +199,42 @@ function applyOneQuarterPerception(
       }
     }
 
-    // Only purchasers affect perception — no purchases means quarterly decay only
-    if (companyUnits <= 0) {
-      newPerception[demId] = Math.max(PERCEPTION_MIN, Math.min(PERCEPTION_MAX, old * QUARTERLY_DECAY));
-      continue;
+    // Compute experience value for this quarter
+    let experienceValue = 0;
+    if (companyUnits > 0) {
+      const avgExperience = weightedExperience / companyUnits;
+      experienceValue = avgExperience < 0 ? avgExperience * NEGATIVITY_MULTIPLIER : avgExperience;
     }
 
-    // Volume-weighted average experience, apply negativity multiplier
-    const avgExperience = weightedExperience / companyUnits;
-    const adjusted = avgExperience < 0 ? avgExperience * NEGATIVITY_MULTIPLIER : avgExperience;
-    const perceptionContribution = (adjusted * PERCEPTION_CONTRIBUTION_SCALE) / 4;
+    // Push into rolling window, drop oldest if full
+    history.push(experienceValue);
+    if (history.length > PERCEPTION_WINDOW_SIZE) {
+      history.splice(0, history.length - PERCEPTION_WINDOW_SIZE);
+    }
 
-    const perception = old * QUARTERLY_DECAY + perceptionContribution;
+    // Perception = mean of window × scale factor
+    const sum = history.reduce((s, v) => s + v, 0);
+    const mean = sum / history.length;
+    const perception = mean * PERCEPTION_CONTRIBUTION_SCALE;
     newPerception[demId] = Math.max(PERCEPTION_MIN, Math.min(PERCEPTION_MAX, perception));
+    newHistory[demId] = history;
   }
 
-  return newPerception;
+  return {
+    perception: newPerception as Record<DemographicId, number>,
+    history: newHistory as Record<DemographicId, number[]>,
+  };
 }
 
 /**
  * Apply a single quarter of perception update for any company.
- * Used by the sales engine for per-quarter perception tracking.
+ * Returns both the new perception values and the updated history window.
  */
 export function applySingleQuarterPerception(
   company: CompanyState,
   allLaptopResults: LaptopSalesResult[],
-): Record<DemographicId, number> {
+): PerceptionUpdateResult {
   const companyResults = allLaptopResults.filter((r) => r.owner === company.id);
-  return applyOneQuarterPerception(company.brandPerception, allLaptopResults, companyResults);
+  const history = company.perceptionHistory ?? {};
+  return applyOneQuarterPerception(history, allLaptopResults, companyResults);
 }

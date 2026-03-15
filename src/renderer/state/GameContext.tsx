@@ -113,10 +113,12 @@ function preSimulateAIYear(initial: GameState): GameState {
       ...s,
       companies: s.companies.map((comp) => {
         if (comp.isPlayer) return comp;
+        const perceptionUpdate = applySingleQuarterPerception(comp, result.laptopResults);
         return {
           ...comp,
           brandReach: updateCompetitorBrandReach(comp, result),
-          brandPerception: applySingleQuarterPerception(comp, result.laptopResults),
+          brandPerception: perceptionUpdate.perception,
+          perceptionHistory: perceptionUpdate.history,
           models: comp.models.map((m) => {
             const sim = simByLaptop.get(m.design.id);
             if (!sim) return m;
@@ -350,6 +352,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       const newPlayerPerception = Object.fromEntries(
         result.perceptionChanges.map((pc) => [pc.demographicId, pc.newPerception]),
       ) as Record<DemographicId, number>;
+      const newPlayerHistory = result.playerPerceptionHistory;
 
       // Build cumulative year result for yearHistory (aggregated after Q4)
       const isQ4 = state.quarter === 4;
@@ -361,6 +364,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
             ...comp,
             brandReach: newPlayerReach,
             brandPerception: newPlayerPerception,
+            perceptionHistory: newPlayerHistory,
             models: comp.models.map((m) => {
               const sim = simByLaptop.get(m.design.id);
               if (!sim) return m;
@@ -402,10 +406,12 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           };
         }
         // Competitor: update brand reach, perception, and inventory
+        const compPerceptionUpdate = applySingleQuarterPerception(comp, result.laptopResults);
         return {
           ...comp,
           brandReach: updateCompetitorBrandReach(comp, result),
-          brandPerception: applySingleQuarterPerception(comp, result.laptopResults),
+          brandPerception: compPerceptionUpdate.perception,
+          perceptionHistory: compPerceptionUpdate.history,
           models: comp.models.map((m) => {
             const sim = allSimByLaptop.get(m.design.id);
             if (!sim) return m;

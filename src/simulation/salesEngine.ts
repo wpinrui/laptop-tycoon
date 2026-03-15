@@ -229,6 +229,7 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
   const player = getPlayerCompany(state);
 
   if (allLaptops.length === 0) {
+    const emptyPerception = computeQuarterlyPerceptionChanges(state, []);
     return {
       year,
       quarter,
@@ -237,7 +238,8 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
       totalRevenue: 0,
       totalProfit: 0,
       cashAfterResolution: state.cash,
-      perceptionChanges: [],
+      perceptionChanges: emptyPerception.changes,
+      playerPerceptionHistory: emptyPerception.history,
     };
   }
 
@@ -344,7 +346,7 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
   const cashAfterResolution = state.cash + playerRevenue;
 
   // Compute player perception changes for this quarter
-  const perceptionChanges = computeQuarterlyPerceptionChanges(state, laptopResults);
+  const perceptionResult = computeQuarterlyPerceptionChanges(state, laptopResults);
 
   return {
     year,
@@ -354,7 +356,8 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
     totalRevenue: playerRevenue,
     totalProfit: playerProfit,
     cashAfterResolution,
-    perceptionChanges,
+    perceptionChanges: perceptionResult.changes,
+    playerPerceptionHistory: perceptionResult.history,
   };
 }
 
@@ -362,24 +365,26 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
 
 /**
  * Compute per-demographic perception changes for one quarter.
- * Uses single-quarter perception update (not 4x loop).
- * Generates a human-readable reason for each change.
+ * Uses rolling-window perception update.
+ * Returns both the perception changes and the updated history.
  */
 function computeQuarterlyPerceptionChanges(
   state: GameState,
   laptopResults: LaptopSalesResult[],
-): PerceptionChange[] {
+): { changes: PerceptionChange[]; history: Record<DemographicId, number[]> } {
   const player = getPlayerCompany(state);
-  const newPerception = applySingleQuarterPerception(player, laptopResults);
+  const { perception: newPerception, history } = applySingleQuarterPerception(player, laptopResults);
   const playerResults = laptopResults.filter((r) => r.owner === player.id);
 
-  return DEMOGRAPHICS.map((dem) => {
+  const changes = DEMOGRAPHICS.map((dem) => {
     const oldP = player.brandPerception[dem.id] ?? 0;
     const newP = newPerception[dem.id] ?? 0;
     const delta = newP - oldP;
     const reason = buildPerceptionReason(dem.id, delta, playerResults, laptopResults, player.models);
     return { demographicId: dem.id, oldPerception: oldP, newPerception: newP, delta, reason };
   });
+
+  return { changes, history };
 }
 
 /** Build a human-readable reason for a perception change in one demographic. */
@@ -407,7 +412,7 @@ function buildPerceptionReason(
 
   if (playerSales.length === 0) {
     if (Math.abs(delta) < PERCEPTION_MEANINGFUL_DELTA) return "No sales — perception unchanged";
-    return "No sales this quarter — natural decay";
+    return "No sales this quarter — perception fading";
   }
 
   const marketAvgVP = marketAverageRawVP(demId, allResults);
@@ -432,7 +437,7 @@ function buildPerceptionReason(
   if (vpDiff < 0) {
     return `${top.name} offered below-average value`;
   }
-  return "Natural decay outweighed modest sales";
+  return "Past reputation outweighed modest sales";
 }
 
 // --- Demand Projection (for manufacturing wizard) ---

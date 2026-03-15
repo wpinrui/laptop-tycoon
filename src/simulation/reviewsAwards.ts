@@ -10,7 +10,7 @@ import { DemographicId, LaptopStat, ALL_STATS } from "../data/types";
 import { GameState, CompanyState, modelDisplayName } from "../renderer/state/gameTypes";
 import { computeStatsForDesign } from "./statCalculation";
 import { LaptopSalesResult, QuarterSimulationResult } from "./salesTypes";
-import { AWARD_PERCEPTION_BONUS, AWARD_REACH_BONUS } from "./tunables";
+import { AWARD_PERCEPTION_BONUS, AWARD_REACH_BONUS, PERCEPTION_CONTRIBUTION_SCALE } from "./tunables";
 
 // ==================== Types ====================
 
@@ -599,19 +599,29 @@ export function applyAwardBonuses(
 
     const perceptionBoost = AWARD_PERCEPTION_BONUS * wins;
     const reachBoost = AWARD_REACH_BONUS * wins;
+    // Convert perception boost to experience-space for the rolling window history
+    const experienceBoost = perceptionBoost / PERCEPTION_CONTRIBUTION_SCALE;
 
     const newPerception = { ...company.brandPerception };
     const newReach = { ...company.brandReach };
+    const newHistory = { ...company.perceptionHistory };
 
     for (const demId of Object.keys(newPerception) as DemographicId[]) {
       newPerception[demId] = Math.min(50, Math.max(-50, newPerception[demId] + perceptionBoost));
       newReach[demId] = Math.min(100, newReach[demId] + reachBoost);
+      // Inject award boost into the most recent history entry so it persists in the window
+      const hist = [...(newHistory[demId] ?? [])];
+      if (hist.length > 0) {
+        hist[hist.length - 1] += experienceBoost;
+      }
+      newHistory[demId] = hist;
     }
 
     return {
       ...company,
       brandPerception: newPerception,
       brandReach: newReach,
+      perceptionHistory: newHistory,
     };
   });
 }

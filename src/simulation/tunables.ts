@@ -23,10 +23,10 @@ export const REACH_INACTIVITY_DECAY = 0.10;
 
 // ==================== Brand Perception ====================
 
-/** Scales raw value-for-money contribution into perception points (roughly +-5 per year) */
+/** Scales rolling-window average experience into perception points */
 export const PERCEPTION_CONTRIBUTION_SCALE = 5;
-/** Perception decay factor (25% fade per year — recency bias) */
-export const PERCEPTION_DECAY = 0.75;
+/** Rolling window size in quarters (12 = 3 years of history) */
+export const PERCEPTION_WINDOW_SIZE = 12;
 /** Negativity bias multiplier — bad value-for-money hits harder */
 export const NEGATIVITY_MULTIPLIER = 1.5;
 /** Perception floor (minimum per-demographic perception score) */
