@@ -1,7 +1,7 @@
 import { CSSProperties, useState, useMemo } from "react";
 import { DEMOGRAPHICS } from "../../data/demographics";
 import { LaptopStat, ALL_STATS, DemographicId, Demographic, STAT_LABELS } from "../../data/types";
-import { LaptopSalesResult, PerceptionChange } from "../../simulation/salesTypes";
+import { LaptopSalesResult, PerceptionChange, PerceptionInsight, StatContributor } from "../../simulation/salesTypes";
 import { tokens } from "../shell/tokens";
 import { formatNumber } from "../utils/formatCash";
 import { tableStyle, thStyle, tdStyle, tdRight, sectionHeadingStyle, cardStyle } from "./summaryStyles";
@@ -120,6 +120,136 @@ function OtherSegmentsSummary({
 }
 
 const rowLabelStyle: CSSProperties = { ...tdStyle, fontWeight: 600, fontSize: tokens.font.sizeSmall };
+
+function StatImpactBar({ contributor }: { contributor: StatContributor }) {
+  const diff = contributor.playerScore - contributor.marketLeaderScore;
+  const color = contributor.impact === "helping" ? tokens.colors.success : contributor.impact === "hurting" ? tokens.colors.danger : tokens.colors.textMuted;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs, marginBottom: 3 }}>
+      <span style={{ flex: "0 0 100px", fontSize: tokens.font.sizeSmall, color: tokens.colors.text }}>{STAT_LABELS[contributor.stat]}</span>
+      <span style={{ flex: "0 0 30px", fontSize: tokens.font.sizeSmall, textAlign: "right" }}>{contributor.playerScore}</span>
+      <div style={{ flex: 1, height: 4, background: tokens.colors.surface, borderRadius: 2, position: "relative", overflow: "hidden" }}>
+        <div style={{
+          position: "absolute",
+          left: diff >= 0 ? `${contributor.marketLeaderScore}%` : `${contributor.playerScore}%`,
+          width: `${Math.abs(diff)}%`,
+          height: "100%",
+          background: color,
+          borderRadius: 2,
+        }} />
+      </div>
+      <span style={{ flex: "0 0 30px", fontSize: tokens.font.sizeSmall, textAlign: "right", color: tokens.colors.textMuted }}>{contributor.marketLeaderScore}</span>
+    </div>
+  );
+}
+
+function PerceptionChangeCard({ change }: { change: PerceptionChange }) {
+  const [expanded, setExpanded] = useState(false);
+  const demName = DEMOGRAPHICS.find((d) => d.id === change.demographicId)?.name ?? change.demographicId;
+  const deltaColor = change.delta > 0 ? tokens.colors.success : change.delta < 0 ? tokens.colors.danger : undefined;
+  const sign = change.delta > 0 ? "+" : "";
+  const insight = change.insight;
+
+  return (
+    <div style={{ marginBottom: tokens.spacing.xs }}>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          width: "100%",
+          padding: `${tokens.spacing.xs}px ${tokens.spacing.sm}px`,
+          background: expanded ? tokens.colors.surface : "transparent",
+          color: tokens.colors.text,
+          border: `1px solid ${tokens.colors.panelBorder}`,
+          borderRadius: tokens.borderRadius.sm,
+          cursor: "pointer",
+          fontSize: tokens.font.sizeBase,
+          textAlign: "left",
+        }}
+      >
+        <span>
+          <span style={{ marginRight: 6 }}>{expanded ? "▾" : "▸"}</span>
+          <span style={{ fontWeight: 600 }}>{demName}</span>
+        </span>
+        <span>
+          <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, marginRight: tokens.spacing.sm }}>
+            {change.oldPerception.toFixed(1)} → {change.newPerception.toFixed(1)}
+          </span>
+          <span style={{ fontWeight: 600, color: deltaColor }}>{sign}{change.delta.toFixed(1)}</span>
+        </span>
+      </button>
+      {expanded && (
+        <div style={{ padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`, borderLeft: `2px solid ${deltaColor ?? tokens.colors.panelBorder}` }}>
+          {!insight ? (
+            <p style={{ margin: 0, fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>{change.reason}</p>
+          ) : (
+            <>
+              {/* VP comparison */}
+              <div style={{ display: "flex", gap: tokens.spacing.lg, marginBottom: tokens.spacing.sm }}>
+                <div>
+                  <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>Your Value</div>
+                  <div style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}>{insight.playerAvgVP.toFixed(3)}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>Market Avg</div>
+                  <div style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}>{insight.marketAvgVP.toFixed(3)}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>Gap</div>
+                  <div style={{ fontSize: tokens.font.sizeBase, fontWeight: 600, color: insight.vpGap >= 0 ? tokens.colors.success : tokens.colors.danger }}>
+                    {insight.vpGap >= 0 ? "+" : ""}{(insight.vpGap / insight.marketAvgVP * 100).toFixed(0)}%
+                  </div>
+                </div>
+              </div>
+
+              {/* Stat contributors */}
+              {insight.topStats.length > 0 && (
+                <div style={{ marginBottom: tokens.spacing.sm }}>
+                  <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, marginBottom: 4 }}>
+                    Key stats (you vs top competitor)
+                  </div>
+                  {insight.topStats.map((sc) => (
+                    <StatImpactBar key={sc.stat} contributor={sc} />
+                  ))}
+                </div>
+              )}
+
+              {/* Price comparison */}
+              <div style={{ display: "flex", gap: tokens.spacing.lg, marginBottom: insight.topCompetitor ? tokens.spacing.sm : 0 }}>
+                <div>
+                  <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>Price score: </span>
+                  <span style={{ fontSize: tokens.font.sizeSmall, fontWeight: 600 }}>{(insight.priceScore.player * 100).toFixed(0)}</span>
+                  <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}> vs market avg </span>
+                  <span style={{ fontSize: tokens.font.sizeSmall, fontWeight: 600 }}>{(insight.priceScore.marketAvg * 100).toFixed(0)}</span>
+                  {insight.priceScore.player < insight.priceScore.marketAvg * 0.85 && (
+                    <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.danger, marginLeft: 4 }}>
+                      — overpriced for this segment
+                    </span>
+                  )}
+                  {insight.priceScore.player > insight.priceScore.marketAvg * 1.15 && (
+                    <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.success, marginLeft: 4 }}>
+                      — competitively priced
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Top competitor */}
+              {insight.topCompetitor && (
+                <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
+                  Top competitor: <span style={{ color: tokens.colors.text, fontWeight: 600 }}>{insight.topCompetitor.name}</span>
+                  {" "}(VP: {insight.topCompetitor.rawVP.toFixed(3)})
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface DemographicDetailProps {
   allLaptopResults: LaptopSalesResult[];
@@ -334,40 +464,12 @@ export function DemographicDetailSection({ allLaptopResults, playerResults, perc
       {perceptionChanges && perceptionChanges.some((pc) => Math.abs(pc.delta) >= 0.1) && (
         <div style={cardStyle}>
           <h3 style={sectionHeadingStyle}>Brand Perception Changes</h3>
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Demographic</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>Before</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>After</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>Change</th>
-                <th style={thStyle}>Explanation</th>
-              </tr>
-            </thead>
-            <tbody>
-              {perceptionChanges
-                .filter((pc) => Math.abs(pc.delta) >= 0.1)
-                .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
-                .map((pc) => {
-                  const demName = DEMOGRAPHICS.find((d) => d.id === pc.demographicId)?.name ?? pc.demographicId;
-                  const deltaColor = pc.delta > 0 ? tokens.colors.success : pc.delta < 0 ? tokens.colors.danger : undefined;
-                  const sign = pc.delta > 0 ? "+" : "";
-                  return (
-                    <tr key={pc.demographicId}>
-                      <td style={tdStyle}>{demName}</td>
-                      <td style={tdRight}>{pc.oldPerception.toFixed(1)}</td>
-                      <td style={tdRight}>{pc.newPerception.toFixed(1)}</td>
-                      <td style={{ ...tdRight, color: deltaColor, fontWeight: 600 }}>
-                        {sign}{pc.delta.toFixed(1)}
-                      </td>
-                      <td style={{ ...tdStyle, fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
-                        {pc.reason}
-                      </td>
-                    </tr>
-                  );
-                })}
-            </tbody>
-          </table>
+          {perceptionChanges
+            .filter((pc) => Math.abs(pc.delta) >= 0.1)
+            .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+            .map((pc) => (
+              <PerceptionChangeCard key={pc.demographicId} change={pc} />
+            ))}
         </div>
       )}
     </>

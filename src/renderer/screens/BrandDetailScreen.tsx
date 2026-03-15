@@ -279,6 +279,7 @@ export function BrandDetailScreen() {
             newPerception: pc.newPerception,
             delta: pc.newPerception - existing.oldPerception,
             reason: pc.reason,
+            insight: pc.insight ?? existing.insight,
           });
         } else {
           map.set(pc.demographicId, { ...pc });

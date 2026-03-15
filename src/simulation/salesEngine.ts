@@ -4,6 +4,7 @@ import {
   DemographicId,
   StatVector,
   ALL_STATS,
+  STAT_LABELS,
 } from "../data/types";
 import { DEMOGRAPHICS } from "../data/demographics";
 import { STARTING_DEMAND_POOL } from "../data/startingDemand";
@@ -20,6 +21,8 @@ import {
   QuarterSimulationResult,
   DemandProjection,
   PerceptionChange,
+  PerceptionInsight,
+  StatContributor,
   sellThroughRate,
   marketAverageRawVP,
 } from "./salesTypes";
@@ -400,24 +403,24 @@ function computeQuarterlyPerceptionChanges(
     const oldP = player.brandPerception[dem.id] ?? 0;
     const newP = newPerception[dem.id] ?? 0;
     const delta = newP - oldP;
-    const reason = buildPerceptionReason(dem.id, delta, playerResults, laptopResults, player.models);
-    return { demographicId: dem.id, oldPerception: oldP, newPerception: newP, delta, reason };
+    const { reason, insight } = buildPerceptionInsight(dem.id, delta, playerResults, laptopResults, state.companies, player.models);
+    return { demographicId: dem.id, oldPerception: oldP, newPerception: newP, delta, reason, insight };
   });
 
   return { changes, history };
 }
 
-/** Build a human-readable reason for a perception change in one demographic. */
-function buildPerceptionReason(
+/** Build a human-readable reason and structured insight for a perception change. */
+function buildPerceptionInsight(
   demId: DemographicId,
   delta: number,
   playerResults: LaptopSalesResult[],
   allResults: LaptopSalesResult[],
+  companies: CompanyState[],
   playerModels: CompanyState["models"],
-): string {
-  // Check if player had any sales in this demographic
-  // Use sell-through ratio to estimate actual units sold per demographic
-  const playerSales: { name: string; rawVP: number; units: number }[] = [];
+): { reason: string; insight: PerceptionInsight | null } {
+  // Collect player sales in this demographic
+  const playerSales: { name: string; rawVP: number; units: number; breakdown: DemographicSalesBreakdown }[] = [];
   for (const pr of playerResults) {
     const db = pr.demographicBreakdown.find((b) => b.demographicId === demId);
     if (db && db.unitsDemanded > 0) {
@@ -425,39 +428,112 @@ function buildPerceptionReason(
       if (units > 0) {
         const model = playerModels.find((m) => m.design.id === pr.laptopId);
         const name = model?.design.name ?? pr.laptopId.slice(0, 6);
-        playerSales.push({ name, rawVP: db.rawVP, units });
+        playerSales.push({ name, rawVP: db.rawVP, units, breakdown: db });
       }
     }
   }
 
   if (playerSales.length === 0) {
-    if (Math.abs(delta) < PERCEPTION_MEANINGFUL_DELTA) return "No sales — perception unchanged";
-    return "No sales this quarter — perception fading";
+    const reason = Math.abs(delta) < PERCEPTION_MEANINGFUL_DELTA
+      ? "No sales — perception unchanged"
+      : "No sales this quarter — perception fading";
+    return { reason, insight: null };
   }
 
   const marketAvgVP = marketAverageRawVP(demId, allResults);
+  const dem = DEMOGRAPHICS.find((d) => d.id === demId);
 
-  // Find best-selling player laptop in this demographic
+  // Weighted-average player VP and stats across all player laptops in this demographic
+  let totalUnits = 0;
+  let weightedVP = 0;
+  let weightedPriceScore = 0;
+  const weightedNormStats: Partial<Record<LaptopStat, number>> = {};
+  for (const ps of playerSales) {
+    weightedVP += ps.rawVP * ps.units;
+    weightedPriceScore += ps.breakdown.priceScore * ps.units;
+    for (const stat of ALL_STATS) {
+      weightedNormStats[stat] = (weightedNormStats[stat] ?? 0) + (ps.breakdown.normalizedStats[stat] ?? 0) * ps.units;
+    }
+    totalUnits += ps.units;
+  }
+  const playerAvgVP = weightedVP / totalUnits;
+  const playerAvgPriceScore = weightedPriceScore / totalUnits;
+  for (const stat of ALL_STATS) {
+    weightedNormStats[stat] = (weightedNormStats[stat] ?? 0) / totalUnits;
+  }
+
+  // Find top competitor (highest rawVP among non-player laptops in this demographic)
+  let topCompetitor: { name: string; rawVP: number } | null = null;
+  let marketAvgPriceScore = 0;
+  let marketPriceUnits = 0;
+  // Also compute market-leader stat scores for comparison
+  let leaderBreakdown: DemographicSalesBreakdown | null = null;
+  let leaderVP = -Infinity;
+
+  for (const lr of allResults) {
+    const db = lr.demographicBreakdown.find((b) => b.demographicId === demId);
+    if (!db || db.unitsDemanded <= 0) continue;
+    const units = db.unitsDemanded * sellThroughRate(lr);
+    marketAvgPriceScore += db.priceScore * units;
+    marketPriceUnits += units;
+
+    if (lr.owner !== playerResults[0]?.owner && db.rawVP > leaderVP) {
+      leaderVP = db.rawVP;
+      leaderBreakdown = db;
+      const comp = companies.find((c) => c.id === lr.owner);
+      const compModel = comp?.models.find((m) => m.design.id === lr.laptopId);
+      topCompetitor = {
+        name: comp ? `${comp.name}${compModel ? ` ${compModel.design.name}` : ""}` : lr.laptopId.slice(0, 6),
+        rawVP: db.rawVP,
+      };
+    }
+  }
+  marketAvgPriceScore = marketPriceUnits > 0 ? marketAvgPriceScore / marketPriceUnits : 0;
+
+  // Build stat contributors: for each stat, compare player norm vs market leader
+  const topStats: StatContributor[] = [];
+  if (dem && leaderBreakdown) {
+    for (const stat of ALL_STATS) {
+      const weight = dem.statWeights[stat] ?? 0;
+      if (weight < 0.01) continue;
+      const playerScore = Math.round((weightedNormStats[stat] ?? 0) * 100);
+      const leaderScore = Math.round((leaderBreakdown.normalizedStats[stat] ?? 0) * 100);
+      const diff = playerScore - leaderScore;
+      topStats.push({
+        stat,
+        playerScore,
+        marketLeaderScore: leaderScore,
+        weight,
+        impact: diff > 5 ? "helping" : diff < -5 ? "hurting" : "neutral",
+      });
+    }
+    // Sort by |weighted impact| descending
+    topStats.sort((a, b) => Math.abs(b.playerScore - b.marketLeaderScore) * b.weight - Math.abs(a.playerScore - a.marketLeaderScore) * a.weight);
+  }
+
+  const vpGap = playerAvgVP - marketAvgVP;
+  const insight: PerceptionInsight = {
+    playerAvgVP,
+    marketAvgVP,
+    vpGap,
+    topStats: topStats.slice(0, 3),
+    priceScore: { player: playerAvgPriceScore, marketAvg: marketAvgPriceScore },
+    topCompetitor,
+  };
+
+  // Build reason string
   playerSales.sort((a, b) => b.units - a.units);
   const top = playerSales[0];
-  const vpDiff = top.rawVP - marketAvgVP;
-
+  let reason: string;
   if (Math.abs(delta) < PERCEPTION_MEANINGFUL_DELTA) {
-    return `${top.name} sold at near-average value`;
+    reason = `${top.name} sold at near-average value`;
+  } else if (delta > 0) {
+    reason = vpGap > 0 ? `${top.name} offered above-average value` : "Sales volume gave a slight perception boost";
+  } else {
+    reason = vpGap < 0 ? `${top.name} offered below-average value` : "Past reputation outweighed modest sales";
   }
 
-  if (delta > 0) {
-    if (vpDiff > 0) {
-      return `${top.name} offered above-average value`;
-    }
-    return `Sales volume gave a slight perception boost`;
-  }
-
-  // delta < 0
-  if (vpDiff < 0) {
-    return `${top.name} offered below-average value`;
-  }
-  return "Past reputation outweighed modest sales";
+  return { reason, insight };
 }
 
 // --- Demand Projection (for manufacturing wizard) ---
