@@ -270,19 +270,22 @@ function AddCampaignPanel({
   const poolSize = getDemandPoolSize(selectedDemId, year, STARTING_DEMAND_POOL[selectedDemId]);
   const ceiling = getEffectiveReachCeiling(effectiveTier, maxTier);
 
-  // Build grouped options for demographic selector
+  // Build grouped options for demographic selector, sorted by pool size descending
+  const getPool = (d: Demographic) => getDemandPoolSize(d.id, year, STARTING_DEMAND_POOL[d.id]);
   const demOptions: SelectGroup<DemographicId>[] = [
     {
       label: "Generalist",
       options: GENERALISTS
         .filter((d) => !existingDemographicIds.has(d.id))
-        .map((d) => ({ value: d.id, label: d.name })),
+        .sort((a, b) => getPool(b) - getPool(a))
+        .map((d) => ({ value: d.id, label: `${d.name} (${getPool(d).toLocaleString()})` })),
     },
     {
       label: "Niche",
       options: NICHES
         .filter((d) => !existingDemographicIds.has(d.id))
-        .map((d) => ({ value: d.id, label: d.name })),
+        .sort((a, b) => getPool(b) - getPool(a))
+        .map((d) => ({ value: d.id, label: `${d.name} (${getPool(d).toLocaleString()})` })),
     },
   ].filter((g) => g.options.length > 0);
 
