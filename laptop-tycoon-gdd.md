@@ -15,7 +15,7 @@ A text-driven tycoon game where the player runs a laptop company from 2000 onwar
 1. **Each quarter (Q1–Q4):**
    a. Design wizard available — design new laptop(s) if model slots are open (available any quarter before simulation runs)
    b. Manufacturing wizard available — set/adjust price, order units
-   c. Manage marketing channels (activate/deactivate, set aggressive or premium mode)
+   c. Manage marketing campaigns (add/remove campaigns per demographic, adjust tier, pause/resume)
    d. Sales simulation runs for that quarter's buyer pool
    e. Revenue collected, cash balance updated
    f. After Q1: laptop reviews are published
@@ -231,7 +231,7 @@ This rewards getting the launch right — the majority of sales happen in Q1. Th
 Each quarter, the player may:
 - Design new laptops (if model slots are open, before the quarter is simulated)
 - Reopen the manufacturing wizard for existing designs (adjust price, order additional manufacturing runs)
-- Manage marketing channels (activate/deactivate, switch between aggressive and premium modes)
+- Manage marketing campaigns (add/remove per demographic, adjust tier 1–5, pause/resume)
 
 Additional manufacturing orders placed in Q2+ are calculated with their own independent economies-of-scale discount. They do not pool with the Q1 order. This creates a natural cost penalty for not forecasting correctly at launch.
 
@@ -359,31 +359,34 @@ Three components, each serving a distinct role in the sales funnel.
 The percentage of a demographic that has heard of your company. Acts as a multiplier on your competitive strength within the shared demand pool. If your reach among Students is 20%, your effective value proposition is scaled to 20% — most students don't know you exist, so your pull on the pool is weak. A company with 0% reach gets 0 effective VP and sells nothing.
 
 **Starting values:**
-- Player: 0% across all demographics. Must be bootstrapped through marketing channels and word of mouth.
+- Player: 0% across all demographics. Must be bootstrapped through marketing campaigns.
 - AI competitors: Pre-set per demographic to reflect each archetype's niche (e.g., ValueTech has 50% Budget Buyer but only 5% Creative Professional; Prestige Computing has 60% Creative Professional but only 10% Budget Buyer; OmniBook is broadly 25–40% across all demographics).
 
-**Growth sources (per demographic, per quarter):**
+**Player reach growth (campaign-based):**
 
-| Source | Calculation | Notes |
-|--------|------------|-------|
-| Marketing channels | CHANNEL_REACH_PER_TIER[tier] per active channel targeting this demographic | Primary mechanism for directed reach growth. Premium mode delivers 0.7× reach but adds perception bonus and WoM multiplier. |
-| Word of mouth | (units_sold_to_this_demographic / WOM_DIVISOR) × (1 + perception / 100) × wom_multiplier | Per-demographic organic source. Positive perception amplifies WOM; negative perception dampens it. Premium marketing channels add +0.1 to the WoM multiplier. |
-
-All sources are summed into a raw growth input, then passed through an **S-curve (logistic derivative)** with a permeability floor:
+The player's reach is driven entirely by marketing campaigns (one per demographic). Each active campaign generates acquisitions that convert to reach growth:
 
 ```
-base_factor = k × e^(-k(x - midpoint)) / (1 + e^(-k(x - midpoint)))²
-floor = permeability × (k / 4)
-growth_factor = max(base_factor, floor)
-actual_growth = raw_input × growth_factor × 100
+reach_delta = (acquisitions / demand_pool_size) × 100
 ```
 
-Where `permeability` is a per-demographic constant (0.0–1.0) that ensures permeable demographics (tech enthusiasts, gamers) can grow reach from cold start, while mass-market demographics require more sustained investment. This produces:
-- Slow growth at low reach (hard to get started, unless demographic is permeable)
-- Fast growth in the mid-range (momentum)
-- Plateauing at high reach (diminishing returns)
+Where `acquisitions` = TIER_ACQUISITIONS[campaign.tier] + spillover from adjacent demographics.
 
-**Inactivity decay:** If no products are on sale, reach decays at REACH_INACTIVITY_DECAY (10%) per year (applied as 2.5% per quarter).
+Reach is capped at a **tier ceiling** — higher tiers unlock higher maximum reach. The ceiling is scaled by permeability so that the demographic's max tier always reaches 95%:
+
+```
+effective_ceiling = base_ceiling[tier] × (95 / base_ceiling[maxTier])
+```
+
+If current reach exceeds the ceiling (e.g., after downgrading tier), reach gently decays toward the ceiling.
+
+**Decay:** Demographics with no active campaign decay at REACH_DECAY_BASE × (1 + permeability) per quarter. Spillover from adjacent campaigns can partially offset this decay.
+
+**Social proximity spillover:** Campaigns spill over to adjacent demographics. Spillover acquisitions = base_acquisitions × adjacency_weight × SPILLOVER_PENALTY. See `SOCIAL_ADJACENCY` in `marketingChannels.ts` for the adjacency graph.
+
+**AI competitor reach growth (WoM-based):**
+
+AI competitors use a different system: word-of-mouth from sales results, passed through an **S-curve (logistic derivative)** with a permeability floor. This gives organic growth from units sold, with inactivity decay at REACH_INACTIVITY_DECAY (10%) per year if no products are on sale.
 
 ### Brand Perception (per demographic, -50 to +50)
 
@@ -400,7 +403,7 @@ The accumulated sentiment a demographic has about your company, based on their p
 - **Negativity bias:** Bad experiences hit 1.5× harder than good experiences help. Getting ripped off is memorable.
 - **Only purchasers matter:** A demographic that never buys from you has no perception of you (stays at 0/neutral). This means entering a new market segment starts from a blank slate, not from baggage accumulated in other segments.
 - **Value-for-money drives perception, not raw quality:** The experience score is based on raw value proposition (stats/price), not raw stats alone. An overpriced premium laptop can hurt perception even if technically excellent.
-- **Marketing quality matters:** Aggressive marketing channels apply a slight perception penalty per targeted demographic; premium channels apply a slight bonus. This creates a cost/perception trade-off.
+- **Marketing does not affect perception:** Marketing campaigns affect reach only. Perception is purely driven by product quality (rawVP vs market average).
 
 **Edge case behaviour:**
 - *Ultrabook company enters gaming market:* Gamers have 0 perception (never bought from you). Your gaming laptop is evaluated on its merits. No penalty, no bonus.
@@ -409,52 +412,42 @@ The accumulated sentiment a demographic has about your company, based on their p
 
 ---
 
-## Marketing Channel System
+## Marketing Campaign System
 
-The player manages marketing channels from the Brand Management screen. Channels can be activated or deactivated at any time (costs are charged quarterly). Each channel targets specific demographics for reach growth and has two operating modes.
+The player manages marketing campaigns from the Brand Management screen. Each campaign targets a single demographic (one campaign per demographic). Campaigns can be added, removed, paused, or have their tier adjusted at any time. Costs are charged quarterly for active (non-paused) campaigns.
 
-### Channel Tiers
+### Campaign Tiers
 
-| Tier | Category | Cost Range (per quarter, year-2000 dollars) | Demographics Targeted |
-|------|----------|----------------------------------------------|----------------------|
-| 1 | Grassroots / Niche | $20K–$50K | 2–4 demographics |
-| 2 | Professional / Trade | $100K–$150K | 4–6 demographics |
-| 3 | Mass Market | $250K–$500K | 8–20 demographics |
+Each demographic has a **maximum available tier** derived from its permeability:
 
-Higher tiers are more expensive but target more demographics simultaneously.
+| Permeability | Max Tier |
+|-------------|----------|
+| ≥ 0.65 | 2 |
+| ≥ 0.35 | 3 |
+| ≥ 0.20 | 4 |
+| < 0.20 | 5 |
 
-### Channel Availability
+Niche demographics (high permeability) cap at lower tiers — they're small, targeted markets. Mass-market demographics (low permeability) unlock all 5 tiers.
 
-Each channel has a `yearAvailable` (first year it can be activated) and an optional `yearDeprecated` (last year it remains available). Deprecated channels are automatically deactivated at year transition. Examples:
-- Tech Forum Sponsorship: 2000–2012 (forums decline as social media rises)
-- YouTube Tech Reviewers: 2010+ (platform didn't exist before)
-- Influencer Network: 2015+ (modern marketing channel)
+| Tier | Label | Base Cost/qtr (year-2000 $) | Acquisitions/qtr | Base Reach Ceiling |
+|------|-------|----------------------------|-------------------|-------------------|
+| 1 | Grassroots | $2,000 | 100 | 15% |
+| 2 | Targeted Digital | $50,000 | 500 | 30% |
+| 3 | Professional | $200,000 | 2,000 | 50% |
+| 4 | Mass Market | $750,000 | 7,500 | 75% |
+| 5 | Cultural Omnipresence | $3,000,000 | 25,000 | 95% |
+Each campaign has a preset description per demographic × tier (see `CAMPAIGN_DESCRIPTIONS` in `marketingChannels.ts`).
 
-### Operating Modes
+### Social Proximity Spillover
 
-Each active channel runs in one of two modes:
-
-| Mode | Cost | Reach | Perception Effect | WoM Bonus |
-|------|------|-------|-------------------|-----------|
-| **Aggressive** | Base cost | Full reach (CHANNEL_REACH_PER_TIER) | -0.2 perception penalty per targeted demographic | None |
-| **Premium** | 1.5× base cost | 0.7× reach | +0.2 perception bonus per targeted demographic | +0.1 WoM multiplier |
-
-**Aggressive** maximises reach growth at the expense of brand perception — good for early-stage growth when perception doesn't matter yet.
-
-**Premium** sacrifices some reach for perception improvement and WoM amplification — better for established brands protecting their reputation.
-
-### Reach Contribution
-
-Raw reach contribution per quarter per targeted demographic, by tier:
-- Tier 1: 0.5
-- Tier 2: 0.3
-- Tier 3: 0.2
-
-Higher tiers have lower per-demographic contribution but target more demographics, spreading the investment.
+Campaigns spill reach to adjacent demographics via a social adjacency graph. Spillover acquisitions = base_acquisitions × adjacency_weight × SPILLOVER_PENALTY (0.15). Example adjacencies:
+- Gamer ↔ Esports Pro (0.8), Gamer ↔ Streamer (0.6)
+- Developer ↔ Tech Enthusiast (0.7)
+- Video Editor ↔ Creative Professional (0.6)
 
 ### Cost Inflation
 
-All channel costs inflate annually at 3% from base year 2000 (same COST_INFLATION factor as other costs).
+All campaign costs inflate annually at 3% from base year 2000 (same COST_INFLATION factor as other costs).
 
 ---
 
@@ -505,11 +498,6 @@ experience = weighted_avg(company_laptop_raw_vp - market_avg_raw_vp)
 if experience < 0:
   experience *= NEGATIVITY_MULTIPLIER (1.5)
 
-// Marketing quality modifier
-experience += sum(perception_modifier per active channel targeting this demographic)
-  // aggressive channels: -0.2 per channel
-  // premium channels: +0.2 per channel
-
 // Push into rolling window (drop oldest if > 12 entries)
 history[demographic].push(experience)
 
@@ -523,17 +511,16 @@ No exponential decay — perception is purely a function of recent experience in
 
 ### Reach Update
 
-Reach growth sources accumulate quarterly. Each quarter:
+**Player:** See Brand Reach section above — campaign-based acquisitions, spillover, and decay.
+
+**AI competitors:** WoM-based reach growth each quarter:
 
 ```
-raw_growth = marketing_channel_contributions
-             + word_of_mouth_this_quarter
+raw_growth = (units_sold / WOM_DIVISOR) × (1 + perception/100)
 new_reach = old_reach + S_curve(raw_growth, current_reach, permeability)
 ```
 
-Where marketing channel contributions sum CHANNEL_REACH_PER_TIER for each active channel targeting this demographic (scaled by 0.7× for premium mode). WoM = (units_sold / WOM_DIVISOR) × (1 + perception/100) × wom_multiplier.
-
-Clamp to [0, 100].
+Clamp to [0, 100]. Inactivity decay applies when no products on sale.
 
 ### Player Feedback
 
@@ -615,9 +602,10 @@ interface CompanyState {
   engineeringBonus?: number;
 }
 
-interface ActiveMarketingChannel {
-  channelId: string;
-  mode: "aggressive" | "premium";
+interface MarketingCampaign {
+  demographicId: DemographicId;
+  tier: 1 | 2 | 3 | 4 | 5;
+  paused: boolean;
 }
 
 interface GameState {
@@ -625,7 +613,7 @@ interface GameState {
   year: number;
   quarter: 1 | 2 | 3 | 4;
   cash: number;
-  activeMarketingChannels: ActiveMarketingChannel[];
+  marketingCampaigns: MarketingCampaign[];
   yearHistory: YearSimulationResult[];
   quarterHistory: QuarterSimulationResult[];
   currentYearReviews: LaptopReview[];
@@ -643,21 +631,20 @@ Both player and AI competitors use the CompanyState interface. The simulation it
 | Constant | Starting Value | Notes |
 |----------|---------------|-------|
 | PRICE_WEIGHT | Varies per demographic stat weight vector | Weight on price_score in VP dot product; higher = more price-sensitive |
-| WOM_DIVISOR | 5,000 | Units sold per 1 raw reach point from word of mouth |
+| WOM_DIVISOR | 5,000 | Units sold per 1 raw reach point from word of mouth (AI competitors only) |
 | PERCEPTION_CONTRIBUTION_SCALE | 5 | Scales rolling-window mean experience into perception points |
 | PERCEPTION_WINDOW_SIZE | 12 | Rolling window in quarters (12 = 3 years of history) |
 | NEGATIVITY_MULTIPLIER | 1.5 | Bad experiences hit 1.5× harder |
-| S_CURVE_STEEPNESS | 0.08 | S-curve steepness for reach growth |
-| S_CURVE_MIDPOINT | 50 | Reach % where growth is fastest |
-| REACH_INACTIVITY_DECAY | 0.10 | Annual reach decay when no products on sale |
+| S_CURVE_STEEPNESS | 0.08 | S-curve steepness for reach growth (AI competitors only) |
+| S_CURVE_MIDPOINT | 50 | Reach % where growth is fastest (AI competitors only) |
+| REACH_INACTIVITY_DECAY | 0.10 | Annual reach decay when no products on sale (AI competitors only) |
+| REACH_DECAY_BASE | 0.05 | Player reach decay per quarter for demographics with no campaign (× 1+permeability) |
+| TIER_COSTS | {1: 2K, 2: 50K, 3: 200K, 4: 750K, 5: 3M} | Base quarterly cost per campaign tier (year-2000 dollars, inflates) |
+| TIER_ACQUISITIONS | {1: 100, 2: 500, 3: 2K, 4: 7.5K, 5: 25K} | Raw customer acquisitions per quarter per campaign tier |
+| TIER_BASE_CEILINGS | {1: 15, 2: 30, 3: 50, 4: 75, 5: 95} | Base reach ceiling (%) per campaign tier |
+| SPILLOVER_PENALTY | 0.15 | Spillover acquisition multiplier (acquisitions × adjacency × this) |
 | CHANNEL_MARGIN_RATE | 0.20 | Retailer takes 20% of retail price; company receives 80% |
-| COST_INFLATION | 1.03 | Annual scaling for marketing channel / infrastructure costs |
-| CHANNEL_REACH_PER_TIER | {1: 0.5, 2: 0.3, 3: 0.2} | Raw reach contribution per quarter per targeted demographic |
-| PREMIUM_COST_MULTIPLIER | 1.5 | Premium mode costs 1.5× base |
-| PREMIUM_REACH_MULTIPLIER | 0.7 | Premium mode delivers 0.7× reach |
-| AGGRESSIVE_PERCEPTION_PENALTY | -0.2 | Perception experience modifier per aggressive channel |
-| PREMIUM_PERCEPTION_BONUS | 0.2 | Perception experience modifier per premium channel |
-| PREMIUM_WOM_BONUS | 0.1 | WoM multiplier bonus per premium channel |
+| COST_INFLATION | 1.03 | Annual scaling for marketing / infrastructure costs |
 | REPLACEMENT_CYCLE | varies | Per-demographic; 2–5 years (see Sales Simulation section) |
 | QUARTER_SHARES | [8, 4, 2, 1] | Out of 15. Buyer distribution across Q1–Q4 |
 | AWARD_PRIMARY_PERCEPTION_BONUS | 5 | Perception boost for primary demographics (matching outlet affinity) |
@@ -761,7 +748,7 @@ Post-year, the player can pay for a detailed demographic breakdown: which buyer 
 - [ ] Momentum-based market weight shifting (annual, runs after Q4) *(not yet implemented — weights are static, only demand pool sizes shift)*
 - [ ] 3 AI competitors (budget, premium, generalist), 1 model each, full stats visible
 - [ ] Brand reach (per demographic) + brand perception (per demographic)
-- [ ] Marketing channel system (3 tiers, aggressive/premium modes, year-gated availability)
+- [ ] Marketing campaign system (5 tiers, per-demographic campaigns, social proximity spillover)
 - [ ] Laptop reviews (2 per model, template-driven, published after Q1)
 - [ ] Year-end awards (after Q4)
 - [ ] ~500 sentence templates for reviews and awards
