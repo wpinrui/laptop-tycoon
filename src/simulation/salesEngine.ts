@@ -393,7 +393,7 @@ function computeQuarterlyPerceptionChanges(
   laptopResults: LaptopSalesResult[],
 ): { changes: PerceptionChange[]; history: Record<DemographicId, number[]> } {
   const player = getPlayerCompany(state);
-  const { perception: newPerception, history } = applySingleQuarterPerception(player, laptopResults, state);
+  const { perception: newPerception, history } = applySingleQuarterPerception(player, laptopResults);
   const playerResults = laptopResults.filter((r) => r.owner === player.id);
 
   const changes = DEMOGRAPHICS.map((dem) => {

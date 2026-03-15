@@ -13,7 +13,7 @@ import { DEMOGRAPHICS, GENERALISTS, NICHES } from "../../data/demographics";
 import { Demographic, DemographicId, MarketingTier } from "../../data/types";
 import { PerceptionChange } from "../../simulation/salesTypes";
 import { SidebarHeading } from "../wizard/LaptopEstimateSidebar";
-import { PERCEPTION_MEANINGFUL_DELTA, PERCEPTION_CONTRIBUTION_SCALE, PERCEPTION_MIN, PERCEPTION_MAX, TIER_COSTS, TIER_ACQUISITIONS } from "../../simulation/tunables";
+import { PERCEPTION_MEANINGFUL_DELTA, PERCEPTION_CONTRIBUTION_SCALE, PERCEPTION_MIN, PERCEPTION_MAX, TIER_ACQUISITIONS } from "../../simulation/tunables";
 import {
   getMaxTier,
   getCampaignCost,
