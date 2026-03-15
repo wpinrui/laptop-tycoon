@@ -128,7 +128,7 @@ function initPerceptionHistory(
   return history as Record<DemographicId, number[]>;
 }
 
-export const STARTING_CASH = 50_000_000;
+export const STARTING_CASH = 2_000_000;
 export const AI_STARTING_YEAR = 2000;
 export const STARTING_YEAR = AI_STARTING_YEAR + 1;
 
