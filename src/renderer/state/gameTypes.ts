@@ -9,7 +9,7 @@ import { FullManufacturingPlan } from "../manufacturing/types";
 import { COMPETITORS, CompetitorArchetype } from "../../data/competitors";
 import { YearSimulationResult, QuarterSimulationResult } from "../../simulation/salesTypes";
 import { LaptopReview, Award } from "../../simulation/reviewsAwards";
-import { MarketingMode } from "../../data/marketingChannels";
+import { MarketingTier } from "../../data/types";
 import { PERCEPTION_CONTRIBUTION_SCALE, PERCEPTION_WINDOW_SIZE } from "../../simulation/tunables";
 
 export type ModelType = "brandNew" | "successor" | "specBump";
@@ -79,9 +79,10 @@ export interface CompanyState {
 
 export type Quarter = 1 | 2 | 3 | 4;
 
-export interface ActiveMarketingChannel {
-  channelId: string;
-  mode: MarketingMode;
+export interface MarketingCampaign {
+  demographicId: DemographicId;
+  tier: MarketingTier;
+  paused: boolean;
 }
 
 export interface GameState {
@@ -91,8 +92,8 @@ export interface GameState {
   quarter: Quarter;
   quarterSimulated: boolean;
   cash: number;
-  /** Active marketing channels — persist until manually changed. */
-  activeMarketingChannels: ActiveMarketingChannel[];
+  /** Active marketing campaigns — persist until manually changed. */
+  marketingCampaigns: MarketingCampaign[];
   yearHistory: YearSimulationResult[];
   lastSimulationResult: QuarterSimulationResult | null;
   /** Accumulated quarterly results for the current year (reset on year advance). */
@@ -127,7 +128,7 @@ function initPerceptionHistory(
   return history as Record<DemographicId, number[]>;
 }
 
-export const STARTING_CASH = 50_000_000;
+export const STARTING_CASH = 2_000_000;
 export const AI_STARTING_YEAR = 2000;
 export const STARTING_YEAR = AI_STARTING_YEAR + 1;
 
@@ -190,7 +191,7 @@ export function createInitialGameState(
     quarter: 1 as Quarter,
     quarterSimulated: false,
     cash: STARTING_CASH,
-    activeMarketingChannels: [],
+    marketingCampaigns: [],
     yearHistory: [],
     lastSimulationResult: null,
     quarterHistory: [],

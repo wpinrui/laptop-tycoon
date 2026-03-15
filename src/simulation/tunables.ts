@@ -4,7 +4,7 @@
  * See GDD § "Tunables (centralised in config)" for reference values.
  */
 
-import { DemographicId } from "../data/types";
+import { DemographicId, MarketingTier } from "../data/types";
 import { CompetitorArchetype } from "../data/competitors";
 import { ModelType } from "../renderer/state/gameTypes";
 
@@ -14,10 +14,45 @@ import { ModelType } from "../renderer/state/gameTypes";
 export const S_CURVE_STEEPNESS = 0.08;
 /** S-curve midpoint (reach % where growth is fastest) */
 export const S_CURVE_MIDPOINT = 50;
-/** Word-of-mouth divisor — every X units sold contributes 1 raw reach point */
+/** Word-of-mouth divisor — every X units sold contributes 1 raw reach point (AI competitors only) */
 export const WOM_DIVISOR = 5_000;
-/** Reach decay rate when no products on sale (proportional, per year) */
+/** Reach decay rate when no products on sale (proportional, per year — AI competitors only) */
 export const REACH_INACTIVITY_DECAY = 0.10;
+
+// ==================== Marketing Campaigns (Player) ====================
+
+/** Base cost per quarter (year-2000 dollars) for each marketing tier. Inflates yearly. */
+export const TIER_COSTS: Record<MarketingTier, number> = {
+  1: 2_000,
+  2: 50_000,
+  3: 200_000,
+  4: 750_000,
+  5: 3_000_000,
+};
+
+/** Raw customer acquisitions per quarter per marketing tier. */
+export const TIER_ACQUISITIONS: Record<MarketingTier, number> = {
+  1: 100,
+  2: 500,
+  3: 2_000,
+  4: 7_500,
+  5: 25_000,
+};
+
+/** Base reach ceiling (%) per marketing tier before permeability adjustment. */
+export const TIER_BASE_CEILINGS: Record<MarketingTier, number> = {
+  1: 15,
+  2: 30,
+  3: 50,
+  4: 75,
+  5: 95,
+};
+
+/** Spillover acquisition multiplier: spillover = baseAcquisitions × adjacency × SPILLOVER_PENALTY */
+export const SPILLOVER_PENALTY = 0.15;
+
+/** Base reach decay rate per quarter when no campaign targets a demographic (multiplied by 1 + permeability). */
+export const REACH_DECAY_BASE = 0.05;
 
 // ==================== Brand Perception ====================
 

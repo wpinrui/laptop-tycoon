@@ -39,7 +39,7 @@ import {
 import { generateCompetitorModels } from "./competitorAI";
 import { COMPETITORS } from "../data/competitors";
 import { averageReach, applySingleQuarterPerception } from "./brandProgression";
-import { MARKETING_CHANNELS, getChannelCost, isChannelAvailable } from "../data/marketingChannels";
+import { getCampaignCost } from "../data/marketingChannels";
 import { getTheoreticalMaxima, getPriceScaleFactor, clearTheoreticalMaxCache } from "./theoreticalMax";
 
 // Cache synthetic competitor models per year for stable demand projections
@@ -235,10 +235,9 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
     const emptyPerception = computeQuarterlyPerceptionChanges(state, []);
     // Still charge marketing costs even with no laptops on market
     let emptyMarketingCost = 0;
-    for (const ac of state.activeMarketingChannels) {
-      const channel = MARKETING_CHANNELS.find((c) => c.id === ac.channelId);
-      if (channel && isChannelAvailable(channel, year)) {
-        emptyMarketingCost += getChannelCost(channel, year, ac.mode);
+    for (const campaign of state.marketingCampaigns) {
+      if (!campaign.paused) {
+        emptyMarketingCost += getCampaignCost(campaign.tier, year);
       }
     }
     return {
@@ -354,12 +353,11 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
 
   const playerResults = laptopResults.filter((r) => r.owner === player.id);
 
-  // Marketing costs: deducted quarterly from active channels
+  // Marketing costs: deducted quarterly from active campaigns
   let marketingCost = 0;
-  for (const ac of state.activeMarketingChannels) {
-    const channel = MARKETING_CHANNELS.find((c) => c.id === ac.channelId);
-    if (channel && isChannelAvailable(channel, year)) {
-      marketingCost += getChannelCost(channel, year, ac.mode);
+  for (const campaign of state.marketingCampaigns) {
+    if (!campaign.paused) {
+      marketingCost += getCampaignCost(campaign.tier, year);
     }
   }
 
@@ -395,7 +393,7 @@ function computeQuarterlyPerceptionChanges(
   laptopResults: LaptopSalesResult[],
 ): { changes: PerceptionChange[]; history: Record<DemographicId, number[]> } {
   const player = getPlayerCompany(state);
-  const { perception: newPerception, history } = applySingleQuarterPerception(player, laptopResults, state);
+  const { perception: newPerception, history } = applySingleQuarterPerception(player, laptopResults);
   const playerResults = laptopResults.filter((r) => r.owner === player.id);
 
   const changes = DEMOGRAPHICS.map((dem) => {

@@ -1,298 +1,193 @@
-import { DemographicId } from "./types";
+import { DemographicId, MarketingTier } from "./types";
 import { getInflatedCost } from "../simulation/costInflation";
+import {
+  TIER_COSTS,
+  TIER_BASE_CEILINGS,
+} from "../simulation/tunables";
 
-export type MarketingTier = 1 | 2 | 3;
-export type MarketingMode = "aggressive" | "premium";
 
-export interface MarketingChannel {
-  id: string;
-  name: string;
-  description: string;
-  tier: MarketingTier;
-  /** Base quarterly cost (year-2000 dollars, inflates over time) */
-  baseCostPerQuarter: number;
-  /** First year available */
-  yearAvailable: number;
-  /** Last year available (inclusive). null = never deprecated. */
-  yearDeprecated: number | null;
-  /** Demographics this channel targets */
-  targetDemographics: DemographicId[];
+// ==================== Tier Helpers ====================
+
+/** Derive maximum available marketing tier from a demographic's permeability. */
+export function getMaxTier(permeability: number): MarketingTier {
+  if (permeability >= 0.65) return 2;
+  if (permeability >= 0.35) return 3;
+  if (permeability >= 0.20) return 4;
+  return 5;
 }
 
-/** Raw reach contribution per quarter per targeted demographic, by tier. */
-export const CHANNEL_REACH_PER_TIER: Record<MarketingTier, number> = {
-  1: 0.5,
-  2: 0.3,
-  3: 0.2,
+/**
+ * Effective reach ceiling for a given campaign tier on a demographic.
+ * Scales base ceilings proportionally so that maxTier always reaches 95%.
+ */
+export function getEffectiveReachCeiling(tier: MarketingTier, maxTier: MarketingTier): number {
+  const baseCeiling = TIER_BASE_CEILINGS[tier];
+  const maxBaseCeiling = TIER_BASE_CEILINGS[maxTier];
+  return Math.min(95, baseCeiling * (95 / maxBaseCeiling));
+}
+
+/** Get the inflated quarterly cost for a campaign tier in a given year. */
+export function getCampaignCost(tier: MarketingTier, year: number): number {
+  return getInflatedCost(TIER_COSTS[tier], year);
+}
+
+// ==================== Social Proximity Adjacency ====================
+
+/** Symmetric adjacency pairs: [demographicA, demographicB, weight]. */
+export const SOCIAL_ADJACENCY: readonly [DemographicId, DemographicId, number][] = [
+  ["gamer", "esportsPro", 0.8],
+  ["gamer", "streamer", 0.6],
+  ["esportsPro", "streamer", 0.5],
+  ["developer", "techEnthusiast", 0.7],
+  ["videoEditor", "creativeProfessional", 0.6],
+  ["digitalNomad", "writer", 0.5],
+  ["businessProfessional", "corporate", 0.4],
+  ["student", "budgetBuyer", 0.3],
+  ["musicProducer", "creativeProfessional", 0.4],
+  ["threeDArtist", "creativeProfessional", 0.5],
+];
+
+/** Get all adjacent demographics and their weights for a given demographic. */
+export function getAdjacencies(demId: DemographicId): { demographicId: DemographicId; weight: number }[] {
+  const result: { demographicId: DemographicId; weight: number }[] = [];
+  for (const [a, b, w] of SOCIAL_ADJACENCY) {
+    if (a === demId) result.push({ demographicId: b, weight: w });
+    else if (b === demId) result.push({ demographicId: a, weight: w });
+  }
+  return result;
+}
+
+// ==================== Tier Labels ====================
+
+/** Tier flavor labels for UI display. */
+export const TIER_LABELS: Record<MarketingTier, string> = {
+  1: "Grassroots",
+  2: "Targeted Digital",
+  3: "Professional",
+  4: "Mass Market",
+  5: "Cultural Omnipresence",
 };
 
-/** Premium mode costs 1.5x base */
-export const PREMIUM_COST_MULTIPLIER = 1.5;
-/** Premium mode delivers 0.7x reach but adds perception bonus */
-export const PREMIUM_REACH_MULTIPLIER = 0.7;
-/** Perception experience modifier per aggressive channel per targeted demographic */
-export const AGGRESSIVE_PERCEPTION_PENALTY = -0.2;
-/** Perception experience modifier per premium channel per targeted demographic */
-export const PREMIUM_PERCEPTION_BONUS = 0.2;
-/** WoM multiplier bonus for premium channels (added to the base 1.0) */
-export const PREMIUM_WOM_BONUS = 0.1;
+// ==================== Campaign Descriptions ====================
 
-/** Get the quarterly cost for a channel in a given year and mode. */
-export function getChannelCost(channel: MarketingChannel, year: number, mode: MarketingMode): number {
-  const base = getInflatedCost(channel.baseCostPerQuarter, year);
-  return mode === "premium" ? Math.round(base * PREMIUM_COST_MULTIPLIER) : base;
-}
-
-/** Check if a channel is available in a given year. */
-export function isChannelAvailable(channel: MarketingChannel, year: number): boolean {
-  if (year < channel.yearAvailable) return false;
-  if (channel.yearDeprecated !== null && year > channel.yearDeprecated) return false;
-  return true;
-}
-
-export const MARKETING_CHANNELS: MarketingChannel[] = [
-  // ============================================================
-  // TIER 1 — Grassroots/Niche ($20K–$50K/qtr, 2-4 demographics)
-  // ============================================================
-  {
-    id: "techForums",
-    name: "Tech Forum Sponsorship",
-    description: "Banner ads and sponsored threads on enthusiast hardware forums.",
-    tier: 1,
-    baseCostPerQuarter: 25_000,
-    yearAvailable: 2000,
-    yearDeprecated: 2012,
-    targetDemographics: ["techEnthusiast", "developer"],
+/** Preset campaign descriptions per demographic × tier. */
+export const CAMPAIGN_DESCRIPTIONS: Record<DemographicId, Partial<Record<MarketingTier, string>>> = {
+  // === Max Tier 2 ===
+  techEnthusiast: {
+    1: "Posting hands-on reviews in r/hardware and enthusiast forums",
+    2: "Sponsoring hardware YouTube channels and tech conference booths",
   },
-  {
-    id: "lanParty",
-    name: "LAN Party Sponsorship",
-    description: "Provide demo units and prizes at competitive LAN events.",
-    tier: 1,
-    baseCostPerQuarter: 20_000,
-    yearAvailable: 2000,
-    yearDeprecated: 2010,
-    targetDemographics: ["gamer", "esportsPro"],
+  esportsPro: {
+    1: "Sponsoring local LAN parties and posting in competitive gaming Discords",
+    2: "Tournament prize pools, pro team equipment deals, and esports media partnerships",
   },
-  {
-    id: "campusRep",
-    name: "Campus Rep Program",
-    description: "Student ambassadors demo your laptops on college campuses.",
-    tier: 1,
-    baseCostPerQuarter: 30_000,
-    yearAvailable: 2000,
-    yearDeprecated: null,
-    targetDemographics: ["student", "educationK12"],
+  gamer: {
+    1: "Community posts in gaming subreddits and Discord servers, word-of-mouth seeding",
+    2: "Gaming YouTuber sponsorships, Twitch streamer partnerships, and gaming site ads",
   },
-  {
-    id: "makerMeetups",
-    name: "Maker/Hacker Meetups",
-    description: "Sponsor local maker spaces and hackathon events.",
-    tier: 1,
-    baseCostPerQuarter: 25_000,
-    yearAvailable: 2005,
-    yearDeprecated: null,
-    targetDemographics: ["developer", "techEnthusiast", "threeDArtist"],
+  streamer: {
+    1: "Gifting units to micro-streamers and posting in content creator Discords",
+    2: "Mid-tier streamer sponsorships, streaming setup YouTube integrations, and creator community partnerships",
   },
-  {
-    id: "indieGameTournaments",
-    name: "Indie Game Tournaments",
-    description: "Sponsor small-scale competitive gaming events and indie showcases.",
-    tier: 1,
-    baseCostPerQuarter: 30_000,
-    yearAvailable: 2005,
-    yearDeprecated: null,
-    targetDemographics: ["gamer", "esportsPro", "streamer"],
-  },
-  {
-    id: "musicForums",
-    name: "Music Production Forums",
-    description: "Advertise on DAW communities and music production sites.",
-    tier: 1,
-    baseCostPerQuarter: 20_000,
-    yearAvailable: 2000,
-    yearDeprecated: null,
-    targetDemographics: ["musicProducer", "creativeProfessional"],
-  },
-  {
-    id: "nomadBlogs",
-    name: "Digital Nomad Blogs",
-    description: "Sponsored reviews on remote work and travel blogs.",
-    tier: 1,
-    baseCostPerQuarter: 25_000,
-    yearAvailable: 2008,
-    yearDeprecated: null,
-    targetDemographics: ["digitalNomad", "writer"],
-  },
-  {
-    id: "twitchPartnerships",
-    name: "Twitch/Streamer Partnerships",
-    description: "Send units to popular streamers for on-stream use and reviews.",
-    tier: 1,
-    baseCostPerQuarter: 40_000,
-    yearAvailable: 2012,
-    yearDeprecated: null,
-    targetDemographics: ["streamer", "gamer", "esportsPro"],
-  },
-  {
-    id: "youtubeReviewers",
-    name: "YouTube Tech Reviewers",
-    description: "Seed units to tech YouTubers for detailed review coverage.",
-    tier: 1,
-    baseCostPerQuarter: 50_000,
-    yearAvailable: 2010,
-    yearDeprecated: null,
-    targetDemographics: ["techEnthusiast", "gamer", "developer", "videoEditor"],
+  developer: {
+    1: "Posting on Hacker News, Stack Overflow sponsorship, and developer meetup demos",
+    2: "Tech conference sponsorships, developer podcast ads, and GitHub community partnerships",
   },
 
-  // ============================================================
-  // TIER 2 — Professional/Trade ($100K–$150K/qtr, 5-8 demographics)
-  // ============================================================
-  {
-    id: "tradeShow",
-    name: "Trade Show Booth (CES/Computex)",
-    description: "Major presence at industry trade shows with demos and press events.",
-    tier: 2,
-    baseCostPerQuarter: 150_000,
-    yearAvailable: 2000,
-    yearDeprecated: null,
-    targetDemographics: ["techEnthusiast", "businessProfessional", "corporate", "developer", "creativeProfessional"],
+  // === Max Tier 3 ===
+  videoEditor: {
+    1: "Posting in video editing forums and small creator community outreach",
+    2: "YouTube creator sponsorships and video editing software bundle partnerships",
+    3: "Film festival sponsorships, professional editor ambassadors, and creative industry media buys",
   },
-  {
-    id: "bizMagazine",
-    name: "Business Magazine Ads",
-    description: "Full-page spreads in Forbes, BusinessWeek, and trade publications.",
-    tier: 2,
-    baseCostPerQuarter: 100_000,
-    yearAvailable: 2000,
-    yearDeprecated: 2015,
-    targetDemographics: ["businessProfessional", "corporate", "dayTrader"],
+  digitalNomad: {
+    1: "Posts in remote work blogs and digital nomad Discord communities",
+    2: "Targeted ads on travel/remote work platforms and nomad influencer partnerships",
+    3: "Co-working space partnerships, travel YouTuber sponsorships, and remote work conference presence",
   },
-  {
-    id: "itChannel",
-    name: "IT Channel Partnership",
-    description: "Partner with IT resellers and managed service providers for enterprise deals.",
-    tier: 2,
-    baseCostPerQuarter: 120_000,
-    yearAvailable: 2000,
-    yearDeprecated: null,
-    targetDemographics: ["corporate", "businessProfessional", "educationK12", "fieldWorker"],
+  creativeProfessional: {
+    1: "Sponsoring local creative meetups and posting in design community forums",
+    2: "Design tool bundle partnerships, creative podcast sponsorships, and Behance/Dribbble ads",
+    3: "Creative conference presence, mid-tier creative influencer campaigns, and agency demo programs",
   },
-  {
-    id: "creativeBundle",
-    name: "Creative Software Bundle",
-    description: "Bundle creative software trials with your laptops. Co-marketing with software vendors.",
-    tier: 2,
-    baseCostPerQuarter: 100_000,
-    yearAvailable: 2003,
-    yearDeprecated: null,
-    targetDemographics: ["creativeProfessional", "videoEditor", "threeDArtist", "musicProducer", "streamer"],
+  threeDArtist: {
+    1: "Posting in 3D/CAD forums and sponsoring local render meetups",
+    2: "Blender/Unreal community partnerships and 3D art YouTuber sponsorships",
+    3: "SIGGRAPH conference presence, studio demo programs, and professional 3D media campaigns",
   },
-  {
-    id: "linkedinAds",
-    name: "LinkedIn/Professional Ads",
-    description: "Targeted ads on LinkedIn and professional networking platforms.",
-    tier: 2,
-    baseCostPerQuarter: 120_000,
-    yearAvailable: 2008,
-    yearDeprecated: null,
-    targetDemographics: ["businessProfessional", "corporate", "dayTrader", "developer", "digitalNomad"],
-  },
-  {
-    id: "esportsLeague",
-    name: "Esports League Sponsorship",
-    description: "Official hardware sponsor for competitive esports leagues.",
-    tier: 2,
-    baseCostPerQuarter: 130_000,
-    yearAvailable: 2010,
-    yearDeprecated: null,
-    targetDemographics: ["esportsPro", "gamer", "streamer", "techEnthusiast", "student"],
-  },
-  {
-    id: "podcastNetwork",
-    name: "Podcast Network Ads",
-    description: "Host-read ads across popular tech, business, and creative podcasts.",
-    tier: 2,
-    baseCostPerQuarter: 100_000,
-    yearAvailable: 2014,
-    yearDeprecated: null,
-    targetDemographics: ["techEnthusiast", "developer", "businessProfessional", "creativeProfessional", "writer", "digitalNomad"],
+  musicProducer: {
+    1: "Posts in DAW communities and music production forums, gifting to bedroom producers",
+    2: "Music production YouTuber sponsorships and DAW software bundle deals",
+    3: "NAMM show presence, studio ambassador programs, and music industry publication ads",
   },
 
-  // ============================================================
-  // TIER 3 — Mass Market ($250K–$500K/qtr, 10-18 demographics)
-  // ============================================================
-  {
-    id: "printCampaign",
-    name: "Print Magazine Campaign",
-    description: "Broad print campaign across consumer, tech, and lifestyle magazines.",
-    tier: 3,
-    baseCostPerQuarter: 300_000,
-    yearAvailable: 2000,
-    yearDeprecated: 2012,
-    targetDemographics: [
-      "generalConsumer", "businessProfessional", "budgetBuyer", "student",
-      "corporate", "creativeProfessional", "writer", "desktopReplacement",
-    ],
+  // === Max Tier 4 ===
+  dayTrader: {
+    1: "Posts in trading forums and finance subreddits",
+    2: "Finance podcast ads and trading platform partnership promotions",
+    3: "Financial media sponsorships, trading conference booths, and fintech influencer campaigns",
+    4: "CNBC/Bloomberg ads, brokerage co-marketing deals, and financial advisor channel programs",
   },
-  {
-    id: "tvCampaign",
-    name: "National TV Campaign",
-    description: "Prime-time television commercials reaching the broadest possible audience.",
-    tier: 3,
-    baseCostPerQuarter: 500_000,
-    yearAvailable: 2000,
-    yearDeprecated: null,
-    targetDemographics: [
-      "generalConsumer", "businessProfessional", "budgetBuyer", "student",
-      "corporate", "creativeProfessional", "gamer", "techEnthusiast",
-      "educationK12", "developer", "desktopReplacement", "fieldWorker",
-    ],
+  desktopReplacement: {
+    1: "Power user forum posts and enthusiast community outreach",
+    2: "Hardware review site sponsorships and power user YouTuber partnerships",
+    3: "Gaming/productivity hybrid campaigns, tech publication features, and retail demo kiosks",
+    4: "Big-box retail floor presence, streaming and online ad campaigns targeting home office buyers",
   },
-  {
-    id: "displayNetwork",
-    name: "Online Display Network",
-    description: "Banner ads across major websites and ad networks. Broad reach, low engagement.",
-    tier: 3,
-    baseCostPerQuarter: 250_000,
-    yearAvailable: 2004,
-    yearDeprecated: null,
-    targetDemographics: [
-      "generalConsumer", "businessProfessional", "budgetBuyer", "student",
-      "corporate", "creativeProfessional", "gamer", "techEnthusiast",
-      "educationK12", "developer", "videoEditor", "threeDArtist",
-      "musicProducer", "esportsPro", "streamer", "digitalNomad",
-      "fieldWorker", "writer", "dayTrader", "desktopReplacement",
-    ],
+  student: {
+    1: "Founder posting in student Discord servers and r/SuggestALaptop personally",
+    2: "Google Ads on \"best student laptop\" and gifting units to small tech YouTubers",
+    3: "Campus ambassador programs, mid-tier YouTuber sponsorships, and timed back-to-school campaigns",
+    4: "Best Buy end-caps, streaming ads during back-to-school season, and university IT bulk deals",
   },
-  {
-    id: "socialMedia",
-    name: "Social Media Campaign",
-    description: "Paid campaigns across Facebook, Instagram, Twitter, and emerging platforms.",
-    tier: 3,
-    baseCostPerQuarter: 300_000,
-    yearAvailable: 2010,
-    yearDeprecated: null,
-    targetDemographics: [
-      "generalConsumer", "businessProfessional", "budgetBuyer", "student",
-      "creativeProfessional", "gamer", "techEnthusiast", "educationK12",
-      "developer", "videoEditor", "threeDArtist", "musicProducer",
-      "esportsPro", "streamer", "digitalNomad", "writer",
-      "dayTrader", "desktopReplacement",
-    ],
+  writer: {
+    1: "Posts in writing communities and NaNoWriMo forums",
+    2: "Writing tool newsletter ads and book blogger/author influencer partnerships",
+    3: "Literary conference presence, writing podcast sponsorships, and journalism trade ads",
+    4: "Mainstream media ads in magazines and bookstores, publisher co-marketing deals",
   },
-  {
-    id: "influencerNetwork",
-    name: "Influencer Network",
-    description: "Coordinated campaign across lifestyle, tech, and creative influencers.",
-    tier: 3,
-    baseCostPerQuarter: 400_000,
-    yearAvailable: 2015,
-    yearDeprecated: null,
-    targetDemographics: [
-      "student", "generalConsumer", "gamer", "streamer",
-      "creativeProfessional", "techEnthusiast", "videoEditor",
-      "musicProducer", "digitalNomad", "writer", "desktopReplacement",
-    ],
+
+  // === Max Tier 5 ===
+  businessProfessional: {
+    1: "LinkedIn thought leadership posts and local networking event demos",
+    2: "LinkedIn targeted ads and business podcast sponsorships",
+    3: "Industry conference booths, business travel media ads, and executive influencer partnerships",
+    4: "Airport lounge advertising, business magazine spreads, and airline partnership co-branding",
+    5: "Celebrity CEO endorsements, Fortune 500 fleet trials, and omnipresent professional media campaigns",
   },
-];
+  budgetBuyer: {
+    1: "Posts in deal-hunting forums and budget tech communities",
+    2: "Google Shopping ads and coupon/deal site partnerships",
+    3: "Walmart.com featured listings, budget tech YouTuber sponsorships, and comparison site placements",
+    4: "Big-box retail shelf placement, Black Friday feature deals, and mass circular advertising",
+    5: "National TV ads during prime time, celebrity spokesperson, and back-to-school institutional deals",
+  },
+  fieldWorker: {
+    1: "Posts in industry-specific forums and field tech communities",
+    2: "Trade publication ads and field equipment reseller partnerships",
+    3: "Industry trade show booths, fleet management vendor partnerships, and rugged tech media features",
+    4: "Distributor channel programs, government procurement qualification, and industry magazine campaigns",
+    5: "Major contractor fleet deals, military/government contracts, and national industrial media campaigns",
+  },
+  corporate: {
+    1: "Cold outreach to IT managers and posts in enterprise IT forums",
+    2: "IT reseller partnerships and enterprise tech publication ads",
+    3: "Enterprise trade show presence, managed service provider deals, and analyst briefings",
+    4: "Channel partner programs, government procurement listings, and enterprise media campaigns",
+    5: "Global enterprise agreements, Fortune 500 fleet deals, and institutional procurement at massive scale",
+  },
+  generalConsumer: {
+    1: "Social media posts and word-of-mouth seeding through early adopters",
+    2: "Google/Facebook targeted ads and consumer tech blog sponsored reviews",
+    3: "Mid-tier influencer campaigns, online retail promotions, and tech publication ads",
+    4: "Best Buy floor presence, streaming TV ads, and retail circular features",
+    5: "Celebrity spokesperson, Super Bowl ad, and cultural omnipresence across all media channels",
+  },
+  educationK12: {
+    1: "Direct outreach to school IT administrators and education tech forums",
+    2: "Education technology conference presence and district pilot programs",
+    3: "State education board presentations, edtech publication ads, and education ecosystem partnerships",
+    4: "Regional procurement contract bids, education distributor partnerships, and teacher influencer programs",
+    5: "National education framework deals, federal grant program qualification, and institutional procurement at scale",
+  },
+};

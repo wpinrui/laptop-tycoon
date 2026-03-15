@@ -4,13 +4,13 @@ import { GameState, Quarter, LaptopDesign, LaptopModel, ModelStatus, CompanyStat
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { QuarterSimulationResult } from "../../simulation/salesTypes";
 import { clearProjectionCache, simulateQuarter } from "../../simulation/salesEngine";
-import { applyMarketingToReach, updateBrandReach, updateCompetitorBrandReach, applySingleQuarterPerception } from "../../simulation/brandProgression";
+import { applyMarketingToReach, updateCompetitorBrandReach, applySingleQuarterPerception } from "../../simulation/brandProgression";
 import { applyDeathSpiralPrevention } from "../../simulation/deathSpiralPrevention";
 import { generateCompetitorModels, discountOldInventoryPrice } from "../../simulation/competitorAI";
 import { COMPETITORS } from "../../data/competitors";
 import { LaptopReview, Award, applyAwardBonuses } from "../../simulation/reviewsAwards";
 import { PERCEPTION_MEANINGFUL_DELTA, AI_MAX_MODEL_AGE } from "../../simulation/tunables";
-import { MarketingMode, MARKETING_CHANNELS, isChannelAvailable } from "../../data/marketingChannels";
+import { MarketingTier } from "../../data/types";
 
 export interface CompetitorModelEntry {
   competitorId: string;
@@ -31,8 +31,10 @@ type GameAction =
   | { type: "SET_RETAIL_PRICE"; modelId: string; retailPrice: number }
   | { type: "ADD_COMPETITOR_MODELS"; models: CompetitorModelEntry[] }
   | { type: "APPLY_QUARTER_RESULT"; result: QuarterSimulationResult }
-  | { type: "TOGGLE_MARKETING_CHANNEL"; channelId: string }
-  | { type: "SET_MARKETING_MODE"; channelId: string; mode: MarketingMode }
+  | { type: "ADD_CAMPAIGN"; demographicId: DemographicId; tier: MarketingTier }
+  | { type: "REMOVE_CAMPAIGN"; demographicId: DemographicId }
+  | { type: "UPDATE_CAMPAIGN_TIER"; demographicId: DemographicId; tier: MarketingTier }
+  | { type: "TOGGLE_CAMPAIGN_PAUSE"; demographicId: DemographicId }
   | { type: "SET_REVIEWS"; reviews: LaptopReview[] }
   | { type: "SET_AWARDS"; awards: Award[] };
 
@@ -181,11 +183,6 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         quarterHistory: [],
         currentYearReviews: [],
         currentYearAwards: [],
-        // Auto-remove deprecated marketing channels
-        activeMarketingChannels: state.activeMarketingChannels.filter((ac) => {
-          const ch = MARKETING_CHANNELS.find((c) => c.id === ac.channelId);
-          return ch && isChannelAvailable(ch, nextYear);
-        }),
         companies: cleanupAIModels(companiesAfterSpiral, nextYear).map((comp) => {
           if (!comp.isPlayer) return comp;
           return {
@@ -346,15 +343,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         result.laptopResults.map((r) => [r.laptopId, r]),
       );
 
-      // Apply marketing reach first (already used for simulation), then WoM on top
-      const marketingReach = applyMarketingToReach(state);
-      const stateWithMarketing = {
-        ...state,
-        companies: state.companies.map((c) =>
-          c.isPlayer ? { ...c, brandReach: marketingReach } : c,
-        ),
-      };
-      const newPlayerReach = updateBrandReach(stateWithMarketing, result);
+      // Apply campaign-based reach (acquisitions, spillover, decay)
+      const newPlayerReach = applyMarketingToReach(state);
       const newPlayerPerception = Object.fromEntries(
         result.perceptionChanges.map((pc) => [pc.demographicId, pc.newPerception]),
       ) as Record<DemographicId, number>;
@@ -441,29 +431,40 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         lastSimulationResult: result,
       };
     }
-    case "TOGGLE_MARKETING_CHANNEL": {
-      const existing = state.activeMarketingChannels.find((c) => c.channelId === action.channelId);
-      if (existing) {
-        // Deactivate
-        return {
-          ...state,
-          activeMarketingChannels: state.activeMarketingChannels.filter((c) => c.channelId !== action.channelId),
-        };
+    case "ADD_CAMPAIGN": {
+      // One campaign per demographic — reject if already exists
+      if (state.marketingCampaigns.some((c) => c.demographicId === action.demographicId)) {
+        return state;
       }
-      // Activate with default aggressive mode
       return {
         ...state,
-        activeMarketingChannels: [...state.activeMarketingChannels, { channelId: action.channelId, mode: "aggressive" }],
+        marketingCampaigns: [
+          ...state.marketingCampaigns,
+          { demographicId: action.demographicId, tier: action.tier, paused: false },
+        ],
       };
     }
-    case "SET_MARKETING_MODE": {
+    case "REMOVE_CAMPAIGN":
       return {
         ...state,
-        activeMarketingChannels: state.activeMarketingChannels.map((c) =>
-          c.channelId === action.channelId ? { ...c, mode: action.mode } : c,
+        marketingCampaigns: state.marketingCampaigns.filter(
+          (c) => c.demographicId !== action.demographicId,
         ),
       };
-    }
+    case "UPDATE_CAMPAIGN_TIER":
+      return {
+        ...state,
+        marketingCampaigns: state.marketingCampaigns.map((c) =>
+          c.demographicId === action.demographicId ? { ...c, tier: action.tier } : c,
+        ),
+      };
+    case "TOGGLE_CAMPAIGN_PAUSE":
+      return {
+        ...state,
+        marketingCampaigns: state.marketingCampaigns.map((c) =>
+          c.demographicId === action.demographicId ? { ...c, paused: !c.paused } : c,
+        ),
+      };
     case "SET_REVIEWS":
       return { ...state, currentYearReviews: action.reviews };
     case "SET_AWARDS":
