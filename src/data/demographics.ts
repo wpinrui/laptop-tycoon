@@ -11,6 +11,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "generalist",
     description: "IT departments buying in bulk. Value reliability, support, and keyboards. Steady presence throughout.",
     priceWeight: 0.05,
+    permeability: 0.10,
     screenSizePreference: {
       preferredMin: 14,
       preferredMax: 15,
@@ -40,6 +41,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "generalist",
     description: "Road warriors who need portability, good keyboards, and a professional look. Growing segment.",
     priceWeight: 0.15,
+    permeability: 0.15,
     screenSizePreference: {
       preferredMin: 13,
       preferredMax: 14,
@@ -69,6 +71,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "generalist",
     description: "Price-conscious buyers who need something portable that lasts through lectures. Huge population.",
     priceWeight: 0.30,
+    permeability: 0.20,
     screenSizePreference: {
       preferredMin: 13,
       preferredMax: 15,
@@ -98,6 +101,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "generalist",
     description: "Designers, photographers, video editors. Will pay a premium for display and performance. Small but growing.",
     priceWeight: 0.05,
+    permeability: 0.40,
     screenSizePreference: {
       preferredMin: 15,
       preferredMax: 17,
@@ -127,6 +131,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "generalist",
     description: "All about gaming performance, display, and thermals. Tiny segment pre-2005, explodes after.",
     priceWeight: 0.15,
+    permeability: 0.70,
     screenSizePreference: {
       preferredMin: 15,
       preferredMax: 17,
@@ -156,6 +161,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "generalist",
     description: "Tastemakers. Care about performance, value, connectivity, and thermals. Small but outsized brand influence.",
     priceWeight: 0.15,
+    permeability: 0.80,
     screenSizePreference: {
       preferredMin: 13,
       preferredMax: 15,
@@ -185,6 +191,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "generalist",
     description: "Largest group. Buys based on price, brand recognition, and looks. Heavily influenced by marketing.",
     priceWeight: 0.25,
+    permeability: 0.10,
     screenSizePreference: {
       preferredMin: 14,
       preferredMax: 16,
@@ -214,6 +221,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "generalist",
     description: "Price above all else. Tolerates bad everything if cheap. No brand loyalty.",
     priceWeight: 0.40,
+    permeability: 0.15,
     screenSizePreference: {
       preferredMin: 14,
       preferredMax: 16,
@@ -243,6 +251,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "generalist",
     description: "Performance and keyboard obsessed. Need fast compiles, many ports, and all-day battery. RAM-hungry.",
     priceWeight: 0.10,
+    permeability: 0.65,
     screenSizePreference: {
       preferredMin: 13,
       preferredMax: 15,
@@ -272,6 +281,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "generalist",
     description: "Schools buying durable, cheap laptops for classrooms. Price-sensitive with emphasis on build quality and battery.",
     priceWeight: 0.35,
+    permeability: 0.10,
     screenSizePreference: {
       preferredMin: 11,
       preferredMax: 14,
@@ -305,6 +315,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "niche",
     description: "CPU-bound sustained workloads. Need top-tier performance, fast storage, big displays, and good thermals.",
     priceWeight: 0.05,
+    permeability: 0.45,
     screenSizePreference: {
       preferredMin: 15,
       preferredMax: 17,
@@ -334,6 +345,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "niche",
     description: "GPU-bound workstation users. Rendering, CAD, and 3D modelling demand GPU power, display accuracy, and cooling.",
     priceWeight: 0.05,
+    permeability: 0.40,
     screenSizePreference: {
       preferredMin: 15,
       preferredMax: 17,
@@ -363,6 +375,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "niche",
     description: "Only demographic that heavily weights audio output. Need great speakers, many ports for audio interfaces, and low-latency performance.",
     priceWeight: 0.10,
+    permeability: 0.35,
     screenSizePreference: {
       preferredMin: 13,
       preferredMax: 15,
@@ -392,6 +405,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "niche",
     description: "Gamer pushed to extremes. Maximum gaming performance, display refresh, keyboard response, and thermals. Near-zero price sensitivity.",
     priceWeight: 0.02,
+    permeability: 0.75,
     screenSizePreference: {
       preferredMin: 15,
       preferredMax: 17,
@@ -421,6 +435,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "niche",
     description: "Only demographic that heavily weights webcam. Need great camera, speakers, connectivity for capture cards, and raw performance.",
     priceWeight: 0.08,
+    permeability: 0.70,
     screenSizePreference: {
       preferredMin: 15,
       preferredMax: 17,
@@ -450,6 +465,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "niche",
     description: "Extreme portability above all. Battery life, weight, thinness, and connectivity for working anywhere in the world.",
     priceWeight: 0.10,
+    permeability: 0.45,
     screenSizePreference: {
       preferredMin: 12,
       preferredMax: 14,
@@ -479,6 +495,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "niche",
     description: "Rugged use cases — construction, logistics, inspections. Only demographic prioritising build quality (durability) above all else.",
     priceWeight: 0.10,
+    permeability: 0.15,
     screenSizePreference: {
       preferredMin: 14,
       preferredMax: 15,
@@ -508,6 +525,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "niche",
     description: "Keyboard-first profile. Great typing experience, long battery, light weight, and a good display for reading. Unique input emphasis.",
     priceWeight: 0.15,
+    permeability: 0.20,
     screenSizePreference: {
       preferredMin: 13,
       preferredMax: 14,
@@ -537,6 +555,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "niche",
     description: "Multi-monitor, ports-heavy workstation profile. Need great display, many connectivity options, and fast performance.",
     priceWeight: 0.05,
+    permeability: 0.30,
     screenSizePreference: {
       preferredMin: 15,
       preferredMax: 17,
@@ -566,6 +585,7 @@ export const DEMOGRAPHICS: Demographic[] = [
     tier: "niche",
     description: "Opposite of portable — weight doesn't matter, power does. Biggest screens, maximum performance, and serious thermals.",
     priceWeight: 0.10,
+    permeability: 0.30,
     screenSizePreference: {
       preferredMin: 17,
       preferredMax: 18,

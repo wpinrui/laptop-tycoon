@@ -206,6 +206,11 @@ export interface Demographic {
   statWeights: Record<LaptopStat, number>;
   /** Weight for price score (cheaper = higher score). statWeights + priceWeight must sum to 1.0. */
   priceWeight: number;
+  /**
+   * S-curve permeability floor (0–1). Sets minimum growth factor at low reach.
+   * High = actively seeks new brands (e.g. tech enthusiasts). Low = only buys established brands.
+   */
+  permeability: number;
   description: string;
 }
 

@@ -20,8 +20,6 @@ export const AWARENESS_DIVISOR = 500_000;
 export const WOM_DIVISOR = 5_000;
 /** Reach decay rate when no products on sale (proportional, per year) */
 export const REACH_INACTIVITY_DECAY = 0.10;
-/** Competitor time-in-market reach growth (raw reach points per year just for existing) */
-export const COMPETITOR_TIME_IN_MARKET_BONUS = 0.5;
 
 // ==================== Brand Perception ====================
 

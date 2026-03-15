@@ -15,7 +15,6 @@ import {
   WOM_DIVISOR,
   PERCEPTION_CONTRIBUTION_SCALE,
   REACH_INACTIVITY_DECAY,
-  COMPETITOR_TIME_IN_MARKET_BONUS,
   PERCEPTION_DECAY,
   NEGATIVITY_MULTIPLIER,
   PERCEPTION_MIN,
@@ -25,14 +24,47 @@ import {
 // ==================== Brand Reach ====================
 
 /**
- * Logistic S-curve growth factor.
+ * Logistic S-curve growth factor with permeability floor.
  * Low reach → slow growth (cold start), mid reach → fast growth, high reach → plateaus.
+ * Permeability sets a minimum growth factor so permeable demographics (e.g. tech enthusiasts)
+ * still grow meaningfully even at 0% reach, while mass market demographics stay punishing.
  */
-function sCurveGrowthFactor(currentReach: number): number {
+function sCurveGrowthFactor(currentReach: number, permeability: number): number {
   const x = currentReach;
   const expTerm = Math.exp(-S_CURVE_STEEPNESS * (x - S_CURVE_MIDPOINT));
   // Derivative of logistic: peaks at midpoint, low at extremes
-  return S_CURVE_STEEPNESS * expTerm / Math.pow(1 + expTerm, 2);
+  const baseFactor = S_CURVE_STEEPNESS * expTerm / Math.pow(1 + expTerm, 2);
+  // Peak of the logistic derivative (at midpoint) = steepness / 4
+  const peakFactor = S_CURVE_STEEPNESS / 4;
+  // Permeability floor: fraction of peak growth always available
+  const floor = permeability * peakFactor;
+  return Math.max(baseFactor, floor);
+}
+
+/** Aggregate units sold per demographic from laptop results */
+function buildUnitsByDemographic(
+  results: LaptopSalesResult[],
+): Partial<Record<DemographicId, number>> {
+  const units: Partial<Record<DemographicId, number>> = {};
+  for (const r of results) {
+    for (const db of r.demographicBreakdown) {
+      const demId = db.demographicId;
+      units[demId] = (units[demId] ?? 0) + db.unitsDemanded;
+    }
+  }
+  return units;
+}
+
+/** Apply S-curve growth, inactivity decay, and clamp reach to [0, 100] */
+function applyReachGrowth(
+  current: number,
+  rawGrowth: number,
+  permeability: number,
+  hasProductsOnSale: boolean,
+): number {
+  const growth = rawGrowth * sCurveGrowthFactor(current, permeability) * 100;
+  const decay = !hasProductsOnSale ? current * (REACH_INACTIVITY_DECAY / 4) : 0;
+  return Math.max(0, Math.min(100, current + growth - decay));
 }
 
 /** Average reach across all demographics */
@@ -57,13 +89,7 @@ export function updateBrandReach(
   );
 
   // Build per-demographic units sold from player results
-  const unitsByDemographic: Partial<Record<DemographicId, number>> = {};
-  for (const pr of result.playerResults) {
-    for (const db of pr.demographicBreakdown) {
-      const demId = db.demographicId;
-      unitsByDemographic[demId] = (unitsByDemographic[demId] ?? 0) + db.unitsDemanded;
-    }
-  }
+  const unitsByDemographic = buildUnitsByDemographic(result.playerResults);
 
   for (const dem of DEMOGRAPHICS) {
     const demId = dem.id;
@@ -89,13 +115,8 @@ export function updateBrandReach(
     const perception = player.brandPerception[demId] ?? 0;
     rawGrowth += (unitsSold / WOM_DIVISOR) * (1 + perception / 100);
 
-    // Apply S-curve: growth is modulated by current reach position
-    const growth = rawGrowth * sCurveGrowthFactor(current) * 100;
-
-    // Decay if no products on sale (quarterly portion)
-    const decay = !hasProductsOnSale ? current * (REACH_INACTIVITY_DECAY / 4) : 0;
-
-    newReach[demId] = Math.max(0, Math.min(100, current + growth - decay));
+    // Apply S-curve growth + decay (same formula as competitors)
+    newReach[demId] = applyReachGrowth(current, rawGrowth, dem.permeability, hasProductsOnSale);
   }
 
   return newReach;
@@ -103,7 +124,8 @@ export function updateBrandReach(
 
 /**
  * Update per-demographic brand reach for a competitor (quarterly).
- * Competitors grow reach from sales volume + time-in-market (simplified).
+ * Uses the same formula as player reach: WoM from sales (perception-amplified).
+ * No time-in-market bonus — AI competitors use the exact same pipeline as the player.
  */
 export function updateCompetitorBrandReach(
   comp: CompanyState,
@@ -111,27 +133,24 @@ export function updateCompetitorBrandReach(
 ): Record<DemographicId, number> {
   const oldReach = comp.brandReach;
   const newReach = { ...oldReach };
+  const hasProductsOnSale = comp.models.some(
+    (m) => m.status === "manufacturing" || m.status === "onSale",
+  );
 
   // Build per-demographic units sold
   const compResults = result.laptopResults.filter((r) => r.owner === comp.id);
-  const unitsByDemographic: Partial<Record<DemographicId, number>> = {};
-  for (const cr of compResults) {
-    for (const db of cr.demographicBreakdown) {
-      const demId = db.demographicId;
-      unitsByDemographic[demId] = (unitsByDemographic[demId] ?? 0) + db.unitsDemanded;
-    }
-  }
+  const unitsByDemographic = buildUnitsByDemographic(compResults);
 
   for (const dem of DEMOGRAPHICS) {
     const demId = dem.id;
     const current = oldReach[demId] ?? 0;
 
-    // Competitor reach growth from sales + time-in-market (quarterly)
+    // Word of mouth — same formula as player (perception-amplified)
     const unitsSold = unitsByDemographic[demId] ?? 0;
-    const rawGrowth = unitsSold / WOM_DIVISOR + (COMPETITOR_TIME_IN_MARKET_BONUS / 4);
-    const growth = rawGrowth * sCurveGrowthFactor(current) * 100;
+    const perception = comp.brandPerception[demId] ?? 0;
+    const rawGrowth = (unitsSold / WOM_DIVISOR) * (1 + perception / 100);
 
-    newReach[demId] = Math.max(0, Math.min(100, current + growth));
+    newReach[demId] = applyReachGrowth(current, rawGrowth, dem.permeability, hasProductsOnSale);
   }
 
   return newReach;
