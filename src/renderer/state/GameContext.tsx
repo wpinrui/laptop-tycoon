@@ -542,12 +542,15 @@ function buildYearResult(
   const laptopResults = Array.from(laptopResultMap.values());
   const playerResults = laptopResults.filter((r) => r.owner === "player");
 
+  const totalMarketingCost = quarters.reduce((s, q) => s + q.marketingCost, 0);
+
   return {
     year: state.year,
     laptopResults,
     playerResults,
     totalRevenue,
     totalProfit,
+    marketingCost: totalMarketingCost,
     cashAfterResolution: lastQuarter.cashAfterResolution,
     gameOver: lastQuarter.cashAfterResolution < 0,
     perceptionChanges,

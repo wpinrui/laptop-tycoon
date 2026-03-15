@@ -6,6 +6,15 @@
 import { DemographicId } from "../data/types";
 import { DEMOGRAPHICS } from "../data/demographics";
 import { GameState, CompanyState, getPlayerCompany } from "../renderer/state/gameTypes";
+import {
+  MARKETING_CHANNELS,
+  CHANNEL_REACH_PER_TIER,
+  PREMIUM_REACH_MULTIPLIER,
+  AGGRESSIVE_PERCEPTION_PENALTY,
+  PREMIUM_PERCEPTION_BONUS,
+  PREMIUM_WOM_BONUS,
+  isChannelAvailable,
+} from "../data/marketingChannels";
 import { LaptopSalesResult, QuarterSimulationResult, sellThroughRate, marketAverageRawVP } from "./salesTypes";
 import {
   S_CURVE_STEEPNESS,
@@ -93,16 +102,30 @@ export function updateBrandReach(
     const demId = dem.id;
     const current = oldReach[demId] ?? 0;
 
-    // Raw growth inputs (divided by 4 for quarterly application)
+    // Raw growth inputs
     let rawGrowth = 0;
+    let womMultiplier = 1;
 
-    // TODO: Marketing channel contributions will be added here (task 5d)
+    // Marketing channels — active channels targeting this demographic contribute reach
+    for (const ac of state.activeMarketingChannels) {
+      const channel = MARKETING_CHANNELS.find((c) => c.id === ac.channelId);
+      if (!channel || !isChannelAvailable(channel, state.year)) continue;
+      if (!channel.targetDemographics.includes(demId)) continue;
+
+      let reachContribution = CHANNEL_REACH_PER_TIER[channel.tier];
+      if (ac.mode === "premium") {
+        reachContribution *= PREMIUM_REACH_MULTIPLIER;
+        womMultiplier += PREMIUM_WOM_BONUS;
+      }
+      rawGrowth += reachContribution;
+    }
 
     // Word of mouth — organic from units sold this quarter
     //    Positive perception amplifies WOM, negative perception dampens it
+    //    Premium marketing channels add a small WoM multiplier
     const unitsSold = unitsByDemographic[demId] ?? 0;
     const perception = player.brandPerception[demId] ?? 0;
-    rawGrowth += (unitsSold / WOM_DIVISOR) * (1 + perception / 100);
+    rawGrowth += (unitsSold / WOM_DIVISOR) * (1 + perception / 100) * womMultiplier;
 
     // Apply S-curve growth + decay (same formula as competitors)
     newReach[demId] = applyReachGrowth(current, rawGrowth, dem.permeability, hasProductsOnSale);
@@ -165,6 +188,7 @@ function applyOneQuarterPerception(
   oldHistory: Record<DemographicId, number[]>,
   allLaptopResults: LaptopSalesResult[],
   companyResults: LaptopSalesResult[],
+  marketingModifiers?: Partial<Record<DemographicId, number>>,
 ): PerceptionUpdateResult {
   const newPerception: Partial<Record<DemographicId, number>> = {};
   const newHistory: Partial<Record<DemographicId, number[]>> = {};
@@ -195,6 +219,9 @@ function applyOneQuarterPerception(
       experienceValue = avgExperience < 0 ? avgExperience * NEGATIVITY_MULTIPLIER : avgExperience;
     }
 
+    // Apply marketing quality modifier (aggressive = slight penalty, premium = slight bonus)
+    experienceValue += marketingModifiers?.[demId] ?? 0;
+
     // Push into rolling window, drop oldest if full
     history.push(experienceValue);
     if (history.length > PERCEPTION_WINDOW_SIZE) {
@@ -216,14 +243,37 @@ function applyOneQuarterPerception(
 }
 
 /**
+ * Build per-demographic marketing perception modifiers from active channels.
+ * Aggressive channels penalize perception, premium channels boost it.
+ */
+function buildMarketingPerceptionModifiers(
+  state: GameState,
+): Partial<Record<DemographicId, number>> {
+  const modifiers: Partial<Record<DemographicId, number>> = {};
+  for (const ac of state.activeMarketingChannels) {
+    const channel = MARKETING_CHANNELS.find((c) => c.id === ac.channelId);
+    if (!channel || !isChannelAvailable(channel, state.year)) continue;
+    const bonus = ac.mode === "premium" ? PREMIUM_PERCEPTION_BONUS : AGGRESSIVE_PERCEPTION_PENALTY;
+    for (const demId of channel.targetDemographics) {
+      modifiers[demId] = (modifiers[demId] ?? 0) + bonus;
+    }
+  }
+  return modifiers;
+}
+
+/**
  * Apply a single quarter of perception update for any company.
  * Returns both the new perception values and the updated history window.
+ * Pass the GameState to include marketing perception modifiers for the player.
  */
 export function applySingleQuarterPerception(
   company: CompanyState,
   allLaptopResults: LaptopSalesResult[],
+  state?: GameState,
 ): PerceptionUpdateResult {
   const companyResults = allLaptopResults.filter((r) => r.owner === company.id);
   const history = company.perceptionHistory ?? {};
-  return applyOneQuarterPerception(history, allLaptopResults, companyResults);
+  // Only apply marketing modifiers for the player
+  const modifiers = company.isPlayer && state ? buildMarketingPerceptionModifiers(state) : undefined;
+  return applyOneQuarterPerception(history, allLaptopResults, companyResults, modifiers);
 }

@@ -37,6 +37,7 @@ import {
 import { generateCompetitorModels } from "./competitorAI";
 import { COMPETITORS } from "../data/competitors";
 import { averageReach, applySingleQuarterPerception } from "./brandProgression";
+import { MARKETING_CHANNELS, getChannelCost, isChannelAvailable } from "../data/marketingChannels";
 import { getTheoreticalMaxima, getPriceScaleFactor, clearTheoreticalMaxCache } from "./theoreticalMax";
 
 // Cache synthetic competitor models per year for stable demand projections
@@ -230,6 +231,14 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
 
   if (allLaptops.length === 0) {
     const emptyPerception = computeQuarterlyPerceptionChanges(state, []);
+    // Still charge marketing costs even with no laptops on market
+    let emptyMarketingCost = 0;
+    for (const ac of state.activeMarketingChannels) {
+      const channel = MARKETING_CHANNELS.find((c) => c.id === ac.channelId);
+      if (channel && isChannelAvailable(channel, year)) {
+        emptyMarketingCost += getChannelCost(channel, year, ac.mode);
+      }
+    }
     return {
       year,
       quarter,
@@ -237,7 +246,8 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
       playerResults: [],
       totalRevenue: 0,
       totalProfit: 0,
-      cashAfterResolution: state.cash,
+      marketingCost: emptyMarketingCost,
+      cashAfterResolution: state.cash - emptyMarketingCost,
       perceptionChanges: emptyPerception.changes,
       playerPerceptionHistory: emptyPerception.history,
     };
@@ -342,8 +352,17 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
 
   const playerResults = laptopResults.filter((r) => r.owner === player.id);
 
-  // Cash flow: revenue collected quarterly
-  const cashAfterResolution = state.cash + playerRevenue;
+  // Marketing costs: deducted quarterly from active channels
+  let marketingCost = 0;
+  for (const ac of state.activeMarketingChannels) {
+    const channel = MARKETING_CHANNELS.find((c) => c.id === ac.channelId);
+    if (channel && isChannelAvailable(channel, year)) {
+      marketingCost += getChannelCost(channel, year, ac.mode);
+    }
+  }
+
+  // Cash flow: revenue collected quarterly, marketing costs deducted
+  const cashAfterResolution = state.cash + playerRevenue - marketingCost;
 
   // Compute player perception changes for this quarter
   const perceptionResult = computeQuarterlyPerceptionChanges(state, laptopResults);
@@ -355,6 +374,7 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
     playerResults,
     totalRevenue: playerRevenue,
     totalProfit: playerProfit,
+    marketingCost,
     cashAfterResolution,
     perceptionChanges: perceptionResult.changes,
     playerPerceptionHistory: perceptionResult.history,
@@ -373,7 +393,7 @@ function computeQuarterlyPerceptionChanges(
   laptopResults: LaptopSalesResult[],
 ): { changes: PerceptionChange[]; history: Record<DemographicId, number[]> } {
   const player = getPlayerCompany(state);
-  const { perception: newPerception, history } = applySingleQuarterPerception(player, laptopResults);
+  const { perception: newPerception, history } = applySingleQuarterPerception(player, laptopResults, state);
   const playerResults = laptopResults.filter((r) => r.owner === player.id);
 
   const changes = DEMOGRAPHICS.map((dem) => {

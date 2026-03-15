@@ -90,6 +90,8 @@ export interface QuarterSimulationResult {
   playerResults: LaptopSalesResult[];
   totalRevenue: number;
   totalProfit: number;
+  /** Total quarterly marketing channel spend */
+  marketingCost: number;
   cashAfterResolution: number;
   /** Per-demographic perception changes for the player this quarter */
   perceptionChanges: PerceptionChange[];
@@ -103,6 +105,8 @@ export interface YearSimulationResult {
   playerResults: LaptopSalesResult[];
   totalRevenue: number;
   totalProfit: number;
+  /** Total marketing channel spend for the year */
+  marketingCost: number;
   cashAfterResolution: number;
   gameOver: boolean;
   /** Per-demographic perception changes for the player this year */
