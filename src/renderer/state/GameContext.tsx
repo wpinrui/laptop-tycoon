@@ -1,6 +1,6 @@
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
 import { DemographicId } from "../../data/types";
-import { GameState, Quarter, LaptopDesign, LaptopModel, ModelStatus, CompanyState, ActiveMarketingChannel, createInitialGameState, hasDiscontinuedComponents } from "./gameTypes";
+import { GameState, Quarter, LaptopDesign, LaptopModel, ModelStatus, CompanyState, createInitialGameState, hasDiscontinuedComponents } from "./gameTypes";
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { QuarterSimulationResult } from "../../simulation/salesTypes";
 import { clearProjectionCache, simulateQuarter } from "../../simulation/salesEngine";

@@ -4,7 +4,6 @@ import {
   DemographicId,
   StatVector,
   ALL_STATS,
-  STAT_LABELS,
 } from "../data/types";
 import { DEMOGRAPHICS } from "../data/demographics";
 import { STARTING_DEMAND_POOL } from "../data/startingDemand";

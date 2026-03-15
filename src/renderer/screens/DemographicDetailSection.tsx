@@ -1,7 +1,7 @@
 import { CSSProperties, useState, useMemo } from "react";
 import { DEMOGRAPHICS } from "../../data/demographics";
 import { LaptopStat, ALL_STATS, DemographicId, Demographic, STAT_LABELS } from "../../data/types";
-import { LaptopSalesResult, PerceptionChange, PerceptionInsight, StatContributor } from "../../simulation/salesTypes";
+import { LaptopSalesResult, PerceptionChange, StatContributor } from "../../simulation/salesTypes";
 import { tokens } from "../shell/tokens";
 import { formatNumber } from "../utils/formatCash";
 import { tableStyle, thStyle, tdStyle, tdRight, sectionHeadingStyle, cardStyle } from "./summaryStyles";

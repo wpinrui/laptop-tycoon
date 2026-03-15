@@ -12,7 +12,7 @@ import { generateCompetitorModels } from "../../../simulation/competitorAI";
 import { simulateQuarter } from "../../../simulation/salesEngine";
 import { generateReviews, determineAwards } from "../../../simulation/reviewsAwards";
 import { QuarterSimulationResult, LaptopSalesResult } from "../../../simulation/salesTypes";
-import { QUARTER_LABELS, formatCash } from "../../utils/formatCash";
+import { QUARTER_LABELS } from "../../utils/formatCash";
 
 /** Models that need a current-year manufacturing plan before simulation. */
 function modelsNeedingPlans(state: { year: number; models: ReturnType<typeof getActiveModels> }) {

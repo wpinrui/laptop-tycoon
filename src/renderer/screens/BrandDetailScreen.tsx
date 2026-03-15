@@ -272,8 +272,10 @@ function PerceptionRow({ dem, player, latestPerceptionChanges }: {
   const perception = formatPerception(player.brandPerception[dem.id] ?? 0);
   const change = latestPerceptionChanges.get(dem.id);
   const hasMeaningfulChange = change && Math.abs(change.delta) >= PERCEPTION_MEANINGFUL_DELTA;
-  const history = player.perceptionHistory?.[dem.id] ?? [];
-  const trajectory = useMemo(() => computePerceptionTrajectory(history), [history]);
+  const trajectory = useMemo(
+    () => computePerceptionTrajectory(player.perceptionHistory?.[dem.id] ?? []),
+    [player.perceptionHistory, dem.id],
+  );
 
   return (
     <div style={{ marginBottom: hasMeaningfulChange ? 10 : 6 }}>
