@@ -57,7 +57,7 @@ const nicheSectionHeadingStyle: CSSProperties = {
 
 const demographicTagStyle: CSSProperties = {
   display: "inline-block",
-  fontSize: 11,
+  fontSize: tokens.font.sizeSmall,
   color: tokens.colors.accent,
   background: tokens.colors.accentBg,
   borderRadius: tokens.borderRadius.sm,
@@ -125,7 +125,7 @@ function ChannelCard({
 
       {/* Deprecation notice */}
       {channel.yearDeprecated !== null && (
-        <p style={{ fontSize: 11, color: tokens.colors.warning, margin: `0 0 ${tokens.spacing.xs}px` }}>
+        <p style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.warning, margin: `0 0 ${tokens.spacing.xs}px` }}>
           Available until {channel.yearDeprecated}
         </p>
       )}
@@ -194,9 +194,9 @@ function ModeButton({
       <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 2 }}>
         {icon}
         <span style={{ fontWeight: 600, fontSize: tokens.font.sizeSmall }}>{label}</span>
-        <span style={{ fontSize: 11, color: tokens.colors.textMuted, marginLeft: "auto" }}>{sublabel}</span>
+        <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, marginLeft: "auto" }}>{sublabel}</span>
       </div>
-      <div style={{ fontSize: 11, color: tokens.colors.textMuted }}>{description}</div>
+      <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>{description}</div>
     </button>
   );
 }
@@ -407,7 +407,7 @@ export function BrandDetailScreen() {
               <div key={tier} style={{ marginBottom: tokens.spacing.xl }}>
                 <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm, marginBottom: tokens.spacing.sm }}>
                   <span style={{
-                    fontSize: 11,
+                    fontSize: tokens.font.sizeSmall,
                     fontWeight: 700,
                     color: tierColor[tier],
                     letterSpacing: 0.5,

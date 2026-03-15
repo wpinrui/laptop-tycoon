@@ -16,6 +16,8 @@ import {
   AWARD_SECONDARY_PERCEPTION_BONUS,
   AWARD_SECONDARY_REACH_BONUS,
   PERCEPTION_CONTRIBUTION_SCALE,
+  PERCEPTION_MIN,
+  PERCEPTION_MAX,
 } from "./tunables";
 
 // ==================== Types ====================
@@ -686,7 +688,7 @@ export function applyAwardBonuses(
       }
 
       if (totalPerceptionBoost > 0 || totalReachBoost > 0) {
-        newPerception[demId] = Math.min(50, Math.max(-50, newPerception[demId] + totalPerceptionBoost));
+        newPerception[demId] = Math.min(PERCEPTION_MAX, Math.max(PERCEPTION_MIN, newPerception[demId] + totalPerceptionBoost));
         newReach[demId] = Math.min(100, newReach[demId] + totalReachBoost);
         // Inject into rolling window history so the boost persists
         const experienceBoost = totalPerceptionBoost / PERCEPTION_CONTRIBUTION_SCALE;

@@ -10,6 +10,7 @@ import { COMPETITORS, CompetitorArchetype } from "../../data/competitors";
 import { YearSimulationResult, QuarterSimulationResult } from "../../simulation/salesTypes";
 import { LaptopReview, Award } from "../../simulation/reviewsAwards";
 import { MarketingMode } from "../../data/marketingChannels";
+import { PERCEPTION_CONTRIBUTION_SCALE, PERCEPTION_WINDOW_SIZE } from "../../simulation/tunables";
 
 export type ModelType = "brandNew" | "successor" | "specBump";
 
@@ -119,12 +120,9 @@ export function modelDisplayName(companyName: string, designName: string): strin
 function initPerceptionHistory(
   perception: Record<DemographicId, number>,
 ): Record<DemographicId, number[]> {
-  const WINDOW = 12;
-  // Must match PERCEPTION_CONTRIBUTION_SCALE in tunables.ts
-  const SCALE = 5;
   const history: Partial<Record<DemographicId, number[]>> = {};
   for (const [demId, p] of Object.entries(perception)) {
-    history[demId as DemographicId] = Array(WINDOW).fill(p / SCALE);
+    history[demId as DemographicId] = Array(PERCEPTION_WINDOW_SIZE).fill(p / PERCEPTION_CONTRIBUTION_SCALE);
   }
   return history as Record<DemographicId, number[]>;
 }

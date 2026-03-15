@@ -199,7 +199,7 @@ function PerceptionChangeCard({ change }: { change: PerceptionChange }) {
                 <div>
                   <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>Gap</div>
                   <div style={{ fontSize: tokens.font.sizeBase, fontWeight: 600, color: insight.vpGap >= 0 ? tokens.colors.success : tokens.colors.danger }}>
-                    {insight.vpGap >= 0 ? "+" : ""}{(insight.vpGap / insight.marketAvgVP * 100).toFixed(0)}%
+                    {insight.vpGap >= 0 ? "+" : ""}{insight.marketAvgVP !== 0 ? (insight.vpGap / insight.marketAvgVP * 100).toFixed(0) : "0"}%
                   </div>
                 </div>
               </div>
