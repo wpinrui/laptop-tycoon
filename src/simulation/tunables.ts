@@ -23,11 +23,11 @@ export const REACH_INACTIVITY_DECAY = 0.10;
 
 /** Base cost per quarter (year-2000 dollars) for each marketing tier. Inflates yearly. */
 export const TIER_COSTS: Record<MarketingTier, number> = {
-  1: 10_000,
-  2: 35_000,
-  3: 100_000,
-  4: 250_000,
-  5: 600_000,
+  1: 2_000,
+  2: 50_000,
+  3: 200_000,
+  4: 750_000,
+  5: 3_000_000,
 };
 
 /** Raw customer acquisitions per quarter per marketing tier. */
