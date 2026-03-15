@@ -15,7 +15,7 @@ A text-driven tycoon game where the player runs a laptop company from 2000 onwar
 1. **Each quarter (Q1–Q4):**
    a. Design wizard available — design new laptop(s) if model slots are open (available any quarter before simulation runs)
    b. Manufacturing wizard available — set/adjust price, order units
-   c. Purchase sponsorships, set awareness budget
+   c. Manage marketing channels (activate/deactivate, set aggressive or premium mode)
    d. Sales simulation runs for that quarter's buyer pool
    e. Revenue collected, cash balance updated
    f. After Q1: laptop reviews are published
@@ -183,6 +183,8 @@ Each buyer type has:
 - A **population size** that shifts over the years
 - A **screen size preference** distribution (soft filter with penalties)
 
+**Generalist Demographics (10):**
+
 | Demographic | Key Stats Valued | Price Sensitivity | Notes |
 |-------------|-----------------|-------------------|-------|
 | Corporate / Enterprise | Keyboard, build quality, reliability | Low (per unit), bulk orders | Steady presence. |
@@ -193,6 +195,25 @@ Each buyer type has:
 | Tech Enthusiast | Performance, value-for-money, connectivity, thermals | Moderate | Small population. 2-year replacement cycle. |
 | General Consumer | Price, design | High | Largest group. |
 | Budget Buyer | Price above all else | Extreme | Tolerates bad everything if cheap enough. |
+| Developer | Performance, keyboard, connectivity | Moderate | Grows significantly with software industry. |
+| Education (K-12) | Price, build quality, battery | High | Institutional buyers. |
+
+**Niche Demographics (10):**
+
+| Demographic | Key Stats Valued | Price Sensitivity | Notes |
+|-------------|-----------------|-------------------|-------|
+| Video Editor | Performance, display, storage | Low | Needs raw power + colour accuracy. |
+| 3D Artist / Architect | Gaming perf (GPU), display, performance | Low | GPU-dependent workflows. |
+| Music Producer | Performance, connectivity, keyboard | Moderate | Audio I/O matters. |
+| Esports Pro | Gaming perf, display, thermals | Moderate | 2-year replacement cycle. |
+| Streamer | Gaming perf, webcam, connectivity | Moderate | Multi-tasking workflows. |
+| Digital Nomad | Battery, weight, connectivity | Moderate | Portability above all. |
+| Field Worker | Build quality, battery, weight | High | Rugged + long-lasting. |
+| Writer | Keyboard, battery, weight | High | Keyboard quality is paramount. |
+| Day Trader | Display, performance, connectivity | Low | Multi-monitor, fast refresh. |
+| Desktop Replacement | Performance, gaming perf, display | Low | Power over portability. |
+
+Each demographic also has a **permeability** value (0.0–1.0) that sets a floor on how quickly brand reach can grow even at 0% reach. Tech-permeable demographics (gamers, tech enthusiasts) grow reach faster from cold start; mass-market demographics (general consumer, corporate) require more sustained effort.
 
 ### Quarterly Structure
 
@@ -210,8 +231,7 @@ This rewards getting the launch right — the majority of sales happen in Q1. Th
 Each quarter, the player may:
 - Design new laptops (if model slots are open, before the quarter is simulated)
 - Reopen the manufacturing wizard for existing designs (adjust price, order additional manufacturing runs)
-- Purchase sponsorships
-- Adjust the general awareness budget
+- Manage marketing channels (activate/deactivate, switch between aggressive and premium modes)
 
 Additional manufacturing orders placed in Q2+ are calculated with their own independent economies-of-scale discount. They do not pool with the Q1 order. This creates a natural cost penalty for not forecasting correctly at launch.
 
@@ -265,15 +285,25 @@ Where quarter_share is: Q1=8, Q2=4, Q3=2, Q4=1.
 
 Replacement cycle varies by demographic:
 - Tech Enthusiast: 2 years
+- Developer: 2 years
+- Esports Pro: 2 years
+- Streamer: 2 years
 - Business Professional: 3 years
 - Student: 3 years
 - Creative Professional: 3 years
 - Gamer: 3 years
 - General Consumer: 3 years
+- Video Editor: 3 years
+- 3D Artist: 3 years
+- Music Producer: 3 years
+- Digital Nomad: 3 years
+- Day Trader: 3 years
 - Corporate / Enterprise: 4 years
+- Education (K-12): 4 years
+- Field Worker: 4 years
+- Writer: 4 years
+- Desktop Replacement: 4 years
 - Budget Buyer: 5 years
-
-(These are starting values — tune during playtesting.)
 
 Everyone in the active buyer pool WILL buy a laptop. There is no "don't buy" option in the probability distribution. The replacement cycle already filters out people who aren't in the market this year.
 
@@ -306,13 +336,17 @@ This gives the player enough information to estimate their own demand based on t
 
 ### Market Weight Shifts
 
-Buyer demographic weight vectors drift over time with **momentum** (slow, consistent shifts, not sudden reversals):
+*Not yet implemented.* Stat weight vectors are currently static per demographic.
+
+**Planned:** Buyer demographic weight vectors drift over time with **momentum** (slow, consistent shifts, not sudden reversals):
 
 ```
 new_weight = old_weight × 0.85 + era_target × 0.15 + small_random_noise
 ```
 
 Era target vectors are predefined at anchor points (2000, 2005, 2010, 2015, 2020, 2025) and interpolated between them. This creates natural transitions — the market gradually prioritises battery life over 2010–2020 without abrupt jumps.
+
+**Currently implemented instead:** Demand pool sizes (population) grow via year-based anchors with interpolation, so demographics get bigger/smaller over time even though what they care about stays constant.
 
 ---
 
@@ -325,27 +359,31 @@ Three components, each serving a distinct role in the sales funnel.
 The percentage of a demographic that has heard of your company. Acts as a multiplier on your competitive strength within the shared demand pool. If your reach among Students is 20%, your effective value proposition is scaled to 20% — most students don't know you exist, so your pull on the pool is weak. A company with 0% reach gets 0 effective VP and sells nothing.
 
 **Starting values:**
-- Player: 0% across all demographics. Must be bootstrapped through sponsorships and awareness budget.
+- Player: 0% across all demographics. Must be bootstrapped through marketing channels and word of mouth.
 - AI competitors: Pre-set per demographic to reflect each archetype's niche (e.g., ValueTech has 50% Budget Buyer but only 5% Creative Professional; Prestige Computing has 60% Creative Professional but only 10% Budget Buyer; OmniBook is broadly 25–40% across all demographics).
 
-**Growth sources (per demographic, per year):**
+**Growth sources (per demographic, per quarter):**
 
 | Source | Calculation | Notes |
 |--------|------------|-------|
-| Word of mouth | (units_sold_to_this_demographic / WOM_DIVISOR) × (1 + perception / 100) | Per-demographic organic source. Positive perception amplifies WOM; negative perception dampens it. Creates natural flywheel. |
-| Sponsorships | Fixed bonuses per sponsorship option | Targeted to specific demographics. Primary mechanism for directed reach growth. |
-| General awareness budget | annual_awareness_spend / AWARENESS_DIVISOR | Uniform across all demographics. |
+| Marketing channels | CHANNEL_REACH_PER_TIER[tier] per active channel targeting this demographic | Primary mechanism for directed reach growth. Premium mode delivers 0.7× reach but adds perception bonus and WoM multiplier. |
+| Word of mouth | (units_sold_to_this_demographic / WOM_DIVISOR) × (1 + perception / 100) × wom_multiplier | Per-demographic organic source. Positive perception amplifies WOM; negative perception dampens it. Premium marketing channels add +0.1 to the WoM multiplier. |
 
-All sources are summed into a raw growth input, then passed through an **S-curve (logistic function)**:
+All sources are summed into a raw growth input, then passed through an **S-curve (logistic derivative)** with a permeability floor:
 
 ```
-actual_growth = L / (1 + e^(-k * (raw_input - midpoint)))
+base_factor = k × e^(-k(x - midpoint)) / (1 + e^(-k(x - midpoint)))²
+floor = permeability × (k / 4)
+growth_factor = max(base_factor, floor)
+actual_growth = raw_input × growth_factor × 100
 ```
 
-Where the midpoint shifts based on current reach, producing:
-- Slow growth at low reach (hard to get started)
+Where `permeability` is a per-demographic constant (0.0–1.0) that ensures permeable demographics (tech enthusiasts, gamers) can grow reach from cold start, while mass-market demographics require more sustained investment. This produces:
+- Slow growth at low reach (hard to get started, unless demographic is permeable)
 - Fast growth in the mid-range (momentum)
 - Plateauing at high reach (diminishing returns)
+
+**Inactivity decay:** If no products are on sale, reach decays at REACH_INACTIVITY_DECAY (10%) per year (applied as 2.5% per quarter).
 
 ### Brand Perception (per demographic, -50 to +50)
 
@@ -358,10 +396,11 @@ The accumulated sentiment a demographic has about your company, based on their p
 **How it changes:** See Post-Sales Feedback section for the quarterly update formula.
 
 **Key properties:**
-- **Recency bias:** Exponential decay means old experiences fade. A bad laptop from 4 years ago barely registers.
+- **Recency bias:** Rolling window (last 12 quarters = 3 years) means old experiences naturally drop off. A bad laptop from 4 years ago is no longer in the window.
 - **Negativity bias:** Bad experiences hit 1.5× harder than good experiences help. Getting ripped off is memorable.
 - **Only purchasers matter:** A demographic that never buys from you has no perception of you (stays at 0/neutral). This means entering a new market segment starts from a blank slate, not from baggage accumulated in other segments.
 - **Value-for-money drives perception, not raw quality:** The experience score is based on raw value proposition (stats/price), not raw stats alone. An overpriced premium laptop can hurt perception even if technically excellent.
+- **Marketing quality matters:** Aggressive marketing channels apply a slight perception penalty per targeted demographic; premium channels apply a slight bonus. This creates a cost/perception trade-off.
 
 **Edge case behaviour:**
 - *Ultrabook company enters gaming market:* Gamers have 0 perception (never bought from you). Your gaming laptop is evaluated on its merits. No penalty, no bonus.
@@ -370,23 +409,52 @@ The accumulated sentiment a demographic has about your company, based on their p
 
 ---
 
-## Sponsorship / Partnership Options
+## Marketing Channel System
 
-Available as discrete purchases during the yearly planning phase. The player may purchase multiple sponsorships per year. Each targets specific demographics for reach growth.
+The player manages marketing channels from the Brand Management screen. Channels can be activated or deactivated at any time (costs are charged quarterly). Each channel targets specific demographics for reach growth and has two operating modes.
 
-| Option | Cost | Reach Effect |
-|--------|------|-------------|
-| Gaming tournament sponsor | $150K | +5% Gamer, +2% Tech Enthusiast |
-| University laptop programme | $300K | +6% Student |
-| Enterprise IT conference | $400K | +5% Corporate, +3% Business Professional |
-| Tech blog partnership | $100K | +4% Tech Enthusiast, +2% Gamer |
-| Retail shelf placement deal | $500K | +3% all demographics |
-| Airport/transit advertising | $250K | +2% Business Professional, +2% General Consumer |
-| TV commercial | $800K | +4% General Consumer, +2% Budget Buyer, +2% all others |
+### Channel Tiers
 
-Sponsorship costs scale with a simple inflation factor per year (3% annually from base year 2000).
+| Tier | Category | Cost Range (per quarter, year-2000 dollars) | Demographics Targeted |
+|------|----------|----------------------------------------------|----------------------|
+| 1 | Grassroots / Niche | $20K–$50K | 2–4 demographics |
+| 2 | Professional / Trade | $100K–$150K | 4–6 demographics |
+| 3 | Mass Market | $250K–$500K | 8–20 demographics |
 
-A **general awareness budget** slider is also available — annual spend that provides a small uniform reach boost across all demographics, fed through the S-curve.
+Higher tiers are more expensive but target more demographics simultaneously.
+
+### Channel Availability
+
+Each channel has a `yearAvailable` (first year it can be activated) and an optional `yearDeprecated` (last year it remains available). Deprecated channels are automatically deactivated at year transition. Examples:
+- Tech Forum Sponsorship: 2000–2012 (forums decline as social media rises)
+- YouTube Tech Reviewers: 2010+ (platform didn't exist before)
+- Influencer Network: 2015+ (modern marketing channel)
+
+### Operating Modes
+
+Each active channel runs in one of two modes:
+
+| Mode | Cost | Reach | Perception Effect | WoM Bonus |
+|------|------|-------|-------------------|-----------|
+| **Aggressive** | Base cost | Full reach (CHANNEL_REACH_PER_TIER) | -0.2 perception penalty per targeted demographic | None |
+| **Premium** | 1.5× base cost | 0.7× reach | +0.2 perception bonus per targeted demographic | +0.1 WoM multiplier |
+
+**Aggressive** maximises reach growth at the expense of brand perception — good for early-stage growth when perception doesn't matter yet.
+
+**Premium** sacrifices some reach for perception improvement and WoM amplification — better for established brands protecting their reputation.
+
+### Reach Contribution
+
+Raw reach contribution per quarter per targeted demographic, by tier:
+- Tier 1: 0.5
+- Tier 2: 0.3
+- Tier 3: 0.2
+
+Higher tiers have lower per-demographic contribution but target more demographics, spreading the investment.
+
+### Cost Inflation
+
+All channel costs inflate annually at 3% from base year 2000 (same COST_INFLATION factor as other costs).
 
 ---
 
@@ -425,31 +493,45 @@ Press release responses feed into the **review generation system**. Reviewer tem
 
 ## Post-Sales Feedback
 
-### Perception Update
+### Perception Update (Rolling Window)
 
-Perception updates run quarterly, applying 1/4 of the annual effect each quarter. The formula per quarter is:
+Perception uses a rolling window of the last 12 quarters (3 years) of experience scores. Each quarter:
 
 ```
-experience = company_laptop_raw_vp - mean(raw_vp of all purchased laptops
-             in this demographic this quarter)
-perception_contribution = experience × volume_weight × negativity_multiplier
-new_perception = old_perception × (DECAY ^ 0.25) + perception_contribution
-```
+experience = weighted_avg(company_laptop_raw_vp - market_avg_raw_vp)
+             across all units sold to this demographic
 
-Using DECAY^0.25 per quarter produces the same annual decay as DECAY over 4 quarters. With DECAY = 0.75, quarterly decay factor = 0.75^0.25 ≈ 0.93.
+// Negativity bias: bad experiences hit harder
+if experience < 0:
+  experience *= NEGATIVITY_MULTIPLIER (1.5)
+
+// Marketing quality modifier
+experience += sum(perception_modifier per active channel targeting this demographic)
+  // aggressive channels: -0.2 per channel
+  // premium channels: +0.2 per channel
+
+// Push into rolling window (drop oldest if > 12 entries)
+history[demographic].push(experience)
+
+// Perception = mean of window × scale factor
+perception = mean(history[demographic]) × PERCEPTION_CONTRIBUTION_SCALE (5)
+```
 
 Clamp to [-50, +50].
+
+No exponential decay — perception is purely a function of recent experience in the rolling window.
 
 ### Reach Update
 
 Reach growth sources accumulate quarterly. Each quarter:
 
 ```
-raw_growth = word_of_mouth_this_quarter
-             + (sponsorship_reach if purchased this quarter)
-             + (awareness_budget_reach / 4)
-new_reach = old_reach + S_curve(raw_growth, current_reach)
+raw_growth = marketing_channel_contributions
+             + word_of_mouth_this_quarter
+new_reach = old_reach + S_curve(raw_growth, current_reach, permeability)
 ```
+
+Where marketing channel contributions sum CHANNEL_REACH_PER_TIER for each active channel targeting this demographic (scaled by 0.7× for premium mode). WoM = (units_sold / WOM_DIVISOR) × (1 + perception/100) × wom_multiplier.
 
 Clamp to [0, 100].
 
@@ -526,14 +608,33 @@ interface CompanyState {
   isPlayer: boolean;
   brandReach: Record<DemographicId, number>;       // 0-100 per demographic
   brandPerception: Record<DemographicId, number>;   // -50 to +50 per demographic
+  perceptionHistory: Record<DemographicId, number[]>; // rolling window of quarterly experience scores
   models: LaptopModel[];
   // For AI only:
   archetype?: "budget" | "premium" | "generalist";
   engineeringBonus?: number;
 }
+
+interface ActiveMarketingChannel {
+  channelId: string;
+  mode: "aggressive" | "premium";
+}
+
+interface GameState {
+  companies: CompanyState[];
+  year: number;
+  quarter: 1 | 2 | 3 | 4;
+  cash: number;
+  activeMarketingChannels: ActiveMarketingChannel[];
+  yearHistory: YearSimulationResult[];
+  quarterHistory: QuarterSimulationResult[];
+  currentYearReviews: LaptopReview[];
+  currentYearAwards: Award[];
+  // ... additional UI state
+}
 ```
 
-Both player and AI competitors use this interface. The simulation iterates over all companies uniformly. Save/load covers one array of CompanyState.
+Both player and AI competitors use the CompanyState interface. The simulation iterates over all companies uniformly. Save/load covers the full GameState.
 
 ---
 
@@ -543,24 +644,26 @@ Both player and AI competitors use this interface. The simulation iterates over 
 |----------|---------------|-------|
 | PRICE_WEIGHT | Varies per demographic stat weight vector | Weight on price_score in VP dot product; higher = more price-sensitive |
 | WOM_DIVISOR | 5,000 | Units sold per 1 raw reach point from word of mouth |
-| AWARENESS_DIVISOR | 500,000 | Awareness budget spend per 1 raw reach point |
-| PERCEPTION_DECAY | 0.75 | Yearly decay on brand perception (25% fade per year) |
+| PERCEPTION_CONTRIBUTION_SCALE | 5 | Scales rolling-window mean experience into perception points |
+| PERCEPTION_WINDOW_SIZE | 12 | Rolling window in quarters (12 = 3 years of history) |
 | NEGATIVITY_MULTIPLIER | 1.5 | Bad experiences hit 1.5× harder |
-| S_CURVE_L | TBD | Max reach growth per year |
-| S_CURVE_K | TBD | S-curve steepness |
+| S_CURVE_STEEPNESS | 0.08 | S-curve steepness for reach growth |
+| S_CURVE_MIDPOINT | 50 | Reach % where growth is fastest |
+| REACH_INACTIVITY_DECAY | 0.10 | Annual reach decay when no products on sale |
 | CHANNEL_MARGIN_RATE | 0.20 | Retailer takes 20% of retail price; company receives 80% |
-| COST_INFLATION | 1.03 | Annual scaling for sponsorship costs |
-| REPLACEMENT_CYCLE_TECH_ENTHUSIAST | 2 | Years between upgrades |
-| REPLACEMENT_CYCLE_BUSINESS_PRO | 3 | |
-| REPLACEMENT_CYCLE_STUDENT | 3 | |
-| REPLACEMENT_CYCLE_CREATIVE_PRO | 3 | |
-| REPLACEMENT_CYCLE_GAMER | 3 | |
-| REPLACEMENT_CYCLE_GENERAL_CONSUMER | 3 | |
-| REPLACEMENT_CYCLE_CORPORATE | 4 | |
-| REPLACEMENT_CYCLE_BUDGET_BUYER | 5 | |
+| COST_INFLATION | 1.03 | Annual scaling for marketing channel / infrastructure costs |
+| CHANNEL_REACH_PER_TIER | {1: 0.5, 2: 0.3, 3: 0.2} | Raw reach contribution per quarter per targeted demographic |
+| PREMIUM_COST_MULTIPLIER | 1.5 | Premium mode costs 1.5× base |
+| PREMIUM_REACH_MULTIPLIER | 0.7 | Premium mode delivers 0.7× reach |
+| AGGRESSIVE_PERCEPTION_PENALTY | -0.2 | Perception experience modifier per aggressive channel |
+| PREMIUM_PERCEPTION_BONUS | 0.2 | Perception experience modifier per premium channel |
+| PREMIUM_WOM_BONUS | 0.1 | WoM multiplier bonus per premium channel |
+| REPLACEMENT_CYCLE | varies | Per-demographic; 2–5 years (see Sales Simulation section) |
 | QUARTER_SHARES | [8, 4, 2, 1] | Out of 15. Buyer distribution across Q1–Q4 |
-| AWARD_PERCEPTION_BONUS | 2 | Global perception boost from winning an award |
-| AWARD_REACH_BONUS | 1 | Global reach % boost from winning an award |
+| AWARD_PRIMARY_PERCEPTION_BONUS | 5 | Perception boost for primary demographics (matching outlet affinity) |
+| AWARD_PRIMARY_REACH_BONUS | 3 | Reach % boost for primary demographics |
+| AWARD_SECONDARY_PERCEPTION_BONUS | 1 | Perception boost for secondary demographics |
+| AWARD_SECONDARY_REACH_BONUS | 0.5 | Reach % boost for secondary demographics |
 
 ---
 
@@ -596,7 +699,12 @@ Awards are published after Q4 — the full year's data determines winners. A mag
 
 Determined by highest scorer in each relevant stat/segment combination. Player and AI competitors are all eligible.
 
-**Winning an award grants +2 brand perception across all demographics and +1% brand reach across all demographics.** Everyone sees the award coverage.
+**Award bonuses are demographic-specific**, based on outlet affinity. Each award is associated with a review outlet (tech enthusiast, mainstream, or both). Demographics that follow that outlet type receive the bonus:
+- **Primary demographics** (strong affinity): +5 perception, +3% reach
+- **Secondary demographics** (adjacent interest): +1 perception, +0.5% reach
+- **Unrelated demographics**: no effect
+
+For example, "Best Performance" is a tech-enthusiast award, so gamers and developers (primary) get the full bonus, while video editors (secondary) get a reduced bonus, and budget buyers get nothing.
 
 ### Template Budget
 
@@ -644,21 +752,20 @@ Post-year, the player can pay for a detailed demographic breakdown: which buyer 
 - [ ] Manufacturing orders with economies of scale
 - [ ] Pricing per model
 - [ ] Market size display (total and per-demographic, per quarter)
-- [ ] Sales simulation with 8 buyer demographics
+- [ ] Sales simulation with 20 buyer demographics (10 generalist + 10 niche)
 - [ ] Quarterly game loop (Q1–Q4 per year, front-loaded buyer distribution)
 - [ ] Mid-year manufacturing wizard access (price adjustment, additional orders)
 - [ ] Quarterly sales summaries
 - [ ] Independent EoS for mid-year manufacturing orders
 - [ ] Replacement cycle per demographic (active buyer pool sizing)
-- [ ] Momentum-based market weight shifting (annual, runs after Q4)
+- [ ] Momentum-based market weight shifting (annual, runs after Q4) *(not yet implemented — weights are static, only demand pool sizes shift)*
 - [ ] 3 AI competitors (budget, premium, generalist), 1 model each, full stats visible
 - [ ] Brand reach (per demographic) + brand perception (per demographic)
-- [ ] Sponsorship/partnership system (7 options, targeted reach per demographic)
-- [ ] General awareness budget slider
+- [ ] Marketing channel system (3 tiers, aggressive/premium modes, year-gated availability)
 - [ ] Laptop reviews (2 per model, template-driven, published after Q1)
 - [ ] Year-end awards (after Q4)
 - [ ] ~500 sentence templates for reviews and awards
-- [ ] Press release prompts (3 per model from pool of 12, feeds into reviews)
+- [ ] Press release prompts (3 per model from pool of 12) *(implemented, but not yet feeding into reviews — see #107, #108)*
 - [ ] Unsold inventory carried over
 - [ ] Game over on negative cash after Q4
 - [ ] Thermals as single collapsed stat (noise + temperature)
