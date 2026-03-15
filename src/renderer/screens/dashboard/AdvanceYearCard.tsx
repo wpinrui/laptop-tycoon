@@ -10,6 +10,7 @@ import { hasDiscontinuedComponents, LaptopModel, getPlayerCompany, modelDisplayN
 import { COMPETITORS } from "../../../data/competitors";
 import { generateCompetitorModels } from "../../../simulation/competitorAI";
 import { simulateQuarter } from "../../../simulation/salesEngine";
+import { applyMarketingToReach } from "../../../simulation/brandProgression";
 import { generateReviews, determineAwards } from "../../../simulation/reviewsAwards";
 import { QuarterSimulationResult, LaptopSalesResult } from "../../../simulation/salesTypes";
 import { QUARTER_LABELS } from "../../utils/formatCash";
@@ -124,6 +125,10 @@ export function AdvanceYearCard() {
           }
           const cashAfterManufacturing = state.cash - totalMfgSpend;
 
+          // Apply marketing reach BEFORE simulation so marketing spend
+          // affects this quarter's sales (not just the next quarter's)
+          const marketingReach = applyMarketingToReach(state);
+
           // Build state for simulation
           const stateForSim = (() => {
             const byCompetitorId = isQ1
@@ -136,6 +141,7 @@ export function AdvanceYearCard() {
                 if (comp.isPlayer) {
                   return {
                     ...comp,
+                    brandReach: marketingReach,
                     models: comp.models.map((m) =>
                       m.status === "designed" &&
                       activeModels.some((am) => am.design.id === m.design.id && hasCurrentPlan(am))

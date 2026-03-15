@@ -81,8 +81,45 @@ export function averageReach(reach: Record<DemographicId, number>): number {
 }
 
 /**
- * Update per-demographic brand reach for the player (quarterly).
- * Growth sources are divided by 4 for quarterly application.
+ * Apply marketing channel contributions to player brand reach (pre-simulation).
+ * This must run BEFORE sales simulation so that marketing spend immediately
+ * affects the quarter's sales via the reach multiplier.
+ */
+export function applyMarketingToReach(state: GameState): Record<DemographicId, number> {
+  const player = getPlayerCompany(state);
+  const oldReach = player.brandReach;
+  const newReach = { ...oldReach };
+
+  for (const dem of DEMOGRAPHICS) {
+    const demId = dem.id;
+    const current = oldReach[demId] ?? 0;
+
+    let rawGrowth = 0;
+    for (const ac of state.activeMarketingChannels) {
+      const channel = MARKETING_CHANNELS.find((c) => c.id === ac.channelId);
+      if (!channel || !isChannelAvailable(channel, state.year)) continue;
+      if (!channel.targetDemographics.includes(demId)) continue;
+
+      let reachContribution = CHANNEL_REACH_PER_TIER[channel.tier];
+      if (ac.mode === "premium") {
+        reachContribution *= PREMIUM_REACH_MULTIPLIER;
+      }
+      rawGrowth += reachContribution;
+    }
+
+    if (rawGrowth > 0) {
+      const growth = rawGrowth * sCurveGrowthFactor(current, dem.permeability) * 100;
+      newReach[demId] = Math.max(0, Math.min(100, current + growth));
+    }
+  }
+
+  return newReach;
+}
+
+/**
+ * Update per-demographic brand reach for the player (post-simulation).
+ * Applies word-of-mouth growth from sales results and inactivity decay.
+ * Marketing channel contributions are already applied pre-simulation via applyMarketingToReach.
  */
 export function updateBrandReach(
   state: GameState,
@@ -102,32 +139,22 @@ export function updateBrandReach(
     const demId = dem.id;
     const current = oldReach[demId] ?? 0;
 
-    // Raw growth inputs
-    let rawGrowth = 0;
+    // Word of mouth — organic from units sold this quarter
+    //    Positive perception amplifies WOM, negative perception dampens it
+    //    Premium marketing channels add a small WoM multiplier
     let womMultiplier = 1;
-
-    // Marketing channels — active channels targeting this demographic contribute reach
     for (const ac of state.activeMarketingChannels) {
       const channel = MARKETING_CHANNELS.find((c) => c.id === ac.channelId);
       if (!channel || !isChannelAvailable(channel, state.year)) continue;
       if (!channel.targetDemographics.includes(demId)) continue;
-
-      let reachContribution = CHANNEL_REACH_PER_TIER[channel.tier];
-      if (ac.mode === "premium") {
-        reachContribution *= PREMIUM_REACH_MULTIPLIER;
-        womMultiplier += PREMIUM_WOM_BONUS;
-      }
-      rawGrowth += reachContribution;
+      if (ac.mode === "premium") womMultiplier += PREMIUM_WOM_BONUS;
     }
 
-    // Word of mouth — organic from units sold this quarter
-    //    Positive perception amplifies WOM, negative perception dampens it
-    //    Premium marketing channels add a small WoM multiplier
     const unitsSold = unitsByDemographic[demId] ?? 0;
     const perception = player.brandPerception[demId] ?? 0;
-    rawGrowth += (unitsSold / WOM_DIVISOR) * (1 + perception / 100) * womMultiplier;
+    const rawGrowth = (unitsSold / WOM_DIVISOR) * (1 + perception / 100) * womMultiplier;
 
-    // Apply S-curve growth + decay (same formula as competitors)
+    // Apply S-curve growth + inactivity decay
     newReach[demId] = applyReachGrowth(current, rawGrowth, dem.permeability, hasProductsOnSale);
   }
 
