@@ -14,8 +14,6 @@ import { ModelType } from "../renderer/state/gameTypes";
 export const S_CURVE_STEEPNESS = 0.08;
 /** S-curve midpoint (reach % where growth is fastest) */
 export const S_CURVE_MIDPOINT = 50;
-/** Awareness budget divisor — every $X of awareness budget contributes 1 raw reach point */
-export const AWARENESS_DIVISOR = 500_000;
 /** Word-of-mouth divisor — every X units sold contributes 1 raw reach point */
 export const WOM_DIVISOR = 5_000;
 /** Reach decay rate when no products on sale (proportional, per year) */

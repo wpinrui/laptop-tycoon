@@ -5,13 +5,11 @@
 
 import { DemographicId } from "../data/types";
 import { DEMOGRAPHICS } from "../data/demographics";
-import { SPONSORSHIPS } from "../data/sponsorships";
 import { GameState, CompanyState, getPlayerCompany } from "../renderer/state/gameTypes";
 import { LaptopSalesResult, QuarterSimulationResult, sellThroughRate, marketAverageRawVP } from "./salesTypes";
 import {
   S_CURVE_STEEPNESS,
   S_CURVE_MIDPOINT,
-  AWARENESS_DIVISOR,
   WOM_DIVISOR,
   PERCEPTION_CONTRIBUTION_SCALE,
   PERCEPTION_WINDOW_SIZE,
@@ -98,18 +96,9 @@ export function updateBrandReach(
     // Raw growth inputs (divided by 4 for quarterly application)
     let rawGrowth = 0;
 
-    // 1. Awareness budget — small uniform push across all demographics
-    rawGrowth += (state.brandAwarenessBudget / AWARENESS_DIVISOR) / 4;
+    // TODO: Marketing channel contributions will be added here (task 5d)
 
-    // 2. Sponsorships — targeted boosts (applied if purchased this quarter)
-    for (const sponsorshipId of state.sponsorships) {
-      const sponsorship = SPONSORSHIPS.find((s) => s.id === sponsorshipId);
-      if (sponsorship) {
-        rawGrowth += (sponsorship.reachBonus[demId] ?? 0) / 4;
-      }
-    }
-
-    // 3. Word of mouth — organic from units sold this quarter
+    // Word of mouth — organic from units sold this quarter
     //    Positive perception amplifies WOM, negative perception dampens it
     const unitsSold = unitsByDemographic[demId] ?? 0;
     const perception = player.brandPerception[demId] ?? 0;

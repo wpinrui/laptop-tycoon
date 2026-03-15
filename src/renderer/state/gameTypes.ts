@@ -84,8 +84,6 @@ export interface GameState {
   quarter: Quarter;
   quarterSimulated: boolean;
   cash: number;
-  brandAwarenessBudget: number;
-  sponsorships: string[];
   yearHistory: YearSimulationResult[];
   lastSimulationResult: QuarterSimulationResult | null;
   /** Accumulated quarterly results for the current year (reset on year advance). */
@@ -186,8 +184,6 @@ export function createInitialGameState(
     quarter: 1 as Quarter,
     quarterSimulated: false,
     cash: STARTING_CASH,
-    brandAwarenessBudget: 0,
-    sponsorships: [],
     yearHistory: [],
     lastSimulationResult: null,
     quarterHistory: [],

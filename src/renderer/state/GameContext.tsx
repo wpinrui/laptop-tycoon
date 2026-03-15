@@ -9,7 +9,6 @@ import { applyDeathSpiralPrevention } from "../../simulation/deathSpiralPreventi
 import { generateCompetitorModels, discountOldInventoryPrice } from "../../simulation/competitorAI";
 import { COMPETITORS } from "../../data/competitors";
 import { LaptopReview, Award, applyAwardBonuses } from "../../simulation/reviewsAwards";
-import { SPONSORSHIPS, getSponsorshipCost } from "../../data/sponsorships";
 import { PERCEPTION_MEANINGFUL_DELTA, AI_MAX_MODEL_AGE } from "../../simulation/tunables";
 
 export interface CompetitorModelEntry {
@@ -31,8 +30,6 @@ type GameAction =
   | { type: "SET_RETAIL_PRICE"; modelId: string; retailPrice: number }
   | { type: "ADD_COMPETITOR_MODELS"; models: CompetitorModelEntry[] }
   | { type: "APPLY_QUARTER_RESULT"; result: QuarterSimulationResult }
-  | { type: "SET_AWARENESS_BUDGET"; budget: number }
-  | { type: "TOGGLE_SPONSORSHIP"; sponsorshipId: string }
   | { type: "SET_REVIEWS"; reviews: LaptopReview[] }
   | { type: "SET_AWARDS"; awards: Award[] };
 
@@ -181,8 +178,6 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         quarterHistory: [],
         currentYearReviews: [],
         currentYearAwards: [],
-        brandAwarenessBudget: 0,
-        sponsorships: [],
         companies: cleanupAIModels(companiesAfterSpiral, nextYear).map((comp) => {
           if (!comp.isPlayer) return comp;
           return {
@@ -433,36 +428,6 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         quarterHistory: [...state.quarterHistory, result],
         yearHistory,
         lastSimulationResult: result,
-      };
-    }
-    case "SET_AWARENESS_BUDGET": {
-      // Refund old budget, charge new budget
-      const cashDelta = state.brandAwarenessBudget - action.budget;
-      return {
-        ...state,
-        cash: state.cash + cashDelta,
-        brandAwarenessBudget: action.budget,
-      };
-    }
-    case "TOGGLE_SPONSORSHIP": {
-      const isActive = state.sponsorships.includes(action.sponsorshipId);
-      const sponsorship = SPONSORSHIPS.find((s) => s.id === action.sponsorshipId);
-      if (!sponsorship) return state;
-      const cost = getSponsorshipCost(sponsorship, state.year);
-      if (isActive) {
-        // Remove and refund
-        return {
-          ...state,
-          cash: state.cash + cost,
-          sponsorships: state.sponsorships.filter((id) => id !== action.sponsorshipId),
-        };
-      }
-      // Purchase
-      if (state.cash < cost) return state;
-      return {
-        ...state,
-        cash: state.cash - cost,
-        sponsorships: [...state.sponsorships, action.sponsorshipId],
       };
     }
     case "SET_REVIEWS":
