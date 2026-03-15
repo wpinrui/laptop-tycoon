@@ -1,5 +1,5 @@
 /**
- * Brand reach (per-demographic, S-curve) and brand perception (per-demographic, decay + value-for-money).
+ * Brand reach (per-demographic, S-curve) and brand perception (per-demographic, rolling window + value-for-money).
  * Called quarterly after sales simulation resolves.
  */
 

@@ -56,7 +56,7 @@ export const PRICE_BASE_YEAR = 2000;
 
 // ==================== Cost Inflation ====================
 
-/** Annual scaling for sponsorship costs */
+/** Annual scaling for marketing/infrastructure costs */
 export const COST_INFLATION = 1.03;
 /** Base year for cost inflation */
 export const COST_BASE_YEAR = 2000;
