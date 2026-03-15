@@ -161,6 +161,10 @@ export interface BatteryEraConfig {
   techLabel: string;
 }
 
+// --- Marketing ---
+
+export type MarketingTier = 1 | 2 | 3 | 4 | 5;
+
 // --- Demographics ---
 
 export type DemographicTier = "generalist" | "niche";
