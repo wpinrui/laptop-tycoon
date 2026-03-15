@@ -10,7 +10,8 @@ import { getActiveModels } from "../../screens/dashboard/utils";
 export function calculateBomUnitCost(baseBomCost: number, unitsOrdered: number): number {
   if (unitsOrdered <= 0) return baseBomCost;
   const scaleFactor = 1 / (1 + 0.4 * Math.log10(unitsOrdered / REFERENCE_QUANTITY));
-  return baseBomCost * Math.max(scaleFactor, 0.7);
+  // Cap at 1.0: small batches pay base BOM (no surcharge), large batches get discounts
+  return baseBomCost * Math.max(0.7, Math.min(1.0, scaleFactor));
 }
 
 export interface CostBreakdown {
