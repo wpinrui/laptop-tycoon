@@ -9,6 +9,8 @@ import { FullManufacturingPlan } from "../manufacturing/types";
 import { COMPETITORS, CompetitorArchetype } from "../../data/competitors";
 import { YearSimulationResult, QuarterSimulationResult } from "../../simulation/salesTypes";
 import { LaptopReview, Award } from "../../simulation/reviewsAwards";
+import { MarketingMode } from "../../data/marketingChannels";
+import { PERCEPTION_CONTRIBUTION_SCALE, PERCEPTION_WINDOW_SIZE } from "../../simulation/tunables";
 
 export type ModelType = "brandNew" | "successor" | "specBump";
 
@@ -66,6 +68,8 @@ export interface CompanyState {
   isPlayer: boolean;
   brandReach: Record<DemographicId, number>;
   brandPerception: Record<DemographicId, number>;
+  /** Rolling window of per-demographic quarterly experience scores (last 12 quarters). */
+  perceptionHistory: Record<DemographicId, number[]>;
   models: LaptopModel[];
   archetype?: CompetitorArchetype;
   engineeringBonus?: number;
@@ -75,6 +79,11 @@ export interface CompanyState {
 
 export type Quarter = 1 | 2 | 3 | 4;
 
+export interface ActiveMarketingChannel {
+  channelId: string;
+  mode: MarketingMode;
+}
+
 export interface GameState {
   companies: CompanyState[];
   companyLogo: string | null;
@@ -82,8 +91,8 @@ export interface GameState {
   quarter: Quarter;
   quarterSimulated: boolean;
   cash: number;
-  brandAwarenessBudget: number;
-  sponsorships: string[];
+  /** Active marketing channels — persist until manually changed. */
+  activeMarketingChannels: ActiveMarketingChannel[];
   yearHistory: YearSimulationResult[];
   lastSimulationResult: QuarterSimulationResult | null;
   /** Accumulated quarterly results for the current year (reset on year advance). */
@@ -102,6 +111,20 @@ export function getPlayerCompany(state: GameState): CompanyState {
 /** Format a laptop's display name as "CompanyName ModelName". */
 export function modelDisplayName(companyName: string, designName: string): string {
   return `${companyName} ${designName}`;
+}
+
+/**
+ * Create initial perception history from starting perception values.
+ * Seeds 12 quarters so that mean(history) * PERCEPTION_CONTRIBUTION_SCALE = initialPerception.
+ */
+function initPerceptionHistory(
+  perception: Record<DemographicId, number>,
+): Record<DemographicId, number[]> {
+  const history: Partial<Record<DemographicId, number[]>> = {};
+  for (const [demId, p] of Object.entries(perception)) {
+    history[demId as DemographicId] = Array(PERCEPTION_WINDOW_SIZE).fill(p / PERCEPTION_CONTRIBUTION_SCALE);
+  }
+  return history as Record<DemographicId, number[]>;
 }
 
 export const STARTING_CASH = 50_000_000;
@@ -137,12 +160,14 @@ export function createInitialGameState(
   companyName: string,
   companyLogo: string | null,
 ): GameState {
+  const playerPerception = { ...ZERO_DEMOGRAPHICS };
   const playerCompany: CompanyState = {
     id: "player",
     name: companyName,
     isPlayer: true,
     brandReach: { ...ZERO_DEMOGRAPHICS },
-    brandPerception: { ...ZERO_DEMOGRAPHICS },
+    brandPerception: playerPerception,
+    perceptionHistory: initPerceptionHistory(playerPerception),
     models: [],
   };
 
@@ -152,6 +177,7 @@ export function createInitialGameState(
     isPlayer: false,
     brandReach: { ...c.brandReach },
     brandPerception: { ...c.brandPerception },
+    perceptionHistory: initPerceptionHistory(c.brandPerception),
     models: [],
     archetype: c.archetype,
     engineeringBonus: c.engineeringBonus,
@@ -164,8 +190,7 @@ export function createInitialGameState(
     quarter: 1 as Quarter,
     quarterSimulated: false,
     cash: STARTING_CASH,
-    brandAwarenessBudget: 0,
-    sponsorships: [],
+    activeMarketingChannels: [],
     yearHistory: [],
     lastSimulationResult: null,
     quarterHistory: [],

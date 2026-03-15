@@ -1,21 +1,28 @@
 /**
- * Brand reach (per-demographic, S-curve) and brand perception (per-demographic, decay + value-for-money).
+ * Brand reach (per-demographic, S-curve) and brand perception (per-demographic, rolling window + value-for-money).
  * Called quarterly after sales simulation resolves.
  */
 
 import { DemographicId } from "../data/types";
 import { DEMOGRAPHICS } from "../data/demographics";
-import { SPONSORSHIPS } from "../data/sponsorships";
 import { GameState, CompanyState, getPlayerCompany } from "../renderer/state/gameTypes";
+import {
+  MARKETING_CHANNELS,
+  CHANNEL_REACH_PER_TIER,
+  PREMIUM_REACH_MULTIPLIER,
+  AGGRESSIVE_PERCEPTION_PENALTY,
+  PREMIUM_PERCEPTION_BONUS,
+  PREMIUM_WOM_BONUS,
+  isChannelAvailable,
+} from "../data/marketingChannels";
 import { LaptopSalesResult, QuarterSimulationResult, sellThroughRate, marketAverageRawVP } from "./salesTypes";
 import {
   S_CURVE_STEEPNESS,
   S_CURVE_MIDPOINT,
-  AWARENESS_DIVISOR,
   WOM_DIVISOR,
   PERCEPTION_CONTRIBUTION_SCALE,
+  PERCEPTION_WINDOW_SIZE,
   REACH_INACTIVITY_DECAY,
-  PERCEPTION_DECAY,
   NEGATIVITY_MULTIPLIER,
   PERCEPTION_MIN,
   PERCEPTION_MAX,
@@ -95,25 +102,30 @@ export function updateBrandReach(
     const demId = dem.id;
     const current = oldReach[demId] ?? 0;
 
-    // Raw growth inputs (divided by 4 for quarterly application)
+    // Raw growth inputs
     let rawGrowth = 0;
+    let womMultiplier = 1;
 
-    // 1. Awareness budget — small uniform push across all demographics
-    rawGrowth += (state.brandAwarenessBudget / AWARENESS_DIVISOR) / 4;
+    // Marketing channels — active channels targeting this demographic contribute reach
+    for (const ac of state.activeMarketingChannels) {
+      const channel = MARKETING_CHANNELS.find((c) => c.id === ac.channelId);
+      if (!channel || !isChannelAvailable(channel, state.year)) continue;
+      if (!channel.targetDemographics.includes(demId)) continue;
 
-    // 2. Sponsorships — targeted boosts (applied if purchased this quarter)
-    for (const sponsorshipId of state.sponsorships) {
-      const sponsorship = SPONSORSHIPS.find((s) => s.id === sponsorshipId);
-      if (sponsorship) {
-        rawGrowth += (sponsorship.reachBonus[demId] ?? 0) / 4;
+      let reachContribution = CHANNEL_REACH_PER_TIER[channel.tier];
+      if (ac.mode === "premium") {
+        reachContribution *= PREMIUM_REACH_MULTIPLIER;
+        womMultiplier += PREMIUM_WOM_BONUS;
       }
+      rawGrowth += reachContribution;
     }
 
-    // 3. Word of mouth — organic from units sold this quarter
+    // Word of mouth — organic from units sold this quarter
     //    Positive perception amplifies WOM, negative perception dampens it
+    //    Premium marketing channels add a small WoM multiplier
     const unitsSold = unitsByDemographic[demId] ?? 0;
     const perception = player.brandPerception[demId] ?? 0;
-    rawGrowth += (unitsSold / WOM_DIVISOR) * (1 + perception / 100);
+    rawGrowth += (unitsSold / WOM_DIVISOR) * (1 + perception / 100) * womMultiplier;
 
     // Apply S-curve growth + decay (same formula as competitors)
     newReach[demId] = applyReachGrowth(current, rawGrowth, dem.permeability, hasProductsOnSale);
@@ -156,30 +168,34 @@ export function updateCompetitorBrandReach(
   return newReach;
 }
 
-// ==================== Brand Perception ====================
+// ==================== Brand Perception (Rolling Window) ====================
 
-const QUARTERLY_DECAY = Math.pow(PERCEPTION_DECAY, 0.25);
+export interface PerceptionUpdateResult {
+  perception: Record<DemographicId, number>;
+  history: Record<DemographicId, number[]>;
+}
 
 /**
- * Apply a single quarter of perception update for a company.
+ * Apply a single quarter of perception update for a company using a rolling window.
  *
- * Per quarter:
- *   experience = company_laptop_raw_vp - mean(raw_vp of all purchased laptops in this demographic)
- *   perception_contribution = experience × volume_weight × negativity_multiplier
- *   new_perception = old_perception × (DECAY ^ 0.25) + perception_contribution / 4
+ * Each quarter, compute the experience score (company rawVP - market average rawVP).
+ * Push it into the per-demographic history window (or 0 if no sales).
+ * Perception = mean(window) × PERCEPTION_CONTRIBUTION_SCALE, clamped to [min, max].
  *
- * Only purchasers affect perception — demographics that didn't buy stay at 0/neutral.
+ * No exponential decay — perception is purely a function of recent experience.
  */
 function applyOneQuarterPerception(
-  oldPerception: Record<DemographicId, number>,
+  oldHistory: Record<DemographicId, number[]>,
   allLaptopResults: LaptopSalesResult[],
   companyResults: LaptopSalesResult[],
-): Record<DemographicId, number> {
-  const newPerception = { ...oldPerception };
+  marketingModifiers?: Partial<Record<DemographicId, number>>,
+): PerceptionUpdateResult {
+  const newPerception: Partial<Record<DemographicId, number>> = {};
+  const newHistory: Partial<Record<DemographicId, number[]>> = {};
 
   for (const dem of DEMOGRAPHICS) {
     const demId = dem.id;
-    const old = oldPerception[demId] ?? 0;
+    const history = [...(oldHistory[demId] ?? [])];
 
     const meanRawVP = marketAverageRawVP(demId, allLaptopResults);
 
@@ -196,32 +212,68 @@ function applyOneQuarterPerception(
       }
     }
 
-    // Only purchasers affect perception — no purchases means quarterly decay only
-    if (companyUnits <= 0) {
-      newPerception[demId] = Math.max(PERCEPTION_MIN, Math.min(PERCEPTION_MAX, old * QUARTERLY_DECAY));
-      continue;
+    // Compute experience value for this quarter
+    let experienceValue = 0;
+    if (companyUnits > 0) {
+      const avgExperience = weightedExperience / companyUnits;
+      experienceValue = avgExperience < 0 ? avgExperience * NEGATIVITY_MULTIPLIER : avgExperience;
     }
 
-    // Volume-weighted average experience, apply negativity multiplier
-    const avgExperience = weightedExperience / companyUnits;
-    const adjusted = avgExperience < 0 ? avgExperience * NEGATIVITY_MULTIPLIER : avgExperience;
-    const perceptionContribution = (adjusted * PERCEPTION_CONTRIBUTION_SCALE) / 4;
+    // Apply marketing quality modifier (aggressive = slight penalty, premium = slight bonus)
+    experienceValue += marketingModifiers?.[demId] ?? 0;
 
-    const perception = old * QUARTERLY_DECAY + perceptionContribution;
+    // Push into rolling window, drop oldest if full
+    history.push(experienceValue);
+    if (history.length > PERCEPTION_WINDOW_SIZE) {
+      history.splice(0, history.length - PERCEPTION_WINDOW_SIZE);
+    }
+
+    // Perception = mean of window × scale factor
+    const sum = history.reduce((s, v) => s + v, 0);
+    const mean = sum / history.length;
+    const perception = mean * PERCEPTION_CONTRIBUTION_SCALE;
     newPerception[demId] = Math.max(PERCEPTION_MIN, Math.min(PERCEPTION_MAX, perception));
+    newHistory[demId] = history;
   }
 
-  return newPerception;
+  return {
+    perception: newPerception as Record<DemographicId, number>,
+    history: newHistory as Record<DemographicId, number[]>,
+  };
+}
+
+/**
+ * Build per-demographic marketing perception modifiers from active channels.
+ * Aggressive channels penalize perception, premium channels boost it.
+ */
+function buildMarketingPerceptionModifiers(
+  state: GameState,
+): Partial<Record<DemographicId, number>> {
+  const modifiers: Partial<Record<DemographicId, number>> = {};
+  for (const ac of state.activeMarketingChannels) {
+    const channel = MARKETING_CHANNELS.find((c) => c.id === ac.channelId);
+    if (!channel || !isChannelAvailable(channel, state.year)) continue;
+    const bonus = ac.mode === "premium" ? PREMIUM_PERCEPTION_BONUS : AGGRESSIVE_PERCEPTION_PENALTY;
+    for (const demId of channel.targetDemographics) {
+      modifiers[demId] = (modifiers[demId] ?? 0) + bonus;
+    }
+  }
+  return modifiers;
 }
 
 /**
  * Apply a single quarter of perception update for any company.
- * Used by the sales engine for per-quarter perception tracking.
+ * Returns both the new perception values and the updated history window.
+ * Pass the GameState to include marketing perception modifiers for the player.
  */
 export function applySingleQuarterPerception(
   company: CompanyState,
   allLaptopResults: LaptopSalesResult[],
-): Record<DemographicId, number> {
+  state?: GameState,
+): PerceptionUpdateResult {
   const companyResults = allLaptopResults.filter((r) => r.owner === company.id);
-  return applyOneQuarterPerception(company.brandPerception, allLaptopResults, companyResults);
+  const history = company.perceptionHistory ?? {};
+  // Only apply marketing modifiers for the player
+  const modifiers = company.isPlayer && state ? buildMarketingPerceptionModifiers(state) : undefined;
+  return applyOneQuarterPerception(history, allLaptopResults, companyResults, modifiers);
 }

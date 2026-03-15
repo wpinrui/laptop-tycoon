@@ -1,5 +1,5 @@
 import { CSSProperties, useMemo, useState } from "react";
-import { Sparkles, Check } from "lucide-react";
+import { Sparkles, Check, Zap, Crown } from "lucide-react";
 import { useGame } from "../state/GameContext";
 import { getPlayerCompany } from "../state/gameTypes";
 import { ContentPanel } from "../shell/ContentPanel";
@@ -10,57 +10,30 @@ import { tokens } from "../shell/tokens";
 import { ProgressBar } from "./dashboard/ProgressBar";
 import { formatPerception } from "./dashboard/utils";
 import { DEMOGRAPHICS, GENERALISTS, NICHES } from "../../data/demographics";
-import { SPONSORSHIPS, getSponsorshipCost } from "../../data/sponsorships";
 import { Demographic, DemographicId } from "../../data/types";
 import { PerceptionChange } from "../../simulation/salesTypes";
 import { SidebarHeading } from "../wizard/LaptopEstimateSidebar";
-import { PERCEPTION_MEANINGFUL_DELTA } from "../../simulation/tunables";
+import { PERCEPTION_MEANINGFUL_DELTA, PERCEPTION_CONTRIBUTION_SCALE, PERCEPTION_MIN, PERCEPTION_MAX } from "../../simulation/tunables";
+import {
+  MARKETING_CHANNELS,
+  MarketingChannel,
+  MarketingMode,
+  getChannelCost,
+  isChannelAvailable,
+} from "../../data/marketingChannels";
+import { formatCash } from "../utils/formatCash";
 
-const BUDGET_PRESETS = [0, 100_000, 250_000, 500_000, 1_000_000, 2_000_000];
-
-
-const sectionStyle: CSSProperties = {
-  marginBottom: tokens.spacing.xl,
+const tierLabel: Record<number, string> = { 1: "Grassroots", 2: "Professional", 3: "Mass Market" };
+const tierColor: Record<number, string> = {
+  1: tokens.colors.success,
+  2: tokens.colors.accent,
+  3: tokens.colors.warning,
 };
-
-const headingStyle: CSSProperties = {
-  fontSize: tokens.font.sizeLarge,
-  fontWeight: 600,
-  marginBottom: tokens.spacing.md,
-};
-
 
 const hintStyle: CSSProperties = {
   fontSize: tokens.font.sizeSmall,
   color: tokens.colors.textMuted,
   marginTop: tokens.spacing.xs,
-};
-
-const sponsorshipCardStyle: CSSProperties = {
-  background: tokens.colors.surface,
-  borderRadius: tokens.borderRadius.md,
-  padding: tokens.spacing.md,
-  marginBottom: tokens.spacing.sm,
-  cursor: "pointer",
-  transition: "background 0.15s, border-color 0.15s",
-  border: `1px solid ${tokens.colors.panelBorder}`,
-};
-
-const sponsorshipActiveStyle: CSSProperties = {
-  ...sponsorshipCardStyle,
-  border: `1px solid ${tokens.colors.accent}`,
-  background: tokens.colors.interactiveAccentBg,
-};
-
-const demographicTagStyle: CSSProperties = {
-  display: "inline-block",
-  fontSize: tokens.font.sizeSmall,
-  color: tokens.colors.accent,
-  background: tokens.colors.accentBg,
-  borderRadius: tokens.borderRadius.sm,
-  padding: "2px 6px",
-  marginRight: 4,
-  marginTop: 4,
 };
 
 const nicheLinkButtonStyle: CSSProperties = {
@@ -82,6 +55,152 @@ const nicheSectionHeadingStyle: CSSProperties = {
   margin: `${tokens.spacing.sm}px 0 ${tokens.spacing.xs}px`,
 };
 
+const demographicTagStyle: CSSProperties = {
+  display: "inline-block",
+  fontSize: tokens.font.sizeSmall,
+  color: tokens.colors.accent,
+  background: tokens.colors.accentBg,
+  borderRadius: tokens.borderRadius.sm,
+  padding: "2px 6px",
+  marginRight: 4,
+  marginTop: 4,
+};
+
+function getDemographicName(id: DemographicId): string {
+  return DEMOGRAPHICS.find((d) => d.id === id)?.shortName ?? id;
+}
+
+function ChannelCard({
+  channel,
+  year,
+  isActive,
+  mode,
+  onToggle,
+  onModeChange,
+}: {
+  channel: MarketingChannel;
+  year: number;
+  isActive: boolean;
+  mode: MarketingMode;
+  onToggle: () => void;
+  onModeChange: (mode: MarketingMode) => void;
+}) {
+  const aggressiveCost = getChannelCost(channel, year, "aggressive");
+  const premiumCost = getChannelCost(channel, year, "premium");
+  const displayCost = isActive ? getChannelCost(channel, year, mode) : aggressiveCost;
+
+  const cardStyle: CSSProperties = {
+    background: isActive ? tokens.colors.interactiveAccentBg : tokens.colors.surface,
+    borderRadius: tokens.borderRadius.md,
+    padding: tokens.spacing.md,
+    marginBottom: tokens.spacing.sm,
+    border: isActive ? `1px solid ${tokens.colors.accent}` : `1px solid ${tokens.colors.panelBorder}`,
+    transition: "border-color 0.15s, background 0.15s",
+  };
+
+  return (
+    <div style={cardStyle}>
+      {/* Header: name + cost + toggle */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: tokens.spacing.xs }}>
+        <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm }}>
+          {isActive && <Check size={16} color={tokens.colors.accent} />}
+          <span style={{ fontWeight: 600, fontSize: tokens.font.sizeBase }}>{channel.name}</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm }}>
+          <span style={{ fontWeight: 600, fontSize: tokens.font.sizeBase, color: isActive ? tokens.colors.accent : tokens.colors.text }}>
+            {formatCash(displayCost)}/qtr
+          </span>
+          <MenuButton
+            variant={isActive ? "accent" : "surface"}
+            onClick={onToggle}
+            style={{ fontSize: tokens.font.sizeSmall, padding: "4px 12px" }}
+          >
+            {isActive ? "Active" : "Activate"}
+          </MenuButton>
+        </div>
+      </div>
+
+      {/* Description */}
+      <p style={{ ...hintStyle, margin: `0 0 ${tokens.spacing.xs}px` }}>{channel.description}</p>
+
+      {/* Deprecation notice */}
+      {channel.yearDeprecated !== null && (
+        <p style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.warning, margin: `0 0 ${tokens.spacing.xs}px` }}>
+          Available until {channel.yearDeprecated}
+        </p>
+      )}
+
+      {/* Demographic tags */}
+      <div style={{ marginBottom: isActive ? tokens.spacing.sm : 0 }}>
+        {channel.targetDemographics.map((demId) => (
+          <span key={demId} style={demographicTagStyle}>{getDemographicName(demId)}</span>
+        ))}
+      </div>
+
+      {/* Mode selector — only when active */}
+      {isActive && (
+        <div style={{ display: "flex", gap: tokens.spacing.sm, marginTop: tokens.spacing.sm }}>
+          <ModeButton
+            icon={<Zap size={14} />}
+            label="Aggressive"
+            sublabel={formatCash(aggressiveCost) + "/qtr"}
+            description="Full reach, slight perception hit"
+            active={mode === "aggressive"}
+            onClick={() => onModeChange("aggressive")}
+          />
+          <ModeButton
+            icon={<Crown size={14} />}
+            label="Premium"
+            sublabel={formatCash(premiumCost) + "/qtr"}
+            description="0.7x reach, perception boost, WoM bonus"
+            active={mode === "premium"}
+            onClick={() => onModeChange("premium")}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ModeButton({
+  icon,
+  label,
+  sublabel,
+  description,
+  active,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  sublabel: string;
+  description: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        flex: 1,
+        background: active ? tokens.colors.interactiveAccentBg : "transparent",
+        border: active ? `1px solid ${tokens.colors.accent}` : `1px solid ${tokens.colors.panelBorder}`,
+        borderRadius: tokens.borderRadius.sm,
+        padding: tokens.spacing.sm,
+        cursor: "pointer",
+        textAlign: "left",
+        color: tokens.colors.text,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 2 }}>
+        {icon}
+        <span style={{ fontWeight: 600, fontSize: tokens.font.sizeSmall }}>{label}</span>
+        <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, marginLeft: "auto" }}>{sublabel}</span>
+      </div>
+      <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>{description}</div>
+    </button>
+  );
+}
+
 function ReachRow({ dem, reach }: { dem: Demographic; reach: number }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs, marginBottom: 6 }}>
@@ -89,6 +208,59 @@ function ReachRow({ dem, reach }: { dem: Demographic; reach: number }) {
       <ProgressBar value={reach} height={6} />
       <span style={{ minWidth: 32, textAlign: "right", fontSize: tokens.font.sizeSmall, color: tokens.colors.text }}>{reach}%</span>
     </div>
+  );
+}
+
+/** Compute the running perception trajectory from a rolling history window. */
+function computePerceptionTrajectory(history: number[]): number[] {
+  if (history.length === 0) return [];
+  const trajectory: number[] = [];
+  let sum = 0;
+  for (let i = 0; i < history.length; i++) {
+    sum += history[i];
+    const mean = sum / (i + 1);
+    const perception = mean * PERCEPTION_CONTRIBUTION_SCALE;
+    trajectory.push(Math.max(PERCEPTION_MIN, Math.min(PERCEPTION_MAX, perception)));
+  }
+  return trajectory;
+}
+
+/** Inline SVG sparkline for perception trajectory. */
+function PerceptionSparkline({ trajectory }: { trajectory: number[] }) {
+  if (trajectory.length < 2) return null;
+  const width = 60;
+  const height = 16;
+  const padding = 1;
+  const min = Math.min(...trajectory, -5);
+  const max = Math.max(...trajectory, 5);
+  const range = max - min || 1;
+
+  const points = trajectory.map((v, i) => {
+    const x = padding + (i / (trajectory.length - 1)) * (width - 2 * padding);
+    const y = padding + (1 - (v - min) / range) * (height - 2 * padding);
+    return `${x},${y}`;
+  });
+
+  const lastVal = trajectory[trajectory.length - 1];
+  const color = lastVal > 1 ? tokens.colors.success : lastVal < -1 ? tokens.colors.danger : tokens.colors.textMuted;
+
+  return (
+    <svg width={width} height={height} style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }}>
+      {/* Zero line */}
+      <line
+        x1={padding} y1={padding + (1 - (0 - min) / range) * (height - 2 * padding)}
+        x2={width - padding} y2={padding + (1 - (0 - min) / range) * (height - 2 * padding)}
+        stroke={tokens.colors.panelBorder} strokeWidth={0.5}
+      />
+      <polyline
+        points={points.join(" ")}
+        fill="none"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 
@@ -100,11 +272,17 @@ function PerceptionRow({ dem, player, latestPerceptionChanges }: {
   const perception = formatPerception(player.brandPerception[dem.id] ?? 0);
   const change = latestPerceptionChanges.get(dem.id);
   const hasMeaningfulChange = change && Math.abs(change.delta) >= PERCEPTION_MEANINGFUL_DELTA;
+  const trajectory = useMemo(
+    () => computePerceptionTrajectory(player.perceptionHistory?.[dem.id] ?? []),
+    [player.perceptionHistory, dem.id],
+  );
+
   return (
     <div style={{ marginBottom: hasMeaningfulChange ? 10 : 6 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.text }}>{dem.name}</span>
-        <span>
+        <span style={{ display: "flex", alignItems: "center" }}>
+          {trajectory.length >= 2 && <PerceptionSparkline trajectory={trajectory} />}
           {hasMeaningfulChange && (
             <span style={{
               fontSize: tokens.font.sizeSmall,
@@ -133,7 +311,6 @@ function PerceptionRow({ dem, player, latestPerceptionChanges }: {
 export function BrandDetailScreen() {
   const { state, dispatch } = useGame();
   const player = getPlayerCompany(state);
-  const [hoveredSponsorship, setHoveredSponsorship] = useState<string | null>(null);
   const [showAllNiches, setShowAllNiches] = useState(false);
 
   const visibleNiches = useMemo(() =>
@@ -144,7 +321,7 @@ export function BrandDetailScreen() {
   );
   const hiddenNicheCount = NICHES.length - visibleNiches.length;
 
-  // Get the most recent perception changes: current year's quarters, or last completed year
+  // Get the most recent perception changes
   const latestPerceptionChanges = useMemo(() => {
     const map = new Map<DemographicId, PerceptionChange>();
     const source = state.quarterHistory.length > 0
@@ -156,12 +333,12 @@ export function BrandDetailScreen() {
       for (const pc of result.perceptionChanges) {
         const existing = map.get(pc.demographicId);
         if (existing) {
-          // Accumulate: keep first old, use latest new, sum deltas, keep latest reason
           map.set(pc.demographicId, {
             ...existing,
             newPerception: pc.newPerception,
             delta: pc.newPerception - existing.oldPerception,
             reason: pc.reason,
+            insight: pc.insight ?? existing.insight,
           });
         } else {
           map.set(pc.demographicId, { ...pc });
@@ -171,107 +348,92 @@ export function BrandDetailScreen() {
     return map;
   }, [state.quarterHistory, state.yearHistory]);
 
-  const totalSponsorshipCost = state.sponsorships.reduce((sum, id) => {
-    const s = SPONSORSHIPS.find((sp) => sp.id === id);
-    return sum + (s ? getSponsorshipCost(s, state.year) : 0);
-  }, 0);
+  // Filter channels available in the current year
+  const availableChannels = useMemo(
+    () => MARKETING_CHANNELS.filter((c) => isChannelAvailable(c, state.year)),
+    [state.year],
+  );
 
-  const totalAnnualSpend = state.brandAwarenessBudget + totalSponsorshipCost;
+  // Group by tier
+  const channelsByTier = useMemo(() => {
+    const grouped: Record<number, MarketingChannel[]> = { 1: [], 2: [], 3: [] };
+    for (const ch of availableChannels) {
+      grouped[ch.tier].push(ch);
+    }
+    return grouped;
+  }, [availableChannels]);
+
+  // Active channel lookup
+  const activeMap = useMemo(() => {
+    const map = new Map<string, MarketingMode>();
+    for (const ac of state.activeMarketingChannels) {
+      map.set(ac.channelId, ac.mode);
+    }
+    return map;
+  }, [state.activeMarketingChannels]);
+
+  // Total quarterly marketing spend
+  const totalQuarterlySpend = useMemo(() => {
+    let total = 0;
+    for (const ac of state.activeMarketingChannels) {
+      const ch = MARKETING_CHANNELS.find((c) => c.id === ac.channelId);
+      if (ch && isChannelAvailable(ch, state.year)) {
+        total += getChannelCost(ch, state.year, ac.mode);
+      }
+    }
+    return total;
+  }, [state.activeMarketingChannels, state.year]);
 
   return (
     <ContentPanel maxWidth={tokens.layout.panelMaxWidth} style={{ display: "flex", flexDirection: "column", overflow: "hidden", height: tokens.layout.panelHeight, width: tokens.layout.panelWidth }}>
       <ScreenHeader
         title="Brand Management"
         icon={Sparkles}
-        right={
+        right={totalQuarterlySpend > 0 ? (
           <span style={{ fontSize: tokens.font.sizeBase, color: tokens.colors.textMuted }}>
-            Annual spend: <span style={{ color: tokens.colors.warning, fontWeight: 600 }}>${totalAnnualSpend.toLocaleString()}</span>
+            Marketing: <span style={{ color: tokens.colors.warning, fontWeight: 600 }}>{formatCash(totalQuarterlySpend)}/qtr</span>
+            {" "}({formatCash(totalQuarterlySpend * 4)}/yr)
           </span>
-        }
+        ) : undefined}
       />
 
       <div style={{ display: "flex", flex: 1, gap: tokens.spacing.lg, minHeight: 0 }}>
-        {/* Main content: Budget + Sponsorships */}
+        {/* Main content: Marketing channels */}
         <div className="content-panel hide-scrollbar" style={{ flex: 2, overflowY: "auto", minHeight: 0 }}>
-          {/* Awareness Budget */}
-          <div style={sectionStyle}>
-            <p style={headingStyle}>Awareness Budget</p>
-            <p style={{ ...hintStyle, marginBottom: tokens.spacing.md, marginTop: 0 }}>
-              Annual general spend that feeds a small amount of brand reach into all demographics.
-              Cost is deducted upfront for the year.
-            </p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: tokens.spacing.sm }}>
-              {BUDGET_PRESETS.map((preset) => {
-                const isSelected = state.brandAwarenessBudget === preset;
-                const canAfford = state.cash >= preset - state.brandAwarenessBudget;
-                return (
-                  <MenuButton
-                    key={preset}
-                    variant={isSelected ? "accent" : "surface"}
-                    disabled={!isSelected && !canAfford}
-                    onClick={() => dispatch({ type: "SET_AWARENESS_BUDGET", budget: preset })}
-                    style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
-                  >
-                    {preset === 0 ? "None" : preset >= 1_000_000 ? `$${(preset / 1_000_000).toFixed(0)}M` : `$${(preset / 1000).toFixed(0)}K`}
-                  </MenuButton>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Sponsorships */}
-          <div style={sectionStyle}>
-            <p style={headingStyle}>Sponsorships & Partnerships</p>
-            <p style={{ ...hintStyle, marginBottom: tokens.spacing.md, marginTop: 0 }}>
-              Discrete annual deals that target specific demographics. Toggle to purchase or cancel.
-              Costs are adjusted for inflation.
-            </p>
-            {SPONSORSHIPS.map((sponsorship) => {
-              const isActive = state.sponsorships.includes(sponsorship.id);
-              const cost = getSponsorshipCost(sponsorship, state.year);
-              const canAfford = state.cash >= cost;
-              const isHovered = hoveredSponsorship === sponsorship.id;
-              const targetedDemos = DEMOGRAPHICS.filter((d) => (sponsorship.reachBonus[d.id] ?? 0) > 0);
-
-              return (
-                <div
-                  key={sponsorship.id}
-                  style={{
-                    ...(isActive ? sponsorshipActiveStyle : sponsorshipCardStyle),
-                    ...(isHovered && !isActive ? { background: tokens.colors.surfaceHover } : {}),
-                    ...((!canAfford && !isActive) ? { opacity: 0.5, cursor: "not-allowed" } : {}),
-                  }}
-                  onClick={() => {
-                    if (!canAfford && !isActive) return;
-                    dispatch({ type: "TOGGLE_SPONSORSHIP", sponsorshipId: sponsorship.id });
-                  }}
-                  onMouseEnter={() => setHoveredSponsorship(sponsorship.id)}
-                  onMouseLeave={() => setHoveredSponsorship(null)}
-                >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm }}>
-                      {isActive && <Check size={16} color={tokens.colors.accent} />}
-                      <span style={{ fontWeight: 600, fontSize: tokens.font.sizeBase }}>{sponsorship.name}</span>
-                    </div>
-                    <span style={{ fontWeight: 600, fontSize: tokens.font.sizeBase, color: isActive ? tokens.colors.accent : tokens.colors.text }}>
-                      ${cost.toLocaleString()}
-                    </span>
-                  </div>
-                  <p style={{ ...hintStyle, marginTop: tokens.spacing.xs, marginBottom: tokens.spacing.xs }}>
-                    {sponsorship.description}
-                  </p>
-                  <div>
-                    {targetedDemos.map((dem) => (
-                      <span key={dem.id} style={demographicTagStyle}>
-                        {dem.name} +{sponsorship.reachBonus[dem.id]}%
-                      </span>
-                    ))}
-                  </div>
+          {([1, 2, 3] as const).map((tier) => {
+            const channels = channelsByTier[tier];
+            if (channels.length === 0) return null;
+            return (
+              <div key={tier} style={{ marginBottom: tokens.spacing.xl }}>
+                <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm, marginBottom: tokens.spacing.sm }}>
+                  <span style={{
+                    fontSize: tokens.font.sizeSmall,
+                    fontWeight: 700,
+                    color: tierColor[tier],
+                    letterSpacing: 0.5,
+                    textTransform: "uppercase",
+                  }}>
+                    TIER {tier}
+                  </span>
+                  <span style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}>{tierLabel[tier]}</span>
+                  <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
+                    ({Math.min(...channels.map((c) => c.targetDemographics.length))}–{Math.max(...channels.map((c) => c.targetDemographics.length))} demographics)
+                  </span>
                 </div>
-              );
-            })}
-          </div>
-
+                {channels.map((ch) => (
+                  <ChannelCard
+                    key={ch.id}
+                    channel={ch}
+                    year={state.year}
+                    isActive={activeMap.has(ch.id)}
+                    mode={activeMap.get(ch.id) ?? "aggressive"}
+                    onToggle={() => dispatch({ type: "TOGGLE_MARKETING_CHANNEL", channelId: ch.id })}
+                    onModeChange={(mode) => dispatch({ type: "SET_MARKETING_MODE", channelId: ch.id, mode })}
+                  />
+                ))}
+              </div>
+            );
+          })}
           <div style={{ flexShrink: 0, height: tokens.spacing.lg }} />
         </div>
 
@@ -324,7 +486,7 @@ export function BrandDetailScreen() {
             <PerceptionRow key={dem.id} dem={dem} player={player} latestPerceptionChanges={latestPerceptionChanges} />
           ))}
           <p style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, marginTop: tokens.spacing.xs }}>
-            Sentiment from quality &amp; value. Decays 25%/yr.
+            Sentiment from product quality &amp; value. Based on last 3 years of experience.
           </p>
         </div>
       </div>
@@ -332,4 +494,3 @@ export function BrandDetailScreen() {
     </ContentPanel>
   );
 }
-

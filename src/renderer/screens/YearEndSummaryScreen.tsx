@@ -9,7 +9,7 @@ import { tokens } from "../shell/tokens";
 import { formatCurrency, formatNumber } from "../utils/formatCash";
 import { titleStyle, sectionHeadingStyle, tableStyle, thStyle, tdStyle, tdRight, cardStyle, twoColumnLayout, warningBannerStyle } from "./summaryStyles";
 import { AwardsTable } from "./AwardsTable";
-import { AWARD_PERCEPTION_BONUS, AWARD_REACH_BONUS } from "../../simulation/tunables";
+import { AWARD_PRIMARY_PERCEPTION_BONUS, AWARD_PRIMARY_REACH_BONUS } from "../../simulation/tunables";
 import { DemographicDetailSection } from "./DemographicDetailSection";
 import { QuarterlyTrendTable } from "./QuarterlyTrendTable";
 import { HeroKPIBar } from "./HeroKPIBar";
@@ -155,7 +155,7 @@ export function YearEndSummaryScreen() {
                 <h3 style={sectionHeadingStyle}>Year-End Awards</h3>
                 <AwardsTable awards={state.currentYearAwards} />
                 <p style={{ margin: 0, marginTop: tokens.spacing.xs, color: tokens.colors.textMuted, fontSize: tokens.font.sizeSmall }}>
-                  Award winners receive +{AWARD_PERCEPTION_BONUS} brand perception and +{AWARD_REACH_BONUS}% brand reach across all demographics.
+                  Award winners receive up to +{AWARD_PRIMARY_PERCEPTION_BONUS} perception and +{AWARD_PRIMARY_REACH_BONUS}% reach in relevant demographics.
                 </p>
               </div>
             )}

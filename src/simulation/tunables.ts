@@ -14,8 +14,6 @@ import { ModelType } from "../renderer/state/gameTypes";
 export const S_CURVE_STEEPNESS = 0.08;
 /** S-curve midpoint (reach % where growth is fastest) */
 export const S_CURVE_MIDPOINT = 50;
-/** Awareness budget divisor — every $X of awareness budget contributes 1 raw reach point */
-export const AWARENESS_DIVISOR = 500_000;
 /** Word-of-mouth divisor — every X units sold contributes 1 raw reach point */
 export const WOM_DIVISOR = 5_000;
 /** Reach decay rate when no products on sale (proportional, per year) */
@@ -23,10 +21,10 @@ export const REACH_INACTIVITY_DECAY = 0.10;
 
 // ==================== Brand Perception ====================
 
-/** Scales raw value-for-money contribution into perception points (roughly +-5 per year) */
+/** Scales rolling-window average experience into perception points */
 export const PERCEPTION_CONTRIBUTION_SCALE = 5;
-/** Perception decay factor (25% fade per year — recency bias) */
-export const PERCEPTION_DECAY = 0.75;
+/** Rolling window size in quarters (12 = 3 years of history) */
+export const PERCEPTION_WINDOW_SIZE = 12;
 /** Negativity bias multiplier — bad value-for-money hits harder */
 export const NEGATIVITY_MULTIPLIER = 1.5;
 /** Perception floor (minimum per-demographic perception score) */
@@ -58,7 +56,7 @@ export const PRICE_BASE_YEAR = 2000;
 
 // ==================== Cost Inflation ====================
 
-/** Annual scaling for sponsorship costs */
+/** Annual scaling for marketing/infrastructure costs */
 export const COST_INFLATION = 1.03;
 /** Base year for cost inflation */
 export const COST_BASE_YEAR = 2000;
@@ -172,7 +170,11 @@ export const DEATH_SPIRAL_MAX_BONUS = 0.4;
 
 // ==================== Awards ====================
 
-/** Global perception boost from winning an award */
-export const AWARD_PERCEPTION_BONUS = 2;
-/** Global reach % boost from winning an award */
-export const AWARD_REACH_BONUS = 1;
+/** Perception boost for primary demographics (matching outlet affinity) */
+export const AWARD_PRIMARY_PERCEPTION_BONUS = 5;
+/** Reach % boost for primary demographics */
+export const AWARD_PRIMARY_REACH_BONUS = 3;
+/** Perception boost for secondary demographics (adjacent interest) */
+export const AWARD_SECONDARY_PERCEPTION_BONUS = 1;
+/** Reach % boost for secondary demographics */
+export const AWARD_SECONDARY_REACH_BONUS = 0.5;

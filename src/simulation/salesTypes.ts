@@ -73,6 +73,35 @@ export function marketAverageRawVP(
   return totalUnits > 0 ? weightedVP / totalUnits : 0;
 }
 
+/** A stat's contribution to the VP gap between the player and market average */
+export interface StatContributor {
+  stat: LaptopStat;
+  /** Player's normalized score (0–100) for this stat */
+  playerScore: number;
+  /** Market leader's normalized score (0–100) for this stat */
+  marketLeaderScore: number;
+  /** Demographic weight for this stat */
+  weight: number;
+  /** Whether this stat is helping or hurting the player */
+  impact: "helping" | "hurting" | "neutral";
+}
+
+/** Structured insight into why perception changed for a demographic */
+export interface PerceptionInsight {
+  /** Player's average rawVP in this demographic */
+  playerAvgVP: number;
+  /** Market-wide average rawVP in this demographic */
+  marketAvgVP: number;
+  /** Gap: playerAvgVP - marketAvgVP */
+  vpGap: number;
+  /** Top stat contributors to the VP gap, sorted by |weighted impact| descending */
+  topStats: StatContributor[];
+  /** Player's average price score vs market average price score */
+  priceScore: { player: number; marketAvg: number };
+  /** The top competitor in this demographic */
+  topCompetitor: { name: string; rawVP: number } | null;
+}
+
 /** Per-demographic perception change for a single company */
 export interface PerceptionChange {
   demographicId: DemographicId;
@@ -81,6 +110,8 @@ export interface PerceptionChange {
   delta: number;
   /** Human-readable explanation of why perception changed */
   reason: string;
+  /** Structured insight for actionable feedback (null if no sales) */
+  insight: PerceptionInsight | null;
 }
 
 export interface QuarterSimulationResult {
@@ -90,9 +121,13 @@ export interface QuarterSimulationResult {
   playerResults: LaptopSalesResult[];
   totalRevenue: number;
   totalProfit: number;
+  /** Total quarterly marketing channel spend */
+  marketingCost: number;
   cashAfterResolution: number;
   /** Per-demographic perception changes for the player this quarter */
   perceptionChanges: PerceptionChange[];
+  /** Updated rolling-window perception history for the player this quarter */
+  playerPerceptionHistory: Record<DemographicId, number[]>;
 }
 
 export interface YearSimulationResult {
@@ -101,6 +136,8 @@ export interface YearSimulationResult {
   playerResults: LaptopSalesResult[];
   totalRevenue: number;
   totalProfit: number;
+  /** Total marketing channel spend for the year */
+  marketingCost: number;
   cashAfterResolution: number;
   gameOver: boolean;
   /** Per-demographic perception changes for the player this year */

@@ -9,8 +9,8 @@ import { applyDeathSpiralPrevention } from "../../simulation/deathSpiralPreventi
 import { generateCompetitorModels, discountOldInventoryPrice } from "../../simulation/competitorAI";
 import { COMPETITORS } from "../../data/competitors";
 import { LaptopReview, Award, applyAwardBonuses } from "../../simulation/reviewsAwards";
-import { SPONSORSHIPS, getSponsorshipCost } from "../../data/sponsorships";
 import { PERCEPTION_MEANINGFUL_DELTA, AI_MAX_MODEL_AGE } from "../../simulation/tunables";
+import { MarketingMode, MARKETING_CHANNELS, isChannelAvailable } from "../../data/marketingChannels";
 
 export interface CompetitorModelEntry {
   competitorId: string;
@@ -31,8 +31,8 @@ type GameAction =
   | { type: "SET_RETAIL_PRICE"; modelId: string; retailPrice: number }
   | { type: "ADD_COMPETITOR_MODELS"; models: CompetitorModelEntry[] }
   | { type: "APPLY_QUARTER_RESULT"; result: QuarterSimulationResult }
-  | { type: "SET_AWARENESS_BUDGET"; budget: number }
-  | { type: "TOGGLE_SPONSORSHIP"; sponsorshipId: string }
+  | { type: "TOGGLE_MARKETING_CHANNEL"; channelId: string }
+  | { type: "SET_MARKETING_MODE"; channelId: string; mode: MarketingMode }
   | { type: "SET_REVIEWS"; reviews: LaptopReview[] }
   | { type: "SET_AWARDS"; awards: Award[] };
 
@@ -113,10 +113,12 @@ function preSimulateAIYear(initial: GameState): GameState {
       ...s,
       companies: s.companies.map((comp) => {
         if (comp.isPlayer) return comp;
+        const perceptionUpdate = applySingleQuarterPerception(comp, result.laptopResults);
         return {
           ...comp,
           brandReach: updateCompetitorBrandReach(comp, result),
-          brandPerception: applySingleQuarterPerception(comp, result.laptopResults),
+          brandPerception: perceptionUpdate.perception,
+          perceptionHistory: perceptionUpdate.history,
           models: comp.models.map((m) => {
             const sim = simByLaptop.get(m.design.id);
             if (!sim) return m;
@@ -179,8 +181,11 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         quarterHistory: [],
         currentYearReviews: [],
         currentYearAwards: [],
-        brandAwarenessBudget: 0,
-        sponsorships: [],
+        // Auto-remove deprecated marketing channels
+        activeMarketingChannels: state.activeMarketingChannels.filter((ac) => {
+          const ch = MARKETING_CHANNELS.find((c) => c.id === ac.channelId);
+          return ch && isChannelAvailable(ch, nextYear);
+        }),
         companies: cleanupAIModels(companiesAfterSpiral, nextYear).map((comp) => {
           if (!comp.isPlayer) return comp;
           return {
@@ -350,6 +355,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       const newPlayerPerception = Object.fromEntries(
         result.perceptionChanges.map((pc) => [pc.demographicId, pc.newPerception]),
       ) as Record<DemographicId, number>;
+      const newPlayerHistory = result.playerPerceptionHistory;
 
       // Build cumulative year result for yearHistory (aggregated after Q4)
       const isQ4 = state.quarter === 4;
@@ -361,6 +367,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
             ...comp,
             brandReach: newPlayerReach,
             brandPerception: newPlayerPerception,
+            perceptionHistory: newPlayerHistory,
             models: comp.models.map((m) => {
               const sim = simByLaptop.get(m.design.id);
               if (!sim) return m;
@@ -402,10 +409,12 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           };
         }
         // Competitor: update brand reach, perception, and inventory
+        const compPerceptionUpdate = applySingleQuarterPerception(comp, result.laptopResults);
         return {
           ...comp,
           brandReach: updateCompetitorBrandReach(comp, result),
-          brandPerception: applySingleQuarterPerception(comp, result.laptopResults),
+          brandPerception: compPerceptionUpdate.perception,
+          perceptionHistory: compPerceptionUpdate.history,
           models: comp.models.map((m) => {
             const sim = allSimByLaptop.get(m.design.id);
             if (!sim) return m;
@@ -429,34 +438,27 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         lastSimulationResult: result,
       };
     }
-    case "SET_AWARENESS_BUDGET": {
-      // Refund old budget, charge new budget
-      const cashDelta = state.brandAwarenessBudget - action.budget;
-      return {
-        ...state,
-        cash: state.cash + cashDelta,
-        brandAwarenessBudget: action.budget,
-      };
-    }
-    case "TOGGLE_SPONSORSHIP": {
-      const isActive = state.sponsorships.includes(action.sponsorshipId);
-      const sponsorship = SPONSORSHIPS.find((s) => s.id === action.sponsorshipId);
-      if (!sponsorship) return state;
-      const cost = getSponsorshipCost(sponsorship, state.year);
-      if (isActive) {
-        // Remove and refund
+    case "TOGGLE_MARKETING_CHANNEL": {
+      const existing = state.activeMarketingChannels.find((c) => c.channelId === action.channelId);
+      if (existing) {
+        // Deactivate
         return {
           ...state,
-          cash: state.cash + cost,
-          sponsorships: state.sponsorships.filter((id) => id !== action.sponsorshipId),
+          activeMarketingChannels: state.activeMarketingChannels.filter((c) => c.channelId !== action.channelId),
         };
       }
-      // Purchase
-      if (state.cash < cost) return state;
+      // Activate with default aggressive mode
       return {
         ...state,
-        cash: state.cash - cost,
-        sponsorships: [...state.sponsorships, action.sponsorshipId],
+        activeMarketingChannels: [...state.activeMarketingChannels, { channelId: action.channelId, mode: "aggressive" }],
+      };
+    }
+    case "SET_MARKETING_MODE": {
+      return {
+        ...state,
+        activeMarketingChannels: state.activeMarketingChannels.map((c) =>
+          c.channelId === action.channelId ? { ...c, mode: action.mode } : c,
+        ),
       };
     }
     case "SET_REVIEWS":
@@ -490,14 +492,16 @@ function buildYearResult(
     // Pick the reason from the quarter whose delta best represents the year-level change:
     // find the quarter with the largest absolute delta matching the overall sign
     let reason = lastQ.perceptionChanges[i]?.reason ?? pc.reason;
+    let insight = lastQ.perceptionChanges[i]?.insight ?? pc.insight;
     const sameSignQuarters = quarters
       .map((q) => q.perceptionChanges[i])
       .filter((qpc) => qpc && Math.sign(qpc.delta) === Math.sign(delta) && Math.abs(qpc.delta) >= PERCEPTION_MEANINGFUL_DELTA);
     if (sameSignQuarters.length > 0) {
       sameSignQuarters.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
       reason = sameSignQuarters[0].reason;
+      insight = sameSignQuarters[0].insight;
     }
-    return { ...pc, newPerception, delta, reason };
+    return { ...pc, newPerception, delta, reason, insight };
   });
 
   // Aggregate laptop results (sum across quarters)
@@ -540,12 +544,15 @@ function buildYearResult(
   const laptopResults = Array.from(laptopResultMap.values());
   const playerResults = laptopResults.filter((r) => r.owner === "player");
 
+  const totalMarketingCost = quarters.reduce((s, q) => s + q.marketingCost, 0);
+
   return {
     year: state.year,
     laptopResults,
     playerResults,
     totalRevenue,
     totalProfit,
+    marketingCost: totalMarketingCost,
     cashAfterResolution: lastQuarter.cashAfterResolution,
     gameOver: lastQuarter.cashAfterResolution < 0,
     perceptionChanges,

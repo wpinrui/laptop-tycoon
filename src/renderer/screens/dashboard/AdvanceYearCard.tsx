@@ -12,8 +12,7 @@ import { generateCompetitorModels } from "../../../simulation/competitorAI";
 import { simulateQuarter } from "../../../simulation/salesEngine";
 import { generateReviews, determineAwards } from "../../../simulation/reviewsAwards";
 import { QuarterSimulationResult, LaptopSalesResult } from "../../../simulation/salesTypes";
-import { QUARTER_LABELS, formatCash } from "../../utils/formatCash";
-import { SPONSORSHIPS, getSponsorshipCost } from "../../../data/sponsorships";
+import { QUARTER_LABELS } from "../../utils/formatCash";
 
 /** Models that need a current-year manufacturing plan before simulation. */
 function modelsNeedingPlans(state: { year: number; models: ReturnType<typeof getActiveModels> }) {
@@ -70,13 +69,6 @@ export function AdvanceYearCard() {
     );
   }
 
-  // Calculate brand marketing spend for display
-  const sponsorshipCost = state.sponsorships.reduce((sum, id) => {
-    const s = SPONSORSHIPS.find((sp) => sp.id === id);
-    return sum + (s ? getSponsorshipCost(s, state.year) : 0);
-  }, 0);
-  const brandSpend = state.brandAwarenessBudget + sponsorshipCost;
-
   return (
     <BentoCard title={`Simulate ${quarterLabel}`} icon={FastForward}>
       {warnings.length > 0 ? (
@@ -91,14 +83,6 @@ export function AdvanceYearCard() {
             ? `All models ready. Simulate ${quarterLabel} ${state.year}.`
             : `Simulate ${quarterLabel} ${state.year}. You can place additional manufacturing orders or adjust pricing from Model Management.`
           }
-        </p>
-      )}
-      {brandSpend > 0 && (
-        <p style={{ ...cardBodyStyle, color: tokens.colors.textMuted }}>
-          Brand marketing: {formatCash(brandSpend)}
-          {state.brandAwarenessBudget > 0 && sponsorshipCost > 0
-            ? ` (${formatCash(state.brandAwarenessBudget)} awareness + ${formatCash(sponsorshipCost)} sponsorships)`
-            : ""}
         </p>
       )}
       <MenuButton
