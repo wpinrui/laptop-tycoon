@@ -3,14 +3,20 @@
  *
  * - Reviews: published after Q1 sales resolve (2 per laptop: tech & mainstream outlet)
  * - Awards: published after Q4 (category winners from all companies)
- * - Award effect: +2 brand perception & +1% brand reach across all demographics
+ * - Award effect: demographic-specific perception & reach boost based on outlet affinity
  */
 
 import { DemographicId, LaptopStat, ALL_STATS } from "../data/types";
 import { GameState, CompanyState, modelDisplayName } from "../renderer/state/gameTypes";
 import { computeStatsForDesign } from "./statCalculation";
 import { LaptopSalesResult, QuarterSimulationResult } from "./salesTypes";
-import { AWARD_PERCEPTION_BONUS, AWARD_REACH_BONUS, PERCEPTION_CONTRIBUTION_SCALE } from "./tunables";
+import {
+  AWARD_PRIMARY_PERCEPTION_BONUS,
+  AWARD_PRIMARY_REACH_BONUS,
+  AWARD_SECONDARY_PERCEPTION_BONUS,
+  AWARD_SECONDARY_REACH_BONUS,
+  PERCEPTION_CONTRIBUTION_SCALE,
+} from "./tunables";
 
 // ==================== Types ====================
 
@@ -465,6 +471,62 @@ export function generateReviews(state: GameState, q1Result: QuarterSimulationRes
 
 // ==================== Award Determination ====================
 
+/** Which outlet each award category is associated with (determines demographic impact). */
+const AWARD_OUTLET_AFFINITY: Record<AwardCategory, ReviewOutlet | "both"> = {
+  bestOverall: "both",
+  bestValue: "mainstream",
+  bestPortable: "mainstream",
+  bestPerformance: "techEnthusiast",
+  bestForBusiness: "mainstream",
+};
+
+type DemographicAffinity = "primary" | "secondary";
+
+/** Demographics that care about tech-focused review outlets */
+const TECH_OUTLET_DEMOGRAPHICS: Record<string, DemographicAffinity> = {
+  techEnthusiast: "primary",
+  gamer: "primary",
+  developer: "primary",
+  esportsPro: "primary",
+  streamer: "primary",
+  videoEditor: "secondary",
+  threeDArtist: "secondary",
+  dayTrader: "secondary",
+  creativeProfessional: "secondary",
+};
+
+/** Demographics that care about mainstream review outlets */
+const MAINSTREAM_OUTLET_DEMOGRAPHICS: Record<string, DemographicAffinity> = {
+  generalConsumer: "primary",
+  student: "primary",
+  budgetBuyer: "primary",
+  businessProfessional: "primary",
+  corporate: "primary",
+  educationK12: "primary",
+  digitalNomad: "secondary",
+  fieldWorker: "secondary",
+  writer: "secondary",
+  desktopReplacement: "secondary",
+  musicProducer: "secondary",
+};
+
+/** Get the affinity level for a demographic given an award's outlet type. */
+function getDemographicAffinity(
+  demId: DemographicId,
+  outlet: ReviewOutlet | "both",
+): DemographicAffinity | null {
+  if (outlet === "both") {
+    const tech = TECH_OUTLET_DEMOGRAPHICS[demId];
+    const mainstream = MAINSTREAM_OUTLET_DEMOGRAPHICS[demId];
+    // Take the best match from either outlet
+    if (tech === "primary" || mainstream === "primary") return "primary";
+    if (tech === "secondary" || mainstream === "secondary") return "secondary";
+    return null;
+  }
+  if (outlet === "techEnthusiast") return TECH_OUTLET_DEMOGRAPHICS[demId] ?? null;
+  return MAINSTREAM_OUTLET_DEMOGRAPHICS[demId] ?? null;
+}
+
 const AWARD_CATEGORIES: {
   category: AwardCategory;
   label: string;
@@ -577,44 +639,63 @@ export function determineAwards(
 // ==================== Award Bonus Application ====================
 
 /**
- * Apply award bonuses to all winning companies.
- * Each award win: +AWARD_PERCEPTION_BONUS perception, +AWARD_REACH_BONUS% reach across all demographics.
+ * Apply demographic-specific award bonuses to all winning companies.
+ * Each award targets demographics based on its outlet affinity:
+ * - Primary demographics get full perception + reach boost
+ * - Secondary demographics get a reduced boost
+ * - Unrelated demographics get nothing
  * Returns updated companies array.
  */
 export function applyAwardBonuses(
   companies: CompanyState[],
   awards: Award[],
 ): CompanyState[] {
-  // Count wins per company
-  const winsPerCompany = new Map<string, number>();
+  // Collect awards per company
+  const awardsPerCompany = new Map<string, Award[]>();
   for (const award of awards) {
-    winsPerCompany.set(award.ownerCompanyId, (winsPerCompany.get(award.ownerCompanyId) ?? 0) + 1);
+    const list = awardsPerCompany.get(award.ownerCompanyId) ?? [];
+    list.push(award);
+    awardsPerCompany.set(award.ownerCompanyId, list);
   }
 
-  if (winsPerCompany.size === 0) return companies;
+  if (awardsPerCompany.size === 0) return companies;
 
   return companies.map((company) => {
-    const wins = winsPerCompany.get(company.id);
-    if (!wins) return company;
-
-    const perceptionBoost = AWARD_PERCEPTION_BONUS * wins;
-    const reachBoost = AWARD_REACH_BONUS * wins;
-    // Convert perception boost to experience-space for the rolling window history
-    const experienceBoost = perceptionBoost / PERCEPTION_CONTRIBUTION_SCALE;
+    const companyAwards = awardsPerCompany.get(company.id);
+    if (!companyAwards) return company;
 
     const newPerception = { ...company.brandPerception };
     const newReach = { ...company.brandReach };
     const newHistory = { ...company.perceptionHistory };
 
     for (const demId of Object.keys(newPerception) as DemographicId[]) {
-      newPerception[demId] = Math.min(50, Math.max(-50, newPerception[demId] + perceptionBoost));
-      newReach[demId] = Math.min(100, newReach[demId] + reachBoost);
-      // Inject award boost into the most recent history entry so it persists in the window
-      const hist = [...(newHistory[demId] ?? [])];
-      if (hist.length > 0) {
-        hist[hist.length - 1] += experienceBoost;
+      let totalPerceptionBoost = 0;
+      let totalReachBoost = 0;
+
+      for (const award of companyAwards) {
+        const outlet = AWARD_OUTLET_AFFINITY[award.category];
+        const affinity = getDemographicAffinity(demId, outlet);
+        if (affinity === "primary") {
+          totalPerceptionBoost += AWARD_PRIMARY_PERCEPTION_BONUS;
+          totalReachBoost += AWARD_PRIMARY_REACH_BONUS;
+        } else if (affinity === "secondary") {
+          totalPerceptionBoost += AWARD_SECONDARY_PERCEPTION_BONUS;
+          totalReachBoost += AWARD_SECONDARY_REACH_BONUS;
+        }
+        // null affinity = irrelevant demographic, no effect
       }
-      newHistory[demId] = hist;
+
+      if (totalPerceptionBoost > 0 || totalReachBoost > 0) {
+        newPerception[demId] = Math.min(50, Math.max(-50, newPerception[demId] + totalPerceptionBoost));
+        newReach[demId] = Math.min(100, newReach[demId] + totalReachBoost);
+        // Inject into rolling window history so the boost persists
+        const experienceBoost = totalPerceptionBoost / PERCEPTION_CONTRIBUTION_SCALE;
+        const hist = [...(newHistory[demId] ?? [])];
+        if (hist.length > 0) {
+          hist[hist.length - 1] += experienceBoost;
+        }
+        newHistory[demId] = hist;
+      }
     }
 
     return {

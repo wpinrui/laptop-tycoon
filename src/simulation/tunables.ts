@@ -172,7 +172,11 @@ export const DEATH_SPIRAL_MAX_BONUS = 0.4;
 
 // ==================== Awards ====================
 
-/** Global perception boost from winning an award */
-export const AWARD_PERCEPTION_BONUS = 2;
-/** Global reach % boost from winning an award */
-export const AWARD_REACH_BONUS = 1;
+/** Perception boost for primary demographics (matching outlet affinity) */
+export const AWARD_PRIMARY_PERCEPTION_BONUS = 5;
+/** Reach % boost for primary demographics */
+export const AWARD_PRIMARY_REACH_BONUS = 3;
+/** Perception boost for secondary demographics (adjacent interest) */
+export const AWARD_SECONDARY_PERCEPTION_BONUS = 1;
+/** Reach % boost for secondary demographics */
+export const AWARD_SECONDARY_REACH_BONUS = 0.5;
