@@ -4,7 +4,7 @@ import { GameState, Quarter, LaptopDesign, LaptopModel, ModelStatus, CompanyStat
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { QuarterSimulationResult } from "../../simulation/salesTypes";
 import { clearProjectionCache, simulateQuarter } from "../../simulation/salesEngine";
-import { updateBrandReach, updateCompetitorBrandReach, applySingleQuarterPerception } from "../../simulation/brandProgression";
+import { applyMarketingToReach, updateBrandReach, updateCompetitorBrandReach, applySingleQuarterPerception } from "../../simulation/brandProgression";
 import { applyDeathSpiralPrevention } from "../../simulation/deathSpiralPrevention";
 import { generateCompetitorModels, discountOldInventoryPrice } from "../../simulation/competitorAI";
 import { COMPETITORS } from "../../data/competitors";
@@ -346,7 +346,15 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         result.laptopResults.map((r) => [r.laptopId, r]),
       );
 
-      const newPlayerReach = updateBrandReach(state, result);
+      // Apply marketing reach first (already used for simulation), then WoM on top
+      const marketingReach = applyMarketingToReach(state);
+      const stateWithMarketing = {
+        ...state,
+        companies: state.companies.map((c) =>
+          c.isPlayer ? { ...c, brandReach: marketingReach } : c,
+        ),
+      };
+      const newPlayerReach = updateBrandReach(stateWithMarketing, result);
       const newPlayerPerception = Object.fromEntries(
         result.perceptionChanges.map((pc) => [pc.demographicId, pc.newPerception]),
       ) as Record<DemographicId, number>;
