@@ -1,6 +1,6 @@
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
 import { DemographicId } from "../../data/types";
-import { GameState, Quarter, LaptopDesign, LaptopModel, ModelStatus, CompanyState, createInitialGameState, hasDiscontinuedComponents } from "./gameTypes";
+import { GameState, Quarter, LaptopDesign, LaptopModel, ModelStatus, CompanyState, ActiveMarketingChannel, createInitialGameState, hasDiscontinuedComponents } from "./gameTypes";
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { QuarterSimulationResult } from "../../simulation/salesTypes";
 import { clearProjectionCache, simulateQuarter } from "../../simulation/salesEngine";
@@ -10,6 +10,7 @@ import { generateCompetitorModels, discountOldInventoryPrice } from "../../simul
 import { COMPETITORS } from "../../data/competitors";
 import { LaptopReview, Award, applyAwardBonuses } from "../../simulation/reviewsAwards";
 import { PERCEPTION_MEANINGFUL_DELTA, AI_MAX_MODEL_AGE } from "../../simulation/tunables";
+import { MarketingMode, MARKETING_CHANNELS, isChannelAvailable } from "../../data/marketingChannels";
 
 export interface CompetitorModelEntry {
   competitorId: string;
@@ -30,6 +31,8 @@ type GameAction =
   | { type: "SET_RETAIL_PRICE"; modelId: string; retailPrice: number }
   | { type: "ADD_COMPETITOR_MODELS"; models: CompetitorModelEntry[] }
   | { type: "APPLY_QUARTER_RESULT"; result: QuarterSimulationResult }
+  | { type: "TOGGLE_MARKETING_CHANNEL"; channelId: string }
+  | { type: "SET_MARKETING_MODE"; channelId: string; mode: MarketingMode }
   | { type: "SET_REVIEWS"; reviews: LaptopReview[] }
   | { type: "SET_AWARDS"; awards: Award[] };
 
@@ -178,6 +181,11 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         quarterHistory: [],
         currentYearReviews: [],
         currentYearAwards: [],
+        // Auto-remove deprecated marketing channels
+        activeMarketingChannels: state.activeMarketingChannels.filter((ac) => {
+          const ch = MARKETING_CHANNELS.find((c) => c.id === ac.channelId);
+          return ch && isChannelAvailable(ch, nextYear);
+        }),
         companies: cleanupAIModels(companiesAfterSpiral, nextYear).map((comp) => {
           if (!comp.isPlayer) return comp;
           return {
@@ -428,6 +436,29 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         quarterHistory: [...state.quarterHistory, result],
         yearHistory,
         lastSimulationResult: result,
+      };
+    }
+    case "TOGGLE_MARKETING_CHANNEL": {
+      const existing = state.activeMarketingChannels.find((c) => c.channelId === action.channelId);
+      if (existing) {
+        // Deactivate
+        return {
+          ...state,
+          activeMarketingChannels: state.activeMarketingChannels.filter((c) => c.channelId !== action.channelId),
+        };
+      }
+      // Activate with default aggressive mode
+      return {
+        ...state,
+        activeMarketingChannels: [...state.activeMarketingChannels, { channelId: action.channelId, mode: "aggressive" as MarketingMode }],
+      };
+    }
+    case "SET_MARKETING_MODE": {
+      return {
+        ...state,
+        activeMarketingChannels: state.activeMarketingChannels.map((c) =>
+          c.channelId === action.channelId ? { ...c, mode: action.mode } : c,
+        ),
       };
     }
     case "SET_REVIEWS":

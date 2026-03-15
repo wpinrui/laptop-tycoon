@@ -9,6 +9,7 @@ import { FullManufacturingPlan } from "../manufacturing/types";
 import { COMPETITORS, CompetitorArchetype } from "../../data/competitors";
 import { YearSimulationResult, QuarterSimulationResult } from "../../simulation/salesTypes";
 import { LaptopReview, Award } from "../../simulation/reviewsAwards";
+import { MarketingMode } from "../../data/marketingChannels";
 
 export type ModelType = "brandNew" | "successor" | "specBump";
 
@@ -77,6 +78,11 @@ export interface CompanyState {
 
 export type Quarter = 1 | 2 | 3 | 4;
 
+export interface ActiveMarketingChannel {
+  channelId: string;
+  mode: MarketingMode;
+}
+
 export interface GameState {
   companies: CompanyState[];
   companyLogo: string | null;
@@ -84,6 +90,8 @@ export interface GameState {
   quarter: Quarter;
   quarterSimulated: boolean;
   cash: number;
+  /** Active marketing channels — persist until manually changed. */
+  activeMarketingChannels: ActiveMarketingChannel[];
   yearHistory: YearSimulationResult[];
   lastSimulationResult: QuarterSimulationResult | null;
   /** Accumulated quarterly results for the current year (reset on year advance). */
@@ -184,6 +192,7 @@ export function createInitialGameState(
     quarter: 1 as Quarter,
     quarterSimulated: false,
     cash: STARTING_CASH,
+    activeMarketingChannels: [],
     yearHistory: [],
     lastSimulationResult: null,
     quarterHistory: [],
