@@ -13,7 +13,7 @@ import { DEMOGRAPHICS, GENERALISTS, NICHES } from "../../data/demographics";
 import { Demographic, DemographicId, MarketingTier } from "../../data/types";
 import { PerceptionChange } from "../../simulation/salesTypes";
 import { SidebarHeading } from "../wizard/LaptopEstimateSidebar";
-import { PERCEPTION_MEANINGFUL_DELTA, PERCEPTION_CONTRIBUTION_SCALE, PERCEPTION_MIN, PERCEPTION_MAX, TIER_ACQUISITIONS } from "../../simulation/tunables";
+import { PERCEPTION_MEANINGFUL_DELTA, PERCEPTION_CONTRIBUTION_SCALE, PERCEPTION_MIN, PERCEPTION_MAX, TIER_ACQUISITIONS, SPILLOVER_PENALTY } from "../../simulation/tunables";
 import {
   getMaxTier,
   getEffectiveReachCeiling,
@@ -148,7 +148,7 @@ function CampaignCard({
           <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>Also reaches: </span>
           {adjacencies.map(({ demographicId, weight }) => (
             <span key={demographicId} style={spilloverTagStyle}>
-              {getDemographicName(demographicId)} ({Math.round(weight * TIER_ACQUISITIONS[campaign.tier] * 0.15)})
+              {getDemographicName(demographicId)} ({Math.round(weight * TIER_ACQUISITIONS[campaign.tier] * SPILLOVER_PENALTY)})
             </span>
           ))}
         </div>
@@ -371,7 +371,7 @@ function AddCampaignPanel({
             <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>Also reaches: </span>
             {adjacencies.map(({ demographicId, weight }) => (
               <span key={demographicId} style={spilloverTagStyle}>
-                {getDemographicName(demographicId)} ({Math.round(weight * TIER_ACQUISITIONS[effectiveTier] * 0.15)})
+                {getDemographicName(demographicId)} ({Math.round(weight * TIER_ACQUISITIONS[effectiveTier] * SPILLOVER_PENALTY)})
               </span>
             ))}
           </div>

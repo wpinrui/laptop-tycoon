@@ -5,8 +5,6 @@ import {
   TIER_BASE_CEILINGS,
 } from "../simulation/tunables";
 
-// Re-export MarketingTier for consumers that previously imported from here
-export type { MarketingTier } from "./types";
 
 // ==================== Tier Helpers ====================
 
