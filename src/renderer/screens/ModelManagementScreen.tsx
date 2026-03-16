@@ -290,9 +290,9 @@ function ModelCard({
     return "Add Manufacturing Plan";
   };
 
-  // Show "Change Pricing" for models that already have a price set and aren't in the first manufacturing plan flow
-  // Also allow pricing changes on discontinued models that still have inventory (clearance sales)
-  const canChangePricing = retailPrice !== null && !isRetailOnly && (
+  // Show "Change Pricing" for retail-only models, models past initial manufacturing plan flow, or discontinued with stock
+  const canChangePricing = retailPrice !== null && (
+    isRetailOnly ||
     (hasPlanThisYear && (!hasCurrentQuarterPlan || isAdditionalOrder)) ||
     (status === "discontinued" && model.unitsInStock > 0)
   );
