@@ -12,7 +12,7 @@ import { DemographicId } from "../data/types";
 import { GameState, getPlayerCompany, Quarter } from "../renderer/state/gameTypes";
 import { QuarterSimulationResult } from "./salesTypes";
 import { LaptopReview, Award } from "./reviewsAwards";
-import { NewsItem, NewsOutletId, NewsCategory, NewsBody, OUTLETS } from "./newsTypes";
+import { NewsItem, NewsOutletId, OUTLETS } from "./newsTypes";
 import {
   TemplatePool,
   PRODUCT_LAUNCH_TEMPLATES,
