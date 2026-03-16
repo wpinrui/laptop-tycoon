@@ -18,6 +18,7 @@ import { MarketBrowserScreen } from "../screens/market-browser";
 import { FinancialHistoryScreen } from "../screens/FinancialHistoryScreen";
 import { HistoryScreen } from "../screens/HistoryScreen";
 import { NewsScreen } from "../screens/NewsScreen";
+import { PreSimNewsScreen } from "../screens/simulation/PreSimNewsScreen";
 import { DebugPanel } from "../debug/DebugPanel";
 
 function ScreenContent() {
@@ -50,6 +51,8 @@ function ScreenContent() {
       return <HistoryScreen />;
     case "marketBrowser":
       return <MarketBrowserScreen />;
+    case "preSimNews":
+      return <PreSimNewsScreen />;
     case "quarterlySummary":
       return <QuarterlySummaryScreen />;
     case "yearEndSummary":
@@ -64,7 +67,7 @@ function ScreenContent() {
 }
 
 /** Screens where Escape should NOT open the pause menu. */
-const NO_PAUSE_SCREENS = new Set(["mainMenu", "newGame", "designWizard", "manufacturingWizard", "quarterlySummary", "yearEndSummary", "gameOver"]);
+const NO_PAUSE_SCREENS = new Set(["mainMenu", "newGame", "designWizard", "manufacturingWizard", "preSimNews", "quarterlySummary", "yearEndSummary", "gameOver"]);
 
 export function ScreenRouter() {
   const { screen, overlay, setOverlay } = useNavigation();
