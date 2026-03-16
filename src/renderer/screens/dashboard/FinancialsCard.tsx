@@ -22,7 +22,7 @@ const heroLabelStyle: CSSProperties = {
 
 const sparkRowStyle: CSSProperties = {
   display: "flex",
-  gap: 20,
+  gap: tokens.spacing.lg,
   marginBottom: tokens.spacing.md,
 };
 
@@ -62,7 +62,8 @@ function pctChange(prev: number, curr: number): string | null {
   if (prev === 0) return null;
   const pct = ((curr - prev) / Math.abs(prev)) * 100;
   const sign = pct >= 0 ? "+" : "";
-  return `${sign}${pct.toFixed(0)}%`;
+  // Round to whole number for the compact dashboard card
+  return `${sign}${Math.round(pct)}%`;
 }
 
 export function FinancialsCard() {

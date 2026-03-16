@@ -1,4 +1,4 @@
-import { CSSProperties, useMemo, useState } from "react";
+import React, { CSSProperties, useMemo, useState } from "react";
 import { DollarSign } from "lucide-react";
 import { useGame } from "../state/GameContext";
 import { getPlayerCompany } from "../state/gameTypes";
@@ -73,7 +73,6 @@ function tabStyle(active: boolean): CSSProperties {
     fontSize: tokens.font.sizeBase,
     color: active ? tokens.colors.accent : tokens.colors.textMuted,
     cursor: "pointer",
-    borderBottom: `2px solid ${active ? tokens.colors.accent : "transparent"}`,
     fontWeight: active ? 600 : 400,
     background: "none",
     border: "none",
@@ -408,7 +407,6 @@ export function FinancialHistoryScreen() {
             {tab === "byModel" && (
               <ByModelTab
                 quarters={allQuarters}
-                companyName={player.name}
                 models={player.models}
               />
             )}
@@ -654,68 +652,68 @@ function PLRow({
   negative,
   bold,
   total,
+  cash,
 }: {
   label: string;
   values: number[];
-  showTotal: boolean;
+  showTotal?: boolean;
   indent?: boolean;
   negative?: boolean;
   bold?: boolean;
   total?: boolean;
+  cash?: boolean;
 }) {
   const sum = values.reduce((s, v) => s + v, 0);
 
-  const rowStyle: CSSProperties = total
-    ? {
-        borderTop: `2px solid ${tokens.colors.panelBorder}`,
-      }
+  const rowBorder: CSSProperties = total
+    ? { borderTop: `2px solid ${tokens.colors.panelBorder}` }
     : {};
 
-  const cellContent = (v: number) => {
-    const color = negative
-      ? tokens.colors.danger
-      : v < 0
-        ? tokens.colors.danger
-        : v > 0
-          ? tokens.colors.success
-          : tokens.colors.text;
-    return (
-      <td
-        style={{
-          ...plTdRight,
-          color,
-          fontWeight: bold ? 700 : 400,
-          ...(total ? { borderBottom: "none", paddingTop: 12 } : {}),
-        }}
-      >
-        {formatCash(v)}
-      </td>
-    );
-  };
+  const totalCellOverride: CSSProperties = total
+    ? { borderBottom: "none", paddingTop: 12 }
+    : {};
+
+  function cellColor(v: number): string {
+    if (cash) return tokens.colors.statusCash;
+    if (negative) return tokens.colors.danger;
+    if (v < 0) return tokens.colors.danger;
+    if (v > 0) return tokens.colors.success;
+    return tokens.colors.text;
+  }
+
+  const cellContent = (v: number, key?: number) => (
+    <td
+      key={key}
+      style={{
+        ...plTdRight,
+        color: cellColor(v),
+        fontWeight: bold ? 700 : 400,
+        ...totalCellOverride,
+      }}
+    >
+      {formatCash(v)}
+    </td>
+  );
 
   return (
-    <tr style={rowStyle}>
+    <tr style={rowBorder}>
       <td
         style={{
           ...plTdStyle,
           color: tokens.colors.textMuted,
           paddingLeft: indent ? 28 : plTdStyle.padding,
           fontWeight: bold ? 700 : 400,
-          ...(total ? { borderBottom: "none", paddingTop: 12 } : {}),
+          ...totalCellOverride,
         }}
       >
         {label}
       </td>
-      {values.map((v, i) => (
-        <React.Fragment key={i}>{cellContent(v)}</React.Fragment>
-      ))}
+      {values.map((v, i) => cellContent(v, i))}
       {showTotal && cellContent(sum)}
     </tr>
   );
 }
 
-// Need React for Fragment
-import React from "react";
 
 // ─── Yearly Tab ──────────────────────────────────────────────
 
@@ -756,34 +754,34 @@ function YearlyTab({
           </tr>
         </thead>
         <tbody>
-          <YearRow
+          <PLRow
             label="Revenue"
             values={years.map((y) => y.revenue)}
           />
-          <YearRow
+          <PLRow
             label="Manufacturing (COGS)"
             values={years.map((y) => -y.cogs)}
             indent
             negative
           />
-          <YearRow
+          <PLRow
             label="Gross Profit"
             values={years.map((y) => y.revenue - y.cogs)}
             bold
           />
-          <YearRow
+          <PLRow
             label="Marketing"
             values={years.map((y) => -y.marketing)}
             indent
             negative
           />
-          <YearRow
+          <PLRow
             label="Net Profit"
             values={years.map((y) => y.profit)}
             bold
             total
           />
-          <YearRow
+          <PLRow
             label="Cash at Year End"
             values={years.map((y) => y.cash)}
             bold
@@ -856,68 +854,6 @@ function YearlyTab({
   );
 }
 
-function YearRow({
-  label,
-  values,
-  indent,
-  negative,
-  bold,
-  total,
-  cash,
-}: {
-  label: string;
-  values: number[];
-  indent?: boolean;
-  negative?: boolean;
-  bold?: boolean;
-  total?: boolean;
-  cash?: boolean;
-}) {
-  const rowStyle: CSSProperties = total
-    ? { borderTop: `2px solid ${tokens.colors.panelBorder}` }
-    : {};
-
-  return (
-    <tr style={rowStyle}>
-      <td
-        style={{
-          ...plTdStyle,
-          color: tokens.colors.textMuted,
-          paddingLeft: indent ? 28 : plTdStyle.padding,
-          fontWeight: bold ? 700 : 400,
-          ...(total ? { borderBottom: "none", paddingTop: 12 } : {}),
-        }}
-      >
-        {label}
-      </td>
-      {values.map((v, i) => {
-        const color = cash
-          ? tokens.colors.statusCash
-          : negative
-            ? tokens.colors.danger
-            : v < 0
-              ? tokens.colors.danger
-              : v > 0
-                ? tokens.colors.success
-                : tokens.colors.text;
-        return (
-          <td
-            key={i}
-            style={{
-              ...plTdRight,
-              color,
-              fontWeight: bold ? 700 : 400,
-              ...(total ? { borderBottom: "none", paddingTop: 12 } : {}),
-            }}
-          >
-            {formatCash(v)}
-          </td>
-        );
-      })}
-    </tr>
-  );
-}
-
 // ─── By Model Tab ────────────────────────────────────────────
 
 function ByModelTab({
@@ -925,7 +861,6 @@ function ByModelTab({
   models,
 }: {
   quarters: QuarterEntry[];
-  companyName: string;
   models: import("../state/gameTypes").LaptopModel[];
 }) {
   // Show latest quarter's per-model breakdown
