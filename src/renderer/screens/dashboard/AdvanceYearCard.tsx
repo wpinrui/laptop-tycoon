@@ -197,14 +197,8 @@ export function AdvanceYearCard() {
       dispatch({ type: "SET_AWARDS", awards });
     }
 
-    // Navigate: game over only at end of Q4
-    if (state.quarter === 4 && result.cashAfterResolution < 0) {
-      navigateTo("gameOver");
-    } else if (state.quarter === 4) {
-      navigateTo("yearEndSummary");
-    } else {
-      navigateTo("quarterlySummary");
-    }
+    // Navigate to pre-sim news carousel (handles routing to results internally)
+    navigateTo("preSimNews");
   };
 
   const handleSimulateClick = (e: React.MouseEvent) => {

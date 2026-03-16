@@ -11,6 +11,7 @@ export type Screen =
   | "reviewsAwards"
   | "news"
   | "history"
+  | "preSimNews"
   | "quarterlySummary"
   | "yearEndSummary"
   | "marketBrowser"
