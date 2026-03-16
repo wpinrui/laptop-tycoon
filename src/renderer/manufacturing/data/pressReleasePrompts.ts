@@ -1,4 +1,5 @@
 import { PressReleasePrompt } from "../types";
+import { shuffled } from "../../../simulation/utils";
 
 export const PRESS_RELEASE_PROMPTS: PressReleasePrompt[] = [
   { id: 1, text: "Describe this laptop in one phrase.", example: "A powerhouse for creators on the go" },
@@ -45,14 +46,9 @@ export function selectPrompts(
     return true;
   });
 
-  // Shuffle with Fisher-Yates
-  const shuffled = [...eligible];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
+  const pool = shuffled(eligible);
 
-  let selected = shuffled.slice(0, PROMPTS_PER_RELEASE).map((p) => p.id);
+  let selected = pool.slice(0, PROMPTS_PER_RELEASE).map((p) => p.id);
 
   // Avoid repeating exact same set as previous release
   if (
@@ -61,10 +57,10 @@ export function selectPrompts(
     selected.every((id) => previousPromptIds.includes(id))
   ) {
     // Try next candidate
-    if (shuffled.length > PROMPTS_PER_RELEASE) {
+    if (pool.length > PROMPTS_PER_RELEASE) {
       selected = [
-        ...shuffled.slice(0, PROMPTS_PER_RELEASE - 1).map((p) => p.id),
-        shuffled[PROMPTS_PER_RELEASE].id,
+        ...pool.slice(0, PROMPTS_PER_RELEASE - 1).map((p) => p.id),
+        pool[PROMPTS_PER_RELEASE].id,
       ];
     }
   }
