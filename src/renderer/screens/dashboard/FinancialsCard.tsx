@@ -5,7 +5,7 @@ import { Sparkline } from "./Sparkline";
 import { emptyStateStyle, sectionDividerStyle } from "./styles";
 import { tokens } from "../../shell/tokens";
 import { useGame } from "../../state/GameContext";
-import { formatCash, pctChange } from "../../utils/formatCash";
+import { formatCash, pctChange, deltaColor, profitColor } from "../../utils/formatCash";
 
 const heroStyle: CSSProperties = {
   fontSize: tokens.font.sizeHero,
@@ -139,11 +139,7 @@ export function FinancialsCard() {
                 <span
                   style={{
                     ...deltaStyle,
-                    color: stats.revDelta.startsWith("+")
-                      ? tokens.colors.success
-                      : stats.revDelta.startsWith("-")
-                        ? tokens.colors.danger
-                        : tokens.colors.textMuted,
+                    color: deltaColor(stats.revDelta),
                   }}
                 >
                   {stats.revDelta} vs Q{stats.latestQ!.quarter - 1 || 4}
@@ -157,10 +153,7 @@ export function FinancialsCard() {
               <span
                 style={{
                   ...sparkValueStyle,
-                  color:
-                    stats.latestQ!.totalProfit >= 0
-                      ? tokens.colors.success
-                      : tokens.colors.danger,
+                  color: profitColor(stats.latestQ!.totalProfit),
                 }}
               >
                 {formatCash(stats.latestQ!.totalProfit)}
@@ -177,11 +170,7 @@ export function FinancialsCard() {
                 <span
                   style={{
                     ...deltaStyle,
-                    color: stats.profitDelta.startsWith("+")
-                      ? tokens.colors.success
-                      : stats.profitDelta.startsWith("-")
-                        ? tokens.colors.danger
-                        : tokens.colors.textMuted,
+                    color: deltaColor(stats.profitDelta),
                   }}
                 >
                   {stats.profitDelta} vs Q{stats.latestQ!.quarter - 1 || 4}
@@ -207,10 +196,7 @@ export function FinancialsCard() {
               <span
                 style={{
                   fontWeight: 600,
-                  color:
-                    stats.ytdProfit >= 0
-                      ? tokens.colors.success
-                      : tokens.colors.danger,
+                  color: profitColor(stats.ytdProfit),
                 }}
               >
                 {formatCash(stats.ytdProfit)}
@@ -223,10 +209,7 @@ export function FinancialsCard() {
               <span
                 style={{
                   fontWeight: 600,
-                  color:
-                    stats.ytdMargin >= 0
-                      ? tokens.colors.success
-                      : tokens.colors.danger,
+                  color: profitColor(stats.ytdMargin),
                 }}
               >
                 {stats.ytdMargin.toFixed(1)}%

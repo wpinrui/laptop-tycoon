@@ -6,7 +6,7 @@ import { ContentPanel } from "../shell/ContentPanel";
 import { ScreenHeader } from "../shell/ScreenHeader";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
-import { formatCash, pctChange, QUARTER_LABELS } from "../utils/formatCash";
+import { formatCash, pctChange, deltaColor, profitColor, QUARTER_LABELS } from "../utils/formatCash";
 import { Sparkline } from "./dashboard/Sparkline";
 import { LaptopSalesResult } from "../../simulation/salesTypes";
 
@@ -172,19 +172,6 @@ const modelStatValue: CSSProperties = {
 };
 
 // ─── Helpers ─────────────────────────────────────────────────
-
-function deltaColor(delta: string | null): string {
-  if (!delta) return tokens.colors.textMuted;
-  return delta.startsWith("+")
-    ? tokens.colors.success
-    : delta.startsWith("-")
-      ? tokens.colors.danger
-      : tokens.colors.textMuted;
-}
-
-function profitColor(v: number): string {
-  return v >= 0 ? tokens.colors.success : tokens.colors.danger;
-}
 
 interface QuarterEntry {
   label: string;
@@ -481,7 +468,7 @@ function BarChart({
               x={x + barWidth + 2}
               y={chartHeight + labelHeight - 2}
               fill={tokens.colors.textMuted}
-              fontSize={11}
+              fontSize={tokens.font.sizeSmall}
               textAnchor="middle"
             >
               {d.label}
