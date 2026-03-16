@@ -173,8 +173,11 @@ function highlightTitle(title: string, color: string): string {
 
 function highlightGroupTitle(rep: Milestone, names: string[], color: string): string {
   const verb = rep.type === "model" ? "Launched" : rep.type === "award" ? "Won" : "Reached";
-  const highlighted = names.map((n) => `<strong style="color: ${color};">${n}</strong>`);
-  if (highlighted.length === 1) return `${verb} ${highlighted[0]}`;
-  if (highlighted.length === 2) return `${verb} ${highlighted[0]} & ${highlighted[1]}`;
-  return `${verb} ${highlighted.slice(0, -1).join(", ")} & ${highlighted[highlighted.length - 1]}`;
+  const MAX_SHOWN = 2;
+  const highlighted = names.slice(0, MAX_SHOWN).map((n) => `<strong style="color: ${color};">${n}</strong>`);
+  const remaining = names.length - MAX_SHOWN;
+
+  if (names.length === 1) return `${verb} ${highlighted[0]}`;
+  if (names.length === 2) return `${verb} ${highlighted[0]} & ${highlighted[1]}`;
+  return `${verb} ${highlighted.join(", ")} & <strong style="color: ${color};">${remaining} more</strong>`;
 }
