@@ -37,3 +37,13 @@ export function deltaColor(delta: string | null): string {
 export function profitColor(v: number): string {
   return v >= 0 ? tokens.colors.success : tokens.colors.danger;
 }
+
+/** Profit margin as a percentage (0 if no revenue). */
+export function calcMargin(profit: number, revenue: number): number {
+  return revenue > 0 ? (profit / revenue) * 100 : 0;
+}
+
+/** Sum manufacturing costs from an array of sales results. */
+export function sumCogs(results: { manufacturingCost: number }[]): number {
+  return results.reduce((s, r) => s + r.manufacturingCost, 0);
+}

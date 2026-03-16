@@ -5,7 +5,7 @@ import { Sparkline } from "./Sparkline";
 import { emptyStateStyle, sectionDividerStyle } from "./styles";
 import { tokens } from "../../shell/tokens";
 import { useGame } from "../../state/GameContext";
-import { formatCash, pctChange, deltaColor, profitColor } from "../../utils/formatCash";
+import { formatCash, pctChange, deltaColor, profitColor, calcMargin } from "../../utils/formatCash";
 
 const heroStyle: CSSProperties = {
   fontSize: tokens.font.sizeHero,
@@ -65,16 +65,18 @@ export function FinancialsCard() {
     const qh = state.quarterHistory;
     const yh = state.yearHistory;
 
-    // Build revenue/profit timeline from yearly then quarterly
+    // Build revenue/profit timeline from yearly then quarterly.
+    // Yearly values are divided by 4 to approximate per-quarter scale,
+    // so the sparkline doesn't show a misleading cliff at the year boundary.
     const revenueTimeline: number[] = [];
     const profitTimeline: number[] = [];
 
     for (const yr of yh) {
-      revenueTimeline.push(yr.totalRevenue);
-      profitTimeline.push(yr.totalProfit);
+      revenueTimeline.push(yr.totalRevenue / 4);
+      profitTimeline.push(yr.totalProfit / 4);
     }
 
-    // Current year: use quarterly data
+    // Current year: use quarterly data (already per-quarter)
     for (const q of qh) {
       revenueTimeline.push(q.totalRevenue);
       profitTimeline.push(q.totalProfit);
@@ -87,7 +89,7 @@ export function FinancialsCard() {
     // Year-to-date totals from current year quarters
     const ytdRevenue = qh.reduce((s, q) => s + q.totalRevenue, 0);
     const ytdProfit = qh.reduce((s, q) => s + q.totalProfit, 0);
-    const ytdMargin = ytdRevenue > 0 ? (ytdProfit / ytdRevenue) * 100 : 0;
+    const ytdMargin = calcMargin(ytdProfit, ytdRevenue);
 
     // QoQ deltas
     const revDelta = latestQ && prevQ ? pctChange(prevQ.totalRevenue, latestQ.totalRevenue, 0) : null;

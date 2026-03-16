@@ -6,7 +6,7 @@ import { ContentPanel } from "../shell/ContentPanel";
 import { ScreenHeader } from "../shell/ScreenHeader";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
-import { formatCash, pctChange, deltaColor, profitColor, QUARTER_LABELS } from "../utils/formatCash";
+import { formatCash, pctChange, deltaColor, profitColor, calcMargin, sumCogs, QUARTER_LABELS } from "../utils/formatCash";
 import { Sparkline } from "./dashboard/Sparkline";
 import { LaptopSalesResult } from "../../simulation/salesTypes";
 
@@ -197,10 +197,6 @@ export function FinancialHistoryScreen() {
     const entries: QuarterEntry[] = [];
 
     for (const q of state.quarterHistory) {
-      const cogs = q.playerResults.reduce(
-        (s, r) => s + r.manufacturingCost,
-        0,
-      );
       entries.push({
         label: `${QUARTER_LABELS[q.quarter - 1]} ${q.year}`,
         year: q.year,
@@ -208,7 +204,7 @@ export function FinancialHistoryScreen() {
         revenue: q.totalRevenue,
         profit: q.totalProfit,
         marketing: q.marketingCost,
-        cogs,
+        cogs: sumCogs(q.playerResults),
         cash: q.cashAfterResolution,
         playerResults: q.playerResults,
       });
@@ -219,21 +215,15 @@ export function FinancialHistoryScreen() {
 
   // Yearly aggregates
   const yearlyData = useMemo(() => {
-    return state.yearHistory.map((yr) => {
-      const cogs = yr.playerResults.reduce(
-        (s, r) => s + r.manufacturingCost,
-        0,
-      );
-      return {
-        year: yr.year,
-        revenue: yr.totalRevenue,
-        profit: yr.totalProfit,
-        marketing: yr.marketingCost,
-        cogs,
-        cash: yr.cashAfterResolution,
-        playerResults: yr.playerResults,
-      };
-    });
+    return state.yearHistory.map((yr) => ({
+      year: yr.year,
+      revenue: yr.totalRevenue,
+      profit: yr.totalProfit,
+      marketing: yr.marketingCost,
+      cogs: sumCogs(yr.playerResults),
+      cash: yr.cashAfterResolution,
+      playerResults: yr.playerResults,
+    }));
   }, [state.yearHistory]);
 
   // Latest quarter for KPI strip
@@ -246,12 +236,8 @@ export function FinancialHistoryScreen() {
     latestQ && prevQ ? pctChange(prevQ.revenue, latestQ.revenue) : null;
   const profitDelta =
     latestQ && prevQ ? pctChange(prevQ.profit, latestQ.profit) : null;
-  const latestMargin =
-    latestQ && latestQ.revenue > 0
-      ? (latestQ.profit / latestQ.revenue) * 100
-      : 0;
-  const prevMargin =
-    prevQ && prevQ.revenue > 0 ? (prevQ.profit / prevQ.revenue) * 100 : 0;
+  const latestMargin = latestQ ? calcMargin(latestQ.profit, latestQ.revenue) : 0;
+  const prevMargin = prevQ ? calcMargin(prevQ.profit, prevQ.revenue) : 0;
   const marginDelta =
     latestQ && prevQ
       ? `${latestMargin - prevMargin >= 0 ? "+" : ""}${(latestMargin - prevMargin).toFixed(1)}pp`
@@ -694,7 +680,6 @@ function PLRow({
   );
 }
 
-
 // ─── Yearly Tab ──────────────────────────────────────────────
 
 function YearlyTab({
@@ -859,9 +844,7 @@ function ByModelTab({
     (a, b) => b.revenue - a.revenue,
   );
   const maxMargin = Math.max(
-    ...sorted.map((r) =>
-      r.revenue > 0 ? Math.abs(r.profit / r.revenue) * 100 : 0,
-    ),
+    ...sorted.map((r) => Math.abs(calcMargin(r.profit, r.revenue))),
     1,
   );
 
@@ -878,8 +861,7 @@ function ByModelTab({
       </div>
 
       {sorted.map((r) => {
-        const margin =
-          r.revenue > 0 ? (r.profit / r.revenue) * 100 : 0;
+        const margin = calcMargin(r.profit, r.revenue);
         const barPct = Math.min(
           (Math.abs(margin) / Math.max(maxMargin, 50)) * 100,
           100,
