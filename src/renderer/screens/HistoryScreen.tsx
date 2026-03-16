@@ -7,7 +7,6 @@ import {
   MilestoneType,
   getPlayerCompany,
   STARTING_YEAR,
-  LaptopModel,
 } from "../state/gameTypes";
 import { ContentPanel } from "../shell/ContentPanel";
 import { ScreenHeader } from "../shell/ScreenHeader";
@@ -791,7 +790,13 @@ function FinancialDetail({ milestone: ms, state }: { milestone: Milestone; state
     return <div style={eventDetailStyle}>Financial data not yet available</div>;
   }
 
-  let cumulative = 0;
+  // Pre-compute cumulative revenue for each year row
+  const cumulativeByYear: number[] = [];
+  let runningTotal = 0;
+  for (const yr of yearData) {
+    runningTotal += yr.revenue;
+    cumulativeByYear.push(runningTotal);
+  }
 
   return (
     <>
@@ -808,8 +813,7 @@ function FinancialDetail({ milestone: ms, state }: { milestone: Milestone; state
           </tr>
         </thead>
         <tbody>
-          {yearData.map((yr) => {
-            cumulative += yr.revenue;
+          {yearData.map((yr, i) => {
             const isMilestoneYear = yr.year === ms.year;
             return (
               <tr key={yr.year}>
@@ -822,7 +826,7 @@ function FinancialDetail({ milestone: ms, state }: { milestone: Milestone; state
                 </td>
                 {isCumulative && (
                   <td style={{ ...qTdRight, color: isMilestoneYear ? EVENT_COLORS.financial : undefined, fontWeight: isMilestoneYear ? 600 : undefined }}>
-                    {formatCash(cumulative)}
+                    {formatCash(cumulativeByYear[i])}
                   </td>
                 )}
               </tr>
