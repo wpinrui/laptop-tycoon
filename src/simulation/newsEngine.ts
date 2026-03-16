@@ -13,7 +13,7 @@ import { DemographicId } from "../data/types";
 import { GameState, getPlayerCompany, Quarter, Milestone } from "../renderer/state/gameTypes";
 import { QuarterSimulationResult } from "./salesTypes";
 import { LaptopReview, Award } from "./reviewsAwards";
-import { PERCEPTION_NEWS_THRESHOLD } from "./tunables";
+import { PERCEPTION_NEWS_THRESHOLD, QUOTE_HEADLINE_PROBABILITY } from "./tunables";
 import { NewsItem, NewsOutletId, OUTLETS } from "./newsTypes";
 import {
   TemplatePool,
@@ -28,7 +28,7 @@ import {
   REVIEW_TEMPLATES,
   AWARD_TEMPLATES,
 } from "./newsTemplates";
-import { pickRandom, formatCompact } from "./utils";
+import { pickRandom, shuffled, formatCompact } from "./utils";
 
 // ─── Helpers ────────────────────────────────────────────────
 
@@ -84,9 +84,9 @@ function makeProductLaunchItem(
   let headlineQuote: string | undefined;
   let subheadlineQuote: string | undefined;
   if (hasQuotes) {
-    const shuffled = [...pressQuotes].sort(() => Math.random() - 0.5);
-    headlineQuote = shuffled[0];
-    subheadlineQuote = shuffled.length > 1 ? shuffled[1] : undefined;
+    const picks = shuffled(pressQuotes);
+    headlineQuote = picks[0];
+    subheadlineQuote = picks.length > 1 ? picks[1] : undefined;
   }
 
   const vars: Record<string, string | number> = {
@@ -99,7 +99,7 @@ function makeProductLaunchItem(
 
   // Prefer quote templates when a quote is available (80% of the time)
   let pool = PRODUCT_LAUNCH_TEMPLATES;
-  if (headlineQuote && Math.random() < 0.8) {
+  if (headlineQuote && Math.random() < QUOTE_HEADLINE_PROBABILITY) {
     pool = PRODUCT_LAUNCH_QUOTE_TEMPLATES;
     vars.pressQuote = headlineQuote;
   }
@@ -233,10 +233,8 @@ export function generateQuarterNews(
 
         const archetype = company.archetype ?? "generalist";
         const segment = ARCHETYPE_SEGMENT[archetype];
-        const quotePool = COMPETITOR_PRESS_QUOTES[archetype] ?? COMPETITOR_PRESS_QUOTES.generalist;
-        // Pick 2 random quotes for the competitor
-        const shuffledQuotes = [...quotePool].sort(() => Math.random() - 0.5);
-        const competitorQuotes = shuffledQuotes.slice(0, 2);
+        const quotePool = COMPETITOR_PRESS_QUOTES[archetype];
+        const competitorQuotes = shuffled(quotePool).slice(0, 2);
         items.push(makeProductLaunchItem(
           makeId(), year, quarter, company.name,
           model.design.name, model.design.screenSize, model.retailPrice ?? 0,

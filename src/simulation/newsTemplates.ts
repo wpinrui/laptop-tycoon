@@ -3,6 +3,7 @@
  * Templates use {placeholder} syntax; the engine interpolates at generation time.
  */
 
+import { CompetitorArchetype } from "../data/competitors";
 import { NewsOutletId } from "./newsTypes";
 
 // ─── Template Type ──────────────────────────────────────────
@@ -51,7 +52,7 @@ export const PRODUCT_LAUNCH_QUOTE_TEMPLATES: TemplatePool = {
 
 // ─── AI Competitor Press Quotes ─────────────────────────────
 
-export const COMPETITOR_PRESS_QUOTES: Record<string, string[]> = {
+export const COMPETITOR_PRESS_QUOTES: Record<CompetitorArchetype, string[]> = {
   budget: [
     "More for less — that's always been our promise",
     "Premium features at a price that makes sense",
