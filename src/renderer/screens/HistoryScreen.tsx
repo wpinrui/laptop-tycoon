@@ -39,7 +39,7 @@ const EVENT_LABELS: Record<MilestoneType, string> = {
   market: "Market",
 };
 
-type FilterType = "all" | MilestoneType;
+const ALL_TYPES: MilestoneType[] = ["model", "award", "financial", "market"];
 
 // ─── Layout Styles ───────────────────────────────────────────
 
@@ -395,15 +395,29 @@ function MarginBar({ margin }: { margin: number }) {
 export function HistoryScreen() {
   const { state } = useGame();
   const milestones = state.milestones;
-  const [filter, setFilter] = useState<FilterType>("all");
+  const [activeTypes, setActiveTypes] = useState<Set<MilestoneType>>(new Set(ALL_TYPES));
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const allActive = activeTypes.size === ALL_TYPES.length;
+
+  const toggleType = (type: MilestoneType) => {
+    setActiveTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) {
+        if (next.size > 1) next.delete(type);
+      } else {
+        next.add(type);
+      }
+      return next;
+    });
+  };
 
   const filtered = useMemo(
     () =>
-      filter === "all"
+      allActive
         ? milestones
-        : milestones.filter((m) => m.type === filter),
-    [milestones, filter],
+        : milestones.filter((m) => activeTypes.has(m.type)),
+    [milestones, activeTypes, allActive],
   );
 
   // Group by year, reverse chronological
@@ -481,9 +495,9 @@ export function HistoryScreen() {
 
         {/* Filter chips */}
         <div style={filterRowStyle}>
-          <button style={chipStyle(filter === "all")} onClick={() => setFilter("all")}>All</button>
-          {(["model", "award", "financial", "market"] as MilestoneType[]).map((t) => (
-            <button key={t} style={chipStyle(filter === t)} onClick={() => setFilter(t)}>
+          <button style={chipStyle(allActive)} onClick={() => setActiveTypes(new Set(ALL_TYPES))}>All</button>
+          {ALL_TYPES.map((t) => (
+            <button key={t} style={chipStyle(activeTypes.has(t))} onClick={() => toggleType(t)}>
               <span style={chipDotStyle(EVENT_COLORS[t])} />
               {EVENT_LABELS[t] + "s"}
             </button>
