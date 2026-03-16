@@ -56,10 +56,8 @@ function getPreSimWarnings(state: ReturnType<typeof useGame>["state"]): SimWarni
 
   const modelName = (m: LaptopModel) => `${player.name} ${m.design.name}`;
 
-  // 1. Designs with no manufacturing plan at all
-  const unplanned = activeModels.filter(
-    (m) => m.status === "designed" && (!m.manufacturingPlan || m.manufacturingPlan.year !== state.year),
-  );
+  // 1. Designs with no manufacturing plan
+  const unplanned = activeModels.filter((m) => m.status === "designed" && !m.manufacturingPlan);
   if (unplanned.length > 0) {
     warnings.push({
       label: "No manufacturing plan",
@@ -73,8 +71,7 @@ function getPreSimWarnings(state: ReturnType<typeof useGame>["state"]): SimWarni
   // 2. Any model that will have zero units available to sell this quarter
   //    Covers: designed with 0-unit plan, manufacturing/onSale with no stock + no new batch
   const outOfStock = activeModels.filter((m) => {
-    // Already caught by check 1
-    if (m.status === "designed" && (!m.manufacturingPlan || m.manufacturingPlan.year !== state.year)) return false;
+    if (m.status === "designed" && !m.manufacturingPlan) return false; // Already caught by check 1
     if (m.status === "draft") return false;
     const hasCurrentQuarterPlan =
       m.manufacturingPlan?.year === state.year && m.manufacturingPlan?.quarter === state.quarter;
