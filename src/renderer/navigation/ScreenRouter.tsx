@@ -1,12 +1,7 @@
 import { useEffect, useState } from "react";
-import { Newspaper } from "lucide-react";
 import { useNavigation } from "./NavigationContext";
 import { GameLayout } from "../shell/GameLayout";
-import { ContentPanel } from "../shell/ContentPanel";
-import { ScreenHeader } from "../shell/ScreenHeader";
-import { tokens } from "../shell/tokens";
 import { PauseMenu } from "../shell/PauseMenu";
-import { StatusBar } from "../shell/StatusBar";
 import { DesignWizard } from "../wizard/DesignWizard";
 import { ManufacturingWizard } from "../manufacturing/ManufacturingWizard";
 import { MainMenuScreen } from "../screens/MainMenuScreen";
@@ -22,17 +17,8 @@ import { MarketOverviewScreen } from "../screens/MarketOverviewScreen";
 import { MarketBrowserScreen } from "../screens/market-browser";
 import { FinancialHistoryScreen } from "../screens/FinancialHistoryScreen";
 import { HistoryScreen } from "../screens/HistoryScreen";
+import { NewsScreen } from "../screens/NewsScreen";
 import { DebugPanel } from "../debug/DebugPanel";
-
-function PlaceholderScreen({ title, icon }: { title: string; icon: React.ComponentType<{ size?: number; color?: string }> }) {
-  return (
-    <ContentPanel maxWidth={tokens.layout.panelMaxWidth} style={{ display: "flex", flexDirection: "column", overflow: "hidden", height: tokens.layout.panelHeight, width: tokens.layout.panelWidth }}>
-      <ScreenHeader title={title} icon={icon} />
-      <p style={{ color: tokens.colors.textMuted, margin: 0, flex: 1, paddingTop: tokens.spacing.lg }}>Coming soon</p>
-      <StatusBar />
-    </ContentPanel>
-  );
-}
 
 function ScreenContent() {
   const { screen } = useNavigation();
@@ -59,7 +45,7 @@ function ScreenContent() {
     case "reviewsAwards":
       return <ReviewsAwardsScreen />;
     case "news":
-      return <PlaceholderScreen title="News" icon={Newspaper} />;
+      return <NewsScreen />;
     case "history":
       return <HistoryScreen />;
     case "marketBrowser":
