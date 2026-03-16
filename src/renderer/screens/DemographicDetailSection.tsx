@@ -4,7 +4,7 @@ import { LaptopStat, ALL_STATS, DemographicId, Demographic, STAT_LABELS } from "
 import { LaptopSalesResult, PerceptionChange, StatContributor } from "../../simulation/salesTypes";
 import { formatPerceptionImpact } from "./dashboard/utils";
 import { tokens } from "../shell/tokens";
-import { formatNumber } from "../utils/formatCash";
+import { formatNumber, profitColor } from "../utils/formatCash";
 import { tableStyle, thStyle, tdStyle, tdRight, sectionHeadingStyle, cardStyle } from "./summaryStyles";
 import { useGame } from "../state/GameContext";
 import { CompanyState, modelDisplayName } from "../state/gameTypes";
@@ -202,7 +202,7 @@ function PerceptionChangeCard({ change }: { change: PerceptionChange }) {
                 </div>
                 <div>
                   <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>Gap</div>
-                  <div style={{ fontSize: tokens.font.sizeBase, fontWeight: 600, color: insight.vpGap >= 0 ? tokens.colors.success : tokens.colors.danger }}>
+                  <div style={{ fontSize: tokens.font.sizeBase, fontWeight: 600, color: profitColor(insight.vpGap) }}>
                     {insight.vpGap >= 0 ? "+" : ""}{insight.competitorAvgVP !== 0 ? (insight.vpGap / insight.competitorAvgVP * 100).toFixed(0) : "0"}%
                   </div>
                 </div>
