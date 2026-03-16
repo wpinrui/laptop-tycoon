@@ -99,8 +99,11 @@ export function buildCostBreakdown(gameState: GameState, wizardState: Pick<Manuf
   const activeModelCount = getActiveModels(gameState).length;
   const overhead = activeModelCount > 1 ? MULTI_MODEL_OVERHEAD : 0;
 
-  // If ordering 0 new units (inventory-only), no manufacturing fixed costs apply
+  // If ordering 0 new units (inventory-only), no manufacturing fixed costs apply.
+  // Tooling + certification are one-time costs: only charged on the first production run.
+  // A model that's already "manufacturing" or "onSale" has already paid these.
   const orderingNew = wizardState.unitsOrdered > 0;
+  const isFirstRun = model?.status === "designed" || model?.status === "draft";
   const cost = calculateCostBreakdown({
     baseBomCost,
     unitsOrdered: wizardState.unitsOrdered,
@@ -108,8 +111,8 @@ export function buildCostBreakdown(gameState: GameState, wizardState: Pick<Manuf
     assemblyQa: ASSEMBLY_QA_COST,
     packagingLogistics: PACKAGING_LOGISTICS_COST,
     channelMarginRate: CHANNEL_MARGIN_RATE,
-    toolingCost: orderingNew ? TOOLING_COST[modelType] : 0,
-    certificationCost: orderingNew ? CERTIFICATION_COST[modelType] : 0,
+    toolingCost: orderingNew && isFirstRun ? TOOLING_COST[modelType] : 0,
+    certificationCost: orderingNew && isFirstRun ? CERTIFICATION_COST[modelType] : 0,
     multiModelOverhead: orderingNew ? overhead : 0,
   });
 

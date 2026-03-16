@@ -191,8 +191,10 @@ export function ManufacturingStep() {
   const modelType = model?.design.modelType ?? "brandNew";
   const activeModelCount = getActiveModels(gameState).length;
 
-  const toolingCost = TOOLING_COST[modelType];
-  const certCost = CERTIFICATION_COST[modelType];
+  // Tooling + certification are one-time costs: only charged on the first production run
+  const isFirstRun = !state.isAdditionalOrder;
+  const toolingCost = isFirstRun ? TOOLING_COST[modelType] : 0;
+  const certCost = isFirstRun ? CERTIFICATION_COST[modelType] : 0;
   const overhead = activeModelCount > 1 ? MULTI_MODEL_OVERHEAD : 0;
 
   // Fixed costs that must be paid regardless
