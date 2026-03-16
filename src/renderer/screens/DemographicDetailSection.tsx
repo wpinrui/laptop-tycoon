@@ -2,6 +2,7 @@ import { CSSProperties, useState, useMemo } from "react";
 import { DEMOGRAPHICS } from "../../data/demographics";
 import { LaptopStat, ALL_STATS, DemographicId, Demographic, STAT_LABELS } from "../../data/types";
 import { LaptopSalesResult, PerceptionChange, StatContributor } from "../../simulation/salesTypes";
+import { formatPerceptionImpact } from "./dashboard/utils";
 import { tokens } from "../shell/tokens";
 import { formatNumber } from "../utils/formatCash";
 import { tableStyle, thStyle, tdStyle, tdRight, sectionHeadingStyle, cardStyle } from "./summaryStyles";
@@ -179,7 +180,7 @@ function PerceptionChangeCard({ change }: { change: PerceptionChange }) {
           </span>
           <span style={{ fontWeight: 600, color: deltaColor }}>{sign}{change.delta.toFixed(1)}</span>
           <span style={{ fontSize: tokens.font.sizeSmall, color: deltaColor ?? tokens.colors.textMuted }}>
-            ({Math.round(change.newPerception) > 0 ? "+" : ""}{Math.round(change.newPerception)}% appeal)
+            ({formatPerceptionImpact(change.newPerception)})
           </span>
         </span>
       </button>

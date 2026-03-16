@@ -55,24 +55,6 @@ export function sellThroughRate(lr: LaptopSalesResult): number {
   return lr.unitsDemanded > 0 ? lr.unitsSold / lr.unitsDemanded : 1;
 }
 
-/** Weighted-average rawVP across all laptops for a single demographic (by sold units). */
-export function marketAverageRawVP(
-  demId: DemographicId,
-  allResults: LaptopSalesResult[],
-): number {
-  let totalUnits = 0;
-  let weightedVP = 0;
-  for (const lr of allResults) {
-    const db = lr.demographicBreakdown.find((b) => b.demographicId === demId);
-    if (db && db.unitsDemanded > 0) {
-      const units = db.unitsDemanded * sellThroughRate(lr);
-      weightedVP += db.rawVP * units;
-      totalUnits += units;
-    }
-  }
-  return totalUnits > 0 ? weightedVP / totalUnits : 0;
-}
-
 /** Weighted-average rawVP across competitor laptops only (excludes one company). */
 export function competitorAverageRawVP(
   demId: DemographicId,
@@ -93,7 +75,7 @@ export function competitorAverageRawVP(
   return totalUnits > 0 ? weightedVP / totalUnits : 0;
 }
 
-/** A stat's contribution to the VP gap between the player and market average */
+/** A stat's contribution to the VP gap between the player and competitor average */
 export interface StatContributor {
   stat: LaptopStat;
   /** Player's normalized score (0–100) for this stat */
