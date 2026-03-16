@@ -1,5 +1,5 @@
 import { CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Newspaper, BarChart3, Package, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight, DollarSign, Newspaper, BarChart3, Package, Star, Users } from "lucide-react";
 import { useGame } from "../../state/GameContext";
 import { getPlayerCompany, modelDisplayName } from "../../state/gameTypes";
 import { useNavigation } from "../../navigation/NavigationContext";
@@ -233,9 +233,9 @@ function MarketSnapshot() {
   const stats = [
     { label: "Your Models", value: String(activeModels.length), icon: <Package size={18} /> },
     { label: "Inventory", value: formatNumber(totalInventory), icon: <BarChart3 size={18} /> },
-    { label: "Competitors", value: String(competitorCount), icon: <Newspaper size={18} /> },
+    { label: "Competitors", value: String(competitorCount), icon: <Users size={18} /> },
     { label: "Competing Models", value: String(competitorModels), icon: <Star size={18} /> },
-    { label: "Cash", value: formatCash(result?.cashAfterResolution ?? state.cash), color: tokens.colors.statusCash },
+    { label: "Cash", value: formatCash(result?.cashAfterResolution ?? state.cash), color: tokens.colors.statusCash, icon: <DollarSign size={18} /> },
   ];
 
   return (
@@ -508,7 +508,10 @@ const KEYFRAME_CSS = `
 
 (function injectKeyframes() {
   if (typeof document === "undefined") return;
+  const id = "presim-news-keyframes";
+  if (document.getElementById(id)) return;
   const style = document.createElement("style");
+  style.id = id;
   style.textContent = KEYFRAME_CSS;
   document.head.appendChild(style);
 })();
