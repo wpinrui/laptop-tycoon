@@ -41,7 +41,7 @@ export function BrandCard() {
   const hiddenPerceptionCount = topPerception.length - TOP_N;
 
   return (
-    <BentoCard title="Brand" icon={Sparkles} screen="brandDetail">
+    <BentoCard title="Brand Management" icon={Sparkles} screen="brandDetail">
       <p style={{ ...sectionHeadingStyle, marginBottom: tokens.spacing.sm }}>Brand Reach</p>
       {shownReach.map(({ dem, value }) => (
         <div key={dem.id} style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm, marginTop: tokens.spacing.xs }}>

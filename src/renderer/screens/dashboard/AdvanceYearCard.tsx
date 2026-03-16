@@ -92,7 +92,7 @@ function getPreSimWarnings(state: ReturnType<typeof useGame>["state"]): SimWarni
     warnings.push({
       label: "Zero brand reach",
       description: "No marketing campaigns set up — your products won't reach any buyers.",
-      actionLabel: "Go to Marketing",
+      actionLabel: "Go to Brand Management",
       actionScreen: "brandDetail",
     });
   }
@@ -242,7 +242,7 @@ export function AdvanceYearCard() {
                     background: "rgba(255, 167, 38, 0.08)",
                     border: "1px solid rgba(255, 167, 38, 0.25)",
                     borderRadius: tokens.borderRadius.sm,
-                    padding: tokens.spacing.sm,
+                    padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
                   }}
                 >
                   <div style={{ fontWeight: 600, color: tokens.colors.warning, fontSize: tokens.font.sizeBase }}>
@@ -253,7 +253,7 @@ export function AdvanceYearCard() {
                   </div>
                   <MenuButton
                     onClick={() => { setWarnings(null); navigateTo(w.actionScreen); }}
-                    style={{ marginTop: tokens.spacing.sm, width: "100%" }}
+                    style={{ marginTop: tokens.spacing.sm, width: "100%", padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`, fontSize: tokens.font.sizeBase }}
                   >
                     {w.actionLabel}
                   </MenuButton>
