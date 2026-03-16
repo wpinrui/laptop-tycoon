@@ -13,6 +13,7 @@ import { DemographicId } from "../data/types";
 import { GameState, getPlayerCompany, Quarter, Milestone } from "../renderer/state/gameTypes";
 import { QuarterSimulationResult } from "./salesTypes";
 import { LaptopReview, Award } from "./reviewsAwards";
+import { PERCEPTION_NEWS_THRESHOLD } from "./tunables";
 import { NewsItem, NewsOutletId, OUTLETS } from "./newsTypes";
 import {
   TemplatePool,
@@ -30,9 +31,6 @@ import { pickRandom, formatCompact } from "./utils";
 // ─── Helpers ────────────────────────────────────────────────
 
 const OUTLET_IDS: NewsOutletId[] = Object.keys(OUTLETS) as NewsOutletId[];
-
-/** Minimum |delta| to generate a perception news item */
-const PERCEPTION_NEWS_THRESHOLD = 3;
 
 function pickOutlet(): NewsOutletId {
   return pickRandom(OUTLET_IDS);
