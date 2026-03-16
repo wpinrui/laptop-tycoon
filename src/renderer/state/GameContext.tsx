@@ -1,6 +1,6 @@
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
 import { DemographicId } from "../../data/types";
-import { GameState, Quarter, LaptopDesign, LaptopModel, ModelStatus, CompanyState, createInitialGameState, hasDiscontinuedComponents } from "./gameTypes";
+import { GameState, Milestone, Quarter, LaptopDesign, LaptopModel, ModelStatus, CompanyState, createInitialGameState, hasDiscontinuedComponents } from "./gameTypes";
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { QuarterSimulationResult } from "../../simulation/salesTypes";
 import { clearProjectionCache, simulateQuarter } from "../../simulation/salesEngine";
@@ -10,6 +10,7 @@ import { generateCompetitorModels, discountOldInventoryPrice } from "../../simul
 import { COMPETITORS } from "../../data/competitors";
 import { LaptopReview, Award, applyAwardBonuses } from "../../simulation/reviewsAwards";
 import { PERCEPTION_MEANINGFUL_DELTA, AI_MAX_MODEL_AGE } from "../../simulation/tunables";
+import { detectQuarterMilestones } from "../../simulation/milestones";
 import { MarketingTier } from "../../data/types";
 
 export interface CompetitorModelEntry {
@@ -419,6 +420,9 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ? [...state.yearHistory, buildYearResult(state, result, [...state.quarterHistory, result])]
         : state.yearHistory;
 
+      // Detect milestones from this quarter's results
+      const newMilestones = detectQuarterMilestones(state, result);
+
       return {
         ...state,
         cash: result.cashAfterResolution,
@@ -427,6 +431,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         quarterHistory: [...state.quarterHistory, result],
         yearHistory,
         lastSimulationResult: result,
+        milestones: [...state.milestones, ...newMilestones],
       };
     }
     case "ADD_CAMPAIGN": {
@@ -465,12 +470,37 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
     case "SET_REVIEWS":
       return { ...state, currentYearReviews: action.reviews };
-    case "SET_AWARDS":
+    case "SET_AWARDS": {
+      // Persist awards on the latest yearHistory entry (built during Q4 APPLY_QUARTER_RESULT)
+      const updatedYearHistory = state.yearHistory.length > 0
+        ? [
+            ...state.yearHistory.slice(0, -1),
+            { ...state.yearHistory[state.yearHistory.length - 1], awards: action.awards },
+          ]
+        : state.yearHistory;
+
+      // Create award milestones for player-won awards
+      const awardMilestones: Milestone[] = action.awards
+        .filter((a) => a.ownerCompanyId === "player")
+        .map((a) => ({
+          id: `ms_award_${state.year}_${a.category}`,
+          type: "award" as const,
+          year: state.year,
+          quarter: 4 as Quarter,
+          title: `Won ${a.categoryLabel}`,
+          detail: `${a.winnerName} — awarded ${a.categoryLabel}`,
+          modelId: a.winnerId,
+          awardCategory: a.category,
+        }));
+
       return {
         ...state,
         currentYearAwards: action.awards,
         companies: applyAwardBonuses(state.companies, action.awards),
+        yearHistory: updatedYearHistory,
+        milestones: [...state.milestones, ...awardMilestones],
       };
+    }
     default:
       return state;
   }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Newspaper, History } from "lucide-react";
+import { Newspaper } from "lucide-react";
 import { useNavigation } from "./NavigationContext";
 import { GameLayout } from "../shell/GameLayout";
 import { ContentPanel } from "../shell/ContentPanel";
@@ -21,6 +21,7 @@ import { ReviewsAwardsScreen } from "../screens/ReviewsAwardsScreen";
 import { MarketOverviewScreen } from "../screens/MarketOverviewScreen";
 import { MarketBrowserScreen } from "../screens/market-browser";
 import { FinancialHistoryScreen } from "../screens/FinancialHistoryScreen";
+import { HistoryScreen } from "../screens/HistoryScreen";
 import { DebugPanel } from "../debug/DebugPanel";
 
 function PlaceholderScreen({ title, icon }: { title: string; icon: React.ComponentType<{ size?: number; color?: string }> }) {
@@ -60,7 +61,7 @@ function ScreenContent() {
     case "news":
       return <PlaceholderScreen title="News" icon={Newspaper} />;
     case "history":
-      return <PlaceholderScreen title="History" icon={History} />;
+      return <HistoryScreen />;
     case "marketBrowser":
       return <MarketBrowserScreen />;
     case "quarterlySummary":

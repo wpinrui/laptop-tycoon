@@ -8,7 +8,7 @@ import {
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { COMPETITORS, CompetitorArchetype } from "../../data/competitors";
 import { YearSimulationResult, QuarterSimulationResult } from "../../simulation/salesTypes";
-import { LaptopReview, Award } from "../../simulation/reviewsAwards";
+import { LaptopReview, Award, AwardCategory } from "../../simulation/reviewsAwards";
 import { MarketingTier } from "../../data/types";
 
 export type ModelType = "brandNew" | "successor" | "specBump";
@@ -76,6 +76,25 @@ export interface CompanyState {
 
 export type Quarter = 1 | 2 | 3 | 4;
 
+// ─── Milestone Types ────────────────────────────────────────
+
+export type MilestoneType = "model" | "award" | "financial" | "market";
+
+export interface Milestone {
+  id: string;
+  type: MilestoneType;
+  year: number;
+  quarter: Quarter;
+  title: string;
+  detail: string;
+  /** Model design ID (model launches, awards) */
+  modelId?: string;
+  /** Award category (award milestones) */
+  awardCategory?: AwardCategory;
+  /** Per-demographic player market share snapshot (market milestones) */
+  marketShareSnapshot?: Partial<Record<DemographicId, number>>;
+}
+
 export interface MarketingCampaign {
   demographicId: DemographicId;
   tier: MarketingTier;
@@ -99,6 +118,8 @@ export interface GameState {
   currentYearReviews: LaptopReview[];
   /** Awards published after Q4 for the most recently completed year. */
   currentYearAwards: Award[];
+  /** Persistent timeline of player milestones detected during simulation. */
+  milestones: Milestone[];
 }
 
 /** Get the player's company from the unified companies array. */
@@ -178,5 +199,6 @@ export function createInitialGameState(
     quarterHistory: [],
     currentYearReviews: [],
     currentYearAwards: [],
+    milestones: [],
   };
 }

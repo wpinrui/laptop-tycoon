@@ -142,6 +142,8 @@ export interface YearSimulationResult {
   gameOver: boolean;
   /** Per-demographic perception changes for the player this year */
   perceptionChanges: PerceptionChange[];
+  /** Awards determined at year end (added by SET_AWARDS action). */
+  awards?: import("./reviewsAwards").Award[];
 }
 
 export interface DemandProjection {
