@@ -121,24 +121,28 @@ const specValueStyle: CSSProperties = {
   color: tokens.colors.text,
 };
 
+const scoreBadgeBg = "rgba(255, 255, 255, 0.06)";
+
+// ─── Shared Components ───────────────────────────────────────
+
+function SpecItem({ label, value, color, fontWeight }: { label: string; value: string; color?: string; fontWeight?: number }) {
+  return (
+    <div style={specItemStyle}>
+      <span style={specLabelStyle}>{label}</span>
+      <span style={{ ...specValueStyle, ...(color ? { color } : {}), ...(fontWeight != null ? { fontWeight } : {}) }}>{value}</span>
+    </div>
+  );
+}
+
 // ─── Body Renderers ──────────────────────────────────────────
 
 function ProductLaunchBody({ body }: { body: Extract<NewsBody, { type: "productLaunch" }> }) {
   return (
     <div style={bodyContainerStyle}>
       <div style={specRowStyle}>
-        <div style={specItemStyle}>
-          <span style={specLabelStyle}>Model</span>
-          <span style={specValueStyle}>{body.modelName}</span>
-        </div>
-        <div style={specItemStyle}>
-          <span style={specLabelStyle}>Screen</span>
-          <span style={specValueStyle}>{body.screenSize}"</span>
-        </div>
-        <div style={specItemStyle}>
-          <span style={specLabelStyle}>Price</span>
-          <span style={{ ...specValueStyle, color: tokens.colors.statusCash }}>{formatCash(body.price)}</span>
-        </div>
+        <SpecItem label="Model" value={body.modelName} />
+        <SpecItem label="Screen" value={`${body.screenSize}"`} />
+        <SpecItem label="Price" value={formatCash(body.price)} color={tokens.colors.statusCash} />
       </div>
       {body.pressQuotes && body.pressQuotes.length > 0 && (
         <div style={{ marginTop: tokens.spacing.sm }}>
@@ -167,14 +171,8 @@ function MarketShareBody({ body }: { body: Extract<NewsBody, { type: "marketShar
   return (
     <div style={bodyContainerStyle}>
       <div style={specRowStyle}>
-        <div style={specItemStyle}>
-          <span style={specLabelStyle}>Demographic</span>
-          <span style={specValueStyle}>{body.demographic}</span>
-        </div>
-        <div style={specItemStyle}>
-          <span style={specLabelStyle}>Market Share</span>
-          <span style={{ ...specValueStyle, color: tokens.colors.accent }}>{Math.round(body.share * 100)}%</span>
-        </div>
+        <SpecItem label="Demographic" value={body.demographic} />
+        <SpecItem label="Market Share" value={`${Math.round(body.share * 100)}%`} color={tokens.colors.accent} />
       </div>
     </div>
   );
@@ -184,19 +182,12 @@ function PerceptionBody({ body }: { body: Extract<NewsBody, { type: "perception"
   const isUp = body.direction === "up";
   const color = isUp ? tokens.colors.success : tokens.colors.danger;
   const arrow = isUp ? "\u2191" : "\u2193";
+  const delta = `${arrow} ${body.delta > 0 ? "+" : ""}${body.delta.toFixed(1)}`;
   return (
     <div style={bodyContainerStyle}>
       <div style={specRowStyle}>
-        <div style={specItemStyle}>
-          <span style={specLabelStyle}>Demographic</span>
-          <span style={specValueStyle}>{body.demographic}</span>
-        </div>
-        <div style={specItemStyle}>
-          <span style={specLabelStyle}>Change</span>
-          <span style={{ ...specValueStyle, color }}>
-            {arrow} {body.delta > 0 ? "+" : ""}{body.delta.toFixed(1)}
-          </span>
-        </div>
+        <SpecItem label="Demographic" value={body.demographic} />
+        <SpecItem label="Change" value={delta} color={color} />
       </div>
     </div>
   );
@@ -207,7 +198,7 @@ function ReviewBody({ body }: { body: Extract<NewsBody, { type: "review" }> }) {
   return (
     <div style={bodyContainerStyle}>
       <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.md, marginBottom: body.sentences.length > 0 ? tokens.spacing.sm : 0 }}>
-        <span style={{ fontSize: tokens.font.sizeLarge, fontWeight: 700, color: scoreColor, background: "rgba(255,255,255,0.06)", padding: "4px 12px", borderRadius: tokens.borderRadius.sm }}>
+        <span style={{ fontSize: tokens.font.sizeLarge, fontWeight: 700, color: scoreColor, background: scoreBadgeBg, padding: "4px 12px", borderRadius: tokens.borderRadius.sm }}>
           {body.score}/10
         </span>
         <span style={{ fontSize: tokens.font.sizeBase, color: tokens.colors.text, fontWeight: 500 }}>{body.laptopName}</span>
@@ -225,19 +216,10 @@ function AwardBody({ body }: { body: Extract<NewsBody, { type: "award" }> }) {
   return (
     <div style={bodyContainerStyle}>
       <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.md }}>
-        <div style={specItemStyle}>
-          <span style={specLabelStyle}>Category</span>
-          <span style={{ ...specValueStyle, color: tokens.colors.statusCash }}>{body.category}</span>
-        </div>
-        <div style={specItemStyle}>
-          <span style={specLabelStyle}>Winner</span>
-          <span style={specValueStyle}>{body.winnerName} ({body.ownerName})</span>
-        </div>
+        <SpecItem label="Category" value={body.category} color={tokens.colors.statusCash} />
+        <SpecItem label="Winner" value={`${body.winnerName} (${body.ownerName})`} />
         {body.runnerUpName && (
-          <div style={specItemStyle}>
-            <span style={specLabelStyle}>Runner-up</span>
-            <span style={{ ...specValueStyle, color: tokens.colors.textMuted, fontWeight: 400 }}>{body.runnerUpName}</span>
-          </div>
+          <SpecItem label="Runner-up" value={body.runnerUpName} color={tokens.colors.textMuted} fontWeight={400} />
         )}
       </div>
     </div>
