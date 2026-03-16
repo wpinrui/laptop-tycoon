@@ -69,19 +69,7 @@ export function FinancialsCard() {
   const { state } = useGame();
 
   const stats = useMemo(() => {
-    // Collect all quarters: completed years + current year
-    const allQuarters = [
-      ...state.yearHistory.flatMap((yr) =>
-        // Reconstruct quarterly data from yearHistory if we had it
-        // but yearHistory is year-level aggregates, so we use quarterHistory for current year
-        // and for past years we only have yearly totals
-        []
-      ),
-    ];
-
-    // Current year quarters
     const qh = state.quarterHistory;
-    // Past year yearly results
     const yh = state.yearHistory;
 
     // Build revenue/profit timeline from yearly then quarterly
