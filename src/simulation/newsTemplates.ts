@@ -3,6 +3,7 @@
  * Templates use {placeholder} syntax; the engine interpolates at generation time.
  */
 
+import { CompetitorArchetype } from "../data/competitors";
 import { NewsOutletId } from "./newsTypes";
 
 // ─── Template Type ──────────────────────────────────────────
@@ -26,6 +27,67 @@ export const PRODUCT_LAUNCH_TEMPLATES: TemplatePool = {
     "{company}'s new {model} hits shelves at {price} — worth a look?",
     "First look: the {price} {model} from {company} aims for your shortlist",
     "New laptop alert: the {model} from {company} starts at {price}",
+  ],
+};
+
+// ─── Product Launch (with press quote) ──────────────────────
+
+export const PRODUCT_LAUNCH_QUOTE_TEMPLATES: TemplatePool = {
+  techbuzz: [
+    "{company} calls the {model} '{pressQuote}' — bold words, let's see if it delivers",
+    "'{pressQuote}' — that's how {company} describes the new {model}. We're intrigued.",
+    "{company} launches {model} with a promise: '{pressQuote}'",
+  ],
+  siliconStandard: [
+    "In a statement, {company} described the {model} as '{pressQuote}'",
+    "{company} positions {model} around a core message: '{pressQuote}'",
+    "New from {company}: {model} — billed as '{pressQuote}'",
+  ],
+  consumerWeekly: [
+    "{company} wants you to know the {model} is about '{pressQuote}'",
+    "'{pressQuote}' — {company}'s pitch for the new {model}. Worth a look?",
+    "The {model} from {company}: '{pressQuote}'. Here's what that means for buyers.",
+  ],
+};
+
+// ─── AI Competitor Press Quotes ─────────────────────────────
+
+export const COMPETITOR_PRESS_QUOTES: Record<CompetitorArchetype, string[]> = {
+  budget: [
+    "More for less — that's always been our promise",
+    "Premium features at a price that makes sense",
+    "We prove you don't have to overpay for quality",
+    "Built for everyone, not just enthusiasts",
+    "Affordability without apology",
+    "The smart choice for smart buyers",
+    "We stripped the markup, not the features",
+    "Real performance at a real-world price",
+    "Value is our north star",
+    "Flagship specs, mid-range price",
+  ],
+  premium: [
+    "Crafted without compromise",
+    "We don't cut corners — we engineer them away",
+    "Luxury is in the details you don't notice until they're gone",
+    "For those who demand the best and won't settle",
+    "Precision-engineered from the ground up",
+    "The finest materials, the finest experience",
+    "Excellence isn't a feature — it's the standard",
+    "When only the best will do",
+    "Performance, elegance, and nothing less",
+    "We build for people who notice the difference",
+  ],
+  generalist: [
+    "Engineered for what's next",
+    "Performance without compromise",
+    "Everything you need, nothing you don't",
+    "Built for the way people actually work",
+    "The laptop that adapts to your life",
+    "Reliable, powerful, ready for anything",
+    "Technology that gets out of your way",
+    "Designed for real life, not spec sheets",
+    "A smarter laptop for a smarter workflow",
+    "We listened to our customers and built this",
   ],
 };
 

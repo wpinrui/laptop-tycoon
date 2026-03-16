@@ -13,11 +13,13 @@ import { DemographicId } from "../data/types";
 import { GameState, getPlayerCompany, Quarter, Milestone } from "../renderer/state/gameTypes";
 import { QuarterSimulationResult } from "./salesTypes";
 import { LaptopReview, Award } from "./reviewsAwards";
-import { PERCEPTION_NEWS_THRESHOLD } from "./tunables";
+import { PERCEPTION_NEWS_THRESHOLD, QUOTE_HEADLINE_PROBABILITY } from "./tunables";
 import { NewsItem, NewsOutletId, OUTLETS } from "./newsTypes";
 import {
   TemplatePool,
   PRODUCT_LAUNCH_TEMPLATES,
+  PRODUCT_LAUNCH_QUOTE_TEMPLATES,
+  COMPETITOR_PRESS_QUOTES,
   REVENUE_MILESTONE_TEMPLATES,
   PROFITABILITY_TEMPLATES,
   MARKET_SHARE_TEMPLATES,
@@ -26,7 +28,7 @@ import {
   REVIEW_TEMPLATES,
   AWARD_TEMPLATES,
 } from "./newsTemplates";
-import { pickRandom, formatCompact } from "./utils";
+import { pickRandom, shuffled, formatCompact } from "./utils";
 
 // ─── Helpers ────────────────────────────────────────────────
 
@@ -73,22 +75,43 @@ function makeProductLaunchItem(
   retailPrice: number,
   segment: string,
   isPlayer: boolean,
+  pressQuotes?: string[],
 ): NewsItem {
   const outlet = pickOutlet();
-  const vars = {
+  const hasQuotes = pressQuotes && pressQuotes.length > 0;
+
+  // Pick two distinct quotes if available (headline + subheadline)
+  let headlineQuote: string | undefined;
+  let subheadlineQuote: string | undefined;
+  if (hasQuotes) {
+    const picks = shuffled(pressQuotes);
+    headlineQuote = picks[0];
+    subheadlineQuote = picks.length > 1 ? picks[1] : undefined;
+  }
+
+  const vars: Record<string, string | number> = {
     company: companyName,
     model: modelName,
     screenSize,
     price: formatCompact(retailPrice),
     segment,
   };
+
+  // Prefer quote templates when a quote is available (80% of the time)
+  let pool = PRODUCT_LAUNCH_TEMPLATES;
+  if (headlineQuote && Math.random() < QUOTE_HEADLINE_PROBABILITY) {
+    pool = PRODUCT_LAUNCH_QUOTE_TEMPLATES;
+    vars.pressQuote = headlineQuote;
+  }
+
   return {
     id,
     year,
     quarter,
     category: "productLaunch",
     outlet,
-    headline: generateHeadline(PRODUCT_LAUNCH_TEMPLATES, outlet, vars),
+    headline: generateHeadline(pool, outlet, vars),
+    subheadline: subheadlineQuote,
     body: {
       type: "productLaunch",
       companyName,
@@ -96,6 +119,7 @@ function makeProductLaunchItem(
       screenSize,
       price: retailPrice,
       isPlayer,
+      pressQuotes: hasQuotes ? pressQuotes : undefined,
     },
   };
 }
@@ -122,10 +146,12 @@ export function generateQuarterNews(
     if (ms.type === "model") {
       const model = player.models.find((m) => m.design.id === ms.modelId);
       if (!model) continue;
+      const responses = model.manufacturingPlan?.pressRelease?.responses;
+      const pressQuotes = responses ? Object.values(responses).filter((s) => s.length > 0) : undefined;
       items.push(makeProductLaunchItem(
         makeId(), year, quarter, player.name,
         model.design.name, model.design.screenSize, model.retailPrice ?? 0,
-        "consumer", true,
+        "consumer", true, pressQuotes,
       ));
     } else if (ms.type === "financial") {
       const outlet = pickOutlet();
@@ -205,11 +231,14 @@ export function generateQuarterNews(
         if (model.yearDesigned !== year) continue;
         if (reportedCompetitorModels.has(model.design.name)) continue;
 
-        const segment = ARCHETYPE_SEGMENT[company.archetype ?? "generalist"];
+        const archetype = company.archetype ?? "generalist";
+        const segment = ARCHETYPE_SEGMENT[archetype];
+        const quotePool = COMPETITOR_PRESS_QUOTES[archetype];
+        const competitorQuotes = shuffled(quotePool).slice(0, 2);
         items.push(makeProductLaunchItem(
           makeId(), year, quarter, company.name,
           model.design.name, model.design.screenSize, model.retailPrice ?? 0,
-          segment, false,
+          segment, false, competitorQuotes,
         ));
       }
     }

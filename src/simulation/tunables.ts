@@ -205,6 +205,11 @@ export const DEATH_SPIRAL_BONUS_NUDGE = 0.05;
 /** Maximum engineeringBonus cap (prevent runaway escalation) */
 export const DEATH_SPIRAL_MAX_BONUS = 0.4;
 
+// ==================== News Engine ====================
+
+/** Probability (0–1) of using a press-quote headline template when a quote is available */
+export const QUOTE_HEADLINE_PROBABILITY = 0.8;
+
 // ==================== Awards ====================
 
 /** Perception boost for primary demographics (matching outlet affinity) */
