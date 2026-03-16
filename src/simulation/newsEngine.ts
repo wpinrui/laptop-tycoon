@@ -9,7 +9,7 @@
 
 import { DEMOGRAPHICS } from "../data/demographics";
 import { DemographicId } from "../data/types";
-import { GameState, getPlayerCompany, Quarter } from "../renderer/state/gameTypes";
+import { GameState, getPlayerCompany, Quarter, Milestone } from "../renderer/state/gameTypes";
 import { QuarterSimulationResult } from "./salesTypes";
 import { LaptopReview, Award } from "./reviewsAwards";
 import { NewsItem, NewsOutletId, OUTLETS } from "./newsTypes";
@@ -25,11 +25,13 @@ import {
   AWARD_TEMPLATES,
 } from "./newsTemplates";
 import { pickRandom, formatCompact } from "./utils";
-import type { Milestone } from "../renderer/state/gameTypes";
 
 // ─── Helpers ────────────────────────────────────────────────
 
 const OUTLET_IDS: NewsOutletId[] = Object.keys(OUTLETS) as NewsOutletId[];
+
+/** Minimum |delta| to generate a perception news item */
+const PERCEPTION_NEWS_THRESHOLD = 3;
 
 function pickOutlet(): NewsOutletId {
   return pickRandom(OUTLET_IDS);
@@ -219,7 +221,7 @@ export function generateQuarterNews(
 
   // ── Perception shifts (|delta| >= 3) ──
   for (const pc of result.perceptionChanges) {
-    if (Math.abs(pc.delta) < 3) continue;
+    if (Math.abs(pc.delta) < PERCEPTION_NEWS_THRESHOLD) continue;
     const direction = pc.delta > 0 ? "up" : "down";
     const pool = direction === "up" ? PERCEPTION_UP_TEMPLATES : PERCEPTION_DOWN_TEMPLATES;
     const outlet = pickOutlet();
@@ -303,7 +305,7 @@ export function generateAwardNews(awards: Award[], year: number): NewsItem[] {
     items.push({
       id: `news_${year}_award_${index++}`,
       year,
-      quarter: 4 as 1 | 2 | 3 | 4,
+      quarter: 4 as Quarter,
       category: "award",
       outlet,
       headline: generateHeadline(AWARD_TEMPLATES, outlet, vars),
