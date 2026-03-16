@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FastForward } from "lucide-react";
 import { useGame } from "../../state/GameContext";
 import { useNavigation } from "../../navigation/NavigationContext";
+import { Screen } from "../../navigation/types";
 import { ContentPanel } from "../../shell/ContentPanel";
 import { MenuButton } from "../../shell/MenuButton";
 import { tokens, overlayStyle } from "../../shell/tokens";
@@ -42,7 +43,10 @@ function aggregateLaptopResults(quarters: QuarterSimulationResult[]): LaptopSale
 
 interface SimWarning {
   label: string;
-  details: string[];
+  description: string;
+  models?: string[];
+  actionLabel: string;
+  actionScreen: Screen;
 }
 
 function getPreSimWarnings(state: ReturnType<typeof useGame>["state"]): SimWarning[] {
@@ -57,7 +61,10 @@ function getPreSimWarnings(state: ReturnType<typeof useGame>["state"]): SimWarni
   if (unplanned.length > 0) {
     warnings.push({
       label: "No manufacturing plan",
-      details: unplanned.map((m) => m.design.name),
+      description: "These designs won't be produced or sold this year without a manufacturing plan.",
+      models: unplanned.map((m) => m.design.name),
+      actionLabel: "Go to Model Management",
+      actionScreen: "modelManagement",
     });
   }
 
@@ -72,7 +79,10 @@ function getPreSimWarnings(state: ReturnType<typeof useGame>["state"]): SimWarni
   if (outOfStock.length > 0) {
     warnings.push({
       label: "Out of stock",
-      details: outOfStock.map((m) => m.design.name),
+      description: "These models have no units to sell. Place an additional order to restock.",
+      models: outOfStock.map((m) => m.design.name),
+      actionLabel: "Go to Model Management",
+      actionScreen: "modelManagement",
     });
   }
 
@@ -81,7 +91,9 @@ function getPreSimWarnings(state: ReturnType<typeof useGame>["state"]): SimWarni
   if (totalReach === 0 && state.marketingCampaigns.length === 0) {
     warnings.push({
       label: "Zero brand reach",
-      details: ["No marketing campaigns set up — your products won't reach any buyers"],
+      description: "No marketing campaigns set up — your products won't reach any buyers.",
+      actionLabel: "Go to Marketing",
+      actionScreen: "brandDetail",
     });
   }
 
@@ -233,14 +245,30 @@ export function AdvanceYearCard() {
                     padding: tokens.spacing.sm,
                   }}
                 >
-                  <div style={{ fontWeight: 600, color: tokens.colors.warning, fontSize: tokens.font.sizeBase }}>
-                    {w.label}
-                  </div>
-                  {w.details.map((d) => (
-                    <div key={d} style={{ color: tokens.colors.textMuted, fontSize: tokens.font.sizeBase, marginTop: 2 }}>
-                      {d}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ fontWeight: 600, color: tokens.colors.warning, fontSize: tokens.font.sizeBase }}>
+                      {w.label}{w.models ? `: ${w.models.join(", ")}` : ""}
                     </div>
-                  ))}
+                    <button
+                      onClick={() => { setWarnings(null); navigateTo(w.actionScreen); }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: tokens.colors.accent,
+                        fontSize: tokens.font.sizeSmall,
+                        cursor: "pointer",
+                        padding: 0,
+                        fontFamily: tokens.font.family,
+                        whiteSpace: "nowrap",
+                        marginLeft: tokens.spacing.sm,
+                      }}
+                    >
+                      {w.actionLabel} &rarr;
+                    </button>
+                  </div>
+                  <div style={{ color: tokens.colors.textMuted, fontSize: tokens.font.sizeBase, marginTop: 4 }}>
+                    {w.description}
+                  </div>
                 </div>
               ))}
             </div>
