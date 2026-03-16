@@ -3,7 +3,7 @@ import { useGame } from "../../state/GameContext";
 import { tokens } from "../../shell/tokens";
 import { OUTLETS } from "../../../simulation/newsTypes";
 import { BentoCard } from "./BentoCard";
-import { emptyStateStyle } from "./styles";
+import { emptyStateStyle, smallTextStyle } from "./styles";
 
 export function NewsCard() {
   const { state } = useGame();
@@ -30,21 +30,15 @@ export function NewsCard() {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "baseline",
-                  marginBottom: 2,
+                  marginBottom: tokens.spacing.xs,
                 }}
               >
-                <span
-                  style={{
-                    fontSize: tokens.font.sizeSmall,
-                    color: tokens.colors.textMuted,
-                  }}
-                >
+                <span style={smallTextStyle}>
                   {OUTLETS[item.outlet].name}
                 </span>
                 <span
                   style={{
-                    fontSize: tokens.font.sizeSmall,
-                    color: tokens.colors.textMuted,
+                    ...smallTextStyle,
                     flexShrink: 0,
                     marginLeft: tokens.spacing.sm,
                   }}
