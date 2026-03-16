@@ -241,8 +241,8 @@ export function AdvanceYearCard() {
                 <div
                   key={w.label}
                   style={{
-                    background: "rgba(255, 167, 38, 0.08)",
-                    border: "1px solid rgba(255, 167, 38, 0.25)",
+                    background: tokens.colors.warningBg,
+                    border: `1px solid ${tokens.colors.warningBorder}`,
                     borderRadius: tokens.borderRadius.sm,
                     padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
                   }}
@@ -250,7 +250,7 @@ export function AdvanceYearCard() {
                   <div style={{ fontWeight: 600, color: tokens.colors.warning, fontSize: tokens.font.sizeBase }}>
                     {w.label}{w.models ? `: ${w.models.join(", ")}` : ""}
                   </div>
-                  <div style={{ color: tokens.colors.textMuted, fontSize: tokens.font.sizeBase, marginTop: 4 }}>
+                  <div style={{ color: tokens.colors.textMuted, fontSize: tokens.font.sizeBase, marginTop: tokens.spacing.xs }}>
                     {w.description}
                   </div>
                   <MenuButton

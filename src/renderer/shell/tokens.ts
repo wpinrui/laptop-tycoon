@@ -23,6 +23,8 @@ export const tokens = {
     dangerBg: "rgba(239, 83, 80, 0.1)",
     accentBg: "rgba(79, 195, 247, 0.1)",
     warning: "#ffa726",
+    warningBg: "rgba(255, 167, 38, 0.08)",
+    warningBorder: "rgba(255, 167, 38, 0.25)",
     warningDark: "#d32f2f",
     interactiveAccent: "#90caf9",
     interactiveAccentBg: "#1a3a5c",
