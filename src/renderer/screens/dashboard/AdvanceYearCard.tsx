@@ -6,7 +6,7 @@ import { tokens } from "../../shell/tokens";
 import { BentoCard } from "./BentoCard";
 import { cardBodyStyle } from "./styles";
 import { getActiveModels } from "./utils";
-import { hasDiscontinuedComponents, LaptopModel, getPlayerCompany, modelDisplayName } from "../../state/gameTypes";
+import { LaptopModel } from "../../state/gameTypes";
 import { COMPETITORS } from "../../../data/competitors";
 import { generateCompetitorModels } from "../../../simulation/competitorAI";
 import { simulateQuarter } from "../../../simulation/salesEngine";
@@ -16,17 +16,6 @@ import { QuarterSimulationResult, LaptopSalesResult } from "../../../simulation/
 import { QUARTER_LABELS } from "../../utils/formatCash";
 
 /** Models that need a current-year manufacturing plan before simulation. */
-function modelsNeedingPlans(state: { year: number; models: ReturnType<typeof getActiveModels> }) {
-  return state.models.filter((m) => {
-    // Draft models haven't been finalized — no plan needed
-    if (m.status === "draft") return false;
-    // Discontinued components → retail-only from inventory, no plan needed
-    if (hasDiscontinuedComponents(m.design, state.year)) return false;
-    // Designed or onSale without a current-year plan
-    const hasPlanForYear = m.manufacturingPlan?.year === state.year;
-    return !hasPlanForYear;
-  });
-}
 
 /** Aggregate laptop sales results across all quarters for award determination. */
 function aggregateLaptopResults(quarters: QuarterSimulationResult[]): LaptopSalesResult[] {
@@ -54,41 +43,18 @@ function aggregateLaptopResults(quarters: QuarterSimulationResult[]): LaptopSale
 export function AdvanceYearCard() {
   const { state, dispatch } = useGame();
   const { navigateTo } = useNavigation();
-  const player = getPlayerCompany(state);
   const activeModels = getActiveModels(state);
   const isQ1 = state.quarter === 1;
   const quarterLabel = QUARTER_LABELS[state.quarter - 1];
 
-  // Only require manufacturing plans in Q1 — subsequent quarters can proceed freely
-  const needPlans = isQ1 ? modelsNeedingPlans({ year: state.year, models: activeModels }) : [];
-  const allReady = isQ1 ? needPlans.length === 0 : true;
-  const warnings: string[] = [];
-
-  if (isQ1 && needPlans.length > 0) {
-    warnings.push(
-      `Add manufacturing plans for: ${needPlans.map((m) => modelDisplayName(player.name, m.design.name)).join(", ")}`,
-    );
-  }
-
   return (
     <BentoCard title={`Simulate ${quarterLabel}`} icon={FastForward}>
-      {warnings.length > 0 ? (
-        warnings.map((w) => (
-          <p key={w} style={{ ...cardBodyStyle, color: tokens.colors.danger }}>
-            {w}
-          </p>
-        ))
-      ) : (
-        <p style={cardBodyStyle}>
-          {isQ1
-            ? `All models ready. Simulate ${quarterLabel} ${state.year}.`
-            : `Simulate ${quarterLabel} ${state.year}. You can place additional manufacturing orders or adjust pricing from Model Management.`
-          }
-        </p>
-      )}
+      <p style={cardBodyStyle}>
+        {`Simulate ${quarterLabel} ${state.year}. You can place additional manufacturing orders or adjust pricing from Model Management.`}
+      </p>
       <MenuButton
         variant="accent"
-        disabled={!allReady}
+
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
 
