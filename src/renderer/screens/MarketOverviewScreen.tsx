@@ -191,7 +191,7 @@ export function MarketOverviewScreen() {
       return true;
     });
 
-    return [...filtered].sort((a, b) => {
+    return filtered.sort((a, b) => {
       switch (sortBy) {
         case "buyers":
           return getAnnualBuyers(b.id, state.year) - getAnnualBuyers(a.id, state.year);
