@@ -5,9 +5,11 @@ import { OUTLETS } from "../../../simulation/newsTypes";
 import { BentoCard } from "./BentoCard";
 import { emptyStateStyle, smallTextStyle } from "./styles";
 
+const MAX_HEADLINES = 3;
+
 export function NewsCard() {
   const { state } = useGame();
-  const latest = [...state.newsHistory].reverse().slice(0, 3);
+  const latest = state.newsHistory.slice(-MAX_HEADLINES).reverse();
 
   return (
     <BentoCard title="News" icon={Newspaper} screen="news">
