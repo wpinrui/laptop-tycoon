@@ -3,6 +3,8 @@
  * and the NewsItem structure that populates the player's news feed.
  */
 
+import { Quarter } from "../renderer/state/gameTypes";
+
 export type NewsOutletId = "techbuzz" | "siliconStandard" | "consumerWeekly";
 
 export interface NewsOutlet {
@@ -48,7 +50,7 @@ export type NewsBody =
 export interface NewsItem {
   id: string;
   year: number;
-  quarter: 1 | 2 | 3 | 4;
+  quarter: Quarter;
   category: NewsCategory;
   outlet: NewsOutletId;
   headline: string;
