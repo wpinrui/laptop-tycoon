@@ -54,25 +54,28 @@ function getPreSimWarnings(state: ReturnType<typeof useGame>["state"]): SimWarni
   const player = getPlayerCompany(state);
   const activeModels = player.models.filter((m) => m.status !== "discontinued");
 
-  // 1. Designs with no manufacturing plan (or a plan with 0 units)
+  const modelName = (m: LaptopModel) => `${player.name} ${m.design.name}`;
+
+  // 1. Designs with no manufacturing plan at all
   const unplanned = activeModels.filter(
-    (m) =>
-      m.status === "designed" &&
-      (!m.manufacturingPlan || m.manufacturingPlan.year !== state.year || (m.manufacturingQuantity ?? 0) === 0),
+    (m) => m.status === "designed" && (!m.manufacturingPlan || m.manufacturingPlan.year !== state.year),
   );
   if (unplanned.length > 0) {
     warnings.push({
       label: "No manufacturing plan",
-      description: "These designs won't be produced or sold this year without a manufacturing plan.",
-      models: unplanned.map((m) => m.design.name),
+      description: "These designs won't be produced or sold without a manufacturing plan.",
+      models: unplanned.map(modelName),
       actionLabel: "Go to Model Management",
       actionScreen: "modelManagement",
     });
   }
 
-  // 2. Models that will have zero units available to sell this quarter
+  // 2. Any model that will have zero units available to sell this quarter
+  //    Covers: designed with 0-unit plan, manufacturing/onSale with no stock + no new batch
   const outOfStock = activeModels.filter((m) => {
-    if (m.status !== "onSale" && m.status !== "manufacturing") return false;
+    // Already caught by check 1
+    if (m.status === "designed" && (!m.manufacturingPlan || m.manufacturingPlan.year !== state.year)) return false;
+    if (m.status === "draft") return false;
     const hasCurrentQuarterPlan =
       m.manufacturingPlan?.year === state.year && m.manufacturingPlan?.quarter === state.quarter;
     const newBatch = hasCurrentQuarterPlan ? (m.manufacturingQuantity ?? 0) : 0;
@@ -81,8 +84,8 @@ function getPreSimWarnings(state: ReturnType<typeof useGame>["state"]): SimWarni
   if (outOfStock.length > 0) {
     warnings.push({
       label: "Out of stock",
-      description: "These models have no units to sell. Place an additional order to restock.",
-      models: outOfStock.map((m) => m.design.name),
+      description: "These models have zero units to sell this quarter.",
+      models: outOfStock.map(modelName),
       actionLabel: "Go to Model Management",
       actionScreen: "modelManagement",
     });
