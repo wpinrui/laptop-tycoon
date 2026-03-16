@@ -54,9 +54,11 @@ function getPreSimWarnings(state: ReturnType<typeof useGame>["state"]): SimWarni
   const player = getPlayerCompany(state);
   const activeModels = player.models.filter((m) => m.status !== "discontinued");
 
-  // 1. Designs with no manufacturing plan
+  // 1. Designs with no manufacturing plan (or a plan with 0 units)
   const unplanned = activeModels.filter(
-    (m) => m.status === "designed" && (!m.manufacturingPlan || m.manufacturingPlan.year !== state.year),
+    (m) =>
+      m.status === "designed" &&
+      (!m.manufacturingPlan || m.manufacturingPlan.year !== state.year || (m.manufacturingQuantity ?? 0) === 0),
   );
   if (unplanned.length > 0) {
     warnings.push({
@@ -68,9 +70,9 @@ function getPreSimWarnings(state: ReturnType<typeof useGame>["state"]): SimWarni
     });
   }
 
-  // 2. On-sale models that are out of stock with no new order this quarter
+  // 2. Models that will have zero units available to sell this quarter
   const outOfStock = activeModels.filter((m) => {
-    if (m.status !== "onSale") return false;
+    if (m.status !== "onSale" && m.status !== "manufacturing") return false;
     const hasCurrentQuarterPlan =
       m.manufacturingPlan?.year === state.year && m.manufacturingPlan?.quarter === state.quarter;
     const newBatch = hasCurrentQuarterPlan ? (m.manufacturingQuantity ?? 0) : 0;
