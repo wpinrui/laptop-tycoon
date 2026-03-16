@@ -1,6 +1,6 @@
 import { QuarterSimulationResult } from "../../simulation/salesTypes";
 import { tokens } from "../shell/tokens";
-import { formatNumber, formatCurrency, QUARTER_LABELS } from "../utils/formatCash";
+import { formatNumber, formatCurrency, QUARTER_LABELS, profitColor } from "../utils/formatCash";
 import { tableStyle, thStyle, tdStyle, tdRight, sectionHeadingStyle } from "./summaryStyles";
 
 interface QuarterlyTrendTableProps {
@@ -42,7 +42,7 @@ export function QuarterlyTrendTable({ quarters, year }: QuarterlyTrendTableProps
               <td style={tdStyle}>{QUARTER_LABELS[q.quarter - 1]} {year}</td>
               <td style={tdRight}>{formatNumber(q.unitsSold)}</td>
               <td style={tdRight}>{formatCurrency(q.revenue)}</td>
-              <td style={{ ...tdRight, color: q.profit >= 0 ? tokens.colors.success : tokens.colors.danger }}>
+              <td style={{ ...tdRight, color: profitColor(q.profit) }}>
                 {formatCurrency(q.profit)}
               </td>
             </tr>
@@ -54,7 +54,7 @@ export function QuarterlyTrendTable({ quarters, year }: QuarterlyTrendTableProps
                 <td style={{ ...tdStyle, ...totalBorder }}>Total</td>
                 <td style={{ ...tdRight, ...totalBorder }}>{formatNumber(totalUnits)}</td>
                 <td style={{ ...tdRight, ...totalBorder }}>{formatCurrency(totalRevenue)}</td>
-                <td style={{ ...tdRight, ...totalBorder, color: totalProfit >= 0 ? tokens.colors.success : tokens.colors.danger }}>
+                <td style={{ ...tdRight, ...totalBorder, color: profitColor(totalProfit) }}>
                   {formatCurrency(totalProfit)}
                 </td>
               </tr>
