@@ -40,7 +40,7 @@ export type NewsCategory =
   | "award";
 
 export type NewsBody =
-  | { type: "productLaunch"; companyName: string; modelName: string; screenSize: number; price: number; isPlayer: boolean }
+  | { type: "productLaunch"; companyName: string; modelName: string; screenSize: number; price: number; isPlayer: boolean; pressQuotes?: string[] }
   | { type: "financial"; milestoneTitle: string }
   | { type: "marketShare"; demographic: string; share: number; threshold: number }
   | { type: "perception"; demographic: string; delta: number; direction: "up" | "down" }
