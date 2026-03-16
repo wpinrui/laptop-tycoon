@@ -465,12 +465,21 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
     case "SET_REVIEWS":
       return { ...state, currentYearReviews: action.reviews };
-    case "SET_AWARDS":
+    case "SET_AWARDS": {
+      // Persist awards on the latest yearHistory entry (built during Q4 APPLY_QUARTER_RESULT)
+      const updatedYearHistory = state.yearHistory.length > 0
+        ? [
+            ...state.yearHistory.slice(0, -1),
+            { ...state.yearHistory[state.yearHistory.length - 1], awards: action.awards },
+          ]
+        : state.yearHistory;
       return {
         ...state,
         currentYearAwards: action.awards,
         companies: applyAwardBonuses(state.companies, action.awards),
+        yearHistory: updatedYearHistory,
       };
+    }
     default:
       return state;
   }

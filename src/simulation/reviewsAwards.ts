@@ -47,6 +47,9 @@ export interface Award {
   winnerName: string;
   ownerCompanyId: string;
   ownerCompanyName: string;
+  runnerUpId?: string;
+  runnerUpName?: string;
+  runnerUpOwnerName?: string;
 }
 
 export interface ReviewsAwarded {
@@ -619,9 +622,10 @@ export function determineAwards(
       }));
     }
 
-    // Sort descending, pick winner
+    // Sort descending, pick winner + runner-up
     scored.sort((a, b) => b.score - a.score);
     const winner = scored[0];
+    const runnerUp = scored.length > 1 ? scored[1] : null;
     if (winner && winner.score > 0) {
       awards.push({
         category: cat.category,
@@ -630,6 +634,11 @@ export function determineAwards(
         winnerName: winner.entry.name,
         ownerCompanyId: winner.entry.companyId,
         ownerCompanyName: winner.entry.companyName,
+        ...(runnerUp && {
+          runnerUpId: runnerUp.entry.id,
+          runnerUpName: runnerUp.entry.name,
+          runnerUpOwnerName: runnerUp.entry.companyName,
+        }),
       });
     }
   }
