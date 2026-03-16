@@ -245,30 +245,18 @@ export function AdvanceYearCard() {
                     padding: tokens.spacing.sm,
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ fontWeight: 600, color: tokens.colors.warning, fontSize: tokens.font.sizeBase }}>
-                      {w.label}{w.models ? `: ${w.models.join(", ")}` : ""}
-                    </div>
-                    <button
-                      onClick={() => { setWarnings(null); navigateTo(w.actionScreen); }}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: tokens.colors.accent,
-                        fontSize: tokens.font.sizeSmall,
-                        cursor: "pointer",
-                        padding: 0,
-                        fontFamily: tokens.font.family,
-                        whiteSpace: "nowrap",
-                        marginLeft: tokens.spacing.sm,
-                      }}
-                    >
-                      {w.actionLabel} &rarr;
-                    </button>
+                  <div style={{ fontWeight: 600, color: tokens.colors.warning, fontSize: tokens.font.sizeBase }}>
+                    {w.label}{w.models ? `: ${w.models.join(", ")}` : ""}
                   </div>
                   <div style={{ color: tokens.colors.textMuted, fontSize: tokens.font.sizeBase, marginTop: 4 }}>
                     {w.description}
                   </div>
+                  <MenuButton
+                    onClick={() => { setWarnings(null); navigateTo(w.actionScreen); }}
+                    style={{ marginTop: tokens.spacing.sm, width: "100%" }}
+                  >
+                    {w.actionLabel}
+                  </MenuButton>
                 </div>
               ))}
             </div>
