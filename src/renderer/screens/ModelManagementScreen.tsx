@@ -290,7 +290,7 @@ function ModelCard({
     return "Add Manufacturing Plan";
   };
 
-  // Show "Change Pricing" for models that already have a price set and aren't in the first manufacturing plan flow
+  // Show "Change Pricing" for retail-only models, models past initial manufacturing plan flow, or discontinued with stock
   const canChangePricing = retailPrice !== null && (
     isRetailOnly ||
     (hasPlanThisYear && (!hasCurrentQuarterPlan || isAdditionalOrder)) ||

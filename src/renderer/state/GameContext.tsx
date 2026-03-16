@@ -212,7 +212,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
                   status: "onSale" as const,
                   unitsInStock: newStock,
                   manufacturingPlan: !discontinued && m.manufacturingPlan
-                    ? { ...m.manufacturingPlan, year: nextYear, quarter: 1 as const }
+                    ? { ...m.manufacturingPlan, year: nextYear, quarter: 1 as const, results: undefined }
                     : null,
                 };
               }
