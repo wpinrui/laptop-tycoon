@@ -1,19 +1,44 @@
-import { CSSProperties } from "react";
+import { CSSProperties, useMemo, useState } from "react";
 import { BarChart3 } from "lucide-react";
 import { useGame } from "../state/GameContext";
 import { ContentPanel } from "../shell/ContentPanel";
 import { ScreenHeader } from "../shell/ScreenHeader";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
+import { CustomSelect, SelectOption } from "../shell/CustomSelect";
 import { DEMOGRAPHICS } from "../../data/demographics";
 import { getPriceCeiling, getAnnualBuyers } from "../../simulation/demographicData";
-import { Demographic, STAT_LABELS } from "../../data/types";
+import { Demographic, DemographicTier, STAT_LABELS } from "../../data/types";
 
-function getPriceSensitivityLabel(priceWeight: number): { label: string; color: string } {
-  if (priceWeight >= 0.35) return { label: "Very price sensitive", color: tokens.colors.danger };
-  if (priceWeight >= 0.25) return { label: "Price sensitive", color: tokens.colors.warning };
-  if (priceWeight >= 0.15) return { label: "Moderate", color: tokens.colors.text };
-  return { label: "Price insensitive", color: tokens.colors.success };
+type SortField = "buyers" | "priceCeiling" | "name";
+type TierFilter = "all" | DemographicTier;
+type PriceSensFilter = "all" | "veryHigh" | "high" | "moderate" | "low";
+
+const SORT_OPTIONS: SelectOption<SortField>[] = [
+  { value: "buyers", label: "Buyers" },
+  { value: "priceCeiling", label: "Price Ceiling" },
+  { value: "name", label: "Name" },
+];
+
+const TIER_OPTIONS: SelectOption<TierFilter>[] = [
+  { value: "all", label: "All" },
+  { value: "generalist", label: "Generalist" },
+  { value: "niche", label: "Niche" },
+];
+
+const PRICE_SENS_OPTIONS: SelectOption<PriceSensFilter>[] = [
+  { value: "all", label: "All" },
+  { value: "veryHigh", label: "Very Price Sensitive" },
+  { value: "high", label: "Price Sensitive" },
+  { value: "moderate", label: "Moderate" },
+  { value: "low", label: "Price Insensitive" },
+];
+
+function getPriceSensitivityLabel(priceWeight: number): { label: string; color: string; bucket: PriceSensFilter } {
+  if (priceWeight >= 0.35) return { label: "Very price sensitive", color: tokens.colors.danger, bucket: "veryHigh" };
+  if (priceWeight >= 0.25) return { label: "Price sensitive", color: tokens.colors.warning, bucket: "high" };
+  if (priceWeight >= 0.15) return { label: "Moderate", color: tokens.colors.text, bucket: "moderate" };
+  return { label: "Price insensitive", color: tokens.colors.success, bucket: "low" };
 }
 
 function getTopAndBottomStats(demo: Demographic): { top: string[]; bottom: string[] } {
@@ -145,15 +170,53 @@ function DemographicCard({ demo, year }: { demo: Demographic; year: number }) {
   );
 }
 
+const toolbarStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: tokens.spacing.md,
+  flexWrap: "wrap",
+  marginBottom: tokens.spacing.md,
+};
+
 export function MarketOverviewScreen() {
   const { state } = useGame();
+  const [sortBy, setSortBy] = useState<SortField>("buyers");
+  const [tierFilter, setTierFilter] = useState<TierFilter>("all");
+  const [priceSensFilter, setPriceSensFilter] = useState<PriceSensFilter>("all");
+
+  const sorted = useMemo(() => {
+    const filtered = DEMOGRAPHICS.filter((d) => {
+      if (tierFilter !== "all" && d.tier !== tierFilter) return false;
+      if (priceSensFilter !== "all" && getPriceSensitivityLabel(d.priceWeight).bucket !== priceSensFilter) return false;
+      return true;
+    });
+
+    return [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case "buyers":
+          return getAnnualBuyers(b.id, state.year) - getAnnualBuyers(a.id, state.year);
+        case "priceCeiling":
+          return getPriceCeiling(b.id, state.year) - getPriceCeiling(a.id, state.year);
+        case "name":
+          return a.name.localeCompare(b.name);
+      }
+    });
+  }, [sortBy, tierFilter, priceSensFilter, state.year]);
 
   return (
     <ContentPanel maxWidth={tokens.layout.panelMaxWidth} style={{ display: "flex", flexDirection: "column", overflow: "hidden", height: tokens.layout.panelHeight, width: tokens.layout.panelWidth }}>
       <ScreenHeader title="Market Overview" icon={BarChart3} />
       <div className="content-panel hide-scrollbar" style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+        <div style={toolbarStyle}>
+          <CustomSelect label="Sort:" value={sortBy} onChange={setSortBy} options={SORT_OPTIONS} />
+          <CustomSelect label="Tier:" value={tierFilter} onChange={setTierFilter} options={TIER_OPTIONS} />
+          <CustomSelect label="Price:" value={priceSensFilter} onChange={setPriceSensFilter} options={PRICE_SENS_OPTIONS} />
+          <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
+            {sorted.length} demographic{sorted.length !== 1 ? "s" : ""}
+          </span>
+        </div>
         <div style={gridStyle}>
-          {DEMOGRAPHICS.map((demo) => (
+          {sorted.map((demo) => (
             <DemographicCard key={demo.id} demo={demo} year={state.year} />
           ))}
         </div>
