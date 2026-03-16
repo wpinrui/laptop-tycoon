@@ -15,8 +15,6 @@ import { generateReviews, determineAwards } from "../../../simulation/reviewsAwa
 import { QuarterSimulationResult, LaptopSalesResult } from "../../../simulation/salesTypes";
 import { QUARTER_LABELS } from "../../utils/formatCash";
 
-/** Models that need a current-year manufacturing plan before simulation. */
-
 /** Aggregate laptop sales results across all quarters for award determination. */
 function aggregateLaptopResults(quarters: QuarterSimulationResult[]): LaptopSalesResult[] {
   const map = new Map<string, LaptopSalesResult>();
@@ -54,7 +52,6 @@ export function AdvanceYearCard() {
       </p>
       <MenuButton
         variant="accent"
-
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
 
