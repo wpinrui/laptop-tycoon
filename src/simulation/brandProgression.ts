@@ -1,5 +1,5 @@
 /**
- * Brand reach (per-demographic) and brand perception (per-demographic, rolling window + value-for-money).
+ * Brand reach (per-demographic) and brand perception (per-demographic, exponential smoothing vs competitors).
  * Player reach is driven by marketing campaigns (acquisitions, spillover, decay).
  * Competitor reach uses word-of-mouth from sales results.
  */
