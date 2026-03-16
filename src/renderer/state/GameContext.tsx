@@ -1,6 +1,6 @@
 import { createContext, useContext, useReducer, ReactNode, Dispatch } from "react";
 import { DemographicId } from "../../data/types";
-import { GameState, Quarter, LaptopDesign, LaptopModel, ModelStatus, CompanyState, createInitialGameState, hasDiscontinuedComponents } from "./gameTypes";
+import { GameState, Milestone, Quarter, LaptopDesign, LaptopModel, ModelStatus, CompanyState, createInitialGameState, hasDiscontinuedComponents } from "./gameTypes";
 import { FullManufacturingPlan } from "../manufacturing/types";
 import { QuarterSimulationResult } from "../../simulation/salesTypes";
 import { clearProjectionCache, simulateQuarter } from "../../simulation/salesEngine";
@@ -11,7 +11,6 @@ import { COMPETITORS } from "../../data/competitors";
 import { LaptopReview, Award, applyAwardBonuses } from "../../simulation/reviewsAwards";
 import { PERCEPTION_MEANINGFUL_DELTA, AI_MAX_MODEL_AGE } from "../../simulation/tunables";
 import { detectQuarterMilestones } from "../../simulation/milestones";
-import { Milestone, Quarter as Q } from "./gameTypes";
 import { MarketingTier } from "../../data/types";
 
 export interface CompetitorModelEntry {
@@ -487,7 +486,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           id: `ms_award_${state.year}_${a.category}`,
           type: "award" as const,
           year: state.year,
-          quarter: 4 as Q,
+          quarter: 4 as Quarter,
           title: `Won ${a.categoryLabel}`,
           detail: `${a.winnerName} — awarded ${a.categoryLabel}`,
           modelId: a.winnerId,

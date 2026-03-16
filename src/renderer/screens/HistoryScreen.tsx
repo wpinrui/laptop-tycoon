@@ -191,7 +191,7 @@ const eventHeaderStyle: CSSProperties = {
 
 function badgeStyle(type: MilestoneType): CSSProperties {
   return {
-    fontSize: 11,
+    fontSize: tokens.font.sizeSmall,
     fontWeight: 600,
     textTransform: "uppercase",
     letterSpacing: "0.5px",
@@ -292,7 +292,7 @@ function statusBadgeStyle(status: "onSale" | "discontinued"): CSSProperties {
   const isDisc = status === "discontinued";
   return {
     display: "inline-block",
-    fontSize: 11,
+    fontSize: tokens.font.sizeSmall,
     fontWeight: 600,
     textTransform: "uppercase",
     letterSpacing: "0.5px",

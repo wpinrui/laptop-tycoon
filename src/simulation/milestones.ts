@@ -9,7 +9,6 @@ import { DEMOGRAPHICS } from "../data/demographics";
 import {
   GameState,
   Milestone,
-  Quarter,
   getPlayerCompany,
 } from "../renderer/state/gameTypes";
 import { QuarterSimulationResult } from "./salesTypes";
@@ -59,7 +58,7 @@ export function detectQuarterMilestones(
       id: milestoneId(),
       type: "model",
       year,
-      quarter: quarter as Quarter,
+      quarter,
       title: `Launched ${model.design.name}`,
       detail: `${model.design.screenSize}" laptop — ${formatThreshold(model.retailPrice ?? 0)} retail`,
       modelId: pr.laptopId,
@@ -75,7 +74,7 @@ export function detectQuarterMilestones(
       id: milestoneId(),
       type: "financial",
       year,
-      quarter: quarter as Quarter,
+      quarter,
       title: "First profitable quarter",
       detail: `${formatThreshold(result.totalProfit)} profit in ${QUARTER_LABEL(quarter)} ${year}`,
     });
@@ -96,7 +95,7 @@ export function detectQuarterMilestones(
           id: milestoneId(),
           type: "financial",
           year,
-          quarter: quarter as Quarter,
+          quarter,
           title: label,
           detail: `Total lifetime revenue crossed the ${formatThreshold(threshold)} mark`,
         });
@@ -118,7 +117,7 @@ export function detectQuarterMilestones(
           id: milestoneId(),
           type: "financial",
           year,
-          quarter: quarter as Quarter,
+          quarter,
           title: "First profitable year",
           detail: `Annual profit of ${formatThreshold(yearProfit)} — a turning point for the company`,
         });
@@ -161,10 +160,10 @@ export function detectQuarterMilestones(
             id: milestoneId(),
             type: "market",
             year,
-            quarter: quarter as Quarter,
+            quarter,
             title,
             detail: `Captured ${pctLabel} of the ${dem.name} laptop market`,
-            marketShareSnapshot: { ...playerShareByDemo } as Partial<Record<DemographicId, number>>,
+            marketShareSnapshot: { ...playerShareByDemo },
           });
         }
       }
