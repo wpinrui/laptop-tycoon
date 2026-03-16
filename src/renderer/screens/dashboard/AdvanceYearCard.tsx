@@ -9,7 +9,7 @@ import { tokens, overlayStyle } from "../../shell/tokens";
 import { BentoCard } from "./BentoCard";
 import { cardBodyStyle } from "./styles";
 import { getActiveModels } from "./utils";
-import { LaptopModel, getPlayerCompany } from "../../state/gameTypes";
+import { GameState, LaptopModel, getPlayerCompany } from "../../state/gameTypes";
 import { COMPETITORS } from "../../../data/competitors";
 import { generateCompetitorModels } from "../../../simulation/competitorAI";
 import { simulateQuarter } from "../../../simulation/salesEngine";
@@ -49,7 +49,7 @@ interface SimWarning {
   actionScreen: Screen;
 }
 
-function getPreSimWarnings(state: ReturnType<typeof useGame>["state"]): SimWarning[] {
+function getPreSimWarnings(state: GameState): SimWarning[] {
   const warnings: SimWarning[] = [];
   const player = getPlayerCompany(state);
   const activeModels = player.models.filter((m) => m.status !== "discontinued");
