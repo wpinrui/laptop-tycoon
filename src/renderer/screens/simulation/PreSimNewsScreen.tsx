@@ -5,8 +5,10 @@ import { getPlayerCompany, modelDisplayName } from "../../state/gameTypes";
 import { useNavigation } from "../../navigation/NavigationContext";
 import { tokens } from "../../shell/tokens";
 import { MenuButton } from "../../shell/MenuButton";
-import { OUTLETS, NewsItem, NewsOutletId, NewsBody } from "../../../simulation/newsTypes";
+import { OUTLETS, NewsItem, NewsOutletId, NewsBody, NewsCategory } from "../../../simulation/newsTypes";
 import { formatCash, formatNumber, QUARTER_LABELS } from "../../utils/formatCash";
+
+const CLIPPING_MAX_WIDTH = 680;
 
 // ─── Outlet Publication Styles ──────────────────────────────
 
@@ -64,8 +66,8 @@ function clippingContainerStyle(pub: PublicationStyle): CSSProperties {
     background: pub.background,
     border: `1px solid ${pub.borderColor}`,
     borderRadius: tokens.borderRadius.md,
-    padding: `${tokens.spacing.xl}px ${tokens.spacing.xl + 8}px`,
-    maxWidth: 680,
+    padding: `${tokens.spacing.xl}px ${tokens.spacing.xl}px`,
+    maxWidth: CLIPPING_MAX_WIDTH,
     width: "100%",
     color: pub.textColor,
   };
@@ -174,7 +176,7 @@ function GenericBody({ item, pub }: { item: NewsItem; pub: PublicationStyle }) {
 
 // ─── Category Icon ──────────────────────────────────────────
 
-function CategoryBadge({ category, pub }: { category: string; pub: PublicationStyle }) {
+function CategoryBadge({ category, pub }: { category: NewsCategory; pub: PublicationStyle }) {
   const icon = category === "productLaunch" ? <Package size={14} /> : category === "review" ? <Star size={14} /> : <Newspaper size={14} />;
   const label = category === "productLaunch" ? "Product Launch" : category === "review" ? "Review" : "News";
   return (
@@ -242,7 +244,7 @@ function MarketSnapshot() {
       border: `1px solid ${tokens.colors.panelBorder}`,
       borderRadius: tokens.borderRadius.md,
       padding: tokens.spacing.xl,
-      maxWidth: 680,
+      maxWidth: CLIPPING_MAX_WIDTH,
       width: "100%",
       color: tokens.colors.text,
     }}>
@@ -390,9 +392,11 @@ export function PreSimNewsScreen() {
     }
   }, [result, navigateTo]);
 
-  // Keyboard navigation
+  // Keyboard navigation — skip if a button/link is focused to avoid double-firing
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement).tagName;
+      if (e.key === "Enter" && (tag === "BUTTON" || tag === "A")) return;
       if (e.key === "ArrowRight" || e.key === "Enter") {
         if (isLastSlide) {
           proceed();
