@@ -66,7 +66,7 @@ function clippingContainerStyle(pub: PublicationStyle): CSSProperties {
     background: pub.background,
     border: `1px solid ${pub.borderColor}`,
     borderRadius: tokens.borderRadius.md,
-    padding: `${tokens.spacing.xl}px ${tokens.spacing.xl}px`,
+    padding: tokens.spacing.xl,
     maxWidth: CLIPPING_MAX_WIDTH,
     width: "100%",
     color: pub.textColor,
@@ -417,7 +417,7 @@ export function PreSimNewsScreen() {
       <div style={screenStyle}>
         <div style={centeredColumn}>
           <MarketSnapshot />
-          <div style={{ marginTop: tokens.spacing.lg, width: "100%", maxWidth: 680 }}>
+          <div style={{ marginTop: tokens.spacing.lg, width: "100%", maxWidth: CLIPPING_MAX_WIDTH }}>
             <MenuButton variant="accent" onClick={proceed} style={{ width: "100%" }}>
               Continue to Results
             </MenuButton>
@@ -481,7 +481,7 @@ export function PreSimNewsScreen() {
       {/* Dots + action */}
       <div style={footerStyle}>
         <DotIndicator count={totalSlides} activeIndex={currentSlide} />
-        <div style={{ marginTop: tokens.spacing.md, width: "100%", maxWidth: 680 }}>
+        <div style={{ marginTop: tokens.spacing.md, width: "100%", maxWidth: CLIPPING_MAX_WIDTH }}>
           {isLastSlide ? (
             <MenuButton variant="accent" onClick={proceed} style={{ width: "100%" }}>
               Continue to Results
