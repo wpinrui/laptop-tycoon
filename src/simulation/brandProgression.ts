@@ -12,13 +12,13 @@ import {
   getEffectiveReachCeiling,
   getAdjacencies,
 } from "../data/marketingChannels";
-import { LaptopSalesResult, QuarterSimulationResult, sellThroughRate, marketAverageRawVP } from "./salesTypes";
+import { LaptopSalesResult, QuarterSimulationResult, sellThroughRate, competitorAverageRawVP } from "./salesTypes";
 import {
   S_CURVE_STEEPNESS,
   S_CURVE_MIDPOINT,
   WOM_DIVISOR,
-  PERCEPTION_CONTRIBUTION_SCALE,
-  PERCEPTION_WINDOW_SIZE,
+  PERCEPTION_SMOOTHING_ALPHA,
+  PERCEPTION_EXPERIENCE_SCALE,
   REACH_INACTIVITY_DECAY,
   NEGATIVITY_MULTIPLIER,
   PERCEPTION_MIN,
@@ -181,77 +181,71 @@ export function updateCompetitorBrandReach(
   return newReach;
 }
 
-// ==================== Brand Perception (Rolling Window) ====================
+// ==================== Brand Perception (Exponential Smoothing) ====================
 
 export interface PerceptionUpdateResult {
   perception: Record<DemographicId, number>;
-  history: Record<DemographicId, number[]>;
 }
 
 /**
- * Apply a single quarter of perception update for a company using a rolling window.
- * Perception is purely driven by product quality (rawVP vs market average).
+ * Apply a single quarter of perception update for a company using exponential smoothing.
+ * Perception is driven by product quality (rawVP vs competitor average).
+ * Uses percentage gap so perception gains are comparable across demographics.
  * No marketing modifiers — marketing affects reach, not perception.
  */
 function applyOneQuarterPerception(
-  oldHistory: Record<DemographicId, number[]>,
+  oldPerception: Record<DemographicId, number>,
   allLaptopResults: LaptopSalesResult[],
   companyResults: LaptopSalesResult[],
+  companyId: string,
 ): PerceptionUpdateResult {
   const newPerception: Partial<Record<DemographicId, number>> = {};
-  const newHistory: Partial<Record<DemographicId, number[]>> = {};
 
   for (const dem of DEMOGRAPHICS) {
     const demId = dem.id;
-    const history = [...(oldHistory[demId] ?? [])];
+    const prevPerception = oldPerception[demId] ?? 0;
 
-    const meanRawVP = marketAverageRawVP(demId, allLaptopResults);
+    const compAvgVP = competitorAverageRawVP(demId, allLaptopResults, companyId);
 
-    let weightedExperience = 0;
+    // Compute company's volume-weighted average rawVP in this demographic
+    let weightedVP = 0;
     let companyUnits = 0;
     for (const cr of companyResults) {
       const db = cr.demographicBreakdown.find((b) => b.demographicId === demId);
       if (db && db.unitsDemanded > 0) {
         const units = db.unitsDemanded * sellThroughRate(cr);
-        const experience = db.rawVP - meanRawVP;
-        weightedExperience += experience * units;
+        weightedVP += db.rawVP * units;
         companyUnits += units;
       }
     }
 
-    let experienceValue = 0;
-    if (companyUnits > 0) {
-      const avgExperience = weightedExperience / companyUnits;
-      experienceValue = avgExperience < 0 ? avgExperience * NEGATIVITY_MULTIPLIER : avgExperience;
+    let scaledExperience = 0;
+    if (companyUnits > 0 && compAvgVP > 0) {
+      const companyAvgVP = weightedVP / companyUnits;
+      const percentageGap = (companyAvgVP - compAvgVP) / compAvgVP;
+      const biasedGap = percentageGap < 0 ? percentageGap * NEGATIVITY_MULTIPLIER : percentageGap;
+      scaledExperience = biasedGap * PERCEPTION_EXPERIENCE_SCALE;
+    } else if (companyUnits > 0 && compAvgVP === 0) {
+      // No competitors selling — treat as max positive gap (capped)
+      scaledExperience = PERCEPTION_EXPERIENCE_SCALE;
     }
+    // No sales → scaledExperience = 0 → perception decays naturally
 
-    history.push(experienceValue);
-    if (history.length > PERCEPTION_WINDOW_SIZE) {
-      history.splice(0, history.length - PERCEPTION_WINDOW_SIZE);
-    }
-
-    const sum = history.reduce((s, v) => s + v, 0);
-    const mean = sum / history.length;
-    const perception = mean * PERCEPTION_CONTRIBUTION_SCALE;
-    newPerception[demId] = Math.max(PERCEPTION_MIN, Math.min(PERCEPTION_MAX, perception));
-    newHistory[demId] = history;
+    const smoothed = PERCEPTION_SMOOTHING_ALPHA * scaledExperience + (1 - PERCEPTION_SMOOTHING_ALPHA) * prevPerception;
+    newPerception[demId] = Math.max(PERCEPTION_MIN, Math.min(PERCEPTION_MAX, smoothed));
   }
 
-  return {
-    perception: newPerception as Record<DemographicId, number>,
-    history: newHistory as Record<DemographicId, number[]>,
-  };
+  return { perception: newPerception as Record<DemographicId, number> };
 }
 
 /**
  * Apply a single quarter of perception update for any company.
- * Returns both the new perception values and the updated history window.
+ * Returns new perception values using exponential smoothing against competitor average.
  */
 export function applySingleQuarterPerception(
   company: CompanyState,
   allLaptopResults: LaptopSalesResult[],
 ): PerceptionUpdateResult {
   const companyResults = allLaptopResults.filter((r) => r.owner === company.id);
-  const history = company.perceptionHistory ?? {};
-  return applyOneQuarterPerception(history, allLaptopResults, companyResults);
+  return applyOneQuarterPerception(company.brandPerception, allLaptopResults, companyResults, company.id);
 }

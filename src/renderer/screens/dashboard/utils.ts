@@ -19,3 +19,9 @@ export function perceptionColor(value: number): string {
   if (value < 0) return tokens.colors.warning;
   return tokens.colors.textMuted;
 }
+
+export function formatPerceptionImpact(perception: number): string {
+  const pct = Math.round(perception);
+  if (pct === 0) return "0% appeal";
+  return `${pct > 0 ? "+" : ""}${pct}% appeal`;
+}

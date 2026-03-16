@@ -10,7 +10,6 @@ import { COMPETITORS, CompetitorArchetype } from "../../data/competitors";
 import { YearSimulationResult, QuarterSimulationResult } from "../../simulation/salesTypes";
 import { LaptopReview, Award } from "../../simulation/reviewsAwards";
 import { MarketingTier } from "../../data/types";
-import { PERCEPTION_CONTRIBUTION_SCALE, PERCEPTION_WINDOW_SIZE } from "../../simulation/tunables";
 
 export type ModelType = "brandNew" | "successor" | "specBump";
 
@@ -68,8 +67,6 @@ export interface CompanyState {
   isPlayer: boolean;
   brandReach: Record<DemographicId, number>;
   brandPerception: Record<DemographicId, number>;
-  /** Rolling window of per-demographic quarterly experience scores (last 12 quarters). */
-  perceptionHistory: Record<DemographicId, number[]>;
   models: LaptopModel[];
   archetype?: CompetitorArchetype;
   engineeringBonus?: number;
@@ -114,19 +111,6 @@ export function modelDisplayName(companyName: string, designName: string): strin
   return `${companyName} ${designName}`;
 }
 
-/**
- * Create initial perception history from starting perception values.
- * Seeds 12 quarters so that mean(history) * PERCEPTION_CONTRIBUTION_SCALE = initialPerception.
- */
-function initPerceptionHistory(
-  perception: Record<DemographicId, number>,
-): Record<DemographicId, number[]> {
-  const history: Partial<Record<DemographicId, number[]>> = {};
-  for (const [demId, p] of Object.entries(perception)) {
-    history[demId as DemographicId] = Array(PERCEPTION_WINDOW_SIZE).fill(p / PERCEPTION_CONTRIBUTION_SCALE);
-  }
-  return history as Record<DemographicId, number[]>;
-}
 
 export const STARTING_CASH = 2_000_000;
 export const AI_STARTING_YEAR = 2000;
@@ -168,7 +152,6 @@ export function createInitialGameState(
     isPlayer: true,
     brandReach: { ...ZERO_DEMOGRAPHICS },
     brandPerception: playerPerception,
-    perceptionHistory: initPerceptionHistory(playerPerception),
     models: [],
   };
 
@@ -178,7 +161,6 @@ export function createInitialGameState(
     isPlayer: false,
     brandReach: { ...c.brandReach },
     brandPerception: { ...c.brandPerception },
-    perceptionHistory: initPerceptionHistory(c.brandPerception),
     models: [],
     archetype: c.archetype,
     engineeringBonus: c.engineeringBonus,

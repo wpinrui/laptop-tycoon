@@ -23,7 +23,7 @@ import {
   PerceptionInsight,
   StatContributor,
   sellThroughRate,
-  marketAverageRawVP,
+  competitorAverageRawVP,
 } from "./salesTypes";
 import {
   CHANNEL_MARGIN_RATE,
@@ -250,7 +250,6 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
       marketingCost: emptyMarketingCost,
       cashAfterResolution: state.cash - emptyMarketingCost,
       perceptionChanges: emptyPerception.changes,
-      playerPerceptionHistory: emptyPerception.history,
     };
   }
 
@@ -377,7 +376,6 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
     marketingCost,
     cashAfterResolution,
     perceptionChanges: perceptionResult.changes,
-    playerPerceptionHistory: perceptionResult.history,
   };
 }
 
@@ -385,15 +383,14 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
 
 /**
  * Compute per-demographic perception changes for one quarter.
- * Uses rolling-window perception update.
- * Returns both the perception changes and the updated history.
+ * Uses exponential smoothing against competitor-only average.
  */
 function computeQuarterlyPerceptionChanges(
   state: GameState,
   laptopResults: LaptopSalesResult[],
-): { changes: PerceptionChange[]; history: Record<DemographicId, number[]> } {
+): { changes: PerceptionChange[] } {
   const player = getPlayerCompany(state);
-  const { perception: newPerception, history } = applySingleQuarterPerception(player, laptopResults);
+  const { perception: newPerception } = applySingleQuarterPerception(player, laptopResults);
   const playerResults = laptopResults.filter((r) => r.owner === player.id);
 
   const changes = DEMOGRAPHICS.map((dem) => {
@@ -404,7 +401,7 @@ function computeQuarterlyPerceptionChanges(
     return { demographicId: dem.id, oldPerception: oldP, newPerception: newP, delta, reason, insight };
   });
 
-  return { changes, history };
+  return { changes };
 }
 
 /** Build a human-readable reason and structured insight for a perception change. */
@@ -437,7 +434,8 @@ function buildPerceptionInsight(
     return { reason, insight: null };
   }
 
-  const marketAvgVP = marketAverageRawVP(demId, allResults);
+  const playerId = playerResults[0]?.owner ?? "player";
+  const compAvgVP = competitorAverageRawVP(demId, allResults, playerId);
   const dem = DEMOGRAPHICS.find((d) => d.id === demId);
 
   // Weighted-average player VP and stats across all player laptops in this demographic
@@ -461,20 +459,21 @@ function buildPerceptionInsight(
 
   // Find top competitor (highest rawVP among non-player laptops in this demographic)
   let topCompetitor: { name: string; rawVP: number } | null = null;
-  let marketAvgPriceScore = 0;
-  let marketPriceUnits = 0;
+  let competitorPriceScore = 0;
+  let competitorPriceUnits = 0;
   // Also compute market-leader stat scores for comparison
   let leaderBreakdown: DemographicSalesBreakdown | null = null;
   let leaderVP = -Infinity;
 
   for (const lr of allResults) {
+    if (lr.owner === playerId) continue; // Exclude player from competitor stats
     const db = lr.demographicBreakdown.find((b) => b.demographicId === demId);
     if (!db || db.unitsDemanded <= 0) continue;
     const units = db.unitsDemanded * sellThroughRate(lr);
-    marketAvgPriceScore += db.priceScore * units;
-    marketPriceUnits += units;
+    competitorPriceScore += db.priceScore * units;
+    competitorPriceUnits += units;
 
-    if (lr.owner !== playerResults[0]?.owner && db.rawVP > leaderVP) {
+    if (db.rawVP > leaderVP) {
       leaderVP = db.rawVP;
       leaderBreakdown = db;
       const comp = companies.find((c) => c.id === lr.owner);
@@ -485,7 +484,7 @@ function buildPerceptionInsight(
       };
     }
   }
-  marketAvgPriceScore = marketPriceUnits > 0 ? marketAvgPriceScore / marketPriceUnits : 0;
+  competitorPriceScore = competitorPriceUnits > 0 ? competitorPriceScore / competitorPriceUnits : 0;
 
   // Build stat contributors: for each stat, compare player norm vs market leader
   const topStats: StatContributor[] = [];
@@ -508,26 +507,28 @@ function buildPerceptionInsight(
     topStats.sort((a, b) => Math.abs(b.playerScore - b.marketLeaderScore) * b.weight - Math.abs(a.playerScore - a.marketLeaderScore) * a.weight);
   }
 
-  const vpGap = playerAvgVP - marketAvgVP;
+  const vpGap = playerAvgVP - compAvgVP;
+  const pctGap = compAvgVP > 0 ? vpGap / compAvgVP : 0;
   const insight: PerceptionInsight = {
     playerAvgVP,
-    marketAvgVP,
+    competitorAvgVP: compAvgVP,
     vpGap,
     topStats: topStats.slice(0, 3),
-    priceScore: { player: playerAvgPriceScore, marketAvg: marketAvgPriceScore },
+    priceScore: { player: playerAvgPriceScore, competitorAvg: competitorPriceScore },
     topCompetitor,
   };
 
   // Build reason string
   playerSales.sort((a, b) => b.units - a.units);
   const top = playerSales[0];
+  const pctStr = `${Math.abs(Math.round(pctGap * 100))}%`;
   let reason: string;
   if (Math.abs(delta) < PERCEPTION_MEANINGFUL_DELTA) {
-    reason = `${top.name} sold at near-average value`;
+    reason = `${top.name} sold at near-competitor value`;
   } else if (delta > 0) {
-    reason = vpGap > 0 ? `${top.name} offered above-average value` : "Sales volume gave a slight perception boost";
+    reason = vpGap > 0 ? `${top.name} offered ${pctStr} better value than competitors` : "Sales gave a slight perception boost";
   } else {
-    reason = vpGap < 0 ? `${top.name} offered below-average value` : "Past reputation outweighed modest sales";
+    reason = vpGap < 0 ? `${top.name} offered ${pctStr} worse value than competitors` : "Perception fading toward competitor level";
   }
 
   return { reason, insight };

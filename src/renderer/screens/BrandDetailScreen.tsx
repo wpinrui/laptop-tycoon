@@ -8,12 +8,12 @@ import { ScreenHeader } from "../shell/ScreenHeader";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
 import { ProgressBar } from "./dashboard/ProgressBar";
-import { formatPerception } from "./dashboard/utils";
+import { formatPerception, formatPerceptionImpact } from "./dashboard/utils";
 import { DEMOGRAPHICS, GENERALISTS, NICHES } from "../../data/demographics";
 import { Demographic, DemographicId, MarketingTier } from "../../data/types";
 import { PerceptionChange } from "../../simulation/salesTypes";
 import { SidebarHeading } from "../wizard/LaptopEstimateSidebar";
-import { PERCEPTION_MEANINGFUL_DELTA, PERCEPTION_CONTRIBUTION_SCALE, PERCEPTION_MIN, PERCEPTION_MAX, TIER_ACQUISITIONS, SPILLOVER_PENALTY } from "../../simulation/tunables";
+import { PERCEPTION_MEANINGFUL_DELTA, TIER_ACQUISITIONS, SPILLOVER_PENALTY } from "../../simulation/tunables";
 import {
   getMaxTier,
   getEffectiveReachCeiling,
@@ -403,81 +403,26 @@ function ReachRow({ dem, reach }: { dem: Demographic; reach: number }) {
   );
 }
 
-function computePerceptionTrajectory(history: number[]): number[] {
-  if (history.length === 0) return [];
-  const trajectory: number[] = [];
-  let sum = 0;
-  for (let i = 0; i < history.length; i++) {
-    sum += history[i];
-    const mean = sum / (i + 1);
-    const perception = mean * PERCEPTION_CONTRIBUTION_SCALE;
-    trajectory.push(Math.max(PERCEPTION_MIN, Math.min(PERCEPTION_MAX, perception)));
-  }
-  return trajectory;
-}
-
-function PerceptionSparkline({ trajectory }: { trajectory: number[] }) {
-  if (trajectory.length < 2) return null;
-  const width = 60;
-  const height = 16;
-  const padding = 1;
-  const min = Math.min(...trajectory, -5);
-  const max = Math.max(...trajectory, 5);
-  const range = max - min || 1;
-
-  const points = trajectory.map((v, i) => {
-    const x = padding + (i / (trajectory.length - 1)) * (width - 2 * padding);
-    const y = padding + (1 - (v - min) / range) * (height - 2 * padding);
-    return `${x},${y}`;
-  });
-
-  const lastVal = trajectory[trajectory.length - 1];
-  const color = lastVal > 1 ? tokens.colors.success : lastVal < -1 ? tokens.colors.danger : tokens.colors.textMuted;
-
-  return (
-    <svg width={width} height={height} style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }}>
-      <line
-        x1={padding} y1={padding + (1 - (0 - min) / range) * (height - 2 * padding)}
-        x2={width - padding} y2={padding + (1 - (0 - min) / range) * (height - 2 * padding)}
-        stroke={tokens.colors.panelBorder} strokeWidth={0.5}
-      />
-      <polyline
-        points={points.join(" ")}
-        fill="none"
-        stroke={color}
-        strokeWidth={1.5}
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
 function PerceptionRow({ dem, player, latestPerceptionChanges }: {
   dem: Demographic;
   player: ReturnType<typeof getPlayerCompany>;
   latestPerceptionChanges: Map<DemographicId, PerceptionChange>;
 }) {
-  const perception = formatPerception(player.brandPerception[dem.id] ?? 0);
+  const rawPerception = player.brandPerception[dem.id] ?? 0;
+  const perception = formatPerception(rawPerception);
   const change = latestPerceptionChanges.get(dem.id);
   const hasMeaningfulChange = change && Math.abs(change.delta) >= PERCEPTION_MEANINGFUL_DELTA;
-  const trajectory = useMemo(
-    () => computePerceptionTrajectory(player.perceptionHistory?.[dem.id] ?? []),
-    [player.perceptionHistory, dem.id],
-  );
 
   return (
     <div style={{ marginBottom: hasMeaningfulChange ? 10 : 6 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.text }}>{dem.name}</span>
-        <span style={{ display: "flex", alignItems: "center" }}>
-          {trajectory.length >= 2 && <PerceptionSparkline trajectory={trajectory} />}
+        <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
           {hasMeaningfulChange && (
             <span style={{
               fontSize: tokens.font.sizeSmall,
               fontWeight: 600,
               color: change.delta > 0 ? tokens.colors.success : tokens.colors.danger,
-              marginRight: 4,
             }}>
               {change.delta > 0 ? "+" : ""}{change.delta.toFixed(1)}
             </span>
@@ -485,7 +430,9 @@ function PerceptionRow({ dem, player, latestPerceptionChanges }: {
           <span style={{ fontWeight: 600, fontSize: tokens.font.sizeSmall, color: perception.color }}>
             {perception.sign}{perception.value}
           </span>
-          <span style={{ color: tokens.colors.textMuted, fontSize: tokens.font.sizeSmall }}> / 50</span>
+          <span style={{ color: tokens.colors.textMuted, fontSize: tokens.font.sizeSmall }}>
+            ({formatPerceptionImpact(rawPerception)})
+          </span>
         </span>
       </div>
       {hasMeaningfulChange && (
@@ -681,7 +628,7 @@ export function BrandDetailScreen() {
             <PerceptionRow key={dem.id} dem={dem} player={player} latestPerceptionChanges={latestPerceptionChanges} />
           ))}
           <p style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, marginTop: tokens.spacing.xs }}>
-            Sentiment from product quality &amp; value. Based on last 3 years of experience.
+            How buyers perceive your brand vs competitors. Affects purchase appeal.
           </p>
         </div>
       </div>

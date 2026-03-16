@@ -173,11 +173,14 @@ function PerceptionChangeCard({ change }: { change: PerceptionChange }) {
           <span style={{ marginRight: 6 }}>{expanded ? "▾" : "▸"}</span>
           <span style={{ fontWeight: 600 }}>{demName}</span>
         </span>
-        <span>
-          <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, marginRight: tokens.spacing.sm }}>
+        <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.sm }}>
+          <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
             {change.oldPerception.toFixed(1)} → {change.newPerception.toFixed(1)}
           </span>
           <span style={{ fontWeight: 600, color: deltaColor }}>{sign}{change.delta.toFixed(1)}</span>
+          <span style={{ fontSize: tokens.font.sizeSmall, color: deltaColor ?? tokens.colors.textMuted }}>
+            ({Math.round(change.newPerception) > 0 ? "+" : ""}{Math.round(change.newPerception)}% appeal)
+          </span>
         </span>
       </button>
       {expanded && (
@@ -193,13 +196,13 @@ function PerceptionChangeCard({ change }: { change: PerceptionChange }) {
                   <div style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}>{insight.playerAvgVP.toFixed(3)}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>Market Avg</div>
-                  <div style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}>{insight.marketAvgVP.toFixed(3)}</div>
+                  <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>Competitor Avg</div>
+                  <div style={{ fontSize: tokens.font.sizeBase, fontWeight: 600 }}>{insight.competitorAvgVP.toFixed(3)}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>Gap</div>
                   <div style={{ fontSize: tokens.font.sizeBase, fontWeight: 600, color: insight.vpGap >= 0 ? tokens.colors.success : tokens.colors.danger }}>
-                    {insight.vpGap >= 0 ? "+" : ""}{insight.marketAvgVP !== 0 ? (insight.vpGap / insight.marketAvgVP * 100).toFixed(0) : "0"}%
+                    {insight.vpGap >= 0 ? "+" : ""}{insight.competitorAvgVP !== 0 ? (insight.vpGap / insight.competitorAvgVP * 100).toFixed(0) : "0"}%
                   </div>
                 </div>
               </div>
@@ -221,14 +224,14 @@ function PerceptionChangeCard({ change }: { change: PerceptionChange }) {
                 <div>
                   <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>Price score: </span>
                   <span style={{ fontSize: tokens.font.sizeSmall, fontWeight: 600 }}>{(insight.priceScore.player * 100).toFixed(0)}</span>
-                  <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}> vs market avg </span>
-                  <span style={{ fontSize: tokens.font.sizeSmall, fontWeight: 600 }}>{(insight.priceScore.marketAvg * 100).toFixed(0)}</span>
-                  {insight.priceScore.player < insight.priceScore.marketAvg * 0.85 && (
+                  <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}> vs competitor avg </span>
+                  <span style={{ fontSize: tokens.font.sizeSmall, fontWeight: 600 }}>{(insight.priceScore.competitorAvg * 100).toFixed(0)}</span>
+                  {insight.priceScore.player < insight.priceScore.competitorAvg * 0.85 && (
                     <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.danger, marginLeft: 4 }}>
                       — overpriced for this segment
                     </span>
                   )}
-                  {insight.priceScore.player > insight.priceScore.marketAvg * 1.15 && (
+                  {insight.priceScore.player > insight.priceScore.competitorAvg * 1.15 && (
                     <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.success, marginLeft: 4 }}>
                       — competitively priced
                     </span>
