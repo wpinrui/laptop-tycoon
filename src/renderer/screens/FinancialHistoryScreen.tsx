@@ -1,12 +1,12 @@
-import React, { CSSProperties, useMemo, useState } from "react";
+import { CSSProperties, useMemo, useState } from "react";
 import { DollarSign } from "lucide-react";
 import { useGame } from "../state/GameContext";
-import { getPlayerCompany } from "../state/gameTypes";
+import { getPlayerCompany, LaptopModel } from "../state/gameTypes";
 import { ContentPanel } from "../shell/ContentPanel";
 import { ScreenHeader } from "../shell/ScreenHeader";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
-import { formatCash, QUARTER_LABELS } from "../utils/formatCash";
+import { formatCash, pctChange, QUARTER_LABELS } from "../utils/formatCash";
 import { Sparkline } from "./dashboard/Sparkline";
 import { LaptopSalesResult } from "../../simulation/salesTypes";
 
@@ -172,13 +172,6 @@ const modelStatValue: CSSProperties = {
 };
 
 // ─── Helpers ─────────────────────────────────────────────────
-
-function pctChange(prev: number, curr: number): string | null {
-  if (prev === 0) return null;
-  const pct = ((curr - prev) / Math.abs(prev)) * 100;
-  const sign = pct >= 0 ? "+" : "";
-  return `${sign}${pct.toFixed(1)}%`;
-}
 
 function deltaColor(delta: string | null): string {
   if (!delta) return tokens.colors.textMuted;
@@ -861,7 +854,7 @@ function ByModelTab({
   models,
 }: {
   quarters: QuarterEntry[];
-  models: import("../state/gameTypes").LaptopModel[];
+  models: LaptopModel[];
 }) {
   // Show latest quarter's per-model breakdown
   const latestQ =

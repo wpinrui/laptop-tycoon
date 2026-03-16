@@ -5,7 +5,7 @@ import { Sparkline } from "./Sparkline";
 import { emptyStateStyle, sectionDividerStyle } from "./styles";
 import { tokens } from "../../shell/tokens";
 import { useGame } from "../../state/GameContext";
-import { formatCash } from "../../utils/formatCash";
+import { formatCash, pctChange } from "../../utils/formatCash";
 
 const heroStyle: CSSProperties = {
   fontSize: tokens.font.sizeHero,
@@ -58,14 +58,6 @@ const summaryRowStyle: CSSProperties = {
   padding: `${tokens.spacing.xs}px 0`,
 };
 
-function pctChange(prev: number, curr: number): string | null {
-  if (prev === 0) return null;
-  const pct = ((curr - prev) / Math.abs(prev)) * 100;
-  const sign = pct >= 0 ? "+" : "";
-  // Round to whole number for the compact dashboard card
-  return `${sign}${Math.round(pct)}%`;
-}
-
 export function FinancialsCard() {
   const { state } = useGame();
 
@@ -98,8 +90,8 @@ export function FinancialsCard() {
     const ytdMargin = ytdRevenue > 0 ? (ytdProfit / ytdRevenue) * 100 : 0;
 
     // QoQ deltas
-    const revDelta = latestQ && prevQ ? pctChange(prevQ.totalRevenue, latestQ.totalRevenue) : null;
-    const profitDelta = latestQ && prevQ ? pctChange(prevQ.totalProfit, latestQ.totalProfit) : null;
+    const revDelta = latestQ && prevQ ? pctChange(prevQ.totalRevenue, latestQ.totalRevenue, 0) : null;
+    const profitDelta = latestQ && prevQ ? pctChange(prevQ.totalProfit, latestQ.totalProfit, 0) : null;
 
     return {
       revenueTimeline,
