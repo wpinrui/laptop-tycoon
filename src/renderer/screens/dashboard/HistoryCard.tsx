@@ -1,20 +1,11 @@
 import { CSSProperties } from "react";
 import { History } from "lucide-react";
 import { useGame } from "../../state/GameContext";
-import { Milestone, MilestoneType } from "../../state/gameTypes";
+import { Milestone, STARTING_YEAR } from "../../state/gameTypes";
 import { BentoCard } from "./BentoCard";
 import { emptyStateStyle } from "./styles";
 import { tokens } from "../../shell/tokens";
-import { STARTING_YEAR } from "../../state/gameTypes";
-
-// ─── Event Type Colors ───────────────────────────────────────
-
-const EVENT_COLORS: Record<MilestoneType, string> = {
-  model: tokens.colors.accent,       // #4fc3f7
-  award: tokens.colors.statusCash,   // #facc15
-  financial: tokens.colors.success,  // #66bb6a
-  market: "#ce93d8",                 // purple
-};
+import { EVENT_COLORS } from "../HistoryScreen";
 
 // ─── Styles ──────────────────────────────────────────────────
 
@@ -136,13 +127,9 @@ export function HistoryCard() {
               <div style={dotStyle(color)} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={eventTextStyle}>
-                  {group.length === 1 ? (
-                    <span dangerouslySetInnerHTML={{ __html: highlightTitle(rep.title, color) }} />
-                  ) : (
-                    <span dangerouslySetInnerHTML={{
-                      __html: highlightGroupTitle(rep, names, color),
-                    }} />
-                  )}
+                  {group.length === 1
+                    ? renderHighlightedTitle(rep.title, color)
+                    : renderGroupTitle(rep, names, color)}
                 </div>
                 <div style={eventDateStyle}>{rep.year} Q{rep.quarter}</div>
               </div>
@@ -159,25 +146,27 @@ export function HistoryCard() {
 
 // ─── Title Formatting ────────────────────────────────────────
 
-function highlightTitle(title: string, color: string): string {
-  // Bold the subject after the verb prefix
-  const prefixes = ["Launched ", "Won ", "Reached ", "Cumulative revenue exceeded ", "First profitable "];
-  for (const prefix of prefixes) {
+const TITLE_PREFIXES = ["Launched ", "Won ", "Reached ", "Cumulative revenue exceeded ", "First profitable "];
+
+function renderHighlightedTitle(title: string, color: string) {
+  for (const prefix of TITLE_PREFIXES) {
     if (title.startsWith(prefix)) {
       const subject = title.slice(prefix.length);
-      return `${prefix}<strong style="color: ${color};">${subject}</strong>`;
+      return <span>{prefix}<strong style={{ color }}>{subject}</strong></span>;
     }
   }
-  return title;
+  return <span>{title}</span>;
 }
 
-function highlightGroupTitle(rep: Milestone, names: string[], color: string): string {
+function renderGroupTitle(rep: Milestone, names: string[], color: string) {
   const verb = rep.type === "model" ? "Launched" : rep.type === "award" ? "Won" : "Reached";
   const MAX_SHOWN = 2;
-  const highlighted = names.slice(0, MAX_SHOWN).map((n) => `<strong style="color: ${color};">${n}</strong>`);
+  const shown = names.slice(0, MAX_SHOWN);
   const remaining = names.length - MAX_SHOWN;
 
-  if (names.length === 1) return `${verb} ${highlighted[0]}`;
-  if (names.length === 2) return `${verb} ${highlighted[0]} & ${highlighted[1]}`;
-  return `${verb} ${highlighted.join(", ")} & <strong style="color: ${color};">${remaining} more</strong>`;
+  const parts = shown.map((n, i) => <strong key={i} style={{ color }}>{n}</strong>);
+
+  if (names.length === 1) return <span>{verb} {parts[0]}</span>;
+  if (names.length === 2) return <span>{verb} {parts[0]} & {parts[1]}</span>;
+  return <span>{verb} {parts[0]}, {parts[1]} & <strong style={{ color }}>{remaining} more</strong></span>;
 }

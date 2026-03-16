@@ -18,7 +18,7 @@ import { Award } from "../../simulation/reviewsAwards";
 
 // ─── Event Type Colors ───────────────────────────────────────
 
-const EVENT_COLORS: Record<MilestoneType, string> = {
+export const EVENT_COLORS: Record<MilestoneType, string> = {
   model: tokens.colors.accent,
   award: tokens.colors.statusCash,
   financial: tokens.colors.success,
@@ -146,7 +146,6 @@ const timelineStyle: CSSProperties = {
 };
 
 const timelineLineStyle: CSSProperties = {
-  content: "''",
   position: "absolute",
   left: 7,
   top: 8,
@@ -589,7 +588,10 @@ function TimelineEvent({
 
 function ModelDetail({ milestone: ms, state }: { milestone: Milestone; state: GameState }) {
   const player = getPlayerCompany(state);
-  const model = player.models.find((m) => m.design.id === ms.modelId);
+  const modelId = ms.modelId;
+  if (!modelId) return <div style={eventDetailStyle}>Model data not available</div>;
+
+  const model = player.models.find((m) => m.design.id === modelId);
   if (!model) return <div style={eventDetailStyle}>Model data not available</div>;
 
   const design = model.design;
@@ -599,10 +601,10 @@ function ModelDetail({ milestone: ms, state }: { milestone: Milestone; state: Ga
   const margin = calcMargin(retailPrice - unitCost, retailPrice);
 
   // Compute lifetime sales from yearHistory + quarterHistory
-  const lifetime = computeLifetimeSales(state, ms.modelId!);
+  const lifetime = computeLifetimeSales(state, modelId);
 
   // Quarterly sales breakdown
-  const quarterlySales = computeQuarterlySales(state, ms.modelId!);
+  const quarterlySales = computeQuarterlySales(state, modelId);
 
   return (
     <>
@@ -898,11 +900,11 @@ function MarketDetail({ milestone: ms }: { milestone: Milestone }) {
 
 // ─── Shared Helpers ──────────────────────────────────────────
 
-function SpecRow({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
+function SpecRow({ label, value }: { label: string; value: string }) {
   return (
     <div style={specRowStyle}>
       <span style={specLabelStyle}>{label}</span>
-      <span style={{ ...specValueStyle, color: valueColor }}>{value}</span>
+      <span style={specValueStyle}>{value}</span>
     </div>
   );
 }
