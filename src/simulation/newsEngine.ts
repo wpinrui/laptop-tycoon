@@ -8,6 +8,7 @@
  */
 
 import { DEMOGRAPHICS } from "../data/demographics";
+import { CompetitorArchetype } from "../data/competitors";
 import { DemographicId } from "../data/types";
 import { GameState, getPlayerCompany, Quarter, Milestone } from "../renderer/state/gameTypes";
 import { QuarterSimulationResult } from "./salesTypes";
@@ -58,11 +59,48 @@ function demName(demId: DemographicId): string {
   return DEMOGRAPHICS.find((d) => d.id === demId)?.shortName ?? demId;
 }
 
-const ARCHETYPE_SEGMENT: Record<string, string> = {
+const ARCHETYPE_SEGMENT: Record<CompetitorArchetype, string> = {
   budget: "budget",
   premium: "premium",
   generalist: "mainstream",
 };
+
+function makeProductLaunchItem(
+  id: string,
+  year: number,
+  quarter: Quarter,
+  companyName: string,
+  modelName: string,
+  screenSize: number,
+  retailPrice: number,
+  segment: string,
+  isPlayer: boolean,
+): NewsItem {
+  const outlet = pickOutlet();
+  const vars = {
+    company: companyName,
+    model: modelName,
+    screenSize,
+    price: formatCompact(retailPrice),
+    segment,
+  };
+  return {
+    id,
+    year,
+    quarter,
+    category: "productLaunch",
+    outlet,
+    headline: generateHeadline(PRODUCT_LAUNCH_TEMPLATES, outlet, vars),
+    body: {
+      type: "productLaunch",
+      companyName,
+      modelName,
+      screenSize,
+      price: retailPrice,
+      isPlayer,
+    },
+  };
+}
 
 // ─── Quarter News ───────────────────────────────────────────
 
@@ -84,33 +122,13 @@ export function generateQuarterNews(
   // ── News from milestones ──
   for (const ms of newMilestones) {
     if (ms.type === "model") {
-      // Player product launch
       const model = player.models.find((m) => m.design.id === ms.modelId);
       if (!model) continue;
-      const outlet = pickOutlet();
-      const vars = {
-        company: player.name,
-        model: model.design.name,
-        screenSize: model.design.screenSize,
-        price: formatCompact(model.retailPrice ?? 0),
-        segment: "consumer",
-      };
-      items.push({
-        id: makeId(),
-        year,
-        quarter,
-        category: "productLaunch",
-        outlet,
-        headline: generateHeadline(PRODUCT_LAUNCH_TEMPLATES, outlet, vars),
-        body: {
-          type: "productLaunch",
-          companyName: player.name,
-          modelName: model.design.name,
-          screenSize: model.design.screenSize,
-          price: model.retailPrice ?? 0,
-          isPlayer: true,
-        },
-      });
+      items.push(makeProductLaunchItem(
+        makeId(), year, quarter, player.name,
+        model.design.name, model.design.screenSize, model.retailPrice ?? 0,
+        "consumer", true,
+      ));
     } else if (ms.type === "financial") {
       const outlet = pickOutlet();
       const isProfitability = ms.title.includes("profitable");
@@ -189,32 +207,12 @@ export function generateQuarterNews(
         if (model.yearDesigned !== year) continue;
         if (reportedCompetitorModels.has(model.design.name)) continue;
 
-        const outlet = pickOutlet();
-        const segment = ARCHETYPE_SEGMENT[company.archetype ?? "generalist"] ?? "mainstream";
-        const price = formatCompact(model.retailPrice ?? 0);
-        const vars = {
-          company: company.name,
-          model: model.design.name,
-          screenSize: model.design.screenSize,
-          price,
-          segment,
-        };
-        items.push({
-          id: makeId(),
-          year,
-          quarter,
-          category: "productLaunch",
-          outlet,
-          headline: generateHeadline(PRODUCT_LAUNCH_TEMPLATES, outlet, vars),
-          body: {
-            type: "productLaunch",
-            companyName: company.name,
-            modelName: model.design.name,
-            screenSize: model.design.screenSize,
-            price: model.retailPrice ?? 0,
-            isPlayer: false,
-          },
-        });
+        const segment = ARCHETYPE_SEGMENT[company.archetype ?? "generalist"];
+        items.push(makeProductLaunchItem(
+          makeId(), year, quarter, company.name,
+          model.design.name, model.design.screenSize, model.retailPrice ?? 0,
+          segment, false,
+        ));
       }
     }
   }
@@ -305,7 +303,7 @@ export function generateAwardNews(awards: Award[], year: number): NewsItem[] {
     items.push({
       id: `news_${year}_award_${index++}`,
       year,
-      quarter: 4 as Quarter,
+      quarter: 4,
       category: "award",
       outlet,
       headline: generateHeadline(AWARD_TEMPLATES, outlet, vars),
