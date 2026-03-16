@@ -218,7 +218,7 @@ export function AdvanceYearCard() {
 
       {warnings && (
         <div style={overlayStyle} onClick={(e) => { if (e.target === e.currentTarget) setWarnings(null); }}>
-          <ContentPanel maxWidth={440}>
+          <ContentPanel maxWidth={540}>
             <h2 style={{ margin: 0, fontSize: tokens.font.sizeTitle, fontWeight: 700, textAlign: "center" }}>
               Before you simulate...
             </h2>
