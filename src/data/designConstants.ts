@@ -74,28 +74,29 @@ export const DESIGN_COLOUR_BONUS_DIVISOR = 2;
  * Uses (1 - e^(-k·x)) / (1 - e^(-k)) so that x=0 → 0 and x=1 → 1.
  *
  * Higher k = steeper S-curve = harsher penalty for low values + stronger
- * diminishing returns at high values. k around 1.5 is nearly linear.
+ * diminishing returns at high values. k around 0.75 is nearly linear.
  *
- * k=4: Near-zero is devastating, above 0.5 barely helps (battery, perf)
- * k=3: Strong floor penalty, moderate diminishing returns
- * k=2: Mild curve, low values still penalised but less dramatically
- * k=1.5: Nearly linear, minimal distortion
+ * k=2.5: Strong floor penalty, moderate diminishing returns (connectivity)
+ * k=2:   Moderate curve, low values penalised (battery, perf)
+ * k=1.5: Mild curve, rewards specialisation (thermals, display, weight, gaming)
+ * k=1:   Gentle curve, meaningful gains across the range (keyboard, trackpad, design, thinness)
+ * k=0.75: Nearly linear, minimal distortion (speakers, webcam)
  */
 export const STAT_VIABILITY_K: Record<LaptopStat, number> = {
-  batteryLife: 4,
-  performance: 4,
-  thermals: 3,
-  connectivity: 5,
-  display: 3,
-  weight: 3,
-  buildQuality: 2.5,
-  gamingPerformance: 3,
-  keyboard: 2,
-  trackpad: 2,
-  design: 2,
-  thinness: 2,
-  speakers: 1.5,
-  webcam: 1.5,
+  batteryLife: 2,
+  performance: 2,
+  thermals: 1.5,
+  connectivity: 2.5,
+  display: 1.5,
+  weight: 1.5,
+  buildQuality: 1.25,
+  gamingPerformance: 1.5,
+  keyboard: 1,
+  trackpad: 1,
+  design: 1,
+  thinness: 1,
+  speakers: 0.75,
+  webcam: 0.75,
 };
 
 /**
