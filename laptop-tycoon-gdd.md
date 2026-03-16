@@ -399,11 +399,11 @@ The accumulated sentiment a demographic has about your company, based on their p
 **How it changes:** See Post-Sales Feedback section for the quarterly update formula.
 
 **Key properties:**
-- **Recency bias:** Rolling window (last 12 quarters = 3 years) means old experiences naturally drop off. A bad laptop from 4 years ago is no longer in the window.
+- **Recency bias:** Exponential smoothing (alpha = 0.25) means recent quarters dominate. Old experiences decay naturally — ~3-quarter half-life.
 - **Negativity bias:** Bad experiences hit 1.5× harder than good experiences help. Getting ripped off is memorable.
 - **Only purchasers matter:** A demographic that never buys from you has no perception of you (stays at 0/neutral). This means entering a new market segment starts from a blank slate, not from baggage accumulated in other segments.
-- **Value-for-money drives perception, not raw quality:** The experience score is based on raw value proposition (stats/price), not raw stats alone. An overpriced premium laptop can hurt perception even if technically excellent.
-- **Marketing does not affect perception:** Marketing campaigns affect reach only. Perception is purely driven by product quality (rawVP vs market average).
+- **Value-for-money drives perception, not raw quality:** The experience score is based on raw value proposition (stats/price) vs competitors, not raw stats alone. An overpriced premium laptop can hurt perception even if technically excellent.
+- **Marketing does not affect perception:** Marketing campaigns affect reach only. Perception is purely driven by product quality (rawVP vs competitor average, excluding self).
 
 **Edge case behaviour:**
 - *Ultrabook company enters gaming market:* Gamers have 0 perception (never bought from you). Your gaming laptop is evaluated on its merits. No penalty, no bonus.
