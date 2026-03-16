@@ -68,6 +68,8 @@ export const PERCEPTION_MIN = -50;
 export const PERCEPTION_MAX = 50;
 /** Minimum absolute delta to count as a "meaningful" perception change */
 export const PERCEPTION_MEANINGFUL_DELTA = 0.1;
+/** Minimum |delta| on a perception shift before the news engine generates a headline */
+export const PERCEPTION_NEWS_THRESHOLD = 3;
 
 // ==================== Sales Engine ====================
 

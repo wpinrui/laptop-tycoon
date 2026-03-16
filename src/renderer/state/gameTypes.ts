@@ -9,6 +9,7 @@ import { FullManufacturingPlan } from "../manufacturing/types";
 import { COMPETITORS, CompetitorArchetype } from "../../data/competitors";
 import { YearSimulationResult, QuarterSimulationResult } from "../../simulation/salesTypes";
 import { LaptopReview, Award, AwardCategory } from "../../simulation/reviewsAwards";
+import { NewsItem } from "../../simulation/newsTypes";
 import { MarketingTier } from "../../data/types";
 
 export type ModelType = "brandNew" | "successor" | "specBump";
@@ -120,6 +121,8 @@ export interface GameState {
   currentYearAwards: Award[];
   /** Persistent timeline of player milestones detected during simulation. */
   milestones: Milestone[];
+  /** Accumulated news items from all quarters. */
+  newsHistory: NewsItem[];
 }
 
 /** Get the player's company from the unified companies array. */
@@ -200,5 +203,6 @@ export function createInitialGameState(
     currentYearReviews: [],
     currentYearAwards: [],
     milestones: [],
+    newsHistory: [],
   };
 }

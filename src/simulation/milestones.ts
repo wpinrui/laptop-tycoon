@@ -12,6 +12,7 @@ import {
   getPlayerCompany,
 } from "../renderer/state/gameTypes";
 import { QuarterSimulationResult } from "./salesTypes";
+import { formatCompact } from "./utils";
 
 let _nextId = 0;
 function milestoneId(): string {
@@ -22,13 +23,6 @@ function milestoneId(): string {
 
 const CUMULATIVE_REVENUE_THRESHOLDS = [1_000_000, 5_000_000, 10_000_000, 25_000_000, 50_000_000, 100_000_000];
 const MARKET_SHARE_THRESHOLDS = [0.10, 0.25, 0.50];
-
-function formatThreshold(n: number): string {
-  if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(n % 1_000_000_000 === 0 ? 0 : 1)}B`;
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(n % 1_000 === 0 ? 0 : 1)}K`;
-  return `$${n}`;
-}
 
 // ─── Detection Functions ─────────────────────────────────────
 
@@ -60,7 +54,7 @@ export function detectQuarterMilestones(
       year,
       quarter,
       title: `Launched ${model.design.name}`,
-      detail: `${model.design.screenSize}" laptop — ${formatThreshold(model.retailPrice ?? 0)} retail`,
+      detail: `${model.design.screenSize}" laptop — ${formatCompact(model.retailPrice ?? 0)} retail`,
       modelId: pr.laptopId,
     });
   }
@@ -76,7 +70,7 @@ export function detectQuarterMilestones(
       year,
       quarter,
       title: "First profitable quarter",
-      detail: `${formatThreshold(result.totalProfit)} profit in ${QUARTER_LABEL(quarter)} ${year}`,
+      detail: `${formatCompact(result.totalProfit)} profit in ${QUARTER_LABEL(quarter)} ${year}`,
     });
   }
 
@@ -89,7 +83,7 @@ export function detectQuarterMilestones(
 
   for (const threshold of CUMULATIVE_REVENUE_THRESHOLDS) {
     if (prevCumulativeRevenue < threshold && newCumulativeRevenue >= threshold) {
-      const label = `Cumulative revenue exceeded ${formatThreshold(threshold)}`;
+      const label = `Cumulative revenue exceeded ${formatCompact(threshold)}`;
       if (!crossedRevThresholds.includes(label)) {
         milestones.push({
           id: milestoneId(),
@@ -97,7 +91,7 @@ export function detectQuarterMilestones(
           year,
           quarter,
           title: label,
-          detail: `Total lifetime revenue crossed the ${formatThreshold(threshold)} mark`,
+          detail: `Total lifetime revenue crossed the ${formatCompact(threshold)} mark`,
         });
       }
     }
@@ -119,7 +113,7 @@ export function detectQuarterMilestones(
           year,
           quarter,
           title: "First profitable year",
-          detail: `Annual profit of ${formatThreshold(yearProfit)} — a turning point for the company`,
+          detail: `Annual profit of ${formatCompact(yearProfit)} — a turning point for the company`,
         });
       }
     }

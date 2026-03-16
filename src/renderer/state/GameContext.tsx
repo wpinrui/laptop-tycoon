@@ -11,6 +11,7 @@ import { COMPETITORS } from "../../data/competitors";
 import { LaptopReview, Award, applyAwardBonuses } from "../../simulation/reviewsAwards";
 import { PERCEPTION_MEANINGFUL_DELTA, AI_MAX_MODEL_AGE } from "../../simulation/tunables";
 import { detectQuarterMilestones } from "../../simulation/milestones";
+import { generateQuarterNews, generateReviewNews, generateAwardNews } from "../../simulation/newsEngine";
 import { MarketingTier } from "../../data/types";
 
 export interface CompetitorModelEntry {
@@ -422,6 +423,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
       // Detect milestones from this quarter's results
       const newMilestones = detectQuarterMilestones(state, result);
+      const newNews = generateQuarterNews(state, result, newMilestones);
 
       return {
         ...state,
@@ -432,6 +434,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         yearHistory,
         lastSimulationResult: result,
         milestones: [...state.milestones, ...newMilestones],
+        newsHistory: [...state.newsHistory, ...newNews],
       };
     }
     case "ADD_CAMPAIGN": {
@@ -468,8 +471,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           c.demographicId === action.demographicId ? { ...c, paused: !c.paused } : c,
         ),
       };
-    case "SET_REVIEWS":
-      return { ...state, currentYearReviews: action.reviews };
+    case "SET_REVIEWS": {
+      const reviewNews = generateReviewNews(action.reviews, state.year, state.quarter);
+      return {
+        ...state,
+        currentYearReviews: action.reviews,
+        newsHistory: [...state.newsHistory, ...reviewNews],
+      };
+    }
     case "SET_AWARDS": {
       // Persist awards on the latest yearHistory entry (built during Q4 APPLY_QUARTER_RESULT)
       const updatedYearHistory = state.yearHistory.length > 0
@@ -493,12 +502,15 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           awardCategory: a.category,
         }));
 
+      const awardNews = generateAwardNews(action.awards, state.year);
+
       return {
         ...state,
         currentYearAwards: action.awards,
         companies: applyAwardBonuses(state.companies, action.awards),
         yearHistory: updatedYearHistory,
         milestones: [...state.milestones, ...awardMilestones],
+        newsHistory: [...state.newsHistory, ...awardNews],
       };
     }
     default:
