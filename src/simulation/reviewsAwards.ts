@@ -18,6 +18,7 @@ import {
   PERCEPTION_MIN,
   PERCEPTION_MAX,
 } from "./tunables";
+import { pickRandom } from "./utils";
 
 // ==================== Types ====================
 
@@ -331,10 +332,6 @@ const SENTIMENT_BAD_THRESHOLD = 0.85;
 const MAX_STATS_PER_REVIEW = 6;
 /** Divisor for normalising retail price in value scoring (higher price = lower value) */
 const VALUE_PRICE_DIVISOR = 1000;
-
-function pickRandom<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
 
 function fillTemplate(template: string, vars: Record<string, string>): string {
   let result = template;

@@ -41,16 +41,13 @@ import {
   AI_SPEC_BUMP_THRESHOLD,
 } from "./tunables";
 import { estimateAnnualDemand } from "./salesEngine";
+import { pickRandom } from "./utils";
 
 const COMPONENT_SLOTS: ComponentSlot[] = [
   "cpu", "gpu", "ram", "storage",
   "resolution", "displayTech", "displaySurface",
   "wifi", "webcam", "speakers",
 ];
-
-function pickRandom<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
 
 function jitter(value: number, range: number): number {
   return value + (Math.random() * 2 - 1) * range;

@@ -24,15 +24,12 @@ import {
   REVIEW_TEMPLATES,
   AWARD_TEMPLATES,
 } from "./newsTemplates";
+import { pickRandom, formatCompact } from "./utils";
 import type { Milestone } from "../renderer/state/gameTypes";
 
 // ─── Helpers ────────────────────────────────────────────────
 
 const OUTLET_IDS: NewsOutletId[] = Object.keys(OUTLETS) as NewsOutletId[];
-
-function pickRandom<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
 
 function pickOutlet(): NewsOutletId {
   return pickRandom(OUTLET_IDS);
@@ -57,13 +54,6 @@ function generateHeadline(
 
 function demName(demId: DemographicId): string {
   return DEMOGRAPHICS.find((d) => d.id === demId)?.shortName ?? demId;
-}
-
-function formatMoney(n: number): string {
-  if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(n % 1_000_000_000 === 0 ? 0 : 1)}B`;
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(n % 1_000 === 0 ? 0 : 1)}K`;
-  return `$${n}`;
 }
 
 const ARCHETYPE_SEGMENT: Record<string, string> = {
@@ -100,7 +90,7 @@ export function generateQuarterNews(
         company: player.name,
         model: model.design.name,
         screenSize: model.design.screenSize,
-        price: formatMoney(model.retailPrice ?? 0),
+        price: formatCompact(model.retailPrice ?? 0),
         segment: "consumer",
       };
       items.push({
@@ -149,7 +139,6 @@ export function generateQuarterNews(
         body: {
           type: "financial",
           milestoneTitle: ms.title,
-          value: 0, // raw value not easily available; headline has the formatted string
         },
       });
     } else if (ms.type === "market") {
@@ -200,7 +189,7 @@ export function generateQuarterNews(
 
         const outlet = pickOutlet();
         const segment = ARCHETYPE_SEGMENT[company.archetype ?? "generalist"] ?? "mainstream";
-        const price = formatMoney(model.retailPrice ?? 0);
+        const price = formatCompact(model.retailPrice ?? 0);
         const vars = {
           company: company.name,
           model: model.design.name,

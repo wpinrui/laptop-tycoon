@@ -39,7 +39,7 @@ export type NewsCategory =
 
 export type NewsBody =
   | { type: "productLaunch"; companyName: string; modelName: string; screenSize: number; price: number; isPlayer: boolean }
-  | { type: "financial"; milestoneTitle: string; value: number }
+  | { type: "financial"; milestoneTitle: string }
   | { type: "marketShare"; demographic: string; share: number; threshold: number }
   | { type: "perception"; demographic: string; delta: number; direction: "up" | "down" }
   | { type: "review"; laptopName: string; outlet: string; score: number; sentences: string[] }
