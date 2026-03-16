@@ -10,6 +10,8 @@ import { generateCompetitorModels, discountOldInventoryPrice } from "../../simul
 import { COMPETITORS } from "../../data/competitors";
 import { LaptopReview, Award, applyAwardBonuses } from "../../simulation/reviewsAwards";
 import { PERCEPTION_MEANINGFUL_DELTA, AI_MAX_MODEL_AGE } from "../../simulation/tunables";
+import { detectQuarterMilestones } from "../../simulation/milestones";
+import { Milestone, Quarter as Q } from "./gameTypes";
 import { MarketingTier } from "../../data/types";
 
 export interface CompetitorModelEntry {
@@ -419,6 +421,9 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ? [...state.yearHistory, buildYearResult(state, result, [...state.quarterHistory, result])]
         : state.yearHistory;
 
+      // Detect milestones from this quarter's results
+      const newMilestones = detectQuarterMilestones(state, result);
+
       return {
         ...state,
         cash: result.cashAfterResolution,
@@ -427,6 +432,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         quarterHistory: [...state.quarterHistory, result],
         yearHistory,
         lastSimulationResult: result,
+        milestones: [...state.milestones, ...newMilestones],
       };
     }
     case "ADD_CAMPAIGN": {
@@ -473,11 +479,27 @@ function gameReducer(state: GameState, action: GameAction): GameState {
             { ...state.yearHistory[state.yearHistory.length - 1], awards: action.awards },
           ]
         : state.yearHistory;
+
+      // Create award milestones for player-won awards
+      const awardMilestones: Milestone[] = action.awards
+        .filter((a) => a.ownerCompanyId === "player")
+        .map((a) => ({
+          id: `ms_award_${state.year}_${a.category}`,
+          type: "award" as const,
+          year: state.year,
+          quarter: 4 as Q,
+          title: `Won ${a.categoryLabel}`,
+          detail: `${a.winnerName} — awarded ${a.categoryLabel}`,
+          modelId: a.winnerId,
+          awardCategory: a.category,
+        }));
+
       return {
         ...state,
         currentYearAwards: action.awards,
         companies: applyAwardBonuses(state.companies, action.awards),
         yearHistory: updatedYearHistory,
+        milestones: [...state.milestones, ...awardMilestones],
       };
     }
     default:
