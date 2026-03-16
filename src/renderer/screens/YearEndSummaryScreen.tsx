@@ -6,7 +6,7 @@ import { ContentPanel } from "../shell/ContentPanel";
 import { MenuButton } from "../shell/MenuButton";
 import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
-import { formatCurrency, formatNumber } from "../utils/formatCash";
+import { formatCurrency, formatNumber, profitColor } from "../utils/formatCash";
 import { titleStyle, sectionHeadingStyle, tableStyle, thStyle, tdStyle, tdRight, cardStyle, twoColumnLayout, warningBannerStyle } from "./summaryStyles";
 import { AwardsTable } from "./AwardsTable";
 import { AWARD_PRIMARY_PERCEPTION_BONUS, AWARD_PRIMARY_REACH_BONUS } from "../../simulation/tunables";
@@ -120,7 +120,7 @@ export function YearEndSummaryScreen() {
                 <tbody>
                   {playerResults.map((r) => {
                     const model = player.models.find((m) => m.design.id === r.laptopId);
-                    const profitColor = r.profit >= 0 ? tokens.colors.success : tokens.colors.danger;
+                    const profitClr = profitColor(r.profit);
                     const totalUnits = r.unitsSold + r.unsoldUnits;
                     return (
                       <tr key={r.laptopId}>
@@ -131,7 +131,7 @@ export function YearEndSummaryScreen() {
                           {formatNumber(r.unsoldUnits)}
                         </td>
                         <td style={tdRight}>{formatCurrency(r.revenue)}</td>
-                        <td style={{ ...tdRight, color: profitColor }}>{formatCurrency(r.profit)}</td>
+                        <td style={{ ...tdRight, color: profitClr }}>{formatCurrency(r.profit)}</td>
                       </tr>
                     );
                   })}

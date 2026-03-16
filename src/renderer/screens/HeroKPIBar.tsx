@@ -1,5 +1,5 @@
 import { tokens } from "../shell/tokens";
-import { formatCurrency, formatNumber } from "../utils/formatCash";
+import { formatCurrency, formatNumber, profitColor } from "../utils/formatCash";
 import { kpiRowStyle, kpiCardStyle, kpiLabelStyle, kpiValueStyle, kpiDeltaStyle } from "./summaryStyles";
 
 interface Delta {
@@ -68,13 +68,13 @@ export function HeroKPIBar({ unitsSold, totalAvailable, revenue, profit, cash, p
     {
       label: "Profit",
       value: formatCurrency(profit),
-      color: profit >= 0 ? tokens.colors.success : tokens.colors.danger,
+      color: profitColor(profit),
       delta: prevProfit != null ? deltaIndicator(profit, prevProfit) : null,
     },
     {
       label: "Cash Balance",
       value: formatCurrency(cash),
-      color: cash >= 0 ? tokens.colors.success : tokens.colors.danger,
+      color: profitColor(cash),
       delta: prevCash != null ? deltaIndicator(cash, prevCash) : null,
     },
   ];
