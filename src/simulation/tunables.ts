@@ -56,10 +56,10 @@ export const REACH_DECAY_BASE = 0.05;
 
 // ==================== Brand Perception ====================
 
-/** Scales rolling-window average experience into perception points */
-export const PERCEPTION_CONTRIBUTION_SCALE = 5;
-/** Rolling window size in quarters (12 = 3 years of history) */
-export const PERCEPTION_WINDOW_SIZE = 12;
+/** Exponential smoothing factor: higher = faster response to changes (0–1) */
+export const PERCEPTION_SMOOTHING_ALPHA = 0.25;
+/** Maps percentage VP gap to perception scale (e.g. 30% better × 50 → target 15) */
+export const PERCEPTION_EXPERIENCE_SCALE = 50;
 /** Negativity bias multiplier — bad value-for-money hits harder */
 export const NEGATIVITY_MULTIPLIER = 1.5;
 /** Perception floor (minimum per-demographic perception score) */

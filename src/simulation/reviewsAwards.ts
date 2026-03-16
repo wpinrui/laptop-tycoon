@@ -15,7 +15,6 @@ import {
   AWARD_PRIMARY_REACH_BONUS,
   AWARD_SECONDARY_PERCEPTION_BONUS,
   AWARD_SECONDARY_REACH_BONUS,
-  PERCEPTION_CONTRIBUTION_SCALE,
   PERCEPTION_MIN,
   PERCEPTION_MAX,
 } from "./tunables";
@@ -668,7 +667,6 @@ export function applyAwardBonuses(
 
     const newPerception = { ...company.brandPerception };
     const newReach = { ...company.brandReach };
-    const newHistory = { ...company.perceptionHistory };
 
     for (const demId of Object.keys(newPerception) as DemographicId[]) {
       let totalPerceptionBoost = 0;
@@ -690,13 +688,6 @@ export function applyAwardBonuses(
       if (totalPerceptionBoost > 0 || totalReachBoost > 0) {
         newPerception[demId] = Math.min(PERCEPTION_MAX, Math.max(PERCEPTION_MIN, newPerception[demId] + totalPerceptionBoost));
         newReach[demId] = Math.min(100, newReach[demId] + totalReachBoost);
-        // Inject into rolling window history so the boost persists
-        const experienceBoost = totalPerceptionBoost / PERCEPTION_CONTRIBUTION_SCALE;
-        const hist = [...(newHistory[demId] ?? [])];
-        if (hist.length > 0) {
-          hist[hist.length - 1] += experienceBoost;
-        }
-        newHistory[demId] = hist;
       }
     }
 
@@ -704,7 +695,6 @@ export function applyAwardBonuses(
       ...company,
       brandPerception: newPerception,
       brandReach: newReach,
-      perceptionHistory: newHistory,
     };
   });
 }

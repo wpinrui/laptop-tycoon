@@ -55,14 +55,16 @@ export function sellThroughRate(lr: LaptopSalesResult): number {
   return lr.unitsDemanded > 0 ? lr.unitsSold / lr.unitsDemanded : 1;
 }
 
-/** Weighted-average rawVP across all laptops for a single demographic (by sold units). */
-export function marketAverageRawVP(
+/** Weighted-average rawVP across competitor laptops only (excludes one company). */
+export function competitorAverageRawVP(
   demId: DemographicId,
   allResults: LaptopSalesResult[],
+  excludeOwner: string,
 ): number {
   let totalUnits = 0;
   let weightedVP = 0;
   for (const lr of allResults) {
+    if (lr.owner === excludeOwner) continue;
     const db = lr.demographicBreakdown.find((b) => b.demographicId === demId);
     if (db && db.unitsDemanded > 0) {
       const units = db.unitsDemanded * sellThroughRate(lr);
@@ -73,7 +75,7 @@ export function marketAverageRawVP(
   return totalUnits > 0 ? weightedVP / totalUnits : 0;
 }
 
-/** A stat's contribution to the VP gap between the player and market average */
+/** A stat's contribution to the VP gap between the player and competitor average */
 export interface StatContributor {
   stat: LaptopStat;
   /** Player's normalized score (0–100) for this stat */
@@ -90,14 +92,14 @@ export interface StatContributor {
 export interface PerceptionInsight {
   /** Player's average rawVP in this demographic */
   playerAvgVP: number;
-  /** Market-wide average rawVP in this demographic */
-  marketAvgVP: number;
-  /** Gap: playerAvgVP - marketAvgVP */
+  /** Competitor-only average rawVP in this demographic (excludes player) */
+  competitorAvgVP: number;
+  /** Gap: playerAvgVP - competitorAvgVP */
   vpGap: number;
   /** Top stat contributors to the VP gap, sorted by |weighted impact| descending */
   topStats: StatContributor[];
-  /** Player's average price score vs market average price score */
-  priceScore: { player: number; marketAvg: number };
+  /** Player's average price score vs competitor average price score */
+  priceScore: { player: number; competitorAvg: number };
   /** The top competitor in this demographic */
   topCompetitor: { name: string; rawVP: number } | null;
 }
@@ -126,8 +128,6 @@ export interface QuarterSimulationResult {
   cashAfterResolution: number;
   /** Per-demographic perception changes for the player this quarter */
   perceptionChanges: PerceptionChange[];
-  /** Updated rolling-window perception history for the player this quarter */
-  playerPerceptionHistory: Record<DemographicId, number[]>;
 }
 
 export interface YearSimulationResult {

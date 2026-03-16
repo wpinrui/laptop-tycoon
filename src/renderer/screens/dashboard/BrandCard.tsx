@@ -6,7 +6,7 @@ import { tokens } from "../../shell/tokens";
 import { BentoCard } from "./BentoCard";
 import { ProgressBar } from "./ProgressBar";
 import { cardBodyStyle, hintStyle, sectionDividerStyle, sectionHeadingStyle, smallTextStyle } from "./styles";
-import { formatPerception } from "./utils";
+import { formatPerception, formatPerceptionImpact } from "./utils";
 
 import { DEMOGRAPHICS } from "../../../data/demographics";
 
@@ -69,6 +69,9 @@ export function BrandCard() {
               <span style={{ ...cardBodyStyle, fontSize: 14, minWidth: 50, textAlign: "right", color: perception.color }}>
                 {perception.sign}{perception.value}
               </span>
+              <span style={{ ...smallTextStyle, minWidth: 80, color: perception.color }}>
+                ({formatPerceptionImpact(value)})
+              </span>
             </div>
           );
         })}
@@ -78,7 +81,7 @@ export function BrandCard() {
           </p>
         )}
         <p style={{ ...hintStyle, marginTop: tokens.spacing.xs }}>
-          Accumulated sentiment — positive = benefit of the doubt, negative = scepticism
+          How buyers perceive your brand vs competitors. Affects purchase appeal.
         </p>
       </div>
 

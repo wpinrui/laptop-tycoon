@@ -399,11 +399,11 @@ The accumulated sentiment a demographic has about your company, based on their p
 **How it changes:** See Post-Sales Feedback section for the quarterly update formula.
 
 **Key properties:**
-- **Recency bias:** Rolling window (last 12 quarters = 3 years) means old experiences naturally drop off. A bad laptop from 4 years ago is no longer in the window.
+- **Recency bias:** Exponential smoothing (alpha = 0.25) means recent quarters dominate. Old experiences decay naturally — ~3-quarter half-life.
 - **Negativity bias:** Bad experiences hit 1.5× harder than good experiences help. Getting ripped off is memorable.
 - **Only purchasers matter:** A demographic that never buys from you has no perception of you (stays at 0/neutral). This means entering a new market segment starts from a blank slate, not from baggage accumulated in other segments.
-- **Value-for-money drives perception, not raw quality:** The experience score is based on raw value proposition (stats/price), not raw stats alone. An overpriced premium laptop can hurt perception even if technically excellent.
-- **Marketing does not affect perception:** Marketing campaigns affect reach only. Perception is purely driven by product quality (rawVP vs market average).
+- **Value-for-money drives perception, not raw quality:** The experience score is based on raw value proposition (stats/price) vs competitors, not raw stats alone. An overpriced premium laptop can hurt perception even if technically excellent.
+- **Marketing does not affect perception:** Marketing campaigns affect reach only. Perception is purely driven by product quality (rawVP vs competitor average, excluding self).
 
 **Edge case behaviour:**
 - *Ultrabook company enters gaming market:* Gamers have 0 perception (never bought from you). Your gaming laptop is evaluated on its merits. No penalty, no bonus.
@@ -486,28 +486,34 @@ Press release responses feed into the **review generation system**. Reviewer tem
 
 ## Post-Sales Feedback
 
-### Perception Update (Rolling Window)
+### Perception Update (Exponential Smoothing)
 
-Perception uses a rolling window of the last 12 quarters (3 years) of experience scores. Each quarter:
+Perception uses exponential smoothing against competitor-only averages. Each quarter:
 
 ```
-experience = weighted_avg(company_laptop_raw_vp - market_avg_raw_vp)
-             across all units sold to this demographic
+competitor_avg_vp = weighted_avg(competitor_laptop_raw_vp) excluding self
+                    across all units sold to this demographic
+
+company_avg_vp = weighted_avg(company_laptop_raw_vp)
+                 across all units sold to this demographic
+
+percentage_gap = (company_avg_vp - competitor_avg_vp) / competitor_avg_vp
 
 // Negativity bias: bad experiences hit harder
-if experience < 0:
-  experience *= NEGATIVITY_MULTIPLIER (1.5)
+if percentage_gap < 0:
+  percentage_gap *= NEGATIVITY_MULTIPLIER (1.5)
 
-// Push into rolling window (drop oldest if > 12 entries)
-history[demographic].push(experience)
+scaled_experience = percentage_gap × PERCEPTION_EXPERIENCE_SCALE (50)
 
-// Perception = mean of window × scale factor
-perception = mean(history[demographic]) × PERCEPTION_CONTRIBUTION_SCALE (5)
+// Exponential smoothing (alpha = 0.25)
+perception = PERCEPTION_SMOOTHING_ALPHA × scaled_experience
+           + (1 - PERCEPTION_SMOOTHING_ALPHA) × previous_perception
 ```
 
 Clamp to [-50, +50].
 
-No exponential decay — perception is purely a function of recent experience in the rolling window.
+No sales → `scaled_experience = 0` → perception decays naturally toward 0.
+No competitors selling → treated as max positive gap (capped at PERCEPTION_EXPERIENCE_SCALE).
 
 ### Reach Update
 
@@ -595,7 +601,6 @@ interface CompanyState {
   isPlayer: boolean;
   brandReach: Record<DemographicId, number>;       // 0-100 per demographic
   brandPerception: Record<DemographicId, number>;   // -50 to +50 per demographic
-  perceptionHistory: Record<DemographicId, number[]>; // rolling window of quarterly experience scores
   models: LaptopModel[];
   // For AI only:
   archetype?: "budget" | "premium" | "generalist";
@@ -632,8 +637,8 @@ Both player and AI competitors use the CompanyState interface. The simulation it
 |----------|---------------|-------|
 | PRICE_WEIGHT | Varies per demographic stat weight vector | Weight on price_score in VP dot product; higher = more price-sensitive |
 | WOM_DIVISOR | 5,000 | Units sold per 1 raw reach point from word of mouth (AI competitors only) |
-| PERCEPTION_CONTRIBUTION_SCALE | 5 | Scales rolling-window mean experience into perception points |
-| PERCEPTION_WINDOW_SIZE | 12 | Rolling window in quarters (12 = 3 years of history) |
+| PERCEPTION_SMOOTHING_ALPHA | 0.25 | Exponential smoothing factor: higher = faster response to changes (0–1) |
+| PERCEPTION_EXPERIENCE_SCALE | 50 | Maps percentage VP gap to perception scale (e.g. 30% better × 50 → target 15) |
 | NEGATIVITY_MULTIPLIER | 1.5 | Bad experiences hit 1.5× harder |
 | S_CURVE_STEEPNESS | 0.08 | S-curve steepness for reach growth (AI competitors only) |
 | S_CURVE_MIDPOINT | 50 | Reach % where growth is fastest (AI competitors only) |
