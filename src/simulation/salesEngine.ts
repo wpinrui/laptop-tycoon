@@ -234,7 +234,7 @@ export function getNoveltyFactor(
   currentQuarter: number,
   demographicId: DemographicId,
 ): number {
-  const launchQ = model.quarterDesigned ?? 1;
+  const launchQ = model.quarterDesigned;
   const quartersSinceLaunch = (currentYear - model.yearDesigned) * 4 + (currentQuarter - launchQ);
   const decayRate = FRESHNESS_DECAY_RATE[demographicId];
   return NOVELTY_LAUNCH_BONUS * Math.pow(NOVELTY_DECAY_BASE, Math.max(0, quartersSinceLaunch) * decayRate);
