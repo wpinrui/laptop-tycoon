@@ -184,4 +184,142 @@ export const RAM: Component[] = [
     specs: { capacity: "2 GB", type: "DDR2-667", speed: "667 MHz" },
     stats: { performance: 95, gamingPerformance: 82 },
   },
+
+  // --- 2006 ---
+  {
+    id: "ddr2_800_1gb",
+    name: "1 GB DDR2-800",
+    description:
+      "Faster DDR2 with improved bandwidth. Budget-friendly for 2006.",
+    slot: "ram",
+    yearIntroduced: 2006,
+    yearDiscontinued: 2009,
+    costAtLaunch: 120,
+    powerDrawW: 4,
+    weightG: 20,
+    volumeCm3: 12,
+    minThicknessCm: 0.5,
+    specs: { capacity: "1 GB", type: "DDR2-800", speed: "800 MHz" },
+    stats: { performance: 90, gamingPerformance: 77 },
+  },
+  {
+    id: "ddr2_800_2gb",
+    name: "2 GB DDR2-800",
+    description:
+      "The sweet spot for 2006 — fast DDR2 with plenty of headroom.",
+    slot: "ram",
+    yearIntroduced: 2006,
+    yearDiscontinued: 2009,
+    costAtLaunch: 250,
+    powerDrawW: 5,
+    weightG: 24,
+    volumeCm3: 13,
+    minThicknessCm: 0.5,
+    specs: { capacity: "2 GB", type: "DDR2-800", speed: "800 MHz" },
+    stats: { performance: 100, gamingPerformance: 86 },
+  },
+
+  // --- 2007 ---
+  {
+    id: "ddr2_800_4gb",
+    name: "4 GB DDR2-800",
+    description:
+      "Maximum DDR2 capacity — future-proof for demanding applications.",
+    slot: "ram",
+    yearIntroduced: 2007,
+    yearDiscontinued: 2010,
+    costAtLaunch: 500,
+    powerDrawW: 6,
+    weightG: 30,
+    volumeCm3: 15,
+    minThicknessCm: 0.5,
+    specs: { capacity: "4 GB", type: "DDR2-800", speed: "800 MHz" },
+    stats: { performance: 108, gamingPerformance: 94 },
+  },
+
+  // --- 2008 ---
+  {
+    id: "ddr3_1066_2gb",
+    name: "2 GB DDR3-1066",
+    description:
+      "Next-gen DDR3 with lower voltage and higher bandwidth. Early adopter premium.",
+    slot: "ram",
+    yearIntroduced: 2008,
+    yearDiscontinued: 2011,
+    costAtLaunch: 150,
+    powerDrawW: 4,
+    weightG: 18,
+    volumeCm3: 12,
+    minThicknessCm: 0.5,
+    specs: { capacity: "2 GB", type: "DDR3-1066", speed: "1066 MHz" },
+    stats: { performance: 105, gamingPerformance: 90 },
+  },
+  {
+    id: "ddr3_1066_4gb",
+    name: "4 GB DDR3-1066",
+    description:
+      "Generous DDR3 config for multitasking and creative workloads.",
+    slot: "ram",
+    yearIntroduced: 2008,
+    yearDiscontinued: 2011,
+    costAtLaunch: 300,
+    powerDrawW: 5,
+    weightG: 22,
+    volumeCm3: 13,
+    minThicknessCm: 0.5,
+    specs: { capacity: "4 GB", type: "DDR3-1066", speed: "1066 MHz" },
+    stats: { performance: 115, gamingPerformance: 98 },
+  },
+
+  // --- 2009 ---
+  {
+    id: "ddr3_1333_2gb",
+    name: "2 GB DDR3-1333",
+    description:
+      "Faster DDR3 at a reasonable price. Solid mainstream choice.",
+    slot: "ram",
+    yearIntroduced: 2009,
+    yearDiscontinued: 2012,
+    costAtLaunch: 80,
+    powerDrawW: 4,
+    weightG: 18,
+    volumeCm3: 12,
+    minThicknessCm: 0.5,
+    specs: { capacity: "2 GB", type: "DDR3-1333", speed: "1333 MHz" },
+    stats: { performance: 108, gamingPerformance: 92 },
+  },
+  {
+    id: "ddr3_1333_4gb",
+    name: "4 GB DDR3-1333",
+    description:
+      "Fast and spacious. The new standard for mid-range and above.",
+    slot: "ram",
+    yearIntroduced: 2009,
+    yearDiscontinued: 2012,
+    costAtLaunch: 160,
+    powerDrawW: 5,
+    weightG: 22,
+    volumeCm3: 13,
+    minThicknessCm: 0.5,
+    specs: { capacity: "4 GB", type: "DDR3-1333", speed: "1333 MHz" },
+    stats: { performance: 120, gamingPerformance: 102 },
+  },
+
+  // --- 2010 ---
+  {
+    id: "ddr3_1333_8gb",
+    name: "8 GB DDR3-1333",
+    description:
+      "Massive RAM capacity for power users. Overkill for most, essential for professionals.",
+    slot: "ram",
+    yearIntroduced: 2010,
+    yearDiscontinued: 2013,
+    costAtLaunch: 350,
+    powerDrawW: 6,
+    weightG: 28,
+    volumeCm3: 15,
+    minThicknessCm: 0.5,
+    specs: { capacity: "8 GB", type: "DDR3-1333", speed: "1333 MHz" },
+    stats: { performance: 130, gamingPerformance: 110 },
+  },
 ];

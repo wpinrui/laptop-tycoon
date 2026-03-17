@@ -254,4 +254,132 @@ export const PORT_TYPES: PortType[] = [
     stats: { connectivity: 5 },
     specs: { type: "SD / MMC" },
   },
+
+  // --- 2006 ---
+  {
+    id: "hdmi",
+    name: "HDMI",
+    description:
+      "Digital audio/video output for HDTVs and monitors. The new standard.",
+    category: "video",
+    yearIntroduced: 2006,
+    yearDiscontinued: null,
+    maxCount: 1,
+    costPerPort: 3,
+    weightPerPortG: 4,
+    volumePerPortCm3: 4,
+    minThicknessCm: 0.7,
+    stats: { connectivity: 12 },
+    specs: { signal: "Digital (HDMI 1.3)", maxResolution: "1920x1200", audio: "Yes" },
+  },
+  {
+    id: "firewire_800",
+    name: "FireWire 800 (IEEE 1394b)",
+    description:
+      "Faster FireWire for video editing and pro audio equipment.",
+    category: "expansion",
+    yearIntroduced: 2006,
+    yearDiscontinued: 2012,
+    maxCount: 1,
+    costPerPort: 6,
+    weightPerPortG: 4,
+    volumePerPortCm3: 3,
+    minThicknessCm: 0.8,
+    stats: { connectivity: 10 },
+    specs: { speed: "800 Mbps", type: "9-pin" },
+  },
+  {
+    id: "ethernet_gigabit",
+    name: "Gigabit Ethernet (RJ-45)",
+    description:
+      "10x faster wired networking. Essential for large file transfers.",
+    category: "networking",
+    yearIntroduced: 2006,
+    yearDiscontinued: null,
+    maxCount: 1,
+    costPerPort: 3,
+    weightPerPortG: 5,
+    volumePerPortCm3: 6,
+    minThicknessCm: 1.3,
+    stats: { connectivity: 15 },
+    specs: { speed: "10/100/1000 Mbps", type: "RJ-45" },
+  },
+
+  // --- 2007 ---
+  {
+    id: "esata",
+    name: "eSATA",
+    description:
+      "External SATA port for fast external hard drive connections.",
+    category: "expansion",
+    yearIntroduced: 2007,
+    yearDiscontinued: 2012,
+    maxCount: 1,
+    costPerPort: 3,
+    weightPerPortG: 4,
+    volumePerPortCm3: 4,
+    minThicknessCm: 0.8,
+    stats: { connectivity: 8 },
+    specs: { speed: "3 Gbps", type: "eSATA" },
+  },
+
+  // --- 2008 ---
+  {
+    id: "displayport",
+    name: "DisplayPort",
+    description:
+      "High-bandwidth digital display connector. Supports higher resolutions than HDMI.",
+    category: "video",
+    yearIntroduced: 2008,
+    yearDiscontinued: null,
+    maxCount: 1,
+    costPerPort: 4,
+    weightPerPortG: 4,
+    volumePerPortCm3: 4,
+    minThicknessCm: 0.7,
+    stats: { connectivity: 14 },
+    specs: {
+      signal: "Digital (DisplayPort 1.1)",
+      maxResolution: "2560x1600",
+      audio: "Yes",
+    },
+  },
+  {
+    id: "mini_displayport",
+    name: "Mini DisplayPort",
+    description:
+      "Compact version of DisplayPort — saves space in thin designs.",
+    category: "video",
+    yearIntroduced: 2008,
+    yearDiscontinued: null,
+    maxCount: 1,
+    costPerPort: 4,
+    weightPerPortG: 2,
+    volumePerPortCm3: 2,
+    minThicknessCm: 0.5,
+    stats: { connectivity: 14 },
+    specs: {
+      signal: "Digital (Mini DisplayPort)",
+      maxResolution: "2560x1600",
+      audio: "Yes",
+    },
+  },
+
+  // --- 2010 ---
+  {
+    id: "usb_3_0",
+    name: "USB 3.0",
+    description:
+      "SuperSpeed USB — 10x faster than USB 2.0. Blue connector, can't miss it.",
+    category: "usb",
+    yearIntroduced: 2010,
+    yearDiscontinued: null,
+    maxCount: 4,
+    costPerPort: 4,
+    weightPerPortG: 4,
+    volumePerPortCm3: 3,
+    minThicknessCm: 0.8,
+    stats: { connectivity: 18 },
+    specs: { speed: "5 Gbps", type: "Type-A (Blue)" },
+  },
 ];

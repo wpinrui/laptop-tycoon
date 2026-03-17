@@ -103,4 +103,74 @@ export const RESOLUTIONS: Component[] = [
     specs: { resolution: "1920x1200", pixels: "2.30M", aspectRatio: "16:10" },
     stats: { display: 70 },
   },
+
+  // --- 2006 ---
+  {
+    id: "res_wxga_plus",
+    name: "WXGA+ (1440x900)",
+    description:
+      "Widescreen with extra vertical space. A nice upgrade from standard WXGA.",
+    slot: "resolution",
+    yearIntroduced: 2006,
+    yearDiscontinued: 2010,
+    costAtLaunch: 200,
+    powerDrawW: 6,
+    weightG: 210,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: { resolution: "1440x900", pixels: "1.30M", aspectRatio: "16:10" },
+    stats: { display: 42 },
+  },
+
+  // --- 2008 ---
+  {
+    id: "res_hd",
+    name: "HD (1366x768)",
+    description:
+      "The new standard widescreen resolution. Compact 16:9 format for movies.",
+    slot: "resolution",
+    yearIntroduced: 2008,
+    yearDiscontinued: 2013,
+    costAtLaunch: 125,
+    powerDrawW: 5,
+    weightG: 195,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: { resolution: "1366x768", pixels: "1.05M", aspectRatio: "16:9" },
+    stats: { display: 35 },
+  },
+  {
+    id: "res_hd_plus",
+    name: "HD+ (1600x900)",
+    description:
+      "More screen real estate in 16:9. A sharp step up from basic HD.",
+    slot: "resolution",
+    yearIntroduced: 2008,
+    yearDiscontinued: 2013,
+    costAtLaunch: 225,
+    powerDrawW: 6,
+    weightG: 215,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: { resolution: "1600x900", pixels: "1.44M", aspectRatio: "16:9" },
+    stats: { display: 50 },
+  },
+
+  // --- 2009 ---
+  {
+    id: "res_fhd",
+    name: "Full HD (1920x1080)",
+    description:
+      "Crisp 1080p display — perfect for HD video and detailed work.",
+    slot: "resolution",
+    yearIntroduced: 2009,
+    yearDiscontinued: 2014,
+    costAtLaunch: 350,
+    powerDrawW: 7,
+    weightG: 230,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: { resolution: "1920x1080", pixels: "2.07M", aspectRatio: "16:9" },
+    stats: { display: 65 },
+  },
 ];

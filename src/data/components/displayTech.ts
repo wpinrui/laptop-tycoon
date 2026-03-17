@@ -49,4 +49,76 @@ export const DISPLAY_TECH: Component[] = [
     specs: { type: "IPS", viewingAngle: "~170°", colorAccuracy: "High", brightness: "220 nits" },
     stats: { display: 35 },
   },
+
+  // --- 2006 ---
+  {
+    id: "tech_tn_led",
+    name: "LED-backlit TN Panel",
+    description:
+      "LED backlight replaces CCFL — thinner, lighter, and more uniform brightness.",
+    slot: "displayTech",
+    yearIntroduced: 2006,
+    yearDiscontinued: 2012,
+    costAtLaunch: 80,
+    powerDrawW: 3,
+    weightG: 40,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: {
+      type: "TN",
+      backlight: "LED",
+      viewingAngle: "~100°",
+      colorAccuracy: "Standard",
+      brightness: "250 nits",
+    },
+    stats: { display: 22 },
+  },
+
+  // --- 2008 ---
+  {
+    id: "tech_tn_led_bright",
+    name: "LED-backlit TN Panel (High Brightness)",
+    description:
+      "Brighter LED-backlit TN for outdoor visibility. Fast response times.",
+    slot: "displayTech",
+    yearIntroduced: 2008,
+    yearDiscontinued: 2013,
+    costAtLaunch: 60,
+    powerDrawW: 4,
+    weightG: 42,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: {
+      type: "TN",
+      backlight: "LED",
+      viewingAngle: "~110°",
+      colorAccuracy: "Standard",
+      brightness: "300 nits",
+    },
+    stats: { display: 28 },
+  },
+
+  // --- 2009 ---
+  {
+    id: "tech_ips_led",
+    name: "LED-backlit IPS Panel",
+    description:
+      "Premium LED-backlit IPS with wide viewing angles and vivid colors.",
+    slot: "displayTech",
+    yearIntroduced: 2009,
+    yearDiscontinued: 2014,
+    costAtLaunch: 150,
+    powerDrawW: 5,
+    weightG: 55,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: {
+      type: "IPS",
+      backlight: "LED",
+      viewingAngle: "~178°",
+      colorAccuracy: "High (>95% sRGB)",
+      brightness: "300 nits",
+    },
+    stats: { display: 45 },
+  },
 ];
