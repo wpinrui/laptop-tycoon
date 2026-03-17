@@ -88,6 +88,7 @@ function groupByYear(components: Component[], minSize: number, gameYear: number)
 }
 
 const AGING_THRESHOLD_QUARTERS = 5;
+const AGING_OPACITY = 0.55;
 
 /** Returns true if a component is 5+ quarters old relative to the current game date. */
 function isAging(component: Component, gameYear: number, gameQuarter: 1 | 2 | 3 | 4): boolean {
@@ -183,27 +184,15 @@ function SlotSection({
       </div>
 
       {singleGroup ? (
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "flex-start",
-            gap: "8px",
-          }}
-        >
-          {groups[0]?.components.map((component) => (
-            <ComponentCard
-              key={component.id}
-              component={component}
-              isSelected={selected?.id === component.id}
-              onSelect={() => onSelect(component)}
-              slot={slot}
-              multiplier={multiplier}
-              gameYear={gameYear}
-              gameQuarter={gameQuarter}
-            />
-          ))}
-        </div>
+        <ComponentGrid
+          components={groups[0]?.components ?? []}
+          selected={selected}
+          onSelect={onSelect}
+          slot={slot}
+          multiplier={multiplier}
+          gameYear={gameYear}
+          gameQuarter={gameQuarter}
+        />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           {groups.map((group, idx) => {
@@ -253,34 +242,67 @@ function SlotSection({
                   )}
                 </button>
                 {isExpanded && (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      alignItems: "flex-start",
-                      gap: "8px",
-                      padding: "4px 0 8px",
-                    }}
-                  >
-                    {group.components.map((component) => (
-                      <ComponentCard
-                        key={component.id}
-                        component={component}
-                        isSelected={selected?.id === component.id}
-                        onSelect={() => onSelect(component)}
-                        slot={slot}
-                        multiplier={multiplier}
-                        gameYear={gameYear}
-                        gameQuarter={gameQuarter}
-                      />
-                    ))}
-                  </div>
+                  <ComponentGrid
+                    components={group.components}
+                    selected={selected}
+                    onSelect={onSelect}
+                    slot={slot}
+                    multiplier={multiplier}
+                    gameYear={gameYear}
+                    gameQuarter={gameQuarter}
+                    style={{ padding: "4px 0 8px" }}
+                  />
                 )}
               </div>
             );
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+function ComponentGrid({
+  components,
+  selected,
+  onSelect,
+  slot,
+  multiplier,
+  gameYear,
+  gameQuarter,
+  style,
+}: {
+  components: Component[];
+  selected: Component | null;
+  onSelect: (component: Component) => void;
+  slot: ComponentSlot;
+  multiplier: number;
+  gameYear: number;
+  gameQuarter: 1 | 2 | 3 | 4;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "flex-start",
+        gap: "8px",
+        ...style,
+      }}
+    >
+      {components.map((component) => (
+        <ComponentCard
+          key={component.id}
+          component={component}
+          isSelected={selected?.id === component.id}
+          onSelect={() => onSelect(component)}
+          slot={slot}
+          multiplier={multiplier}
+          gameYear={gameYear}
+          gameQuarter={gameQuarter}
+        />
+      ))}
     </div>
   );
 }
@@ -312,7 +334,7 @@ function ComponentCard({
       <SelectionCard isSelected={isSelected} onClick={onSelect}>
         <div
           style={{
-            opacity: aging && !isSelected ? 0.55 : 1,
+            opacity: aging && !isSelected ? AGING_OPACITY : 1,
             transition: "opacity 0.15s",
           }}
         >
