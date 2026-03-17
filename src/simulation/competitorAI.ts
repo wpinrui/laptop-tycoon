@@ -260,6 +260,7 @@ function buildAIModel(
     retailPrice,
     manufacturingQuantity,
     yearDesigned: year,
+    quarterDesigned: competitor.launchQuarter,
     manufacturingPlan: null,
     unitsInStock: manufacturingQuantity,
     totalProductionSpend: 0,

@@ -1,4 +1,5 @@
 import { DemographicId, LaptopStat, ScreenSizeInches } from "./types";
+import { Quarter } from "../renderer/state/gameTypes";
 
 export type CompetitorArchetype = "budget" | "premium" | "generalist";
 
@@ -7,6 +8,8 @@ export interface CompetitorDefinition {
   name: string;
   productLine: string;
   archetype: CompetitorArchetype;
+  /** Quarter in which this competitor launches new models each year */
+  launchQuarter: Quarter;
   brandReach: Record<DemographicId, number>;
   brandPerception: Record<DemographicId, number>;
   statPriorities: {
@@ -30,6 +33,7 @@ export const COMPETITORS: CompetitorDefinition[] = [
     name: "ValueTech",
     productLine: "EconoBook",
     archetype: "budget",
+    launchQuarter: 3,
     brandReach: {
       // Generalist
       corporate: 15,
@@ -95,6 +99,7 @@ export const COMPETITORS: CompetitorDefinition[] = [
     name: "Prestige Computing",
     productLine: "EliteBook",
     archetype: "premium",
+    launchQuarter: 1,
     brandReach: {
       // Generalist
       corporate: 40,
@@ -160,6 +165,7 @@ export const COMPETITORS: CompetitorDefinition[] = [
     name: "OmniBook",
     productLine: "Voyager",
     archetype: "generalist",
+    launchQuarter: 2,
     brandReach: {
       // Generalist
       corporate: 35,

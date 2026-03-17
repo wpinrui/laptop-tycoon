@@ -6,8 +6,9 @@ import { ALL_STATS, LaptopStat, DemographicId, StatVector } from "../../data/typ
 import { DEMOGRAPHICS } from "../../data/demographics";
 import { STARTING_DEMAND_POOL } from "../../data/startingDemand";
 import { getDemandPoolSize, getScreenSizeFit } from "../../simulation/demographicData";
-import { REPLACEMENT_CYCLE, QUARTER_SHARES, QUARTER_SHARES_SUM, DEMAND_NOISE_MIN, DEMAND_NOISE_MAX } from "../../simulation/tunables";
+import { REPLACEMENT_CYCLE, SEASONAL_DEMAND_CURVES, DEMAND_NOISE_MIN, DEMAND_NOISE_MAX } from "../../simulation/tunables";
 import { getTheoreticalMaxima, getPriceScaleFactor } from "../../simulation/theoreticalMax";
+import { getNoveltyFactor } from "../../simulation/salesEngine";
 import { applyViabilityTransform } from "../../data/designConstants";
 import { tokens } from "../shell/tokens";
 
@@ -358,6 +359,7 @@ interface MarketEntry {
   owner: string;
   companyName: string;
   modelName: string;
+  model: LaptopModel;
   stats: StatVector;
   retailPrice: number;
   screenSize: number;
@@ -370,10 +372,11 @@ interface VPComputeContext {
   selectedDemo: DemographicId;
   companies: CompanyState[];
   year: number;
+  quarter: number;
 }
 
 function computeVPForLaptop(laptop: MarketEntry, ctx: VPComputeContext) {
-  const { maxStats, demographic, selectedDemo, companies, year } = ctx;
+  const { maxStats, demographic, selectedDemo, companies, year, quarter } = ctx;
 
   const normalised = {} as Record<LaptopStat, number>;
   for (const stat of ALL_STATS) {
@@ -403,13 +406,14 @@ function computeVPForLaptop(laptop: MarketEntry, ctx: VPComputeContext) {
   const biasedVP = Math.max(0, rawVP * (1 + perceptionMod / 100));
 
   const reach = company ? Math.min(company.brandReach[selectedDemo] ?? 0, 100) : 0;
-  const effectiveVP = biasedVP * (reach / 100);
+  const novelty = getNoveltyFactor(laptop.model, year, quarter, selectedDemo);
+  const effectiveVP = biasedVP * novelty * (reach / 100);
 
   return {
     laptop, normalised, weightedPerStat, weightedStatScore,
     priceScore, screenPenalty, rawVP,
     brandPerception, perceptionMod,
-    biasedVP, reach, effectiveVP,
+    biasedVP, reach, novelty, effectiveVP,
   };
 }
 
@@ -446,6 +450,7 @@ function SimulationTab() {
           owner: company.id,
           companyName: company.name,
           modelName: model.design.name,
+          model,
           stats: computeStatsForDesign(model.design, state.year),
           retailPrice: model.retailPrice,
           screenSize: model.design.screenSize,
@@ -477,8 +482,8 @@ function SimulationTab() {
   }, [state.year]);
 
   const vpContext: VPComputeContext = useMemo(
-    () => ({ maxStats, demographic, selectedDemo, companies: state.companies, year: state.year }),
-    [maxStats, demographic, selectedDemo, state.companies, state.year],
+    () => ({ maxStats, demographic, selectedDemo, companies: state.companies, year: state.year, quarter: state.quarter }),
+    [maxStats, demographic, selectedDemo, state.companies, state.year, state.quarter],
   );
 
   // --- Compute all intermediate values ---
@@ -502,7 +507,7 @@ function SimulationTab() {
   const basePool = STARTING_DEMAND_POOL[selectedDemo];
   const demPopulation = getDemandPoolSize(selectedDemo, state.year, basePool);
   const annualBuyers = demPopulation / REPLACEMENT_CYCLE[selectedDemo];
-  const quarterShare = QUARTER_SHARES[state.quarter - 1] / QUARTER_SHARES_SUM;
+  const quarterShare = SEASONAL_DEMAND_CURVES[selectedDemo][state.quarter - 1];
   const quarterlyBuyers = annualBuyers * quarterShare;
 
   const selectStyle: CSSProperties = {
@@ -719,15 +724,16 @@ function SimulationTab() {
         {currentStep === 9 && (
           <div>
             <div style={{ color: "#ffc800", fontWeight: "bold", marginBottom: 4, fontSize: 10 }}>
-              Effective VP = Biased VP x (reach / 100)
+              Effective VP = Biased VP x Novelty x (reach / 100)
             </div>
             <StepTable
-              columns={["Biased VP", "Reach %", "Effective VP"]}
+              columns={["Biased VP", "Novelty", "Reach %", "Effective VP"]}
               rows={computed.map((c) => ({
                 label: `${c.laptop.companyName.slice(0, 10)} ${c.laptop.modelName}`,
                 isPlayer: c.laptop.isPlayer,
                 cells: [
                   c.biasedVP.toExponential(4),
+                  c.novelty.toFixed(3),
                   c.reach.toFixed(2) + "%",
                   c.effectiveVP.toExponential(4),
                 ],

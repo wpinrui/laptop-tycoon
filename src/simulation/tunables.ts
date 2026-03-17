@@ -166,13 +166,81 @@ export const REPLACEMENT_CYCLE: Record<DemographicId, number> = {
   desktopReplacement: 4,
 };
 
-// ==================== Quarterly Distribution ====================
+// ==================== Seasonal Demand Curves ====================
 
-/** Buyer distribution across Q1-Q4 (out of sum = 15) */
-export const QUARTER_SHARES = [8, 4, 2, 1] as const;
+/**
+ * Per-demographic quarterly demand distribution.
+ * Each tuple [Q1, Q2, Q3, Q4] sums to 1.0.
+ * Total annual buyers per demographic is unchanged — just redistributed.
+ */
+export const SEASONAL_DEMAND_CURVES: Record<DemographicId, [number, number, number, number]> = {
+  // Student-type: Q3 peak (back-to-school)
+  student:       [0.15, 0.15, 0.55, 0.15],
+  educationK12:  [0.15, 0.15, 0.55, 0.15],
+  // Consumer-type: Q4 peak (holidays)
+  generalConsumer: [0.15, 0.15, 0.25, 0.45],
+  budgetBuyer:     [0.15, 0.15, 0.25, 0.45],
+  techEnthusiast:  [0.15, 0.15, 0.25, 0.45],
+  // Business-type: Q1-Q2 heavy, Q4 light
+  businessProfessional: [0.30, 0.30, 0.25, 0.15],
+  corporate:            [0.30, 0.30, 0.25, 0.15],
+  developer:            [0.30, 0.30, 0.25, 0.15],
+  // Creative-type: relatively flat, slight Q1-Q2 bias
+  creativeProfessional: [0.28, 0.27, 0.27, 0.18],
+  videoEditor:          [0.28, 0.27, 0.27, 0.18],
+  threeDArtist:         [0.28, 0.27, 0.27, 0.18],
+  musicProducer:        [0.28, 0.27, 0.27, 0.18],
+  writer:               [0.28, 0.27, 0.27, 0.18],
+  // Gamer-type: Q4 peak (holidays)
+  gamer:              [0.12, 0.22, 0.22, 0.44],
+  esportsPro:         [0.12, 0.22, 0.22, 0.44],
+  streamer:           [0.12, 0.22, 0.22, 0.44],
+  desktopReplacement: [0.12, 0.22, 0.22, 0.44],
+  // Other niche → business-type curve
+  digitalNomad: [0.30, 0.30, 0.25, 0.15],
+  fieldWorker:  [0.30, 0.30, 0.25, 0.15],
+  dayTrader:    [0.30, 0.30, 0.25, 0.15],
+};
 
-/** Sum of all quarter shares for normalisation. */
-export const QUARTER_SHARES_SUM = QUARTER_SHARES.reduce<number>((s, v) => s + v, 0);
+// ==================== Product Freshness / Novelty ====================
+
+/** VP multiplier at launch quarter (novelty/hype bonus) */
+export const NOVELTY_LAUNCH_BONUS = 1.3;
+/** Per-quarter exponential decay base for novelty factor */
+export const NOVELTY_DECAY_BASE = 0.85;
+
+/**
+ * Per-demographic freshness decay rate multiplier.
+ * Higher = product ages faster for this demographic.
+ */
+export const FRESHNESS_DECAY_RATE: Record<DemographicId, number> = {
+  // Student-type: fast (trend-conscious)
+  student: 1.2,
+  educationK12: 1.2,
+  // Consumer-type: baseline
+  generalConsumer: 1.0,
+  budgetBuyer: 1.0,
+  techEnthusiast: 1.0,
+  // Business-type: slow (procurement cycles)
+  businessProfessional: 0.7,
+  corporate: 0.7,
+  developer: 0.7,
+  // Creative-type: slow (tool loyalty)
+  creativeProfessional: 0.8,
+  videoEditor: 0.8,
+  threeDArtist: 0.8,
+  musicProducer: 0.8,
+  writer: 0.8,
+  // Gamer-type: fast (chasing latest specs)
+  gamer: 1.3,
+  esportsPro: 1.3,
+  streamer: 1.3,
+  desktopReplacement: 1.3,
+  // Other niche → business-type decay
+  digitalNomad: 0.7,
+  fieldWorker: 0.7,
+  dayTrader: 0.7,
+};
 
 // ==================== AI Production ====================
 

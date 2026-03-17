@@ -92,21 +92,25 @@ function cleanupAIModels(companies: CompanyState[], nextYear: number): CompanySt
 function preSimulateAIYear(initial: GameState): GameState {
   let s = initial;
 
-  // Generate AI models for this year
-  const generated = generateCompetitorModels(s.year, COMPETITORS, s.companies);
-  const modelByCompetitor = new Map(COMPETITORS.map((c, i) => [c.id, generated[i]]));
-  s = {
-    ...s,
-    companies: s.companies.map((comp) => {
-      if (comp.isPlayer) return comp;
-      const model = modelByCompetitor.get(comp.id);
-      return model ? { ...comp, models: [...comp.models, model] } : comp;
-    }),
-  };
-
-  // Simulate all 4 quarters
+  // Simulate all 4 quarters — generate AI models per competitor's launch quarter
   for (let q = 1; q <= 4; q++) {
     s = { ...s, quarter: q as Quarter };
+
+    // Generate AI models for competitors launching this quarter
+    const launching = COMPETITORS.filter((c) => c.launchQuarter === q);
+    if (launching.length > 0) {
+      const generated = generateCompetitorModels(s.year, launching, s.companies);
+      const modelByCompetitor = new Map(launching.map((c, i) => [c.id, generated[i]]));
+      s = {
+        ...s,
+        companies: s.companies.map((comp) => {
+          if (comp.isPlayer) return comp;
+          const model = modelByCompetitor.get(comp.id);
+          return model ? { ...comp, models: [...comp.models, model] } : comp;
+        }),
+      };
+    }
+
     const result = simulateQuarter(s);
 
     // Update competitor brand reach, perception, and inventory (same as APPLY_QUARTER_RESULT)

@@ -43,6 +43,8 @@ export interface LaptopModel {
   retailPrice: number | null;
   manufacturingQuantity: number | null;
   yearDesigned: number;
+  /** Quarter when this model was designed/launched. */
+  quarterDesigned: Quarter;
   manufacturingPlan: FullManufacturingPlan | null;
   /** Prior-quarter plan saved when an additional order replaces it, so it can be restored on cancel. */
   previousManufacturingPlan?: FullManufacturingPlan | null;

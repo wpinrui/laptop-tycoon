@@ -7,7 +7,7 @@ import { MenuButton } from "../../shell/MenuButton";
 import { tokens } from "../../shell/tokens";
 import { BentoCard } from "./BentoCard";
 import { emptyStateStyle } from "./styles";
-import { getActiveModels, MAX_MODELS } from "./utils";
+import { getActiveModels } from "./utils";
 import { STATUS_CONFIG, getDisplayStatus } from "../../statusConfig";
 
 const modelRowStyle: CSSProperties = {
@@ -23,7 +23,6 @@ export function ModelsCard() {
   const { navigateTo } = useNavigation();
   const player = getPlayerCompany(state);
   const activeModels = getActiveModels(state);
-  const emptySlots = MAX_MODELS - activeModels.length;
   const canDesignNew = !state.quarterSimulated;
 
   return (
@@ -72,7 +71,7 @@ export function ModelsCard() {
           navigateTo("designWizard");
         }}
         style={{ marginTop: tokens.spacing.md, width: "100%", fontSize: tokens.font.sizeBase }}
-        disabled={emptySlots === 0 || !canDesignNew}
+        disabled={!canDesignNew}
       >
         + New Design
       </MenuButton>

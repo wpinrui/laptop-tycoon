@@ -1,6 +1,6 @@
 import { DemographicId } from "../data/types";
 import { PriceCeiling, DemandGrowthAnchor } from "./salesTypes";
-import { PRICE_INFLATION_RATE, PRICE_BASE_YEAR, REPLACEMENT_CYCLE, QUARTER_SHARES, QUARTER_SHARES_SUM } from "./tunables";
+import { PRICE_INFLATION_RATE, PRICE_BASE_YEAR, REPLACEMENT_CYCLE, SEASONAL_DEMAND_CURVES } from "./tunables";
 import { Quarter } from "../renderer/state/gameTypes";
 import { STARTING_DEMAND_POOL } from "../data/startingDemand";
 
@@ -144,7 +144,7 @@ export function getQuarterlyBuyers(demographicId: DemographicId, year: number, q
   const basePool = STARTING_DEMAND_POOL[demographicId];
   const population = getDemandPoolSize(demographicId, year, basePool);
   const annualActiveBuyers = population / REPLACEMENT_CYCLE[demographicId];
-  const quarterShare = QUARTER_SHARES[quarter - 1] / QUARTER_SHARES_SUM;
+  const quarterShare = SEASONAL_DEMAND_CURVES[demographicId][quarter - 1];
   return Math.round(annualActiveBuyers * quarterShare);
 }
 
