@@ -382,4 +382,92 @@ export const PORT_TYPES: PortType[] = [
     stats: { connectivity: 18 },
     specs: { speed: "5 Gbps", type: "Type-A (Blue)" },
   },
+
+  // --- 2011 ---
+  {
+    id: "thunderbolt_1",
+    name: "Thunderbolt",
+    description:
+      "Intel's lightning-fast port for displays and storage. Uses Mini DisplayPort connector.",
+    category: "expansion",
+    yearIntroduced: 2011,
+    yearDiscontinued: 2015,
+    maxCount: 2,
+    costPerPort: 8,
+    weightPerPortG: 2,
+    volumePerPortCm3: 2,
+    minThicknessCm: 0.5,
+    stats: { connectivity: 20 },
+    specs: { speed: "10 Gbps", type: "Mini DisplayPort connector", features: "Daisy-chain displays + storage" },
+  },
+
+  // --- 2013 ---
+  {
+    id: "thunderbolt_2",
+    name: "Thunderbolt 2",
+    description:
+      "Doubled bandwidth over Thunderbolt 1. Supports 4K displays and fast external storage.",
+    category: "expansion",
+    yearIntroduced: 2013,
+    yearDiscontinued: 2017,
+    maxCount: 2,
+    costPerPort: 8,
+    weightPerPortG: 2,
+    volumePerPortCm3: 2,
+    minThicknessCm: 0.5,
+    stats: { connectivity: 22 },
+    specs: { speed: "20 Gbps", type: "Mini DisplayPort connector", features: "4K display + storage" },
+  },
+  {
+    id: "hdmi_1_4",
+    name: "HDMI 1.4",
+    description:
+      "Updated HDMI with 4K support at 30Hz and an Audio Return Channel.",
+    category: "video",
+    yearIntroduced: 2013,
+    yearDiscontinued: null,
+    maxCount: 1,
+    costPerPort: 3,
+    weightPerPortG: 4,
+    volumePerPortCm3: 4,
+    minThicknessCm: 0.7,
+    stats: { connectivity: 14 },
+    specs: { signal: "Digital (HDMI 1.4)", maxResolution: "3840x2160@30Hz", audio: "Yes" },
+  },
+
+  // --- 2014 ---
+  {
+    id: "hdmi_2_0",
+    name: "HDMI 2.0",
+    description:
+      "Full 4K at 60Hz. The definitive digital video output for modern displays.",
+    category: "video",
+    yearIntroduced: 2014,
+    yearDiscontinued: null,
+    maxCount: 1,
+    costPerPort: 4,
+    weightPerPortG: 4,
+    volumePerPortCm3: 4,
+    minThicknessCm: 0.7,
+    stats: { connectivity: 16 },
+    specs: { signal: "Digital (HDMI 2.0)", maxResolution: "3840x2160@60Hz", audio: "Yes" },
+  },
+
+  // --- 2015 ---
+  {
+    id: "usb_type_c",
+    name: "USB Type-C (USB 3.1)",
+    description:
+      "The reversible connector that does everything — data, charging, and video.",
+    category: "usb",
+    yearIntroduced: 2015,
+    yearDiscontinued: null,
+    maxCount: 3,
+    costPerPort: 5,
+    weightPerPortG: 2,
+    volumePerPortCm3: 2,
+    minThicknessCm: 0.4,
+    stats: { connectivity: 22 },
+    specs: { speed: "10 Gbps", type: "Type-C", features: "Reversible, Alt Mode (DP/HDMI)" },
+  },
 ];

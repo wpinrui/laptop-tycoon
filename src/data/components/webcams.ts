@@ -154,4 +154,114 @@ export const WEBCAMS: Component[] = [
     },
     stats: { webcam: 88 },
   },
+
+  // --- 2011 ---
+  {
+    id: "webcam_hd_720p_standard",
+    name: "HD 720p Webcam",
+    description:
+      "720p HD webcam becomes the standard. Clear video calls for everyone.",
+    slot: "webcam",
+    yearIntroduced: 2011,
+    yearDiscontinued: 2014,
+    costAtLaunch: 15,
+    powerDrawW: 1,
+    weightG: 5,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: {
+      resolution: "1280x720",
+      megapixels: "1.0 MP (HD)",
+      feature: "720p standard",
+    },
+    stats: { webcam: 85 },
+  },
+
+  // --- 2012 ---
+  {
+    id: "webcam_hd_720p_lowlight",
+    name: "HD 720p Webcam (Low-light Enhanced)",
+    description:
+      "Improved sensor for better performance in dimly lit environments.",
+    slot: "webcam",
+    yearIntroduced: 2012,
+    yearDiscontinued: 2015,
+    costAtLaunch: 18,
+    powerDrawW: 1,
+    weightG: 5,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: {
+      resolution: "1280x720",
+      megapixels: "1.0 MP (HD)",
+      feature: "720p + improved low-light",
+    },
+    stats: { webcam: 92 },
+  },
+
+  // --- 2013 ---
+  {
+    id: "webcam_hd_1080p",
+    name: "Full HD 1080p Webcam",
+    description:
+      "Crystal-clear 1080p video. A premium feature for video conferencing.",
+    slot: "webcam",
+    yearIntroduced: 2013,
+    yearDiscontinued: 2016,
+    costAtLaunch: 35,
+    powerDrawW: 1,
+    weightG: 6,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: {
+      resolution: "1920x1080",
+      megapixels: "2.1 MP (Full HD)",
+      feature: "1080p video",
+    },
+    stats: { webcam: 105 },
+  },
+
+  // --- 2014 ---
+  {
+    id: "webcam_hd_720p_2014",
+    name: "HD 720p Webcam (2014)",
+    description:
+      "Standard 720p webcam with better colour accuracy and faster autofocus.",
+    slot: "webcam",
+    yearIntroduced: 2014,
+    yearDiscontinued: 2017,
+    costAtLaunch: 10,
+    powerDrawW: 1,
+    weightG: 5,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: {
+      resolution: "1280x720",
+      megapixels: "1.0 MP (HD)",
+      feature: "720p + fast autofocus",
+    },
+    stats: { webcam: 90 },
+  },
+
+  // --- 2015 ---
+  {
+    id: "webcam_hd_1080p_wide",
+    name: "Full HD 1080p Wide-angle Webcam",
+    description:
+      "Sharp 1080p with a wider field of view. Premium video conferencing experience.",
+    slot: "webcam",
+    yearIntroduced: 2015,
+    yearDiscontinued: 2018,
+    costAtLaunch: 30,
+    powerDrawW: 1,
+    weightG: 6,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: {
+      resolution: "1920x1080",
+      megapixels: "2.1 MP (Full HD)",
+      feature: "1080p + wide-angle lens",
+    },
+    stats: { webcam: 110 },
+  },
 ];
