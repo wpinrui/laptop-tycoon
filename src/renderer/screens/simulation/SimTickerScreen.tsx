@@ -18,8 +18,8 @@ function easeOutCubic(t: number): number {
 
 // ─── Animated Counter ────────────────────────────────────────
 
-function AnimatedValue({ value, progress, format }: { value: number; progress: number; format: (n: number) => string }) {
-  const current = value * easeOutCubic(progress);
+function AnimatedValue({ value, from = 0, progress, format }: { value: number; from?: number; progress: number; format: (n: number) => string }) {
+  const current = from + (value - from) * easeOutCubic(progress);
   return <>{format(current)}</>;
 }
 
@@ -174,9 +174,10 @@ function DateProgressBar({ progress, quarter, year }: { progress: number; quarte
 
 // ─── KPI Counter ─────────────────────────────────────────────
 
-function KpiCounter({ label, value, progress, format, color }: {
+function KpiCounter({ label, value, from, progress, format, color }: {
   label: string;
   value: number;
+  from?: number;
   progress: number;
   format: (n: number) => string;
   color?: string;
@@ -192,7 +193,7 @@ function KpiCounter({ label, value, progress, format, color }: {
         fontVariantNumeric: "tabular-nums",
         color: color ?? tokens.colors.text,
       }}>
-        <AnimatedValue value={value} progress={progress} format={format} />
+        <AnimatedValue value={value} from={from} progress={progress} format={format} />
       </div>
     </div>
   );
@@ -331,7 +332,7 @@ export function SimTickerScreen() {
   if (!result) return null;
 
   const totalUnits = result.playerResults.reduce((s, lr) => s + lr.unitsSold, 0);
-  const cashBefore = result.cashAfterResolution - result.totalProfit + result.marketingCost;
+  const cashBefore = result.cashAfterResolution - result.totalRevenue + result.marketingCost;
 
   return (
     <div style={screenStyle}>
@@ -437,12 +438,9 @@ export function SimTickerScreen() {
             <KpiCounter
               label="Cash"
               value={result.cashAfterResolution}
+              from={cashBefore}
               progress={progress}
-              format={(_n) => {
-                // Interpolate from pre-sim cash to final cash
-                const current = cashBefore + (result.cashAfterResolution - cashBefore) * easeOutCubic(progress);
-                return formatCash(Math.round(current));
-              }}
+              format={(n) => formatCash(Math.round(n))}
               color={tokens.colors.statusCash}
             />
           </div>
