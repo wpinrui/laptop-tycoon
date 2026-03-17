@@ -12,6 +12,7 @@ export type Screen =
   | "news"
   | "history"
   | "preSimNews"
+  | "simTicker"
   | "quarterlySummary"
   | "yearEndSummary"
   | "marketBrowser"
