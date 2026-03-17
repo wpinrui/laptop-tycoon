@@ -86,6 +86,26 @@ export const MATERIALS: ChassisOption[] = [
     specs: { material: "Carbon Fibre Reinforced Polymer", finish: "Woven" },
     stats: { design: 60, buildQuality: 70 },
   },
+
+  // --- 2008 ---
+  {
+    id: "unibody_aluminium",
+    name: "Unibody Aluminium",
+    description:
+      "Machined from a single block of aluminium. Incredibly rigid and premium.",
+    slot: "material",
+    yearIntroduced: 2008,
+    yearDiscontinued: null,
+    costAtLaunch: 150,
+    costDecayRate: 0.06,
+    weightG: 0,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 0.8,
+    specs: { material: "CNC Aluminium", finish: "Anodised" },
+    stats: { design: 80, buildQuality: 75 },
+  },
 ];
 
 export const COOLING_SOLUTIONS: ChassisOption[] = [
@@ -174,6 +194,7 @@ export const COOLING_SOLUTIONS: ChassisOption[] = [
     specs: { type: "Active", noise: "Loud", fans: "2", heatpipes: "2 copper" },
     stats: {},
   },
+
 ];
 
 export const KEYBOARD_FEATURES: ChassisOption[] = [
@@ -262,6 +283,51 @@ export const KEYBOARD_FEATURES: ChassisOption[] = [
     specs: { type: "Membrane", travel: "2.5mm", backlight: "White LED" },
     stats: { keyboard: 55, design: 10 },
   },
+
+  // --- 2007 ---
+  {
+    id: "keyboard_chiclet",
+    name: "Chiclet (Island-style) Keyboard",
+    description:
+      "Modern flat keys with gaps between them. Clean look, decent typing feel.",
+    slot: "keyboardFeature",
+    yearIntroduced: 2007,
+    yearDiscontinued: null,
+    costAtLaunch: 10,
+    costDecayRate: 0.05,
+    weightG: 0,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 1.0,
+    specs: { type: "Chiclet", travel: "2.0mm", layout: "Island-style" },
+    stats: { keyboard: 48, design: 8 },
+  },
+
+  // --- 2008 ---
+  {
+    id: "keyboard_chiclet_backlit",
+    name: "Backlit Chiclet Keyboard",
+    description:
+      "Island-style keys with LED backlighting. The modern standard for premium laptops.",
+    slot: "keyboardFeature",
+    yearIntroduced: 2008,
+    yearDiscontinued: null,
+    costAtLaunch: 25,
+    costDecayRate: 0.08,
+    weightG: 5,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 1.0,
+    specs: {
+      type: "Chiclet",
+      travel: "2.0mm",
+      backlight: "White LED",
+      layout: "Island-style",
+    },
+    stats: { keyboard: 58, design: 15 },
+  },
 ];
 
 export const TRACKPAD_FEATURES: ChassisOption[] = [
@@ -349,6 +415,54 @@ export const TRACKPAD_FEATURES: ChassisOption[] = [
     shellDensityMultiplier: 1.0,
     specs: { type: "Synaptics", size: "Medium-Large", buttons: "2 physical buttons", feature: "Horizontal + vertical scroll" },
     stats: { trackpad: 55 },
+  },
+
+  // --- 2008 ---
+  {
+    id: "trackpad_multitouch",
+    name: "Multi-touch Trackpad",
+    description:
+      "Supports pinch-to-zoom, two-finger scroll, and other gestures.",
+    slot: "trackpadFeature",
+    yearIntroduced: 2008,
+    yearDiscontinued: null,
+    costAtLaunch: 18,
+    costDecayRate: 0.08,
+    weightG: 0,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 1.0,
+    specs: {
+      type: "Synaptics",
+      size: "Large",
+      buttons: "2 physical buttons",
+      feature: "Multi-touch gestures",
+    },
+    stats: { trackpad: 68 },
+  },
+  {
+    id: "trackpad_glass_multitouch",
+    name: "Glass Multi-touch Trackpad",
+    description:
+      "Smooth glass surface with advanced gesture support. Premium feel and precision.",
+    slot: "trackpadFeature",
+    yearIntroduced: 2008,
+    yearDiscontinued: null,
+    costAtLaunch: 30,
+    costDecayRate: 0.06,
+    weightG: 5,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 1.0,
+    specs: {
+      type: "Glass",
+      size: "Large",
+      buttons: "Integrated click",
+      feature: "Multi-touch + click-anywhere",
+    },
+    stats: { trackpad: 80, design: 5 },
   },
 ];
 

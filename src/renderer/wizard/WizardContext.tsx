@@ -45,8 +45,8 @@ type WizardAction =
   | { type: "RESET" }
   | { type: "LOAD_DESIGN"; design: LaptopDesign }
   | { type: "PREFILL_FROM_MODEL"; design: LaptopDesign; gameYear: number }
-  | { type: "DEBUG_AUTOFILL"; year: number }
-  | { type: "DEBUG_OPTIMISE"; demographic: Demographic; year: number };
+  | { type: "DEBUG_AUTOFILL"; year: number; quarter: 1 | 2 | 3 | 4 }
+  | { type: "DEBUG_OPTIMISE"; demographic: Demographic; year: number; quarter: 1 | 2 | 3 | 4 };
 
 /** Steps locked by spec bump — screen size and body are inherited from predecessor. */
 export function isStepLockedBySpecBump(step: WizardStep, state: WizardState): boolean {
@@ -208,7 +208,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       const allSlots: ComponentSlot[] = Object.values(COMPONENT_STEP_SLOTS).flat() as ComponentSlot[];
       const components: Partial<Record<ComponentSlot, Component>> = {};
       for (const slot of allSlots) {
-        const available = getAvailableComponents(slot, action.year);
+        const available = getAvailableComponents(slot, action.year, action.quarter);
         if (available.length > 0) components[slot] = available[0];
       }
       const chassis: WizardState["chassis"] = { material: null, coolingSolution: null, keyboardFeature: null, trackpadFeature: null };
@@ -228,7 +228,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       };
     }
     case "DEBUG_OPTIMISE": {
-      const result = optimiseForDemographic(action.demographic, action.year);
+      const result = optimiseForDemographic(action.demographic, action.year, action.quarter);
       return {
         ...state,
         name: `Optimised (${action.demographic.name})`,
@@ -272,6 +272,7 @@ interface WizardContextValue {
   state: WizardState;
   dispatch: Dispatch<WizardAction>;
   gameYear: number;
+  gameQuarter: 1 | 2 | 3 | 4;
 }
 
 const WizardContext = createContext<WizardContextValue | null>(null);
@@ -280,8 +281,9 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(wizardReducer, INITIAL_WIZARD_STATE);
   const { state: gameState } = useGame();
   const gameYear = gameState.year;
+  const gameQuarter = gameState.quarter;
   return (
-    <WizardContext.Provider value={{ state, dispatch, gameYear }}>
+    <WizardContext.Provider value={{ state, dispatch, gameYear, gameQuarter }}>
       {children}
     </WizardContext.Provider>
   );

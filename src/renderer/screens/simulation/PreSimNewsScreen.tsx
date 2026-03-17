@@ -178,8 +178,8 @@ function GenericBody({ item, pub }: { item: NewsItem; pub: PublicationStyle }) {
 // ─── Category Icon ──────────────────────────────────────────
 
 function CategoryBadge({ category, pub }: { category: NewsCategory; pub: PublicationStyle }) {
-  const icon = category === "productLaunch" ? <Package size={14} /> : category === "review" ? <Star size={14} /> : <Newspaper size={14} />;
-  const label = category === "productLaunch" ? "Product Launch" : category === "review" ? "Review" : "News";
+  const icon = category === "productLaunch" ? <Package size={14} /> : category === "componentLaunch" ? <Package size={14} /> : category === "review" ? <Star size={14} /> : <Newspaper size={14} />;
+  const label = category === "productLaunch" ? "Product Launch" : category === "componentLaunch" ? "New Hardware" : category === "review" ? "Review" : "News";
   return (
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 4,
@@ -365,7 +365,7 @@ export function PreSimNewsScreen() {
       (n) =>
         n.year === result.year &&
         n.quarter === result.quarter &&
-        (n.category === "productLaunch" || n.category === "review"),
+        (n.category === "productLaunch" || n.category === "componentLaunch" || n.category === "review"),
     );
   }, [state.newsHistory, result]);
 

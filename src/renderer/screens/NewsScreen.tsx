@@ -227,10 +227,25 @@ function AwardBody({ body }: { body: Extract<NewsBody, { type: "award" }> }) {
   );
 }
 
+function ComponentLaunchBody({ body }: { body: Extract<NewsBody, { type: "componentLaunch" }> }) {
+  return (
+    <div style={bodyContainerStyle}>
+      {body.components.map((c, i) => (
+        <div key={i} style={{ marginBottom: i < body.components.length - 1 ? 6 : 0 }}>
+          <span style={{ color: "#ddd", fontWeight: 600 }}>{c.name}</span>
+          <span style={{ color: "#888", marginLeft: 6 }}>({c.slot})</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function NewsBodyRenderer({ body }: { body: NewsBody }) {
   switch (body.type) {
     case "productLaunch":
       return <ProductLaunchBody body={body} />;
+    case "componentLaunch":
+      return <ComponentLaunchBody body={body} />;
     case "financial":
       return <FinancialBody body={body} />;
     case "marketShare":

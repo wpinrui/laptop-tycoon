@@ -115,4 +115,163 @@ export const WIFI: Component[] = [
     specs: { wifi: "802.11a/b/g", speed: "54 Mbps", bluetooth: "2.0 + EDR" },
     stats: { connectivity: 75 },
   },
+
+  // --- 2006 ---
+  {
+    id: "intel_pro_3945abg_bt20",
+    name: "Intel PRO/Wireless 3945ABG + Bluetooth 2.0",
+    description:
+      "Tri-band WiFi with Bluetooth. Reliable and widely compatible.",
+    slot: "wifi",
+    yearIntroduced: 2006,
+    yearDiscontinued: 2009,
+    costAtLaunch: 40,
+    powerDrawW: 2,
+    weightG: 7,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: { wifi: "802.11a/b/g", speed: "54 Mbps", bluetooth: "2.0 + EDR" },
+    stats: { connectivity: 78 },
+  },
+
+  // --- 2007 ---
+  {
+    id: "intel_4965agn",
+    name: "Intel WiFi Link 4965AGN",
+    description:
+      "First 802.11n WiFi — dramatically faster wireless with MIMO technology.",
+    slot: "wifi",
+    yearIntroduced: 2007,
+    yearDiscontinued: 2010,
+    costAtLaunch: 45,
+    powerDrawW: 2,
+    weightG: 7,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11a/b/g/n (draft)",
+      speed: "300 Mbps",
+      bluetooth: "None",
+    },
+    stats: { connectivity: 85 },
+  },
+  {
+    id: "intel_4965agn_bt21",
+    name: "Intel WiFi Link 4965AGN + Bluetooth 2.1",
+    description:
+      "Draft-N WiFi with Bluetooth combo. Best wireless option for 2007.",
+    slot: "wifi",
+    yearIntroduced: 2007,
+    yearDiscontinued: 2010,
+    costAtLaunch: 55,
+    powerDrawW: 3,
+    weightG: 8,
+    volumeCm3: 3,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11a/b/g/n (draft)",
+      speed: "300 Mbps",
+      bluetooth: "2.1 + EDR",
+    },
+    stats: { connectivity: 90 },
+  },
+
+  // --- 2008 ---
+  {
+    id: "intel_5100agn",
+    name: "Intel WiFi Link 5100AGN",
+    description:
+      "Certified 802.11n with excellent range. Budget N-capable option.",
+    slot: "wifi",
+    yearIntroduced: 2008,
+    quarterIntroduced: 3,
+    yearDiscontinued: 2011,
+    costAtLaunch: 35,
+    powerDrawW: 2,
+    weightG: 6,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: { wifi: "802.11a/b/g/n", speed: "300 Mbps", bluetooth: "None" },
+    stats: { connectivity: 88 },
+  },
+  {
+    id: "intel_5300agn_bt21",
+    name: "Intel WiFi Link 5300AGN + Bluetooth 2.1",
+    description:
+      "Triple-stream 802.11n for maximum throughput. Premium wireless.",
+    slot: "wifi",
+    yearIntroduced: 2008,
+    yearDiscontinued: 2011,
+    costAtLaunch: 50,
+    powerDrawW: 3,
+    weightG: 7,
+    volumeCm3: 3,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11a/b/g/n",
+      speed: "450 Mbps (3x3)",
+      bluetooth: "2.1 + EDR",
+    },
+    stats: { connectivity: 95 },
+  },
+
+  // --- 2009 ---
+  {
+    id: "atheros_ar9285_bt21",
+    name: "Atheros AR9285 802.11n + Bluetooth 2.1",
+    description:
+      "Budget single-band WiFi N with Bluetooth. Great value for mainstream laptops.",
+    slot: "wifi",
+    yearIntroduced: 2009,
+    yearDiscontinued: 2012,
+    costAtLaunch: 25,
+    powerDrawW: 2,
+    weightG: 5,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: { wifi: "802.11b/g/n", speed: "150 Mbps", bluetooth: "2.1 + EDR" },
+    stats: { connectivity: 82 },
+  },
+
+  // --- 2010 ---
+  {
+    id: "intel_6200agn_bt30",
+    name: "Intel Centrino Advanced-N 6200 + Bluetooth 3.0",
+    description:
+      "Fast dual-band WiFi with Bluetooth 3.0. The new standard for premium laptops.",
+    slot: "wifi",
+    yearIntroduced: 2010,
+    yearDiscontinued: 2013,
+    costAtLaunch: 40,
+    powerDrawW: 2,
+    weightG: 6,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11a/b/g/n",
+      speed: "300 Mbps",
+      bluetooth: "3.0 + HS",
+    },
+    stats: { connectivity: 100 },
+  },
+  {
+    id: "intel_6300agn_bt30",
+    name: "Intel Centrino Ultimate-N 6300 + Bluetooth 3.0",
+    description:
+      "Top-tier triple-stream WiFi. The fastest wireless available in 2010.",
+    slot: "wifi",
+    yearIntroduced: 2010,
+    yearDiscontinued: 2013,
+    costAtLaunch: 50,
+    powerDrawW: 3,
+    weightG: 7,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11a/b/g/n",
+      speed: "450 Mbps (3x3)",
+      bluetooth: "3.0 + HS",
+    },
+    stats: { connectivity: 108 },
+  },
 ];

@@ -34,4 +34,40 @@ export const DISPLAY_SURFACES: Component[] = [
     specs: { finish: "Glossy", reflections: "High", contrast: "Enhanced" },
     stats: { display: 8 },
   },
+
+  // --- 2006 ---
+  {
+    id: "surface_glossy_premium",
+    name: "Premium Glossy Finish",
+    description:
+      "Ultra-vivid glossy display with deeper blacks. The trendy choice of the late 2000s.",
+    slot: "displaySurface",
+    yearIntroduced: 2006,
+    yearDiscontinued: 2012,
+    costAtLaunch: 5,
+    powerDrawW: 0,
+    weightG: 0,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: { finish: "Glossy (Premium)", reflections: "High", contrast: "Enhanced+" },
+    stats: { display: 12 },
+  },
+
+  // --- 2009 ---
+  {
+    id: "surface_anti_glare",
+    name: "Anti-glare Coating",
+    description:
+      "Advanced anti-reflective treatment that reduces glare without dulling colors.",
+    slot: "displaySurface",
+    yearIntroduced: 2009,
+    yearDiscontinued: 2014,
+    costAtLaunch: 15,
+    powerDrawW: 0,
+    weightG: 0,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: { finish: "Anti-glare", reflections: "Very Low", contrast: "Standard+" },
+    stats: { display: 10 },
+  },
 ];
