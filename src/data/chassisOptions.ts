@@ -166,6 +166,46 @@ export const MATERIALS: ChassisOption[] = [
     specs: { material: "Magnesium Alloy + Carbon Fibre", finish: "Painted + Woven" },
     stats: { design: 75, buildQuality: 82 },
   },
+
+  // --- 2021 ---
+  {
+    id: "recycled_aluminium",
+    name: "Recycled Aluminium",
+    description:
+      "Sustainable unibody made from 100% recycled aluminium. Premium feel with a smaller footprint.",
+    slot: "material",
+    yearIntroduced: 2021,
+    yearDiscontinued: null,
+    costAtLaunch: 130,
+    costDecayRate: 0.06,
+    weightG: 0,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 0.78,
+    specs: { material: "100% Recycled Aluminium", finish: "Anodised" },
+    stats: { design: 90, buildQuality: 82 },
+  },
+
+  // --- 2024 ---
+  {
+    id: "bio_polymer_aluminium",
+    name: "Bio-based Polymer + Aluminium",
+    description:
+      "Sustainable blend of bio-based polymers and aluminium. Lightweight, eco-friendly, and surprisingly rigid.",
+    slot: "material",
+    yearIntroduced: 2024,
+    yearDiscontinued: null,
+    costAtLaunch: 100,
+    costDecayRate: 0.07,
+    weightG: 0,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 0.72,
+    specs: { material: "Bio-polymer + Aluminium", finish: "Sustainable blend" },
+    stats: { design: 85, buildQuality: 78 },
+  },
 ];
 
 export const COOLING_SOLUTIONS: ChassisOption[] = [
@@ -309,6 +349,46 @@ export const COOLING_SOLUTIONS: ChassisOption[] = [
     coolingCapacityW: 280,
     shellDensityMultiplier: 1.0,
     specs: { type: "Active", noise: "Very Loud", fans: "2 (high-speed)", heatpipes: "Vapour chamber + 4 copper" },
+    stats: {},
+  },
+
+  // --- 2021 ---
+  {
+    id: "vapour_chamber_liquid_metal",
+    name: "Vapour Chamber + Liquid Metal",
+    description:
+      "Vapour chamber paired with liquid metal thermal interface. Extreme cooling for high-wattage builds.",
+    slot: "coolingSolution",
+    yearIntroduced: 2021,
+    yearDiscontinued: null,
+    costAtLaunch: 150,
+    costDecayRate: 0.04,
+    weightG: 290,
+    volumeCm3: 230,
+    minThicknessCm: 2.0,
+    coolingCapacityW: 320,
+    shellDensityMultiplier: 1.0,
+    specs: { type: "Active", noise: "Very Loud", fans: "2 (high-speed)", heatpipes: "Vapour chamber + liquid metal TIM" },
+    stats: {},
+  },
+
+  // --- 2023 ---
+  {
+    id: "triple_fan",
+    name: "Triple Fan Cooling",
+    description:
+      "Three-fan setup with vapour chamber and five heatpipes. Maximum airflow for desktop-class performance.",
+    slot: "coolingSolution",
+    yearIntroduced: 2023,
+    yearDiscontinued: null,
+    costAtLaunch: 100,
+    costDecayRate: 0.05,
+    weightG: 320,
+    volumeCm3: 260,
+    minThicknessCm: 2.2,
+    coolingCapacityW: 350,
+    shellDensityMultiplier: 1.0,
+    specs: { type: "Active", noise: "Very Loud", fans: "3", heatpipes: "Vapour chamber + 5 heatpipes" },
     stats: {},
   },
 
@@ -545,6 +625,56 @@ export const KEYBOARD_FEATURES: ChassisOption[] = [
     },
     stats: { keyboard: 65, design: 22 },
   },
+
+  // --- 2020 ---
+  {
+    id: "keyboard_scissor",
+    name: "Scissor Mechanism Keyboard",
+    description:
+      "Reliable scissor switches replacing the butterfly mechanism. Better travel and durability.",
+    slot: "keyboardFeature",
+    yearIntroduced: 2020,
+    yearDiscontinued: null,
+    costAtLaunch: 18,
+    costDecayRate: 0.05,
+    weightG: 0,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 1.0,
+    specs: {
+      type: "Scissor",
+      travel: "1.0mm",
+      backlight: "White LED",
+      layout: "Low-profile island-style",
+    },
+    stats: { keyboard: 60, design: 14 },
+  },
+
+  // --- 2022 ---
+  {
+    id: "keyboard_low_profile_mechanical",
+    name: "Low-profile Mechanical Keyboard",
+    description:
+      "Mechanical switches in a slim form factor. Per-key RGB with satisfying tactile feel.",
+    slot: "keyboardFeature",
+    yearIntroduced: 2022,
+    yearDiscontinued: null,
+    costAtLaunch: 55,
+    costDecayRate: 0.05,
+    weightG: 10,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 1.0,
+    specs: {
+      type: "Mechanical (low-profile)",
+      travel: "1.5mm",
+      backlight: "Per-key RGB LED",
+      layout: "Island-style",
+    },
+    stats: { keyboard: 78, design: 20 },
+  },
 ];
 
 export const TRACKPAD_FEATURES: ChassisOption[] = [
@@ -780,6 +910,31 @@ export const TRACKPAD_FEATURES: ChassisOption[] = [
       feature: "Windows Precision driver + edge gestures",
     },
     stats: { trackpad: 90, design: 10 },
+  },
+
+  // --- 2021 ---
+  {
+    id: "trackpad_haptic",
+    name: "Haptic Trackpad",
+    description:
+      "Pressure-sensitive haptic engine replaces the physical click mechanism entirely. Seamless glass surface.",
+    slot: "trackpadFeature",
+    yearIntroduced: 2021,
+    yearDiscontinued: null,
+    costAtLaunch: 40,
+    costDecayRate: 0.05,
+    weightG: 10,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 1.0,
+    specs: {
+      type: "Glass + Haptic Engine",
+      size: "Extra Large",
+      buttons: "Haptic (no physical click)",
+      feature: "Pressure-sensitive haptic feedback + multi-gesture",
+    },
+    stats: { trackpad: 95, design: 12 },
   },
 ];
 

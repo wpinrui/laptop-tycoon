@@ -87,7 +87,7 @@ export interface Component {
   yearIntroduced: number;
   /** Quarter within yearIntroduced when component becomes available (1-4). Defaults to 1. */
   quarterIntroduced?: 1 | 2 | 3 | 4;
-  yearDiscontinued: number;
+  yearDiscontinued: number | null;
   costAtLaunch: number;
   powerDrawW: number;
   weightG: number;

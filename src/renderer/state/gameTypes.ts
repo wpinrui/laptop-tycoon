@@ -59,7 +59,7 @@ export interface LaptopModel {
 /** Returns true if any component in the design has been discontinued by the given year. */
 export function hasDiscontinuedComponents(design: LaptopDesign, year: number): boolean {
   for (const component of Object.values(design.components)) {
-    if (component && component.yearDiscontinued < year) return true;
+    if (component && component.yearDiscontinued !== null && component.yearDiscontinued < year) return true;
   }
   return false;
 }
