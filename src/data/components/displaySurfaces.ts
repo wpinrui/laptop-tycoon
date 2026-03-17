@@ -70,4 +70,74 @@ export const DISPLAY_SURFACES: Component[] = [
     specs: { finish: "Anti-glare", reflections: "Very Low", contrast: "Standard+" },
     stats: { display: 10 },
   },
+
+  // --- 2011 ---
+  {
+    id: "surface_matte_led",
+    name: "Matte Anti-glare Finish",
+    description:
+      "Modern anti-glare matte coating optimised for LED-backlit displays.",
+    slot: "displaySurface",
+    yearIntroduced: 2011,
+    yearDiscontinued: 2016,
+    costAtLaunch: 8,
+    powerDrawW: 0,
+    weightG: 0,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: { finish: "Matte (LED-optimised)", reflections: "Low", contrast: "Standard" },
+    stats: { display: 8 },
+  },
+  {
+    id: "surface_glossy_2011",
+    name: "Glossy Finish (2011)",
+    description:
+      "Vivid glossy surface with improved scratch resistance. Popular for consumer laptops.",
+    slot: "displaySurface",
+    yearIntroduced: 2011,
+    yearDiscontinued: 2015,
+    costAtLaunch: 3,
+    powerDrawW: 0,
+    weightG: 0,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: { finish: "Glossy", reflections: "High", contrast: "Enhanced" },
+    stats: { display: 10 },
+  },
+
+  // --- 2013 ---
+  {
+    id: "surface_gorilla_glass",
+    name: "Corning Gorilla Glass",
+    description:
+      "Toughened glass surface that resists scratches and impacts. Used on touchscreen models.",
+    slot: "displaySurface",
+    yearIntroduced: 2013,
+    yearDiscontinued: 2018,
+    costAtLaunch: 20,
+    powerDrawW: 0,
+    weightG: 15,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: { finish: "Gorilla Glass", reflections: "Medium", contrast: "Enhanced", durability: "High" },
+    stats: { display: 15 },
+  },
+
+  // --- 2015 ---
+  {
+    id: "surface_anti_reflective",
+    name: "Anti-reflective Coating (2015)",
+    description:
+      "Advanced multi-layer anti-reflective treatment. Minimal glare with vivid colours.",
+    slot: "displaySurface",
+    yearIntroduced: 2015,
+    yearDiscontinued: 2019,
+    costAtLaunch: 18,
+    powerDrawW: 0,
+    weightG: 0,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: { finish: "Anti-reflective", reflections: "Very Low", contrast: "Enhanced" },
+    stats: { display: 12 },
+  },
 ];

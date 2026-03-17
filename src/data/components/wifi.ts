@@ -274,4 +274,154 @@ export const WIFI: Component[] = [
     },
     stats: { connectivity: 108 },
   },
+
+  // --- 2011 ---
+  {
+    id: "intel_6230_bgn_bt30",
+    name: "Intel Centrino Advanced-N 6230 + Bluetooth 3.0",
+    description:
+      "Dual-band WiFi N with Bluetooth 3.0. Solid standard for mainstream laptops.",
+    slot: "wifi",
+    yearIntroduced: 2011,
+    yearDiscontinued: 2014,
+    costAtLaunch: 35,
+    powerDrawW: 2,
+    weightG: 6,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11a/b/g/n",
+      speed: "300 Mbps",
+      bluetooth: "3.0 + HS",
+    },
+    stats: { connectivity: 102 },
+  },
+
+  // --- 2012 ---
+  {
+    id: "intel_6235_bgn_bt40",
+    name: "Intel Centrino Advanced-N 6235 + Bluetooth 4.0",
+    description:
+      "WiFi N with Bluetooth 4.0 Low Energy. Enables new low-power accessories.",
+    slot: "wifi",
+    yearIntroduced: 2012,
+    yearDiscontinued: 2015,
+    costAtLaunch: 30,
+    powerDrawW: 2,
+    weightG: 5,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11a/b/g/n",
+      speed: "300 Mbps",
+      bluetooth: "4.0 LE",
+    },
+    stats: { connectivity: 108 },
+  },
+
+  // --- 2013 ---
+  {
+    id: "intel_7260_ac_bt40",
+    name: "Intel Dual Band Wireless-AC 7260 + Bluetooth 4.0",
+    description:
+      "First 802.11ac WiFi — dramatically faster wireless with up to 867 Mbps.",
+    slot: "wifi",
+    yearIntroduced: 2013,
+    yearDiscontinued: 2016,
+    costAtLaunch: 35,
+    powerDrawW: 2,
+    weightG: 5,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11a/b/g/n/ac",
+      speed: "867 Mbps",
+      bluetooth: "4.0 LE",
+    },
+    stats: { connectivity: 125 },
+  },
+  {
+    id: "atheros_ar9565_bgn_bt40",
+    name: "Atheros AR9565 802.11n + Bluetooth 4.0",
+    description:
+      "Budget single-band WiFi N with Bluetooth 4.0. Good enough for everyday use.",
+    slot: "wifi",
+    yearIntroduced: 2013,
+    yearDiscontinued: 2016,
+    costAtLaunch: 18,
+    powerDrawW: 2,
+    weightG: 4,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11b/g/n",
+      speed: "150 Mbps",
+      bluetooth: "4.0 LE",
+    },
+    stats: { connectivity: 92 },
+  },
+
+  // --- 2014 ---
+  {
+    id: "intel_7265_ac_bt41",
+    name: "Intel Dual Band Wireless-AC 7265 + Bluetooth 4.1",
+    description:
+      "Refined 802.11ac with Bluetooth 4.1. Better range and reliability.",
+    slot: "wifi",
+    yearIntroduced: 2014,
+    yearDiscontinued: 2017,
+    costAtLaunch: 30,
+    powerDrawW: 2,
+    weightG: 5,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11a/b/g/n/ac",
+      speed: "867 Mbps",
+      bluetooth: "4.1",
+    },
+    stats: { connectivity: 130 },
+  },
+
+  // --- 2015 ---
+  {
+    id: "intel_8260_ac_bt42",
+    name: "Intel Dual Band Wireless-AC 8260 + Bluetooth 4.2",
+    description:
+      "Top-tier WiFi 5 with MU-MIMO and Bluetooth 4.2. The fastest wireless available.",
+    slot: "wifi",
+    yearIntroduced: 2015,
+    yearDiscontinued: 2018,
+    costAtLaunch: 30,
+    powerDrawW: 2,
+    weightG: 5,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11a/b/g/n/ac",
+      speed: "867 Mbps (MU-MIMO)",
+      bluetooth: "4.2",
+    },
+    stats: { connectivity: 138 },
+  },
+  {
+    id: "broadcom_bcm4352_ac_bt41",
+    name: "Broadcom BCM4352 802.11ac + Bluetooth 4.1",
+    description:
+      "High-performance 802.11ac used in MacBooks. Excellent range and throughput.",
+    slot: "wifi",
+    yearIntroduced: 2015,
+    yearDiscontinued: 2018,
+    costAtLaunch: 35,
+    powerDrawW: 2,
+    weightG: 5,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11a/b/g/n/ac",
+      speed: "1.3 Gbps (3x3)",
+      bluetooth: "4.1",
+    },
+    stats: { connectivity: 145 },
+  },
 ];

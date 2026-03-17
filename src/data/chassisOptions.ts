@@ -106,6 +106,26 @@ export const MATERIALS: ChassisOption[] = [
     specs: { material: "CNC Aluminium", finish: "Anodised" },
     stats: { design: 80, buildQuality: 75 },
   },
+
+  // --- 2012 ---
+  {
+    id: "unibody_aluminium_refined",
+    name: "Refined Unibody Aluminium",
+    description:
+      "Precision-machined unibody with tighter tolerances and improved anodising.",
+    slot: "material",
+    yearIntroduced: 2012,
+    yearDiscontinued: null,
+    costAtLaunch: 130,
+    costDecayRate: 0.06,
+    weightG: 0,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 0.78,
+    specs: { material: "CNC Aluminium (2nd gen)", finish: "Diamond-cut anodised" },
+    stats: { design: 88, buildQuality: 80 },
+  },
 ];
 
 export const COOLING_SOLUTIONS: ChassisOption[] = [
@@ -192,6 +212,44 @@ export const COOLING_SOLUTIONS: ChassisOption[] = [
     coolingCapacityW: 180,
     shellDensityMultiplier: 1.0,
     specs: { type: "Active", noise: "Loud", fans: "2", heatpipes: "2 copper" },
+    stats: {},
+  },
+
+  // --- 2011 ---
+  {
+    id: "dual_fan_triple_heatpipe",
+    name: "Dual Fan + Triple Heatpipe",
+    description: "Heavy-duty cooling for high-power CPU+GPU combos. Keeps thermals under control.",
+    slot: "coolingSolution",
+    yearIntroduced: 2011,
+    yearDiscontinued: null,
+    costAtLaunch: 85,
+    costDecayRate: 0.05,
+    weightG: 240,
+    volumeCm3: 190,
+    minThicknessCm: 2.0,
+    coolingCapacityW: 220,
+    shellDensityMultiplier: 1.0,
+    specs: { type: "Active", noise: "Very Loud", fans: "2", heatpipes: "3 copper" },
+    stats: {},
+  },
+
+  // --- 2013 ---
+  {
+    id: "slim_fan_heatpipe",
+    name: "Slim Fan + Flat Heatpipe",
+    description: "Low-profile cooling designed for ultrabooks. Quiet operation at reasonable capacity.",
+    slot: "coolingSolution",
+    yearIntroduced: 2013,
+    yearDiscontinued: null,
+    costAtLaunch: 30,
+    costDecayRate: 0.06,
+    weightG: 70,
+    volumeCm3: 45,
+    minThicknessCm: 0.8,
+    coolingCapacityW: 60,
+    shellDensityMultiplier: 1.0,
+    specs: { type: "Active", noise: "Quiet", fans: "1 (slim)", heatpipes: "1 flat copper" },
     stats: {},
   },
 
@@ -328,6 +386,56 @@ export const KEYBOARD_FEATURES: ChassisOption[] = [
     },
     stats: { keyboard: 58, design: 15 },
   },
+
+  // --- 2012 ---
+  {
+    id: "keyboard_chiclet_backlit_rgb",
+    name: "Backlit Chiclet Keyboard (RGB zones)",
+    description:
+      "Island-style keyboard with customisable RGB zone lighting. A gaming laptop staple.",
+    slot: "keyboardFeature",
+    yearIntroduced: 2012,
+    yearDiscontinued: null,
+    costAtLaunch: 35,
+    costDecayRate: 0.08,
+    weightG: 8,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 1.0,
+    specs: {
+      type: "Chiclet",
+      travel: "2.0mm",
+      backlight: "RGB zone LED",
+      layout: "Island-style",
+    },
+    stats: { keyboard: 62, design: 18 },
+  },
+
+  // --- 2014 ---
+  {
+    id: "keyboard_shallow_chiclet",
+    name: "Shallow Chiclet Keyboard",
+    description:
+      "Ultra-thin keys for slim laptops. Less travel but works in very thin chassis.",
+    slot: "keyboardFeature",
+    yearIntroduced: 2014,
+    yearDiscontinued: null,
+    costAtLaunch: 12,
+    costDecayRate: 0.06,
+    weightG: 0,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 1.0,
+    specs: {
+      type: "Chiclet",
+      travel: "1.5mm",
+      backlight: "White LED",
+      layout: "Low-profile island-style",
+    },
+    stats: { keyboard: 50, design: 12 },
+  },
 ];
 
 export const TRACKPAD_FEATURES: ChassisOption[] = [
@@ -463,6 +571,56 @@ export const TRACKPAD_FEATURES: ChassisOption[] = [
       feature: "Multi-touch + click-anywhere",
     },
     stats: { trackpad: 80, design: 5 },
+  },
+
+  // --- 2011 ---
+  {
+    id: "trackpad_glass_large",
+    name: "Large Glass Trackpad",
+    description:
+      "Oversized glass trackpad with buttery-smooth tracking and gesture support.",
+    slot: "trackpadFeature",
+    yearIntroduced: 2011,
+    yearDiscontinued: null,
+    costAtLaunch: 25,
+    costDecayRate: 0.06,
+    weightG: 8,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 1.0,
+    specs: {
+      type: "Glass",
+      size: "Extra Large",
+      buttons: "Integrated click",
+      feature: "Multi-touch + edge gestures",
+    },
+    stats: { trackpad: 85, design: 8 },
+  },
+
+  // --- 2015 ---
+  {
+    id: "trackpad_force_touch",
+    name: "Force Touch Trackpad",
+    description:
+      "Haptic feedback replaces physical click. Pressure-sensitive with uniform feel everywhere.",
+    slot: "trackpadFeature",
+    yearIntroduced: 2015,
+    yearDiscontinued: null,
+    costAtLaunch: 35,
+    costDecayRate: 0.05,
+    weightG: 10,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 1.0,
+    specs: {
+      type: "Glass + Haptic",
+      size: "Extra Large",
+      buttons: "Force Touch (haptic)",
+      feature: "Pressure-sensitive + haptic feedback",
+    },
+    stats: { trackpad: 92, design: 10 },
   },
 ];
 

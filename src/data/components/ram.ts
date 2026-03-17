@@ -322,4 +322,108 @@ export const RAM: Component[] = [
     specs: { capacity: "8 GB", type: "DDR3-1333", speed: "1333 MHz" },
     stats: { performance: 130, gamingPerformance: 110 },
   },
+
+  // --- 2011 ---
+  {
+    id: "ddr3_1600_4gb",
+    name: "4 GB DDR3-1600",
+    description:
+      "Faster DDR3 at a mainstream price. The new standard for budget laptops.",
+    slot: "ram",
+    yearIntroduced: 2011,
+    yearDiscontinued: 2014,
+    costAtLaunch: 60,
+    powerDrawW: 4,
+    weightG: 20,
+    volumeCm3: 12,
+    minThicknessCm: 0.5,
+    specs: { capacity: "4 GB", type: "DDR3-1600", speed: "1600 MHz" },
+    stats: { performance: 125, gamingPerformance: 106 },
+  },
+  {
+    id: "ddr3_1600_8gb",
+    name: "8 GB DDR3-1600",
+    description:
+      "Fast and spacious. Handles multitasking, gaming, and creative work with ease.",
+    slot: "ram",
+    yearIntroduced: 2011,
+    yearDiscontinued: 2014,
+    costAtLaunch: 100,
+    powerDrawW: 5,
+    weightG: 24,
+    volumeCm3: 13,
+    minThicknessCm: 0.5,
+    specs: { capacity: "8 GB", type: "DDR3-1600", speed: "1600 MHz" },
+    stats: { performance: 140, gamingPerformance: 118 },
+  },
+
+  // --- 2012 ---
+  {
+    id: "ddr3l_1600_4gb",
+    name: "4 GB DDR3L-1600",
+    description:
+      "Low-voltage DDR3 for Ultrabooks. Same speed, better battery life.",
+    slot: "ram",
+    yearIntroduced: 2012,
+    yearDiscontinued: 2015,
+    costAtLaunch: 65,
+    powerDrawW: 3,
+    weightG: 18,
+    volumeCm3: 10,
+    minThicknessCm: 0.4,
+    specs: { capacity: "4 GB", type: "DDR3L-1600", speed: "1600 MHz", voltage: "1.35V" },
+    stats: { performance: 125, gamingPerformance: 106 },
+  },
+  {
+    id: "ddr3_1600_16gb",
+    name: "16 GB DDR3-1600",
+    description:
+      "Maximum capacity for power users. Overkill for most, essential for heavy workloads.",
+    slot: "ram",
+    yearIntroduced: 2012,
+    yearDiscontinued: 2015,
+    costAtLaunch: 200,
+    powerDrawW: 6,
+    weightG: 30,
+    volumeCm3: 16,
+    minThicknessCm: 0.5,
+    specs: { capacity: "16 GB", type: "DDR3-1600", speed: "1600 MHz" },
+    stats: { performance: 150, gamingPerformance: 128 },
+  },
+
+  // --- 2013 ---
+  {
+    id: "ddr3l_1600_8gb",
+    name: "8 GB DDR3L-1600",
+    description:
+      "The sweet spot for 2013 laptops. Low voltage, plenty of capacity.",
+    slot: "ram",
+    yearIntroduced: 2013,
+    yearDiscontinued: 2016,
+    costAtLaunch: 55,
+    powerDrawW: 3,
+    weightG: 20,
+    volumeCm3: 11,
+    minThicknessCm: 0.4,
+    specs: { capacity: "8 GB", type: "DDR3L-1600", speed: "1600 MHz", voltage: "1.35V" },
+    stats: { performance: 140, gamingPerformance: 118 },
+  },
+
+  // --- 2014 ---
+  {
+    id: "ddr3l_1600_16gb",
+    name: "16 GB DDR3L-1600",
+    description:
+      "Top-tier low-voltage RAM. Future-proof capacity with low power draw.",
+    slot: "ram",
+    yearIntroduced: 2014,
+    yearDiscontinued: 2016,
+    costAtLaunch: 120,
+    powerDrawW: 4,
+    weightG: 26,
+    volumeCm3: 14,
+    minThicknessCm: 0.4,
+    specs: { capacity: "16 GB", type: "DDR3L-1600", speed: "1600 MHz", voltage: "1.35V" },
+    stats: { performance: 150, gamingPerformance: 128 },
+  },
 ];

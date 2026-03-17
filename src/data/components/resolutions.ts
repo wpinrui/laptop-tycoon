@@ -173,4 +173,110 @@ export const RESOLUTIONS: Component[] = [
     specs: { resolution: "1920x1080", pixels: "2.07M", aspectRatio: "16:9" },
     stats: { display: 65 },
   },
+
+  // --- 2011 ---
+  {
+    id: "res_hd_standard",
+    name: "HD (1366x768, LED)",
+    description:
+      "Standard 1366x768 with LED backlight. The default for mainstream laptops.",
+    slot: "resolution",
+    yearIntroduced: 2011,
+    yearDiscontinued: 2016,
+    costAtLaunch: 100,
+    powerDrawW: 4,
+    weightG: 180,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: { resolution: "1366x768", pixels: "1.05M", aspectRatio: "16:9" },
+    stats: { display: 35 },
+  },
+
+  // --- 2012 ---
+  {
+    id: "res_fhd_2012",
+    name: "Full HD (1920x1080)",
+    description:
+      "Sharp 1080p display. Increasingly common as the premium mainstream choice.",
+    slot: "resolution",
+    yearIntroduced: 2012,
+    yearDiscontinued: 2017,
+    costAtLaunch: 250,
+    powerDrawW: 6,
+    weightG: 210,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: { resolution: "1920x1080", pixels: "2.07M", aspectRatio: "16:9" },
+    stats: { display: 68 },
+  },
+
+  // --- 2013 ---
+  {
+    id: "res_qhd",
+    name: "QHD (2560x1440)",
+    description:
+      "Ultra-sharp display for professionals. Text is incredibly crisp.",
+    slot: "resolution",
+    yearIntroduced: 2013,
+    yearDiscontinued: 2018,
+    costAtLaunch: 450,
+    powerDrawW: 8,
+    weightG: 230,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: { resolution: "2560x1440", pixels: "3.69M", aspectRatio: "16:9" },
+    stats: { display: 82 },
+  },
+  {
+    id: "res_wqxga",
+    name: "WQXGA (2560x1600)",
+    description:
+      "High-res 16:10 display with extra vertical space. Ideal for creative work.",
+    slot: "resolution",
+    yearIntroduced: 2013,
+    yearDiscontinued: 2018,
+    costAtLaunch: 500,
+    powerDrawW: 8,
+    weightG: 235,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: { resolution: "2560x1600", pixels: "4.10M", aspectRatio: "16:10" },
+    stats: { display: 85 },
+  },
+
+  // --- 2014 ---
+  {
+    id: "res_qhd_plus",
+    name: "QHD+ (3200x1800)",
+    description:
+      "Near-4K resolution in a laptop. Stunning pixel density that demands GPU power.",
+    slot: "resolution",
+    yearIntroduced: 2014,
+    yearDiscontinued: 2018,
+    costAtLaunch: 600,
+    powerDrawW: 9,
+    weightG: 240,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: { resolution: "3200x1800", pixels: "5.76M", aspectRatio: "16:9" },
+    stats: { display: 92 },
+  },
+
+  // --- 2015 ---
+  {
+    id: "res_4k",
+    name: "4K UHD (3840x2160)",
+    description:
+      "Full 4K resolution in a laptop. Jaw-dropping clarity but hammers battery life.",
+    slot: "resolution",
+    yearIntroduced: 2015,
+    yearDiscontinued: 2019,
+    costAtLaunch: 750,
+    powerDrawW: 10,
+    weightG: 250,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: { resolution: "3840x2160", pixels: "8.29M", aspectRatio: "16:9" },
+    stats: { display: 100 },
+  },
 ];
