@@ -6,6 +6,7 @@
 import { DEMOGRAPHICS } from "../../../data/demographics";
 import { DemographicId } from "../../../data/types";
 import { QuarterSimulationResult } from "../../../simulation/salesTypes";
+import { pickRandom } from "../../../simulation/utils";
 import { GameState, getPlayerCompany, modelDisplayName } from "../../state/gameTypes";
 
 export interface TickerHeadline {
@@ -15,13 +16,15 @@ export interface TickerHeadline {
   type: "milestone" | "trend" | "sellout" | "perception";
 }
 
+const MAX_HEADLINES = 6;
+const HEADLINE_START = 0.15;
+const HEADLINE_END = 0.85;
+const NEAR_SELLOUT_THRESHOLD = 0.85;
+const PERCEPTION_DELTA_THRESHOLD = 0.5;
+export const MAX_COMPETITOR_MODELS = 5;
+
 const demName = (id: DemographicId): string =>
   DEMOGRAPHICS.find((d) => d.id === id)?.name ?? id;
-
-/** Pick a random element from an array. */
-function pick<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
 
 /**
  * Generate ticker headlines for the sim animation.
@@ -70,7 +73,7 @@ export function generateTickerHeadlines(
       });
     } else if (lr.unitsDemanded > 0 && lr.unsoldUnits > 0) {
       const sellThrough = lr.unitsSold / lr.unitsDemanded;
-      if (sellThrough > 0.85) {
+      if (sellThrough > NEAR_SELLOUT_THRESHOLD) {
         headlines.push({
           triggerAt: 0,
           text: `${name} nears sell-out — only ${lr.unsoldUnits.toLocaleString()} left`,
@@ -100,14 +103,14 @@ export function generateTickerHeadlines(
     ];
     headlines.push({
       triggerAt: 0,
-      text: pick(templates),
+      text: pickRandom(templates),
       type: "trend",
     });
   }
 
   // ── Perception shifts ──
   for (const pc of result.perceptionChanges) {
-    if (Math.abs(pc.delta) < 0.5) continue;
+    if (Math.abs(pc.delta) < PERCEPTION_DELTA_THRESHOLD) continue;
     const dir = pc.delta > 0 ? "rises" : "falls";
     headlines.push({
       triggerAt: 0,
@@ -137,7 +140,7 @@ export function generateTickerHeadlines(
     }
   }
 
-  // Cap at 6 headlines max, prioritize variety
+  // Cap at MAX_HEADLINES, prioritize variety
   const byType = new Map<string, TickerHeadline[]>();
   for (const h of headlines) {
     const arr = byType.get(h.type) ?? [];
@@ -156,16 +159,17 @@ export function generateTickerHeadlines(
     const arr = byType.get(t);
     if (arr) {
       for (const h of arr) {
-        if (selected.length >= 6) break;
+        if (selected.length >= MAX_HEADLINES) break;
         selected.push(h);
       }
     }
   }
 
-  // Space them evenly across 0.15–0.85
+  // Space them evenly across HEADLINE_START–HEADLINE_END
   const count = selected.length;
+  const range = HEADLINE_END - HEADLINE_START;
   for (let i = 0; i < count; i++) {
-    selected[i].triggerAt = count === 1 ? 0.5 : 0.15 + (i / (count - 1)) * 0.7;
+    selected[i].triggerAt = count === 1 ? 0.5 : HEADLINE_START + (i / (count - 1)) * range;
   }
 
   return selected;

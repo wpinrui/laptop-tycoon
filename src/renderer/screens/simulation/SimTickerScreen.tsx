@@ -7,9 +7,11 @@ import { tokens } from "../../shell/tokens";
 import { MenuButton } from "../../shell/MenuButton";
 import { formatCash, formatNumber, QUARTER_LABELS } from "../../utils/formatCash";
 import { LaptopSalesResult } from "../../../simulation/salesTypes";
-import { generateTickerHeadlines, TickerHeadline } from "./tickerHeadlines";
+import { generateTickerHeadlines, MAX_COMPETITOR_MODELS, TickerHeadline } from "./tickerHeadlines";
 
 const DURATION_MS = 12_000;
+const TOAST_DISPLAY_MS = 4_500;
+const TOAST_EXIT_MS = 500;
 
 /** Ease-out cubic: fast start, slow finish. */
 function easeOutCubic(t: number): number {
@@ -95,13 +97,13 @@ function HeadlineToast({ headline, onDismiss }: { headline: TickerHeadline; onDi
   const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setExiting(true), 4500);
+    const timer = setTimeout(() => setExiting(true), TOAST_DISPLAY_MS);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     if (exiting) {
-      const timer = setTimeout(onDismiss, 500);
+      const timer = setTimeout(onDismiss, TOAST_EXIT_MS);
       return () => clearTimeout(timer);
     }
   }, [exiting, onDismiss]);
@@ -228,7 +230,7 @@ export function SimTickerScreen() {
     const compResults = result.laptopResults
       .filter((lr) => lr.owner !== player.id)
       .sort((a, b) => b.unitsSold - a.unitsSold)
-      .slice(0, 5); // Top 5 competitors
+      .slice(0, MAX_COMPETITOR_MODELS);
     return [...playerResults, ...compResults];
   }, [result, player.id]);
 
