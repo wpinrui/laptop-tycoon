@@ -82,19 +82,20 @@ export function AdvanceYearCard() {
   const { state, dispatch } = useGame();
   const { navigateTo } = useNavigation();
   const activeModels = getActiveModels(state);
-  const isQ1 = state.quarter === 1;
   const quarterLabel = QUARTER_LABELS[state.quarter - 1];
   const [warnings, setWarnings] = useState<SimWarning[] | null>(null);
 
   const runSimulation = () => {
     setWarnings(null);
 
-    // Q1 only: generate competitor models once (reused for dispatch + simulation)
-    // Pass companies so AI reads live engineeringBonus (death spiral prevention)
-    const generated = isQ1 ? generateCompetitorModels(state.year, COMPETITORS, state.companies) : [];
+    // Generate competitor models for any competitor whose launch quarter matches current quarter
+    const launchingCompetitors = COMPETITORS.filter((c) => c.launchQuarter === state.quarter);
+    const generated = launchingCompetitors.length > 0
+      ? generateCompetitorModels(state.year, launchingCompetitors, state.companies)
+      : [];
 
-    if (isQ1) {
-      const competitorModels = COMPETITORS.map((c, i) => ({
+    if (launchingCompetitors.length > 0) {
+      const competitorModels = launchingCompetitors.map((c, i) => ({
         competitorId: c.id,
         model: generated[i],
       }));
@@ -128,8 +129,8 @@ export function AdvanceYearCard() {
 
     // Build state for simulation
     const stateForSim = (() => {
-      const byCompetitorId = isQ1
-        ? new Map(COMPETITORS.map((c, i) => [c.id, generated[i]]))
+      const byCompetitorId = launchingCompetitors.length > 0
+        ? new Map(launchingCompetitors.map((c, i) => [c.id, generated[i]]))
         : new Map<string, (typeof generated)[0]>();
       return {
         ...state,
