@@ -22,7 +22,7 @@ export const EVENT_COLORS: Record<MilestoneType, string> = {
   model: tokens.colors.accent,
   award: tokens.colors.statusCash,
   financial: tokens.colors.success,
-  market: "#ce93d8",
+  market: tokens.colors.market,
 };
 
 const EVENT_BG: Record<MilestoneType, string> = {

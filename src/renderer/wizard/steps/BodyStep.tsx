@@ -267,10 +267,10 @@ function ChassisCard({
             </span>
           )}
           {option.volumeCm3 > 0 && (
-            <span style={{ color: "#ce93d8" }}>{option.volumeCm3}cm³</span>
+            <span style={{ color: tokens.colors.market }}>{option.volumeCm3}cm³</span>
           )}
           {option.coolingCapacityW > 0 && (
-            <span style={{ color: "#4fc3f7" }}>{option.coolingCapacityW}W cooling</span>
+            <span style={{ color: tokens.colors.accent }}>{option.coolingCapacityW}W cooling</span>
           )}
           <span style={{ color: "#666" }}>{option.yearIntroduced}</span>
         </div>

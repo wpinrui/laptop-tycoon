@@ -7,6 +7,7 @@ import { StatusBar } from "../shell/StatusBar";
 import { tokens } from "../shell/tokens";
 import { OUTLETS, NewsItem, NewsOutletId, NewsBody } from "../../simulation/newsTypes";
 import { formatCash } from "../utils/formatCash";
+import { reviewScoreColor } from "../utils/reviewScoreColor";
 
 // ─── Outlet Accent Colors ────────────────────────────────────
 
@@ -194,7 +195,7 @@ function PerceptionBody({ body }: { body: Extract<NewsBody, { type: "perception"
 }
 
 function ReviewBody({ body }: { body: Extract<NewsBody, { type: "review" }> }) {
-  const scoreColor = body.score >= 8 ? tokens.colors.success : body.score >= 5 ? tokens.colors.warning : tokens.colors.danger;
+  const scoreColor = reviewScoreColor(body.score);
   return (
     <div style={bodyContainerStyle}>
       <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.md, marginBottom: body.sentences.length > 0 ? tokens.spacing.sm : 0 }}>
