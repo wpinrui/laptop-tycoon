@@ -32,8 +32,10 @@ import {
   BASE_DEMAND_VARIANCE,
   REACH_VARIANCE_SCALE,
   REPLACEMENT_CYCLE,
-  QUARTER_SHARES,
-  QUARTER_SHARES_SUM,
+  SEASONAL_DEMAND_CURVES,
+  NOVELTY_LAUNCH_BONUS,
+  NOVELTY_DECAY_BASE,
+  FRESHNESS_DECAY_RATE,
   PERCEPTION_MEANINGFUL_DELTA,
 } from "./tunables";
 import { generateCompetitorModels } from "./competitorAI";
@@ -222,12 +224,28 @@ function applySalesNoise(baseDemand: number): number {
 }
 
 /**
+ * Compute novelty/freshness multiplier for a product.
+ * Fresh products get a hype bonus; older products decay.
+ * noveltyFactor = NOVELTY_LAUNCH_BONUS × NOVELTY_DECAY_BASE^(quartersSinceLaunch × decayRate)
+ */
+export function getNoveltyFactor(
+  model: LaptopModel,
+  currentYear: number,
+  currentQuarter: number,
+  demographicId: DemographicId,
+): number {
+  const launchQ = model.quarterDesigned ?? 1;
+  const quartersSinceLaunch = (currentYear - model.yearDesigned) * 4 + (currentQuarter - launchQ);
+  const decayRate = FRESHNESS_DECAY_RATE[demographicId];
+  return NOVELTY_LAUNCH_BONUS * Math.pow(NOVELTY_DECAY_BASE, Math.max(0, quartersSinceLaunch) * decayRate);
+}
+
+/**
  * Run the sales simulation for a single quarter.
  * Demand is scaled by the quarter's share of annual buyers.
  */
 export function simulateQuarter(state: GameState): QuarterSimulationResult {
   const { year, quarter } = state;
-  const quarterShare = QUARTER_SHARES[quarter - 1] / QUARTER_SHARES_SUM;
   const allLaptops = buildMarketLaptops(state);
   const player = getPlayerCompany(state);
 
@@ -274,11 +292,11 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
     const replacementCycle = REPLACEMENT_CYCLE[demId];
     const annualActiveBuyers = demographicPopulation / replacementCycle;
 
-    // Quarterly active buyers = annual × quarter share
-    const quarterlyActiveBuyers = annualActiveBuyers * quarterShare;
+    // Quarterly active buyers = annual × seasonal quarter share
+    const seasonalShare = SEASONAL_DEMAND_CURVES[demId][quarter - 1];
+    const quarterlyActiveBuyers = annualActiveBuyers * seasonalShare;
 
-    // Calculate effective VP for each laptop: biased_vp × (reach / 100)
-    // Reach multiplies competitive strength within one shared pool (no per-company pools)
+    // Calculate effective VP for each laptop: biased_vp × novelty × (reach / 100)
     const vpEntries: { laptopId: string; vp: VPComponents; effectiveVP: number }[] = [];
     let totalEffectiveVP = 0;
 
@@ -288,7 +306,8 @@ export function simulateQuarter(state: GameState): QuarterSimulationResult {
 
       const company = state.companies.find((c) => c.id === laptop.owner);
       const reach = Math.min(company ? (company.brandReach[demId] ?? 0) : 0, 100);
-      const effectiveVP = vp.biasedVP * (reach / 100);
+      const novelty = getNoveltyFactor(laptop.model, year, quarter, demId);
+      const effectiveVP = vp.biasedVP * novelty * (reach / 100);
 
       vpEntries.push({ laptopId: laptop.id, vp, effectiveVP });
       totalEffectiveVP += effectiveVP;
@@ -619,9 +638,9 @@ export function projectDemandRange(
     const basePool = STARTING_DEMAND_POOL[demId];
     const demographicPopulation = getDemandPoolSize(demId, year, basePool);
     const annualActiveBuyers = demographicPopulation / REPLACEMENT_CYCLE[demId];
-    // Scale by current quarter's share
-    const quarterShare = QUARTER_SHARES[state.quarter - 1] / QUARTER_SHARES_SUM;
-    const quarterlyActiveBuyers = annualActiveBuyers * quarterShare;
+    // Scale by current quarter's seasonal share
+    const seasonalShare = SEASONAL_DEMAND_CURVES[demId][state.quarter - 1];
+    const quarterlyActiveBuyers = annualActiveBuyers * seasonalShare;
 
     let totalEffectiveVP = 0;
     let ourEffectiveVP = 0;
@@ -630,10 +649,11 @@ export function projectDemandRange(
       const normStats = normalisedStatsMap.get(laptop.id)!;
       const { biasedVP: vp } = calculateBiasedVP(laptop, normStats, demographic, state);
 
-      // effective_vp = biased_vp × (reach / 100)
+      // effective_vp = biased_vp × novelty × (reach / 100)
       const company = state.companies.find((c) => c.id === laptop.owner);
       const reach = Math.min(company ? (company.brandReach[demId] ?? 0) : 0, 100);
-      const effectiveVP = vp * (reach / 100);
+      const novelty = getNoveltyFactor(laptop.model, year, state.quarter, demId);
+      const effectiveVP = vp * novelty * (reach / 100);
 
       totalEffectiveVP += effectiveVP;
       if (laptop.id === modelId) ourEffectiveVP = effectiveVP;
@@ -733,25 +753,32 @@ export function estimateAnnualDemand(
     const demographicPopulation = getDemandPoolSize(demId, year, basePool);
     const annualActiveBuyers = demographicPopulation / REPLACEMENT_CYCLE[demId];
 
-    // Compute effective VP for each laptop
-    let totalEffectiveVP = 0;
-    const vpEntries: { laptopId: string; effectiveVP: number }[] = [];
-
-    for (const laptop of laptops) {
+    // Pre-compute biased VP for each laptop (doesn't change per quarter)
+    const vpData = laptops.map((laptop) => {
       const normStats = normalisedStatsMap.get(laptop.id)!;
       const { biasedVP } = calculateBiasedVP(laptop, normStats, demographic, stateProxy);
-
       const company = companies.find((c) => c.id === laptop.owner);
       const reach = Math.min(company ? (company.brandReach[demId] ?? 0) : 0, 100);
-      const effectiveVP = biasedVP * (reach / 100);
+      return { laptop, biasedVP, reach };
+    });
 
-      vpEntries.push({ laptopId: laptop.id, effectiveVP });
-      totalEffectiveVP += effectiveVP;
-    }
+    // Sum across all 4 quarters (seasonal curves + novelty vary per quarter)
+    for (let q = 1; q <= 4; q++) {
+      const seasonalShare = SEASONAL_DEMAND_CURVES[demId][q - 1];
+      const quarterlyBuyers = annualActiveBuyers * seasonalShare;
 
-    for (const { laptopId, effectiveVP } of vpEntries) {
-      const share = totalEffectiveVP > 0 ? effectiveVP / totalEffectiveVP : 0;
-      demandMap.set(laptopId, demandMap.get(laptopId)! + annualActiveBuyers * share);
+      let totalEffectiveVP = 0;
+      const entries = vpData.map(({ laptop, biasedVP, reach }) => {
+        const novelty = getNoveltyFactor(laptop.model, year, q, demId);
+        const effectiveVP = biasedVP * novelty * (reach / 100);
+        totalEffectiveVP += effectiveVP;
+        return { laptopId: laptop.id, effectiveVP };
+      });
+
+      for (const { laptopId, effectiveVP } of entries) {
+        const share = totalEffectiveVP > 0 ? effectiveVP / totalEffectiveVP : 0;
+        demandMap.set(laptopId, demandMap.get(laptopId)! + quarterlyBuyers * share);
+      }
     }
   }
 
