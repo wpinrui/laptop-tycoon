@@ -9,7 +9,9 @@
 
 import { DEMOGRAPHICS } from "../data/demographics";
 import { CompetitorArchetype } from "../data/competitors";
-import { DemographicId } from "../data/types";
+import { ComponentSlot, DemographicId } from "../data/types";
+import { ALL_COMPONENTS } from "../data/components";
+import { SLOT_CONFIGS } from "../data/slotConfigs";
 import { GameState, getPlayerCompany, Quarter, Milestone } from "../renderer/state/gameTypes";
 import { QuarterSimulationResult } from "./salesTypes";
 import { LaptopReview, Award } from "./reviewsAwards";
@@ -27,6 +29,8 @@ import {
   PERCEPTION_DOWN_TEMPLATES,
   REVIEW_TEMPLATES,
   AWARD_TEMPLATES,
+  COMPONENT_LAUNCH_TEMPLATES,
+  COMPONENT_LAUNCH_MULTI_TEMPLATES,
 } from "./newsTemplates";
 import { pickRandom, shuffled, formatCompact } from "./utils";
 
@@ -270,6 +274,58 @@ export function generateQuarterNews(
         direction,
       },
     });
+  }
+
+  // ── New component launches ──
+  const newComponents = ALL_COMPONENTS.filter(
+    (c) => c.yearIntroduced === year && (c.quarterIntroduced ?? 1) === quarter,
+  );
+
+  if (newComponents.length > 0) {
+    // Group by slot for cleaner headlines
+    const bySlot = new Map<ComponentSlot, typeof newComponents>();
+    for (const c of newComponents) {
+      const list = bySlot.get(c.slot) ?? [];
+      list.push(c);
+      bySlot.set(c.slot, list);
+    }
+
+    for (const [slot, components] of bySlot) {
+      const outlet = pickOutlet();
+      const slotLabel = SLOT_CONFIGS.find((s) => s.slot === slot)?.name ?? slot;
+
+      if (components.length === 1) {
+        const comp = components[0];
+        const vars = { component: comp.name, slot: slotLabel };
+        items.push({
+          id: makeId(),
+          year,
+          quarter,
+          category: "componentLaunch",
+          outlet,
+          headline: generateHeadline(COMPONENT_LAUNCH_TEMPLATES, outlet, vars),
+          subheadline: comp.description,
+          body: {
+            type: "componentLaunch",
+            components: [{ name: comp.name, slot: slotLabel, description: comp.description }],
+          },
+        });
+      } else {
+        const vars = { count: components.length, slot: slotLabel };
+        items.push({
+          id: makeId(),
+          year,
+          quarter,
+          category: "componentLaunch",
+          outlet,
+          headline: generateHeadline(COMPONENT_LAUNCH_MULTI_TEMPLATES, outlet, vars),
+          body: {
+            type: "componentLaunch",
+            components: components.map((c) => ({ name: c.name, slot: slotLabel, description: c.description })),
+          },
+        });
+      }
+    }
   }
 
   return items;

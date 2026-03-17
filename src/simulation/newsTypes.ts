@@ -33,6 +33,7 @@ export const OUTLETS: Record<NewsOutletId, NewsOutlet> = {
 
 export type NewsCategory =
   | "productLaunch"
+  | "componentLaunch"
   | "financial"
   | "marketShare"
   | "perception"
@@ -41,6 +42,7 @@ export type NewsCategory =
 
 export type NewsBody =
   | { type: "productLaunch"; companyName: string; modelName: string; screenSize: number; price: number; isPlayer: boolean; pressQuotes?: string[] }
+  | { type: "componentLaunch"; components: { name: string; slot: string; description: string }[] }
   | { type: "financial"; milestoneTitle: string }
   | { type: "marketShare"; demographic: string; share: number; threshold: number }
   | { type: "perception"; demographic: string; delta: number; direction: "up" | "down" }

@@ -10,6 +10,44 @@ import { NewsOutletId } from "./newsTypes";
 
 export type TemplatePool = Record<NewsOutletId, string[]>;
 
+// ─── Component Launch ───────────────────────────────────────
+
+export const COMPONENT_LAUNCH_TEMPLATES: TemplatePool = {
+  techbuzz: [
+    "New hardware just dropped: {component} is now available to manufacturers",
+    "{component} hits the market — {slot} options just got more interesting",
+    "JUST IN: {component} launches, shaking up the {slot} landscape",
+  ],
+  siliconStandard: [
+    "{component} enters the {slot} market, expanding options for laptop OEMs",
+    "New {slot} option available: {component} begins shipping to manufacturers",
+    "Industry update: {component} now available for laptop designs",
+  ],
+  consumerWeekly: [
+    "New tech alert: {component} is here — expect it in laptops soon",
+    "Laptops are about to get better: {component} launches as a new {slot} option",
+    "Keep an eye out for {component} — a new {slot} choice for laptop buyers",
+  ],
+};
+
+export const COMPONENT_LAUNCH_MULTI_TEMPLATES: TemplatePool = {
+  techbuzz: [
+    "{count} new components just dropped — {slot} gets a major refresh",
+    "Hardware refresh: {count} new {slot} options hit the market at once",
+    "It's raining silicon — {count} new {slot} components launch this quarter",
+  ],
+  siliconStandard: [
+    "{count} new {slot} components enter the market this quarter",
+    "Quarterly hardware update: {count} new {slot} options now available",
+    "{slot} market expands with {count} new components",
+  ],
+  consumerWeekly: [
+    "Lots of new {slot} options this quarter — {count} new components to choose from",
+    "{count} new {slot} choices just hit the market. Here's what it means for buyers",
+    "New quarter, new hardware: {count} {slot} components launch",
+  ],
+};
+
 // ─── Product Launch ─────────────────────────────────────────
 
 export const PRODUCT_LAUNCH_TEMPLATES: TemplatePool = {
