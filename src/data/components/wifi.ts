@@ -118,10 +118,10 @@ export const WIFI: Component[] = [
 
   // --- 2006 ---
   {
-    id: "intel_pro_3945abg_bt21",
-    name: "Intel PRO/Wireless 3945ABG + Bluetooth 2.1",
+    id: "intel_pro_3945abg_bt20",
+    name: "Intel PRO/Wireless 3945ABG + Bluetooth 2.0",
     description:
-      "Tri-band WiFi with improved Bluetooth. Reliable and widely compatible.",
+      "Tri-band WiFi with Bluetooth. Reliable and widely compatible.",
     slot: "wifi",
     yearIntroduced: 2006,
     yearDiscontinued: 2009,
@@ -130,7 +130,7 @@ export const WIFI: Component[] = [
     weightG: 7,
     volumeCm3: 2,
     minThicknessCm: 0,
-    specs: { wifi: "802.11a/b/g", speed: "54 Mbps", bluetooth: "2.1 + EDR" },
+    specs: { wifi: "802.11a/b/g", speed: "54 Mbps", bluetooth: "2.0 + EDR" },
     stats: { connectivity: 78 },
   },
 

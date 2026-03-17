@@ -490,6 +490,21 @@ export const GPUS: Component[] = [
     specs: { type: "Dedicated", memory: "1 GB GDDR3", core: "550 MHz", directX: "10.1" },
     stats: { gamingPerformance: 220 },
   },
+  {
+    id: "nvidia_geforce_gtx_285m",
+    name: "NVIDIA GeForce GTX 285M",
+    description: "Enthusiast-grade mobile GPU with 1GB GDDR3. Plays anything at high settings.",
+    slot: "gpu",
+    yearIntroduced: 2009,
+    yearDiscontinued: 2011,
+    costAtLaunch: 650,
+    powerDrawW: 55,
+    weightG: 55,
+    volumeCm3: 85,
+    minThicknessCm: 1.8,
+    specs: { type: "Dedicated", memory: "1 GB GDDR3", core: "585 MHz", directX: "10" },
+    stats: { gamingPerformance: 240 },
+  },
 
   // --- 2010 ---
   {
@@ -521,21 +536,6 @@ export const GPUS: Component[] = [
     minThicknessCm: 1.0,
     specs: { type: "Dedicated", memory: "512 MB GDDR3", core: "575 MHz", directX: "10.1" },
     stats: { gamingPerformance: 180 },
-  },
-  {
-    id: "nvidia_geforce_gtx_285m",
-    name: "NVIDIA GeForce GTX 285M",
-    description: "Enthusiast-grade mobile GPU with 1GB GDDR3. Plays anything at high settings.",
-    slot: "gpu",
-    yearIntroduced: 2010,
-    yearDiscontinued: 2012,
-    costAtLaunch: 650,
-    powerDrawW: 55,
-    weightG: 55,
-    volumeCm3: 85,
-    minThicknessCm: 1.8,
-    specs: { type: "Dedicated", memory: "1 GB GDDR3", core: "585 MHz", directX: "10" },
-    stats: { gamingPerformance: 240 },
   },
   {
     id: "ati_mobility_radeon_hd_5650",

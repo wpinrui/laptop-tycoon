@@ -50,14 +50,14 @@ export const DISPLAY_TECH: Component[] = [
     stats: { display: 35 },
   },
 
-  // --- 2006 ---
+  // --- 2007 ---
   {
     id: "tech_tn_led",
     name: "LED-backlit TN Panel",
     description:
       "LED backlight replaces CCFL — thinner, lighter, and more uniform brightness.",
     slot: "displayTech",
-    yearIntroduced: 2006,
+    yearIntroduced: 2007,
     yearDiscontinued: 2012,
     costAtLaunch: 80,
     powerDrawW: 3,
