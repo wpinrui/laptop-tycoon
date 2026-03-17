@@ -378,9 +378,18 @@ export const CHASSIS_SLOTS: ChassisSlotDef[] = [
   { slot: "trackpadFeature", label: "Trackpad / Pointing Device", options: TRACKPAD_FEATURES },
 ];
 
-export function getAvailableComponents(slot: ComponentSlot, year: number): Component[] {
+export function getAvailableComponents(slot: ComponentSlot, year: number, quarter?: 1 | 2 | 3 | 4): Component[] {
   return ALL_COMPONENTS
-    .filter((c) => c.slot === slot && c.yearIntroduced <= year && c.yearDiscontinued >= year)
+    .filter((c) => {
+      if (c.slot !== slot) return false;
+      if (c.yearDiscontinued < year) return false;
+      if (c.yearIntroduced > year) return false;
+      // If quarter is specified and component launches this year, check quarter
+      if (quarter && c.yearIntroduced === year) {
+        return (c.quarterIntroduced ?? 1) <= quarter;
+      }
+      return true;
+    })
     .sort((a, b) => a.yearIntroduced - b.yearIntroduced || a.costAtLaunch - b.costAtLaunch);
 }
 

@@ -58,6 +58,7 @@ export const DISPLAY_TECH: Component[] = [
       "LED backlight replaces CCFL — thinner, lighter, and more uniform brightness.",
     slot: "displayTech",
     yearIntroduced: 2007,
+    quarterIntroduced: 2,
     yearDiscontinued: 2012,
     costAtLaunch: 80,
     powerDrawW: 3,

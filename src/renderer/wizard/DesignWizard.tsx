@@ -472,7 +472,7 @@ function WizardContent() {
           </p>
         </div>
         <div style={{ display: "flex", gap: tokens.spacing.sm, flexShrink: 0 }}>
-        <ToolbarButton onClick={() => dispatch({ type: "DEBUG_AUTOFILL", year: gameState.year })}>Auto-fill</ToolbarButton>
+        <ToolbarButton onClick={() => dispatch({ type: "DEBUG_AUTOFILL", year: gameState.year, quarter: gameState.quarter })}>Auto-fill</ToolbarButton>
         <ToolbarButton onClick={() => setShowOptimisePicker(true)}>Optimise</ToolbarButton>
         <ToolbarButton onClick={() => {
           navigator.clipboard.writeText(buildCopyText(state, gameState.year));
@@ -601,7 +601,7 @@ function WizardContent() {
         <DemographicPickerDialog
           year={gameState.year}
           onPick={(d) => {
-            dispatch({ type: "DEBUG_OPTIMISE", demographic: d, year: gameState.year });
+            dispatch({ type: "DEBUG_OPTIMISE", demographic: d, year: gameState.year, quarter: gameState.quarter });
             setShowOptimisePicker(false);
           }}
           onCancel={() => setShowOptimisePicker(false)}

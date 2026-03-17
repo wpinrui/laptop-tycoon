@@ -310,6 +310,7 @@ export const STORAGE: Component[] = [
       "Revolutionary solid-state drive. Blazing fast but eye-wateringly expensive.",
     slot: "storage",
     yearIntroduced: 2008,
+    quarterIntroduced: 3,
     yearDiscontinued: 2011,
     costAtLaunch: 595,
     powerDrawW: 1,

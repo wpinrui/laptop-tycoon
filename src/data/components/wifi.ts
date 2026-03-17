@@ -184,6 +184,7 @@ export const WIFI: Component[] = [
       "Certified 802.11n with excellent range. Budget N-capable option.",
     slot: "wifi",
     yearIntroduced: 2008,
+    quarterIntroduced: 3,
     yearDiscontinued: 2011,
     costAtLaunch: 35,
     powerDrawW: 2,

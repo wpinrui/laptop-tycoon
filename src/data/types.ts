@@ -85,6 +85,8 @@ export interface Component {
   description: string;
   slot: ComponentSlot;
   yearIntroduced: number;
+  /** Quarter within yearIntroduced when component becomes available (1-4). Defaults to 1. */
+  quarterIntroduced?: 1 | 2 | 3 | 4;
   yearDiscontinued: number;
   costAtLaunch: number;
   powerDrawW: number;

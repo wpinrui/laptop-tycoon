@@ -146,7 +146,7 @@ const ALL_COMPONENT_SLOTS: ComponentSlot[] = Object.values(COMPONENT_STEP_SLOTS)
 /**
  * Seed a build with the cheapest available option in every slot.
  */
-function seedCheapestBuild(screenSize: ScreenSizeInches, year: number): {
+function seedCheapestBuild(screenSize: ScreenSizeInches, year: number, quarter?: 1 | 2 | 3 | 4): {
   components: Partial<Record<ComponentSlot, Component>>;
   chassis: WizardState["chassis"];
 } {
@@ -155,7 +155,7 @@ function seedCheapestBuild(screenSize: ScreenSizeInches, year: number): {
 
   const components: Partial<Record<ComponentSlot, Component>> = {};
   for (const slot of ALL_COMPONENT_SLOTS) {
-    const available = getAvailableComponents(slot, year);
+    const available = getAvailableComponents(slot, year, quarter);
     if (available.length === 0) continue;
     // Pick cheapest (or first if free)
     let cheapest = available[0];
@@ -193,6 +193,7 @@ function hillClimb(
   initChassis: WizardState["chassis"],
   demographic: Demographic,
   year: number,
+  quarter?: 1 | 2 | 3 | 4,
 ): { components: Partial<Record<ComponentSlot, Component>>; chassis: WizardState["chassis"]; batteryCapacityWh: number } {
   const screenDef = SCREEN_SIZES.find(s => s.size === screenSize)!;
   const displayMult = screenDef.displayMultiplier;
@@ -214,7 +215,7 @@ function hillClimb(
 
     // Try swapping each component slot
     for (const slot of ALL_COMPONENT_SLOTS) {
-      const available = getAvailableComponents(slot, year);
+      const available = getAvailableComponents(slot, year, quarter);
       const current = components[slot];
       let bestForSlot = current;
       let bestSlotScore = currentScore;
@@ -295,7 +296,7 @@ function hillClimb(
  * 3. Repeat until no single swap improves the score
  * 4. Pick the screen size with the best final score
  */
-export function optimiseForDemographic(demographic: Demographic, year: number): OptimisedResult {
+export function optimiseForDemographic(demographic: Demographic, year: number, quarter?: 1 | 2 | 3 | 4): OptimisedResult {
   const selectedColours = [COLOUR_OPTIONS[0].id];
 
   let bestResult: OptimisedResult | null = null;
@@ -305,8 +306,8 @@ export function optimiseForDemographic(demographic: Demographic, year: number): 
     const screenSize = screenDef.size;
     const displayMult = screenDef.displayMultiplier;
 
-    const seed = seedCheapestBuild(screenSize, year);
-    const optimised = hillClimb(screenSize, seed.components, seed.chassis, demographic, year);
+    const seed = seedCheapestBuild(screenSize, year, quarter);
+    const optimised = hillClimb(screenSize, seed.components, seed.chassis, demographic, year, quarter);
 
     const chassisOptions = [optimised.chassis.material, optimised.chassis.coolingSolution, optimised.chassis.keyboardFeature, optimised.chassis.trackpadFeature];
     const thickness = findMinThickness(screenSize, optimised.components, optimised.batteryCapacityWh, chassisOptions, year);

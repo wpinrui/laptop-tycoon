@@ -262,10 +262,10 @@ function ScreenSizeEditor() {
 }
 
 function SingleComponentEditor({ slot }: { slot: ComponentSlot }) {
-  const { state, dispatch, gameYear } = useWizard();
+  const { state, dispatch, gameYear, gameQuarter } = useWizard();
   const screenSizeDef = getScreenSizeDef(state.screenSize);
   const multiplier = screenSizeDef.displayMultiplier;
-  const available = getAvailableComponents(slot, gameYear);
+  const available = getAvailableComponents(slot, gameYear, gameQuarter);
   const selected = state.components[slot] ?? null;
   const isDisplay = DISPLAY_SLOTS.includes(slot);
 
