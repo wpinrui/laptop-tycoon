@@ -39,7 +39,7 @@ export const TABLE_STATS: LaptopStat[] = ["performance", "gamingPerformance", "b
 
 export const MAX_COMPARE = 3;
 
-export const RADAR_COLORS = ["#4fc3f7", "#ffb74d", tokens.colors.market];
+export const RADAR_COLORS = [tokens.colors.accent, "#ffb74d", tokens.colors.market];
 
 /** Shared compare-toggle button style used by card and table views. */
 export const compareBtnStyle = (active: boolean, disabled: boolean, compact = false): CSSProperties => ({

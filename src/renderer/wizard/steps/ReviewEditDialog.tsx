@@ -499,7 +499,7 @@ function SingleChassisEditor({ slot, options }: { slot: ChassisOptionSlot; optio
                   </span>
                 )}
                 {option.volumeCm3 > 0 && <span style={{ color: tokens.colors.market }}>{option.volumeCm3}cm³</span>}
-                {option.coolingCapacityW > 0 && <span style={{ color: "#4fc3f7" }}>{option.coolingCapacityW}W cooling</span>}
+                {option.coolingCapacityW > 0 && <span style={{ color: tokens.colors.accent }}>{option.coolingCapacityW}W cooling</span>}
               </div>
             </SelectionCard>
           </Tooltip>
