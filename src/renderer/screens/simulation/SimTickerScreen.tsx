@@ -97,7 +97,7 @@ const HEADLINE_TYPE_COLOR: Record<TickerHeadline["type"], string> = {
   milestone: tokens.colors.accent,
   trend: tokens.colors.text,
   sellout: tokens.colors.warning,
-  perception: "#ce93d8",
+  perception: tokens.colors.market,
 };
 
 function HeadlineToast({ headline, onDismiss }: { headline: TickerHeadline; onDismiss: () => void }) {

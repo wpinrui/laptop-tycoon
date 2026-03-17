@@ -37,6 +37,7 @@ export const tokens = {
     background: "#121212",
     surface: "rgba(255, 255, 255, 0.05)",
     surfaceHover: "rgba(255, 255, 255, 0.1)",
+    market: "#ce93d8",
   },
   backdrop: {
     blur: "blur(20px)",
