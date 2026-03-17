@@ -6,8 +6,32 @@ import { useNavigation } from "../../navigation/NavigationContext";
 import { tokens } from "../../shell/tokens";
 import { MenuButton } from "../../shell/MenuButton";
 import { formatCash, formatNumber, QUARTER_LABELS } from "../../utils/formatCash";
-import { LaptopSalesResult } from "../../../simulation/salesTypes";
+import { LaptopSalesResult, QuarterSimulationResult } from "../../../simulation/salesTypes";
+import { determineAwards } from "../../../simulation/reviewsAwards";
 import { generateTickerHeadlines, MAX_COMPETITOR_MODELS, TickerHeadline } from "./tickerHeadlines";
+
+/** Aggregate laptop sales results across all quarters for award determination. */
+function aggregateLaptopResults(quarters: QuarterSimulationResult[]): LaptopSalesResult[] {
+  const map = new Map<string, LaptopSalesResult>();
+  for (const q of quarters) {
+    for (const lr of q.laptopResults) {
+      const existing = map.get(lr.laptopId);
+      if (existing) {
+        map.set(lr.laptopId, {
+          ...existing,
+          unitsDemanded: existing.unitsDemanded + lr.unitsDemanded,
+          unitsSold: existing.unitsSold + lr.unitsSold,
+          revenue: existing.revenue + lr.revenue,
+          profit: existing.profit + lr.profit,
+          unsoldUnits: lr.unsoldUnits,
+        });
+      } else {
+        map.set(lr.laptopId, { ...lr });
+      }
+    }
+  }
+  return Array.from(map.values());
+}
 
 const DURATION_MS = 12_000;
 const TOAST_DISPLAY_MS = 4_500;
@@ -204,7 +228,7 @@ function KpiCounter({ label, value, from, progress, format, color }: {
 // ─── Main Screen ─────────────────────────────────────────────
 
 export function SimTickerScreen() {
-  const { state } = useGame();
+  const { state, dispatch } = useGame();
   const { navigateTo } = useNavigation();
   const result = state.lastSimulationResult;
   const player = getPlayerCompany(state);
@@ -298,14 +322,21 @@ export function SimTickerScreen() {
 
   const proceed = useCallback(() => {
     if (!result) return;
-    if (result.quarter === 4 && result.cashAfterResolution < 0) {
-      navigateTo("gameOver");
-    } else if (result.quarter === 4) {
-      navigateTo("yearEndSummary");
+    if (result.quarter === 4) {
+      // Determine year-end awards after Q4 sales animation completes
+      const yearLaptopResults = aggregateLaptopResults(state.quarterHistory);
+      const awards = determineAwards(state, yearLaptopResults);
+      dispatch({ type: "SET_AWARDS", awards });
+
+      if (result.cashAfterResolution < 0) {
+        navigateTo("gameOver");
+      } else {
+        navigateTo("yearEndSummary");
+      }
     } else {
       navigateTo("quarterlySummary");
     }
-  }, [result, navigateTo]);
+  }, [result, state, dispatch, navigateTo]);
 
   // Keyboard: Space to pause/resume, Enter/Escape to skip
   useEffect(() => {
