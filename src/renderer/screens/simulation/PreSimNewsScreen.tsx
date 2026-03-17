@@ -7,6 +7,7 @@ import { tokens } from "../../shell/tokens";
 import { MenuButton } from "../../shell/MenuButton";
 import { OUTLETS, NewsItem, NewsOutletId, NewsBody, NewsCategory } from "../../../simulation/newsTypes";
 import { formatCash, formatNumber, QUARTER_LABELS } from "../../utils/formatCash";
+import { reviewScoreColor } from "../../utils/reviewScoreColor";
 
 const CLIPPING_MAX_WIDTH = 680;
 
@@ -124,7 +125,7 @@ function LaunchBody({ body, pub }: { body: Extract<NewsBody, { type: "productLau
 }
 
 function ReviewClippingBody({ body, pub }: { body: Extract<NewsBody, { type: "review" }>; pub: PublicationStyle }) {
-  const scoreColor = body.score >= 8 ? "#2e7d32" : body.score >= 5 ? "#e65100" : "#c62828";
+  const scoreColor = reviewScoreColor(body.score);
   return (
     <div style={{ marginTop: tokens.spacing.md }}>
       <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing.md, marginBottom: tokens.spacing.md }}>
