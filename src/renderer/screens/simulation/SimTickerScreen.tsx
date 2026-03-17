@@ -93,6 +93,13 @@ function SalesBar({ label, unitsSold, maxUnits, unsoldUnits, progress, isPlayer 
 
 // ─── Headline Toast ──────────────────────────────────────────
 
+const HEADLINE_TYPE_COLOR: Record<TickerHeadline["type"], string> = {
+  milestone: tokens.colors.accent,
+  trend: tokens.colors.text,
+  sellout: tokens.colors.warning,
+  perception: "#ce93d8",
+};
+
 function HeadlineToast({ headline, onDismiss }: { headline: TickerHeadline; onDismiss: () => void }) {
   const [exiting, setExiting] = useState(false);
 
@@ -108,18 +115,11 @@ function HeadlineToast({ headline, onDismiss }: { headline: TickerHeadline; onDi
     }
   }, [exiting, onDismiss]);
 
-  const typeColor: Record<TickerHeadline["type"], string> = {
-    milestone: tokens.colors.accent,
-    trend: tokens.colors.text,
-    sellout: tokens.colors.warning,
-    perception: "#ce93d8",
-  };
-
   return (
     <div style={{
       background: tokens.colors.cardBg,
       border: `1px solid ${tokens.colors.panelBorder}`,
-      borderLeft: `3px solid ${typeColor[headline.type]}`,
+      borderLeft: `3px solid ${HEADLINE_TYPE_COLOR[headline.type]}`,
       borderRadius: tokens.borderRadius.sm,
       padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
       fontSize: tokens.font.sizeBase,

@@ -21,6 +21,9 @@ const HEADLINE_START = 0.15;
 const HEADLINE_END = 0.85;
 const NEAR_SELLOUT_THRESHOLD = 0.85;
 const PERCEPTION_DELTA_THRESHOLD = 0.5;
+const MILESTONE_LARGE_THRESHOLD = 1000;
+const MILESTONE_SMALL_THRESHOLD = 100;
+const MIN_DEMAND_FOR_TREND = 50;
 export const MAX_COMPETITOR_MODELS = 5;
 
 const demName = (id: DemographicId): string =>
@@ -43,14 +46,14 @@ export function generateTickerHeadlines(
     if (!model) continue;
     const name = modelDisplayName(player.name, model.design.name);
 
-    if (lr.unitsSold >= 1000) {
-      const rounded = Math.floor(lr.unitsSold / 1000) * 1000;
+    if (lr.unitsSold >= MILESTONE_LARGE_THRESHOLD) {
+      const rounded = Math.floor(lr.unitsSold / MILESTONE_LARGE_THRESHOLD) * MILESTONE_LARGE_THRESHOLD;
       headlines.push({
         triggerAt: 0,
         text: `${name} crosses ${rounded.toLocaleString()} units sold`,
         type: "milestone",
       });
-    } else if (lr.unitsSold >= 100) {
+    } else if (lr.unitsSold >= MILESTONE_SMALL_THRESHOLD) {
       headlines.push({
         triggerAt: 0,
         text: `${name} sells ${lr.unitsSold.toLocaleString()} units this quarter`,
@@ -71,9 +74,9 @@ export function generateTickerHeadlines(
         text: `${name} sells out completely!`,
         type: "sellout",
       });
-    } else if (lr.unitsDemanded > 0 && lr.unsoldUnits > 0) {
-      const sellThrough = lr.unitsSold / lr.unitsDemanded;
-      if (sellThrough > NEAR_SELLOUT_THRESHOLD) {
+    } else if (lr.unitsSold > 0 && lr.unsoldUnits > 0) {
+      const inventorySellThrough = lr.unitsSold / (lr.unitsSold + lr.unsoldUnits);
+      if (inventorySellThrough > NEAR_SELLOUT_THRESHOLD) {
         headlines.push({
           triggerAt: 0,
           text: `${name} nears sell-out — only ${lr.unsoldUnits.toLocaleString()} left`,
@@ -95,7 +98,7 @@ export function generateTickerHeadlines(
     .slice(0, 2);
 
   for (const [demId, demand] of topDems) {
-    if (demand < 50) continue;
+    if (demand < MIN_DEMAND_FOR_TREND) continue;
     const templates = [
       `Strong ${demName(demId)} demand this quarter — ${demand.toLocaleString()} units sought`,
       `${demName(demId)} buyers flood the market — ${demand.toLocaleString()} units in demand`,
