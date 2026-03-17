@@ -126,6 +126,46 @@ export const MATERIALS: ChassisOption[] = [
     specs: { material: "CNC Aluminium (2nd gen)", finish: "Diamond-cut anodised" },
     stats: { design: 88, buildQuality: 80 },
   },
+
+  // --- 2016 ---
+  {
+    id: "cnc_aluminium",
+    name: "CNC Aluminium (Precision)",
+    description:
+      "Precision CNC-machined aluminium with diamond-cut edges. Ultra-premium build quality.",
+    slot: "material",
+    yearIntroduced: 2016,
+    yearDiscontinued: null,
+    costAtLaunch: 120,
+    costDecayRate: 0.06,
+    weightG: 0,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 0.76,
+    specs: { material: "CNC Aluminium (3rd gen)", finish: "Precision diamond-cut anodised" },
+    stats: { design: 92, buildQuality: 85 },
+  },
+
+  // --- 2018 ---
+  {
+    id: "magnesium_carbon",
+    name: "Magnesium-Carbon Fibre Hybrid",
+    description:
+      "Combines magnesium alloy lid with carbon fibre base. Incredibly light and rigid.",
+    slot: "material",
+    yearIntroduced: 2018,
+    yearDiscontinued: null,
+    costAtLaunch: 180,
+    costDecayRate: 0.05,
+    weightG: 0,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 0.42,
+    specs: { material: "Magnesium Alloy + Carbon Fibre", finish: "Painted + Woven" },
+    stats: { design: 75, buildQuality: 82 },
+  },
 ];
 
 export const COOLING_SOLUTIONS: ChassisOption[] = [
@@ -250,6 +290,25 @@ export const COOLING_SOLUTIONS: ChassisOption[] = [
     coolingCapacityW: 60,
     shellDensityMultiplier: 1.0,
     specs: { type: "Active", noise: "Quiet", fans: "1 (slim)", heatpipes: "1 flat copper" },
+    stats: {},
+  },
+
+  // --- 2018 (vapour chamber) ---
+  {
+    id: "vapour_chamber",
+    name: "Vapour Chamber Cooling",
+    description: "Premium cooling using a flat vapour chamber for even heat distribution. Top-tier thermal performance.",
+    slot: "coolingSolution",
+    yearIntroduced: 2018,
+    yearDiscontinued: null,
+    costAtLaunch: 120,
+    costDecayRate: 0.04,
+    weightG: 280,
+    volumeCm3: 220,
+    minThicknessCm: 2.0,
+    coolingCapacityW: 280,
+    shellDensityMultiplier: 1.0,
+    specs: { type: "Active", noise: "Very Loud", fans: "2 (high-speed)", heatpipes: "Vapour chamber + 4 copper" },
     stats: {},
   },
 
@@ -436,6 +495,56 @@ export const KEYBOARD_FEATURES: ChassisOption[] = [
     },
     stats: { keyboard: 50, design: 12 },
   },
+
+  // --- 2016 (butterfly keyboard era) ---
+  {
+    id: "keyboard_butterfly",
+    name: "Butterfly Mechanism Keyboard",
+    description:
+      "Ultra-thin butterfly switches for the slimmest laptops. Minimal travel, polarising feel.",
+    slot: "keyboardFeature",
+    yearIntroduced: 2016,
+    yearDiscontinued: 2020,
+    costAtLaunch: 20,
+    costDecayRate: 0.05,
+    weightG: 0,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 1.0,
+    specs: {
+      type: "Butterfly",
+      travel: "0.7mm",
+      backlight: "White LED",
+      layout: "Ultra-low-profile",
+    },
+    stats: { keyboard: 38, design: 15 },
+  },
+
+  // --- 2017 (per-key RGB) ---
+  {
+    id: "keyboard_chiclet_perkey_rgb",
+    name: "Per-key RGB Backlit Keyboard",
+    description:
+      "Individual RGB lighting per key. Full customisation for gaming setups.",
+    slot: "keyboardFeature",
+    yearIntroduced: 2017,
+    yearDiscontinued: null,
+    costAtLaunch: 45,
+    costDecayRate: 0.08,
+    weightG: 10,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 1.0,
+    specs: {
+      type: "Chiclet",
+      travel: "1.8mm",
+      backlight: "Per-key RGB LED",
+      layout: "Island-style",
+    },
+    stats: { keyboard: 65, design: 22 },
+  },
 ];
 
 export const TRACKPAD_FEATURES: ChassisOption[] = [
@@ -621,6 +730,56 @@ export const TRACKPAD_FEATURES: ChassisOption[] = [
       feature: "Pressure-sensitive + haptic feedback",
     },
     stats: { trackpad: 92, design: 10 },
+  },
+
+  // --- 2017 (precision trackpads) ---
+  {
+    id: "trackpad_precision",
+    name: "Windows Precision Trackpad",
+    description:
+      "Microsoft-certified precision trackpad with reliable multi-touch gestures and palm rejection.",
+    slot: "trackpadFeature",
+    yearIntroduced: 2017,
+    yearDiscontinued: null,
+    costAtLaunch: 20,
+    costDecayRate: 0.06,
+    weightG: 8,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 1.0,
+    specs: {
+      type: "Glass (Precision)",
+      size: "Large",
+      buttons: "Integrated click",
+      feature: "Windows Precision driver + multi-gesture",
+    },
+    stats: { trackpad: 88, design: 8 },
+  },
+
+  // --- 2020 ---
+  {
+    id: "trackpad_precision_xl",
+    name: "XL Precision Trackpad",
+    description:
+      "Oversized precision trackpad with excellent tracking and gesture support. The new standard.",
+    slot: "trackpadFeature",
+    yearIntroduced: 2020,
+    yearDiscontinued: null,
+    costAtLaunch: 22,
+    costDecayRate: 0.05,
+    weightG: 10,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    coolingCapacityW: 0,
+    shellDensityMultiplier: 1.0,
+    specs: {
+      type: "Glass (Precision)",
+      size: "Extra Large",
+      buttons: "Integrated click",
+      feature: "Windows Precision driver + edge gestures",
+    },
+    stats: { trackpad: 90, design: 10 },
   },
 ];
 
