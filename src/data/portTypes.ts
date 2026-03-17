@@ -470,4 +470,90 @@ export const PORT_TYPES: PortType[] = [
     stats: { connectivity: 22 },
     specs: { speed: "10 Gbps", type: "Type-C", features: "Reversible, Alt Mode (DP/HDMI)" },
   },
+
+  // --- 2016 (Thunderbolt 3 / USB-C era — dongle life begins) ---
+  {
+    id: "thunderbolt_3",
+    name: "Thunderbolt 3 (USB-C)",
+    description:
+      "40 Gbps over USB-C. Connects eGPUs, docks, 4K displays, and charges the laptop — all through one cable.",
+    category: "expansion",
+    yearIntroduced: 2016,
+    yearDiscontinued: null,
+    maxCount: 2,
+    costPerPort: 10,
+    weightPerPortG: 2,
+    volumePerPortCm3: 2,
+    minThicknessCm: 0.4,
+    stats: { connectivity: 28 },
+    specs: { speed: "40 Gbps", type: "USB-C connector", features: "PCIe, DisplayPort, Power Delivery, Daisy-chain" },
+  },
+  {
+    id: "usb_3_1_gen2",
+    name: "USB 3.1 Gen 2 (Type-A)",
+    description:
+      "Faster USB Type-A at 10 Gbps. Backwards compatible with all USB devices.",
+    category: "usb",
+    yearIntroduced: 2016,
+    yearDiscontinued: null,
+    maxCount: 3,
+    costPerPort: 5,
+    weightPerPortG: 4,
+    volumePerPortCm3: 3,
+    minThicknessCm: 0.8,
+    stats: { connectivity: 20 },
+    specs: { speed: "10 Gbps", type: "Type-A" },
+  },
+
+  // --- 2017 ---
+  {
+    id: "usb_type_c_3_1_gen2",
+    name: "USB Type-C (3.1 Gen 2)",
+    description:
+      "10 Gbps USB-C with Power Delivery. Charges, transfers, and outputs video through one port.",
+    category: "usb",
+    yearIntroduced: 2017,
+    yearDiscontinued: null,
+    maxCount: 3,
+    costPerPort: 6,
+    weightPerPortG: 2,
+    volumePerPortCm3: 2,
+    minThicknessCm: 0.4,
+    stats: { connectivity: 24 },
+    specs: { speed: "10 Gbps", type: "Type-C", features: "Power Delivery, DisplayPort Alt Mode" },
+  },
+
+  // --- 2019 ---
+  {
+    id: "usb_3_2_gen2",
+    name: "USB 3.2 Gen 2 (Type-A)",
+    description:
+      "Rebranded USB 3.1 Gen 2 — same 10 Gbps speed, new confusing name.",
+    category: "usb",
+    yearIntroduced: 2019,
+    yearDiscontinued: null,
+    maxCount: 3,
+    costPerPort: 5,
+    weightPerPortG: 4,
+    volumePerPortCm3: 3,
+    minThicknessCm: 0.8,
+    stats: { connectivity: 20 },
+    specs: { speed: "10 Gbps", type: "Type-A" },
+  },
+  {
+    id: "hdmi_2_0b",
+    name: "HDMI 2.0b",
+    description:
+      "Updated HDMI with HDR support. Full 4K at 60Hz with high dynamic range.",
+    category: "video",
+    yearIntroduced: 2019,
+    yearDiscontinued: null,
+    maxCount: 1,
+    costPerPort: 4,
+    weightPerPortG: 4,
+    volumePerPortCm3: 4,
+    minThicknessCm: 0.7,
+    stats: { connectivity: 18 },
+    specs: { signal: "Digital (HDMI 2.0b)", maxResolution: "3840x2160@60Hz HDR", audio: "Yes" },
+  },
 ];

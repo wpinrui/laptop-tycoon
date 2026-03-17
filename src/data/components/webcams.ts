@@ -264,4 +264,194 @@ export const WEBCAMS: Component[] = [
     },
     stats: { webcam: 110 },
   },
+
+  // --- 2016 ---
+  {
+    id: "webcam_hd_720p_2016",
+    name: "HD 720p Webcam (2016)",
+    description:
+      "Still just 720p on most laptops — even premium ones. The sad webcam era begins.",
+    slot: "webcam",
+    yearIntroduced: 2016,
+    yearDiscontinued: 2019,
+    costAtLaunch: 8,
+    powerDrawW: 1,
+    weightG: 5,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: {
+      resolution: "1280x720",
+      megapixels: "1.0 MP (HD)",
+      feature: "720p standard",
+    },
+    stats: { webcam: 85 },
+  },
+  {
+    id: "webcam_hd_1080p_2016",
+    name: "Full HD 1080p Webcam (2016)",
+    description:
+      "1080p webcam reserved for premium models. Noticeably sharper video calls.",
+    slot: "webcam",
+    yearIntroduced: 2016,
+    yearDiscontinued: 2019,
+    costAtLaunch: 25,
+    powerDrawW: 1,
+    weightG: 6,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: {
+      resolution: "1920x1080",
+      megapixels: "2.1 MP (Full HD)",
+      feature: "1080p video",
+    },
+    stats: { webcam: 108 },
+  },
+
+  // --- 2017 ---
+  {
+    id: "webcam_hd_720p_ir",
+    name: "HD 720p Webcam + IR Camera",
+    description:
+      "720p webcam with infrared sensor for Windows Hello face unlock. Security meets convenience.",
+    slot: "webcam",
+    yearIntroduced: 2017,
+    yearDiscontinued: 2020,
+    costAtLaunch: 18,
+    powerDrawW: 1,
+    weightG: 7,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: {
+      resolution: "1280x720",
+      megapixels: "1.0 MP (HD)",
+      feature: "720p + IR (Windows Hello)",
+    },
+    stats: { webcam: 100 },
+  },
+
+  // --- 2018 ---
+  {
+    id: "webcam_hd_720p_2018",
+    name: "HD 720p Webcam (2018)",
+    description:
+      "720p webcams persist even on premium laptops. The camera quality stagnation continues.",
+    slot: "webcam",
+    yearIntroduced: 2018,
+    yearDiscontinued: 2021,
+    costAtLaunch: 6,
+    powerDrawW: 1,
+    weightG: 5,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: {
+      resolution: "1280x720",
+      megapixels: "1.0 MP (HD)",
+      feature: "720p standard",
+    },
+    stats: { webcam: 82 },
+  },
+  {
+    id: "webcam_hd_1080p_ir",
+    name: "Full HD 1080p Webcam + IR Camera",
+    description:
+      "Premium webcam combo with 1080p video and Windows Hello facial recognition.",
+    slot: "webcam",
+    yearIntroduced: 2018,
+    yearDiscontinued: 2021,
+    costAtLaunch: 30,
+    powerDrawW: 1,
+    weightG: 8,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: {
+      resolution: "1920x1080",
+      megapixels: "2.1 MP (Full HD)",
+      feature: "1080p + IR (Windows Hello)",
+    },
+    stats: { webcam: 118 },
+  },
+
+  // --- 2019 ---
+  {
+    id: "webcam_hd_720p_2019",
+    name: "HD 720p Webcam (2019)",
+    description:
+      "Yes, still 720p. Even on $1500 laptops. The webcam dark ages.",
+    slot: "webcam",
+    yearIntroduced: 2019,
+    yearDiscontinued: 2022,
+    costAtLaunch: 5,
+    powerDrawW: 1,
+    weightG: 5,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: {
+      resolution: "1280x720",
+      megapixels: "1.0 MP (HD)",
+      feature: "720p standard",
+    },
+    stats: { webcam: 80 },
+  },
+  {
+    id: "webcam_hd_720p_ir_2019",
+    name: "HD 720p Webcam + IR Camera (2019)",
+    description:
+      "At least it has Windows Hello. The camera resolution hasn't budged though.",
+    slot: "webcam",
+    yearIntroduced: 2019,
+    yearDiscontinued: 2022,
+    costAtLaunch: 15,
+    powerDrawW: 1,
+    weightG: 7,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: {
+      resolution: "1280x720",
+      megapixels: "1.0 MP (HD)",
+      feature: "720p + IR (Windows Hello)",
+    },
+    stats: { webcam: 98 },
+  },
+
+  // --- 2020 ---
+  {
+    id: "webcam_hd_720p_2020",
+    name: "HD 720p Webcam (2020)",
+    description:
+      "The pandemic exposes how bad 720p webcams really are. Demand for better cameras skyrockets.",
+    slot: "webcam",
+    yearIntroduced: 2020,
+    yearDiscontinued: 2023,
+    costAtLaunch: 5,
+    powerDrawW: 1,
+    weightG: 5,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: {
+      resolution: "1280x720",
+      megapixels: "1.0 MP (HD)",
+      feature: "720p standard",
+    },
+    stats: { webcam: 78 },
+  },
+  {
+    id: "webcam_hd_1080p_ir_2020",
+    name: "Full HD 1080p Webcam + IR Camera (2020)",
+    description:
+      "Premium 1080p with Windows Hello. Finally appreciated as remote work takes over.",
+    slot: "webcam",
+    yearIntroduced: 2020,
+    yearDiscontinued: 2023,
+    costAtLaunch: 25,
+    powerDrawW: 1,
+    weightG: 8,
+    volumeCm3: 0,
+    minThicknessCm: 0,
+    specs: {
+      resolution: "1920x1080",
+      megapixels: "2.1 MP (Full HD)",
+      feature: "1080p + IR (Windows Hello)",
+    },
+    stats: { webcam: 120 },
+  },
 ];
