@@ -21,6 +21,16 @@ interface YearGroup {
   components: Component[];
 }
 
+function makeGroupLabel(years: number[]): string {
+  const sorted = [...years].sort((a, b) => a - b);
+  return sorted.length === 1
+    ? `${sorted[0]}`
+    : `${sorted[0]}\u2013${sorted[sorted.length - 1]}`;
+}
+
+const sortCheapestFirst = (gameYear: number) => (a: Component, b: Component) =>
+  componentCostDecayed(a, gameYear) - componentCostDecayed(b, gameYear);
+
 /** Group components by year (newest first), merging small groups so each has >= minSize items. */
 function groupByYear(components: Component[], minSize: number, gameYear: number): YearGroup[] {
   // Bucket by yearIntroduced
@@ -36,7 +46,7 @@ function groupByYear(components: Component[], minSize: number, gameYear: number)
 
   // Sort each bucket cheapest-first (by decayed cost)
   for (const [, items] of buckets) {
-    items.sort((a, b) => componentCostDecayed(a, gameYear) - componentCostDecayed(b, gameYear));
+    items.sort(sortCheapestFirst(gameYear));
   }
 
   // Build groups, merging from the tail (oldest) until each has >= minSize
@@ -51,13 +61,8 @@ function groupByYear(components: Component[], minSize: number, gameYear: number)
     pendingItems.push(...buckets.get(year)!);
 
     if (pendingItems.length >= minSize) {
-      // Re-sort merged group cheapest-first
-      pendingItems.sort((a, b) => componentCostDecayed(a, gameYear) - componentCostDecayed(b, gameYear));
-      const sortedYears = pendingYears.sort((a, b) => a - b);
-      const label = sortedYears.length === 1
-        ? `${sortedYears[0]}`
-        : `${sortedYears[0]}\u2013${sortedYears[sortedYears.length - 1]}`;
-      groups.push({ label, components: pendingItems });
+      pendingItems.sort(sortCheapestFirst(gameYear));
+      groups.push({ label: makeGroupLabel(pendingYears), components: pendingItems });
       pendingYears = [];
       pendingItems = [];
     }
@@ -68,19 +73,12 @@ function groupByYear(components: Component[], minSize: number, gameYear: number)
     if (groups.length > 0) {
       const last = groups[groups.length - 1];
       last.components.push(...pendingItems);
-      last.components.sort((a, b) => componentCostDecayed(a, gameYear) - componentCostDecayed(b, gameYear));
-      // Update label to include the merged years
-      const allYears = [...new Set(last.components.map((c) => c.yearIntroduced))].sort((a, b) => a - b);
-      last.label = allYears.length === 1
-        ? `${allYears[0]}`
-        : `${allYears[0]}\u2013${allYears[allYears.length - 1]}`;
+      last.components.sort(sortCheapestFirst(gameYear));
+      const allYears = [...new Set(last.components.map((c) => c.yearIntroduced))];
+      last.label = makeGroupLabel(allYears);
     } else {
-      pendingItems.sort((a, b) => componentCostDecayed(a, gameYear) - componentCostDecayed(b, gameYear));
-      const sortedYears = pendingYears.sort((a, b) => a - b);
-      const label = sortedYears.length === 1
-        ? `${sortedYears[0]}`
-        : `${sortedYears[0]}\u2013${sortedYears[sortedYears.length - 1]}`;
-      groups.push({ label, components: pendingItems });
+      pendingItems.sort(sortCheapestFirst(gameYear));
+      groups.push({ label: makeGroupLabel(pendingYears), components: pendingItems });
     }
   }
 
@@ -89,11 +87,13 @@ function groupByYear(components: Component[], minSize: number, gameYear: number)
   return groups;
 }
 
+const AGING_THRESHOLD_QUARTERS = 5;
+
 /** Returns true if a component is 5+ quarters old relative to the current game date. */
 function isAging(component: Component, gameYear: number, gameQuarter: number): boolean {
   const gameQ = gameYear * 4 + gameQuarter;
   const compQ = component.yearIntroduced * 4 + (component.quarterIntroduced ?? 1);
-  return gameQ - compQ >= 5;
+  return gameQ - compQ >= AGING_THRESHOLD_QUARTERS;
 }
 
 export function ComponentStepLayout({
@@ -300,7 +300,7 @@ function ComponentCard({
   slot: ComponentSlot;
   multiplier: number;
   gameYear: number;
-  gameQuarter: number;
+  gameQuarter: 1 | 2 | 3 | 4;
 }) {
   const cost = applyDisplayMultiplier(componentCostDecayed(component, gameYear), slot, multiplier);
   const power = applyDisplayMultiplier(component.powerDrawW, slot, multiplier);
