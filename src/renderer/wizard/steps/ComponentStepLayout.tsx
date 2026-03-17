@@ -90,7 +90,7 @@ function groupByYear(components: Component[], minSize: number, gameYear: number)
 const AGING_THRESHOLD_QUARTERS = 5;
 
 /** Returns true if a component is 5+ quarters old relative to the current game date. */
-function isAging(component: Component, gameYear: number, gameQuarter: number): boolean {
+function isAging(component: Component, gameYear: number, gameQuarter: 1 | 2 | 3 | 4): boolean {
   const gameQ = gameYear * 4 + gameQuarter;
   const compQ = component.yearIntroduced * 4 + (component.quarterIntroduced ?? 1);
   return gameQ - compQ >= AGING_THRESHOLD_QUARTERS;
