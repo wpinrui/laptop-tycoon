@@ -424,4 +424,177 @@ export const WIFI: Component[] = [
     },
     stats: { connectivity: 145 },
   },
+
+  // --- 2016 ---
+  {
+    id: "intel_8260_ac_bt42_2016",
+    name: "Intel Wireless-AC 8260 + Bluetooth 4.2",
+    description:
+      "Standard WiFi 5 (802.11ac) with MU-MIMO. Reliable and widespread.",
+    slot: "wifi",
+    yearIntroduced: 2016,
+    yearDiscontinued: 2019,
+    costAtLaunch: 25,
+    powerDrawW: 2,
+    weightG: 5,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11a/b/g/n/ac",
+      speed: "867 Mbps (MU-MIMO)",
+      bluetooth: "4.2",
+    },
+    stats: { connectivity: 138 },
+  },
+
+  // --- 2017 ---
+  {
+    id: "intel_9260_ac_bt50",
+    name: "Intel Wireless-AC 9260 + Bluetooth 5.0",
+    description:
+      "2x2 WiFi 5 with Bluetooth 5.0. Faster range and lower latency for wireless peripherals.",
+    slot: "wifi",
+    yearIntroduced: 2017,
+    yearDiscontinued: 2020,
+    costAtLaunch: 25,
+    powerDrawW: 2,
+    weightG: 5,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11a/b/g/n/ac",
+      speed: "1.73 Gbps (2x2 160 MHz)",
+      bluetooth: "5.0",
+    },
+    stats: { connectivity: 152 },
+  },
+  {
+    id: "realtek_8822be_ac_bt42",
+    name: "Realtek RTL8822BE 802.11ac + Bluetooth 4.2",
+    description:
+      "Budget WiFi 5 adapter. Widely used in affordable laptops.",
+    slot: "wifi",
+    yearIntroduced: 2017,
+    yearDiscontinued: 2020,
+    costAtLaunch: 15,
+    powerDrawW: 2,
+    weightG: 4,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11a/b/g/n/ac",
+      speed: "867 Mbps",
+      bluetooth: "4.2",
+    },
+    stats: { connectivity: 128 },
+  },
+
+  // --- 2018 ---
+  {
+    id: "intel_9560_ac_bt50",
+    name: "Intel Wireless-AC 9560 + Bluetooth 5.0",
+    description:
+      "Top-tier WiFi 5 with CNVi integration for lower power and cost.",
+    slot: "wifi",
+    yearIntroduced: 2018,
+    yearDiscontinued: 2021,
+    costAtLaunch: 22,
+    powerDrawW: 2,
+    weightG: 4,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11a/b/g/n/ac",
+      speed: "1.73 Gbps (2x2 160 MHz)",
+      bluetooth: "5.0",
+    },
+    stats: { connectivity: 155 },
+  },
+
+  // --- 2019 (WiFi 6 arrives) ---
+  {
+    id: "intel_ax200_wifi6_bt50",
+    name: "Intel Wi-Fi 6 AX200 + Bluetooth 5.0",
+    description:
+      "First WiFi 6 (802.11ax) adapter. Dramatically faster in crowded networks with OFDMA.",
+    slot: "wifi",
+    yearIntroduced: 2019,
+    quarterIntroduced: 3,
+    yearDiscontinued: 2022,
+    costAtLaunch: 25,
+    powerDrawW: 2,
+    weightG: 4,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11a/b/g/n/ac/ax (WiFi 6)",
+      speed: "2.4 Gbps (2x2 160 MHz)",
+      bluetooth: "5.0",
+    },
+    stats: { connectivity: 168 },
+  },
+  {
+    id: "killer_ax1650_wifi6_bt50",
+    name: "Killer Wi-Fi 6 AX1650 + Bluetooth 5.0",
+    description:
+      "Gaming-optimised WiFi 6 with traffic prioritisation. Low latency for online gaming.",
+    slot: "wifi",
+    yearIntroduced: 2019,
+    quarterIntroduced: 3,
+    yearDiscontinued: 2022,
+    costAtLaunch: 30,
+    powerDrawW: 2,
+    weightG: 4,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11a/b/g/n/ac/ax (WiFi 6)",
+      speed: "2.4 Gbps (2x2 160 MHz)",
+      bluetooth: "5.0",
+      feature: "Killer Prioritization Engine",
+    },
+    stats: { connectivity: 172 },
+  },
+
+  // --- 2020 ---
+  {
+    id: "intel_ax201_wifi6_bt50",
+    name: "Intel Wi-Fi 6 AX201 + Bluetooth 5.0",
+    description:
+      "CNVi-integrated WiFi 6. Lower cost and power than AX200 with identical performance.",
+    slot: "wifi",
+    yearIntroduced: 2020,
+    yearDiscontinued: 2023,
+    costAtLaunch: 20,
+    powerDrawW: 2,
+    weightG: 4,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11a/b/g/n/ac/ax (WiFi 6)",
+      speed: "2.4 Gbps (2x2 160 MHz)",
+      bluetooth: "5.0",
+    },
+    stats: { connectivity: 170 },
+  },
+  {
+    id: "mediatek_mt7921_wifi6_bt50",
+    name: "MediaTek MT7921 Wi-Fi 6 + Bluetooth 5.0",
+    description:
+      "Budget WiFi 6 adapter from MediaTek. Brings WiFi 6 to affordable laptops.",
+    slot: "wifi",
+    yearIntroduced: 2020,
+    yearDiscontinued: 2023,
+    costAtLaunch: 12,
+    powerDrawW: 2,
+    weightG: 4,
+    volumeCm3: 2,
+    minThicknessCm: 0,
+    specs: {
+      wifi: "802.11a/b/g/n/ac/ax (WiFi 6)",
+      speed: "1.2 Gbps (2x2)",
+      bluetooth: "5.0",
+    },
+    stats: { connectivity: 158 },
+  },
 ];
