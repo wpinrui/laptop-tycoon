@@ -454,11 +454,11 @@ export function SimTickerScreen() {
             gap: tokens.spacing.sm,
             minHeight: 80,
           }}>
-            {visibleHeadlines.map((h, i) => (
+            {visibleHeadlines.map((h) => (
               <HeadlineToast
-                key={`${h.triggerAt}-${i}`}
+                key={h.triggerAt}
                 headline={h}
-                onDismiss={() => setVisibleHeadlines((prev) => prev.filter((_, j) => j !== i))}
+                onDismiss={() => setVisibleHeadlines((prev) => prev.filter((x) => x !== h))}
               />
             ))}
           </div>
