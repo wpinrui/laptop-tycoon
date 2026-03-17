@@ -382,7 +382,7 @@ export function getAvailableComponents(slot: ComponentSlot, year: number, quarte
   return ALL_COMPONENTS
     .filter((c) => {
       if (c.slot !== slot) return false;
-      if (c.yearDiscontinued < year) return false;
+      if (c.yearDiscontinued !== null && c.yearDiscontinued < year) return false;
       if (c.yearIntroduced > year) return false;
       // If quarter is specified and component launches this year, check quarter
       if (quarter && c.yearIntroduced === year) {

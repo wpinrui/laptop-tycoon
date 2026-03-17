@@ -556,4 +556,108 @@ export const PORT_TYPES: PortType[] = [
     stats: { connectivity: 18 },
     specs: { signal: "Digital (HDMI 2.0b)", maxResolution: "3840x2160@60Hz HDR", audio: "Yes" },
   },
+
+  // --- 2020 ---
+  {
+    id: "usb4",
+    name: "USB4",
+    description:
+      "Next-gen USB based on Thunderbolt 3. 40 Gbps over Type-C with tunnelling for displays and PCIe.",
+    category: "usb",
+    yearIntroduced: 2020,
+    yearDiscontinued: null,
+    maxCount: 2,
+    costPerPort: 8,
+    weightPerPortG: 2,
+    volumePerPortCm3: 2,
+    minThicknessCm: 0.4,
+    stats: { connectivity: 30 },
+    specs: { speed: "40 Gbps", type: "Type-C" },
+  },
+
+  // --- 2021 ---
+  {
+    id: "thunderbolt_4",
+    name: "Thunderbolt 4",
+    description:
+      "Universal cable standard with mandatory PCIe tunnelling, wake from sleep, and DMA protection.",
+    category: "expansion",
+    yearIntroduced: 2021,
+    yearDiscontinued: null,
+    maxCount: 2,
+    costPerPort: 12,
+    weightPerPortG: 2,
+    volumePerPortCm3: 2,
+    minThicknessCm: 0.4,
+    stats: { connectivity: 32 },
+    specs: { speed: "40 Gbps", type: "Type-C", features: "Universal cable, mandatory features: PCIe tunneling, wake from sleep, DMA protection" },
+  },
+  {
+    id: "hdmi_2_1",
+    name: "HDMI 2.1",
+    description:
+      "High-bandwidth HDMI supporting 4K at 120Hz and 8K at 60Hz. The definitive display output.",
+    category: "video",
+    yearIntroduced: 2021,
+    yearDiscontinued: null,
+    maxCount: 1,
+    costPerPort: 5,
+    weightPerPortG: 4,
+    volumePerPortCm3: 4,
+    minThicknessCm: 0.7,
+    stats: { connectivity: 22 },
+    specs: { signal: "Digital (HDMI 2.1)", maxResolution: "4K@120Hz / 8K@60Hz", audio: "Yes", bandwidth: "48 Gbps" },
+  },
+
+  // --- 2022 ---
+  {
+    id: "usb4_v2",
+    name: "USB4 v2",
+    description:
+      "Doubled USB4 bandwidth to 80 Gbps. Handles multiple 4K displays and fast storage simultaneously.",
+    category: "usb",
+    yearIntroduced: 2022,
+    yearDiscontinued: null,
+    maxCount: 2,
+    costPerPort: 10,
+    weightPerPortG: 2,
+    volumePerPortCm3: 2,
+    minThicknessCm: 0.4,
+    stats: { connectivity: 35 },
+    specs: { speed: "80 Gbps", type: "Type-C" },
+  },
+  {
+    id: "sd_express",
+    name: "SD Express",
+    description:
+      "High-speed SD card slot using PCIe/NVMe. Ideal for photographers and videographers.",
+    category: "expansion",
+    yearIntroduced: 2022,
+    yearDiscontinued: null,
+    maxCount: 1,
+    costPerPort: 5,
+    weightPerPortG: 3,
+    volumePerPortCm3: 3,
+    minThicknessCm: 0.5,
+    stats: { connectivity: 12 },
+    specs: { speed: "985 MB/s", type: "SD Express (PCIe/NVMe)" },
+  },
+
+  // --- 2024 ---
+  {
+    id: "thunderbolt_5",
+    name: "Thunderbolt 5",
+    description:
+      "80 Gbps bi-directional (120 Gbps asymmetric). Supports DisplayPort 2.1 and USB4 v2.",
+    category: "expansion",
+    yearIntroduced: 2024,
+    yearDiscontinued: null,
+    maxCount: 2,
+    costPerPort: 15,
+    weightPerPortG: 2,
+    volumePerPortCm3: 2,
+    minThicknessCm: 0.4,
+    stats: { connectivity: 38 },
+    specs: { speed: "80/120 Gbps", type: "Type-C", features: "PCIe tunneling, DisplayPort 2.1, USB4 v2" },
+  },
 ];

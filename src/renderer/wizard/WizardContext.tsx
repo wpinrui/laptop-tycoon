@@ -62,7 +62,7 @@ function mergeComponents(
 ): WizardState["components"] {
   const merged: typeof existing = { ...existing };
   for (const [slot, component] of Object.entries(source)) {
-    if (component && component.yearDiscontinued >= gameYear && !existing[slot as ComponentSlot]) {
+    if (component && (component.yearDiscontinued === null || component.yearDiscontinued >= gameYear) && !existing[slot as ComponentSlot]) {
       merged[slot as ComponentSlot] = component;
     }
   }
