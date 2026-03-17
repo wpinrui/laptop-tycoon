@@ -10,7 +10,7 @@ import { MenuButton } from "../shell/MenuButton";
 import { ScreenHeader } from "../shell/ScreenHeader";
 import { tokens } from "../shell/tokens";
 import { StatusBar } from "../shell/StatusBar";
-import { getActiveModels, MAX_MODELS } from "./dashboard/utils";
+import { getActiveModels } from "./dashboard/utils";
 import { STATUS_CONFIG, getDisplayStatus } from "../statusConfig";
 import { ChangePricingDialog } from "../manufacturing/components/ChangePricingDialog";
 import { ConfirmDiscardDialog } from "../shell/ConfirmDiscardDialog";
@@ -73,7 +73,6 @@ export function ModelManagementScreen() {
   const player = getPlayerCompany(state);
   const activeModels = getActiveModels(state);
   const discontinuedModels = player.models.filter((m) => m.status === "discontinued");
-  const emptySlots = MAX_MODELS - activeModels.length;
   const canDesignNew = !state.quarterSimulated;
 
   function handleEdit(model: LaptopModel) {
@@ -116,21 +115,16 @@ export function ModelManagementScreen() {
         title="Your Models"
         icon={Laptop}
         right={
-          <>
-            <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted }}>
-              {activeModels.length} / {MAX_MODELS} slots
+          <MenuButton
+            variant="accent"
+            onClick={() => navigateTo("designWizard")}
+            disabled={!canDesignNew}
+            style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
+          >
+            <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
+              <Plus size={16} /> New Design
             </span>
-            <MenuButton
-              variant="accent"
-              onClick={() => navigateTo("designWizard")}
-              disabled={emptySlots === 0 || !canDesignNew}
-              style={{ fontSize: tokens.font.sizeBase, padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px` }}
-            >
-              <span style={{ display: "flex", alignItems: "center", gap: tokens.spacing.xs }}>
-                <Plus size={16} /> New Design
-              </span>
-            </MenuButton>
-          </>
+          </MenuButton>
         }
       />
 

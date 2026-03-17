@@ -1,8 +1,6 @@
 import { GameState, getPlayerCompany } from "../../state/gameTypes";
 import { tokens } from "../../shell/tokens";
 
-export const MAX_MODELS = 2;
-
 export function getActiveModels(state: GameState) {
   return getPlayerCompany(state).models.filter((m) => m.status !== "discontinued");
 }
