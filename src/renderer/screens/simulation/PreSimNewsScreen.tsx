@@ -380,16 +380,10 @@ export function PreSimNewsScreen() {
     setCurrentSlide((i) => Math.max(i - 1, 0));
   }, []);
 
-  // Navigate to the appropriate results screen
+  // Navigate to the sim ticker animation
   const proceed = useCallback(() => {
     if (!result) return;
-    if (result.quarter === 4 && result.cashAfterResolution < 0) {
-      navigateTo("gameOver");
-    } else if (result.quarter === 4) {
-      navigateTo("yearEndSummary");
-    } else {
-      navigateTo("quarterlySummary");
-    }
+    navigateTo("simTicker");
   }, [result, navigateTo]);
 
   // Keyboard navigation — skip if a button/link is focused to avoid double-firing
@@ -419,7 +413,7 @@ export function PreSimNewsScreen() {
           <MarketSnapshot />
           <div style={{ marginTop: tokens.spacing.lg, width: "100%", maxWidth: CLIPPING_MAX_WIDTH }}>
             <MenuButton variant="accent" onClick={proceed} style={{ width: "100%" }}>
-              Continue to Results
+              Start Simulation
             </MenuButton>
           </div>
         </div>
@@ -442,7 +436,7 @@ export function PreSimNewsScreen() {
             fontFamily: tokens.font.family,
           }}
         >
-          Skip to results &rarr;
+          Skip to simulation &rarr;
         </button>
       </div>
 
@@ -484,7 +478,7 @@ export function PreSimNewsScreen() {
         <div style={{ marginTop: tokens.spacing.md, width: "100%", maxWidth: CLIPPING_MAX_WIDTH }}>
           {isLastSlide ? (
             <MenuButton variant="accent" onClick={proceed} style={{ width: "100%" }}>
-              Continue to Results
+              Start Simulation
             </MenuButton>
           ) : (
             <div style={{ textAlign: "center", color: tokens.colors.textMuted, fontSize: tokens.font.sizeBase }}>
