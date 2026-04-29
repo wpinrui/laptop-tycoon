@@ -382,14 +382,24 @@ function getSentiment(value: number, avg: number): "good" | "neutral" | "bad" {
 }
 
 /**
- * Generate reviews for all laptops on sale after Q1.
+ * Generate reviews for all laptops on sale after each quarter.
  */
 export function generateReviews(state: GameState, q1Result: QuarterSimulationResult): LaptopReview[] {
   const reviews: LaptopReview[] = [];
   const year = state.year;
 
-  // Collect all active laptops (player + competitor) from simulation results
-  const allLaptopIds = q1Result.laptopResults.map((r) => r.laptopId);
+  // Only review models that are not discontinued
+  const activeModelIds = new Set<string>();
+  for (const company of state.companies) {
+    for (const model of company.models) {
+      if (model.status !== "discontinued") activeModelIds.add(model.design.id);
+    }
+  }
+
+  // Collect laptops from simulation results, excluding discontinued models
+  const allLaptopIds = q1Result.laptopResults
+    .map((r) => r.laptopId)
+    .filter((id) => activeModelIds.has(id));
   if (allLaptopIds.length === 0) return reviews;
 
   // Build stat vectors for all laptops

@@ -159,11 +159,9 @@ export function AdvanceYearCard() {
     // Apply quarterly simulation results
     dispatch({ type: "APPLY_QUARTER_RESULT", result });
 
-    // After Q1: generate and publish laptop reviews
-    if (state.quarter === 1) {
-      const reviews = generateReviews(stateForSim, result);
-      dispatch({ type: "SET_REVIEWS", reviews });
-    }
+    // Generate and publish laptop reviews after every quarter
+    const reviews = generateReviews(stateForSim, result);
+    dispatch({ type: "SET_REVIEWS", reviews });
 
     // Navigate to pre-sim news carousel (handles routing to results internally)
     navigateTo("preSimNews");
