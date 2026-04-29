@@ -364,6 +364,7 @@ export function generateReviewNews(
       headline: generateHeadline(REVIEW_TEMPLATES, outlet, vars),
       body: {
         type: "review",
+        laptopId: review.laptopId,
         laptopName: review.laptopName,
         outlet: review.outletName,
         score: review.score,
