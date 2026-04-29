@@ -384,7 +384,7 @@ function getSentiment(value: number, avg: number): "good" | "neutral" | "bad" {
 /**
  * Generate reviews for all laptops on sale after each quarter.
  */
-export function generateReviews(state: GameState, q1Result: QuarterSimulationResult): LaptopReview[] {
+export function generateReviews(state: GameState, quarterResult: QuarterSimulationResult): LaptopReview[] {
   const reviews: LaptopReview[] = [];
   const year = state.year;
 
@@ -397,7 +397,7 @@ export function generateReviews(state: GameState, q1Result: QuarterSimulationRes
   }
 
   // Collect laptops from simulation results, excluding discontinued models
-  const allLaptopIds = q1Result.laptopResults
+  const allLaptopIds = quarterResult.laptopResults
     .map((r) => r.laptopId)
     .filter((id) => activeModelIds.has(id));
   if (allLaptopIds.length === 0) return reviews;
