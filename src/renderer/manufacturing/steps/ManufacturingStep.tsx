@@ -205,8 +205,18 @@ export function ManufacturingStep() {
   const minPrice = Math.max(snapPrice(baseTotalPerUnit * MIN_PRICE_MULTIPLIER), MIN_RETAIL_PRICE);
   const maxPrice = snapPrice(baseTotalPerUnit * MAX_PRICE_MULTIPLIER);
 
+  // Other models' committed manufacturing costs for this quarter (cash not yet deducted — only deducted at simulation)
+  const otherPlansCost = player.models
+    .filter((m) =>
+      m.design.id !== state.modelId &&
+      m.manufacturingPlan !== null &&
+      m.manufacturingPlan.year === gameState.year &&
+      m.manufacturingPlan.quarter === gameState.quarter,
+    )
+    .reduce((sum, m) => sum + m.manufacturingPlan!.manufacturing.totalCost, 0);
+
   // Quantity slider: binary search for max affordable
-  const cashForManufacturing = Math.max(0, gameState.cash - totalFixedCosts);
+  const cashForManufacturing = Math.max(0, gameState.cash - totalFixedCosts - otherPlansCost);
   const minPerUnit = calculateBomUnitCost(baseBom, 10_000_000) + ASSEMBLY_QA_COST + PACKAGING_LOGISTICS_COST;
   const maxQuantity = (() => {
     let lo = MIN_BATCH_SIZE;
