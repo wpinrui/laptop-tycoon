@@ -267,7 +267,7 @@ function MarketSnapshot() {
             <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
               {s.icon} {s.label}
             </span>
-            <span style={{ fontSize: tokens.font.sizeTitle, fontWeight: 700, color: s.color ?? tokens.colors.text }}>
+            <span style={{ fontSize: tokens.font.sizeTitle, fontWeight: 700, color: tokens.colors.text }}>
               {s.value}
             </span>
           </div>

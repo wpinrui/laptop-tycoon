@@ -9,7 +9,7 @@
 
 import { DEMOGRAPHICS } from "../data/demographics";
 import { CompetitorArchetype } from "../data/competitors";
-import { ComponentSlot, DemographicId } from "../data/types";
+import { DemographicId } from "../data/types";
 import { ALL_COMPONENTS } from "../data/components";
 import { SLOT_CONFIGS } from "../data/slotConfigs";
 import { GameState, getPlayerCompany, Quarter, Milestone } from "../renderer/state/gameTypes";
@@ -231,20 +231,21 @@ export function generateQuarterNews(
 
     for (const company of state.companies) {
       if (company.isPlayer) continue;
-      for (const model of company.models) {
-        if (model.yearDesigned !== year) continue;
-        if (reportedCompetitorModels.has(model.design.name)) continue;
-
-        const archetype = company.archetype ?? "generalist";
-        const segment = ARCHETYPE_SEGMENT[archetype];
-        const quotePool = COMPETITOR_PRESS_QUOTES[archetype];
-        const competitorQuotes = shuffled(quotePool).slice(0, 2);
-        items.push(makeProductLaunchItem(
-          makeId(), year, quarter, company.name,
-          model.design.name, model.design.screenSize, model.retailPrice ?? 0,
-          segment, false, competitorQuotes,
-        ));
-      }
+      // Pick at most one model per competitor — the highest-priced new model this year
+      const newModels = company.models
+        .filter((m) => m.yearDesigned === year && !reportedCompetitorModels.has(m.design.name))
+        .sort((a, b) => (b.retailPrice ?? 0) - (a.retailPrice ?? 0));
+      if (newModels.length === 0) continue;
+      const model = newModels[0];
+      const archetype = company.archetype ?? "generalist";
+      const segment = ARCHETYPE_SEGMENT[archetype];
+      const quotePool = COMPETITOR_PRESS_QUOTES[archetype];
+      const competitorQuotes = shuffled(quotePool).slice(0, 2);
+      items.push(makeProductLaunchItem(
+        makeId(), year, quarter, company.name,
+        model.design.name, model.design.screenSize, model.retailPrice ?? 0,
+        segment, false, competitorQuotes,
+      ));
     }
   }
 
@@ -281,51 +282,55 @@ export function generateQuarterNews(
     (c) => c.yearIntroduced === year && (c.quarterIntroduced ?? 1) === quarter,
   );
 
-  if (newComponents.length > 0) {
-    // Group by slot for cleaner headlines
-    const bySlot = new Map<ComponentSlot, typeof newComponents>();
+  if (newComponents.length === 1) {
+    const comp = newComponents[0];
+    const outlet = pickOutlet();
+    const slotLabel = SLOT_CONFIGS.find((s) => s.slot === comp.slot)?.name ?? comp.slot;
+    items.push({
+      id: makeId(),
+      year,
+      quarter,
+      category: "componentLaunch",
+      outlet,
+      headline: generateHeadline(COMPONENT_LAUNCH_TEMPLATES, outlet, { component: comp.name, slot: slotLabel }),
+      subheadline: comp.description,
+      body: {
+        type: "componentLaunch",
+        components: [{ name: comp.name, slot: slotLabel, description: comp.description }],
+      },
+    });
+  } else if (newComponents.length > 1) {
+    // One consolidated article listing all parts, grouped by slot in the subheadline
+    const outlet = pickOutlet();
+    const bySlot = new Map<string, string[]>();
     for (const c of newComponents) {
-      const list = bySlot.get(c.slot) ?? [];
-      list.push(c);
-      bySlot.set(c.slot, list);
+      const slotLabel = SLOT_CONFIGS.find((s) => s.slot === c.slot)?.name ?? c.slot;
+      const list = bySlot.get(slotLabel) ?? [];
+      list.push(c.name);
+      bySlot.set(slotLabel, list);
     }
-
-    for (const [slot, components] of bySlot) {
-      const outlet = pickOutlet();
-      const slotLabel = SLOT_CONFIGS.find((s) => s.slot === slot)?.name ?? slot;
-
-      if (components.length === 1) {
-        const comp = components[0];
-        const vars = { component: comp.name, slot: slotLabel };
-        items.push({
-          id: makeId(),
-          year,
-          quarter,
-          category: "componentLaunch",
-          outlet,
-          headline: generateHeadline(COMPONENT_LAUNCH_TEMPLATES, outlet, vars),
-          subheadline: comp.description,
-          body: {
-            type: "componentLaunch",
-            components: [{ name: comp.name, slot: slotLabel, description: comp.description }],
-          },
-        });
-      } else {
-        const vars = { count: components.length, slot: slotLabel };
-        items.push({
-          id: makeId(),
-          year,
-          quarter,
-          category: "componentLaunch",
-          outlet,
-          headline: generateHeadline(COMPONENT_LAUNCH_MULTI_TEMPLATES, outlet, vars),
-          body: {
-            type: "componentLaunch",
-            components: components.map((c) => ({ name: c.name, slot: slotLabel, description: c.description })),
-          },
-        });
-      }
-    }
+    const slotKeys = Array.from(bySlot.keys());
+    const primarySlot = slotKeys.length === 1 ? slotKeys[0] : "hardware";
+    const subheadline = slotKeys
+      .map((slot) => `${slot}: ${bySlot.get(slot)!.join(", ")}`)
+      .join(" · ");
+    items.push({
+      id: makeId(),
+      year,
+      quarter,
+      category: "componentLaunch",
+      outlet,
+      headline: generateHeadline(COMPONENT_LAUNCH_MULTI_TEMPLATES, outlet, { count: newComponents.length, slot: primarySlot }),
+      subheadline,
+      body: {
+        type: "componentLaunch",
+        components: newComponents.map((c) => ({
+          name: c.name,
+          slot: SLOT_CONFIGS.find((s) => s.slot === c.slot)?.name ?? c.slot,
+          description: c.description,
+        })),
+      },
+    });
   }
 
   return items;
