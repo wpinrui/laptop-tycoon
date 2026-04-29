@@ -141,7 +141,7 @@ function CampaignCard({
           Pool: <span style={{ color: tokens.colors.text, fontWeight: 600 }}>{poolSize.toLocaleString()}</span>
         </span>
         <span style={{ color: tokens.colors.textMuted }}>
-          <span style={{ color: tokens.colors.text, fontWeight: 600 }}>{TIER_ACQUISITIONS[campaign.tier].toLocaleString()}</span> acq/qtr
+          <span style={{ color: tokens.colors.text, fontWeight: 600 }}>{TIER_ACQUISITIONS[campaign.tier].toLocaleString()}</span> acquisitions/qtr
         </span>
       </div>
 
