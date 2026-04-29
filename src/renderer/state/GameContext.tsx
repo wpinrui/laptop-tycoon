@@ -286,6 +286,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
               manufacturingQuantity: action.plan.manufacturing.unitsOrdered,
               totalProductionSpend: (m.totalProductionSpend ?? 0) - oldCost + newCost,
               totalUnitsOrdered: (m.totalUnitsOrdered ?? 0) - oldUnits + action.plan.manufacturing.unitsOrdered,
+              pressReleaseResponses: action.plan.pressRelease.responses,
             };
           }),
         ),

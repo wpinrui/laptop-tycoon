@@ -3,7 +3,7 @@ import { ManufacturingWizardState, ManufacturingWizardStep, MFG_WIZARD_STEPS, Fu
 import { DEMAND_NOISE_MIN, DEMAND_NOISE_MAX, DEFAULT_PRICE_MULTIPLIER, MIN_RETAIL_PRICE, snapPrice, getBaseCostPerUnit } from "./utils/constants";
 
 type MfgWizardAction =
-  | { type: "INIT"; modelId: string; promptIds: number[]; baseBomCost: number; isAdditionalOrder?: boolean; existingRetailPrice?: number }
+  | { type: "INIT"; modelId: string; promptIds: number[]; baseBomCost: number; isAdditionalOrder?: boolean; existingRetailPrice?: number; existingResponses?: Record<number, string> }
   | { type: "LOAD_PLAN"; modelId: string; plan: FullManufacturingPlan; isAdditionalOrder?: boolean }
   | { type: "SET_UNIT_PRICE"; unitPrice: number }
   | { type: "SET_UNITS_ORDERED"; unitsOrdered: number }
@@ -37,6 +37,7 @@ function mfgWizardReducer(state: ManufacturingWizardState, action: MfgWizardActi
         modelId: action.modelId,
         unitPrice: defaultPrice,
         pressReleasePromptIds: action.promptIds,
+        pressReleaseResponses: action.existingResponses ? { ...action.existingResponses } : {},
         noiseMargin: generateNoiseMargin(),
         isAdditionalOrder: action.isAdditionalOrder ?? false,
       };

@@ -54,6 +54,8 @@ export interface LaptopModel {
   totalProductionSpend: number;
   /** Cumulative units ordered across all manufacturing orders. */
   totalUnitsOrdered: number;
+  /** Player-authored press release responses — persists for the model's lifetime. */
+  pressReleaseResponses?: Record<number, string>;
 }
 
 /** Returns true if any component in the design has been discontinued by the given year. */

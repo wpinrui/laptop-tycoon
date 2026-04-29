@@ -150,7 +150,7 @@ export function generateQuarterNews(
     if (ms.type === "model") {
       const model = player.models.find((m) => m.design.id === ms.modelId);
       if (!model) continue;
-      const responses = model.manufacturingPlan?.pressRelease?.responses;
+      const responses = model.pressReleaseResponses;
       const pressQuotes = responses ? Object.values(responses).filter((s) => s.length > 0) : undefined;
       items.push(makeProductLaunchItem(
         makeId(), year, quarter, player.name,
