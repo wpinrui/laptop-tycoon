@@ -302,12 +302,15 @@ export function generateQuarterNews(
   } else if (newComponents.length > 1) {
     // One consolidated article listing all parts, grouped by slot in the subheadline
     const outlet = pickOutlet();
+    const componentsWithLabels = newComponents.map((c) => ({
+      ...c,
+      slotLabel: SLOT_CONFIGS.find((s) => s.slot === c.slot)?.name ?? c.slot,
+    }));
     const bySlot = new Map<string, string[]>();
-    for (const c of newComponents) {
-      const slotLabel = SLOT_CONFIGS.find((s) => s.slot === c.slot)?.name ?? c.slot;
-      const list = bySlot.get(slotLabel) ?? [];
+    for (const c of componentsWithLabels) {
+      const list = bySlot.get(c.slotLabel) ?? [];
       list.push(c.name);
-      bySlot.set(slotLabel, list);
+      bySlot.set(c.slotLabel, list);
     }
     const slotKeys = Array.from(bySlot.keys());
     const primarySlot = slotKeys.length === 1 ? slotKeys[0] : "hardware";
@@ -324,9 +327,9 @@ export function generateQuarterNews(
       subheadline,
       body: {
         type: "componentLaunch",
-        components: newComponents.map((c) => ({
+        components: componentsWithLabels.map((c) => ({
           name: c.name,
-          slot: SLOT_CONFIGS.find((s) => s.slot === c.slot)?.name ?? c.slot,
+          slot: c.slotLabel,
           description: c.description,
         })),
       },
