@@ -34,8 +34,6 @@ function aggregateLaptopResults(quarters: QuarterSimulationResult[]): LaptopSale
 }
 
 const DURATION_MS = 12_000;
-const TOAST_DISPLAY_MS = 7_500;
-const TOAST_EXIT_MS = 500;
 
 /** Ease-out cubic: fast start, slow finish. */
 function easeOutCubic(t: number): number {
@@ -159,27 +157,11 @@ const HEADLINE_TYPE_COLOR: Record<TickerHeadline["type"], string> = {
 
 function HeadlineToast({
   headline,
-  onDismiss,
   onClick,
 }: {
   headline: TickerHeadline;
-  onDismiss: () => void;
   onClick: () => void;
 }) {
-  const [exiting, setExiting] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setExiting(true), TOAST_DISPLAY_MS);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (exiting) {
-      const timer = setTimeout(onDismiss, TOAST_EXIT_MS);
-      return () => clearTimeout(timer);
-    }
-  }, [exiting, onDismiss]);
-
   return (
     <div
       onClick={onClick}
@@ -191,7 +173,7 @@ function HeadlineToast({
         padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
         fontSize: tokens.font.sizeBase,
         color: tokens.colors.text,
-        animation: exiting ? "toastSlideOut 0.5s ease-in forwards" : "toastSlideIn 0.4s ease-out",
+        animation: "toastSlideIn 0.4s ease-out",
         cursor: "pointer",
       }}
     >
@@ -423,6 +405,7 @@ export function SimTickerScreen() {
   const startTimeRef = useRef<number | null>(null);
   const pausedAtRef = useRef(0);
   const rafRef = useRef<number>(0);
+  const progressRef = useRef(0);
 
   const headlines = useMemo(() => {
     if (!result) return [];
@@ -470,6 +453,7 @@ export function SimTickerScreen() {
       }
       const elapsed = timestamp - startTimeRef.current;
       const p = Math.min(elapsed / DURATION_MS, 1);
+      progressRef.current = p;
       setProgress(p);
 
       for (let i = 0; i < headlines.length; i++) {
@@ -489,14 +473,6 @@ export function SimTickerScreen() {
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
   }, [done, paused, isOverlayOpen, result, headlines]);
-
-  // When overlay closes, reset start time so animation resumes from current position
-  useEffect(() => {
-    if (!isOverlayOpen) {
-      startTimeRef.current = null;
-      pausedAtRef.current = progress * DURATION_MS;
-    }
-  }, [isOverlayOpen, progress]);
 
   const handleSkip = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
@@ -524,6 +500,8 @@ export function SimTickerScreen() {
   }, [progress]);
 
   const closeOverlay = useCallback(() => {
+    pausedAtRef.current = progressRef.current * DURATION_MS;
+    startTimeRef.current = null;
     setOverlayHeadline(null);
   }, []);
 
@@ -682,7 +660,6 @@ export function SimTickerScreen() {
               <HeadlineToast
                 key={h.triggerAt}
                 headline={h}
-                onDismiss={() => setVisibleHeadlines((prev) => prev.filter((x) => x !== h))}
                 onClick={() => openOverlay(h)}
               />
             ))}

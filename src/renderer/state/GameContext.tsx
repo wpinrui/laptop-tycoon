@@ -475,7 +475,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ),
       };
     case "SET_REVIEWS": {
-      const reviewNews = generateReviewNews(action.reviews, state.year, state.quarter);
+      const alreadyReviewedIds = new Set(
+        state.newsHistory
+          .filter((n) => n.category === "review" && n.body?.type === "review")
+          .map((n) => (n.body as Extract<import("../../simulation/newsTypes").NewsBody, { type: "review" }>).laptopId),
+      );
+      const unreviewed = action.reviews.filter((r) => !alreadyReviewedIds.has(r.laptopId));
+      const reviewNews = generateReviewNews(unreviewed, state.year, state.quarter);
       return {
         ...state,
         currentYearReviews: action.reviews,

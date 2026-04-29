@@ -46,7 +46,7 @@ export type NewsBody =
   | { type: "financial"; milestoneTitle: string }
   | { type: "marketShare"; demographic: string; share: number; threshold: number }
   | { type: "perception"; demographic: string; delta: number; direction: "up" | "down" }
-  | { type: "review"; laptopName: string; outlet: string; score: number; sentences: string[] }
+  | { type: "review"; laptopId: string; laptopName: string; outlet: string; score: number; sentences: string[] }
   | { type: "award"; category: string; winnerName: string; ownerName: string; runnerUpName?: string };
 
 export interface NewsItem {
