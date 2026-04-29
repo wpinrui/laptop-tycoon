@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Simulation Flow Mockup — Laptop Tycoon</title>
+<style>
+  :root {
+    --bg: #121212;
+    --panel-bg: rgba(0, 0, 0, 0.82);
+    --panel-border: rgba(255, 255, 255, 0.18);
+    --card-bg: #1a1a1a;
+    --card-bg-hover: #222;
+    --card-border: #444;
+    --text: #e0e0e0;
+    --text-muted: #888;
+    --accent: #4fc3f7;
+    --accent-hover: #81d4fa;
+    --accent-bg: rgba(79, 195, 247, 0.1);
+    --success: #66bb6a;
+    --success-bg: rgba(102, 187, 106, 0.1);
+    --danger: #ef5350;
+    --danger-bg: rgba(239, 83, 80, 0.1);
+    --warning: #ffa726;
+    --warning-bg: rgba(255, 167, 38, 0.08);
+    --warning-border: rgba(255, 167, 38, 0.25);
+    --cash: #facc15;
+    --surface: rgba(255, 255, 255, 0.05);
+
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --font-serif: Georgia, 'Times New Roman', Times, serif;
+    --size-small: 13px;
+    --size-base: 15px;
+    --size-large: 18px;
+    --size-title: 24px;
+    --size-hero: 36px;
+
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+
+    /* Newspaper clipping colors */
+    --paper: #f0ebe0;
+    --paper-border: #d4cfc4;
+    --ink: #1a1a1a;
+    --ink-muted: #555;
+    --ink-light: #888;
+    --rule: #1a1a1a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: var(--size-base);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  .panel {
+    background: var(--bg);
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .screen {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    padding: 40px 60px 0;
+  }
+  .screen.active { display: flex; }
+
+  .screen-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-lg);
+    flex-shrink: 0;
+  }
+  .screen-header h1 {
+    font-size: var(--size-title);
+    font-weight: 700;
+    color: var(--text);
+  }
+  .screen-header .subtitle {
+    font-size: var(--size-base);
+    color: var(--text-muted);
+    margin-top: var(--space-xs);
+  }
+
+  .screen-body {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: var(--space-md);
+  }
+  .screen-body::-webkit-scrollbar { width: 6px; }
+  .screen-body::-webkit-scrollbar-track { background: transparent; }
+  .screen-body::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+
+  /* ── Buttons ── */
+  .btn {
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--radius-sm);
+    border: none;
+    font-family: var(--font);
+    font-size: var(--size-base);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-accent {
+    background: var(--accent);
+    color: #000;
+  }
+  .btn-accent:hover { background: var(--accent-hover); }
+  .btn-large {
+    padding: var(--space-md) var(--space-xl);
+    font-size: var(--size-large);
+    font-weight: 600;
+    border-radius: var(--radius-md);
+  }
+  .btn-ghost {
+    background: var(--surface);
+    color: var(--text-muted);
+    border: 1px solid var(--card-border);
+  }
+  .btn-ghost:hover {
+    background: rgba(255,255,255,0.1);
+    color: var(--text);
+  }
+
+  /* ── Status Bar ── */
+  .status-bar {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    padding: 0 60px;
+    border-top: 1px solid var(--panel-border);
+    font-size: var(--size-small);
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .status-bar .status-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+  .status-bar .status-icon { font-size: 14px; }
+  .status-bar .cash-value { color: var(--cash); font-weight: 500; }
+
+  /* ══════════════════════════════════════════
+     SCREEN 1: PRE-SIM NEWS (Newspaper Style)
+     ══════════════════════════════════════════ */
+
+  .news-carousel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-lg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Navigation arrows */
+  .nav-arrow {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 1px solid var(--card-border);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    font-family: var(--font);
+  }
+  .nav-arrow:hover:not(:disabled) {
+    background: rgba(255,255,255,0.1);
+    color: var(--text);
+    border-color: var(--accent);
+  }
+  .nav-arrow:disabled {
+    opacity: 0.2;
+    cursor: default;
+  }
+
+  /* Dot indicators */
+  .carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: var(--space-md) 0;
+    flex-shrink: 0;
+  }
+  .carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--card-border);
+    transition: all 0.2s;
+  }
+  .carousel-dot.active {
+    background: var(--accent);
+    transform: scale(1.25);
+  }
+
+  /* Enter hint */
+  .enter-hint {
+    text-align: center;
+    font-size: var(--size-small);
+    color: var(--text-muted);
+    padding-bottom: var(--space-sm);
+    flex-shrink: 0;
+  }
+  .enter-hint kbd {
+    display: inline-block;
+    background: var(--surface);
+    border: 1px solid var(--card-border);
+    border-radius: 3px;
+    padding: 1px 7px;
+    font-family: var(--font);
+    font-size: 12px;
+    margin: 0 2px;
+  }
+
+  /* ── Newspaper Clipping Card ── */
+  .clipping-container {
+    display: grid;
+    width: 720px;
+    max-width: 100%;
+  }
+
+  .clipping {
+    grid-area: 1 / 1;
+    display: none;
+    flex-direction: column;
+  }
+  .clipping.active {
+    display: flex;
+    animation: clipFadeIn 0.3s ease-out;
+  }
+  @keyframes clipFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .clipping-card {
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--paper-border);
+    border-radius: 2px;
+    padding: 48px 56px;
+    font-family: var(--font-serif);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+    max-height: 78vh;
+    overflow-y: auto;
+  }
+  .clipping-card::-webkit-scrollbar { width: 5px; }
+  .clipping-card::-webkit-scrollbar-track { background: transparent; }
+  .clipping-card::-webkit-scrollbar-thumb { background: var(--paper-border); border-radius: 3px; }
+
+  /* Masthead */
+  .clipping-masthead {
+    text-align: center;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+    border-bottom: 3px solid var(--rule);
+    position: relative;
+  }
+  .clipping-masthead::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 0;
+    right: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .clipping-outlet {
+    font-family: var(--font-serif);
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .clipping-date {
+    font-size: 14px;
+    color: var(--ink-muted);
+    font-style: italic;
+    margin-top: 8px;
+    letter-spacing: 0.3px;
+  }
+
+  /* Headline */
+  .clipping-headline {
+    font-family: var(--font-serif);
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--ink);
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  /* Subhead */
+  .clipping-subhead {
+    font-size: 17px;
+    color: var(--ink-muted);
+    text-align: center;
+    font-style: italic;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--paper-border);
+  }
+
+  /* Body text with drop cap */
+  .clipping-body {
+    font-family: var(--font-serif);
+    font-size: 17px;
+    line-height: 1.8;
+    color: var(--ink);
+    text-align: justify;
+    hyphens: auto;
+  }
+  .clipping-body p {
+    margin-bottom: 16px;
+  }
+  .clipping-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Drop cap */
+  .dropcap::first-letter {
+    float: left;
+    font-family: var(--font-serif);
+    font-size: 78px;
+    font-weight: 700;
+    line-height: 0.78;
+    padding-right: 10px;
+    padding-top: 6px;
+    color: var(--ink);
+  }
+
+  /* Specs block within article */
+  .clipping-specs {
+    background: rgba(0,0,0,0.04);
+    border: 1px solid var(--paper-border);
+    border-radius: 2px;
+    padding: 18px 24px;
+    margin: 20px 0;
+    font-family: var(--font);
+    font-size: 15px;
+    color: var(--ink-muted);
+    line-height: 1.8;
+  }
+  .clipping-specs .spec-price {
+    font-family: var(--font-serif);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  /* Review score in article */
+  .clipping-review-score {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 24px 0;
+    padding: 20px 0;
+    border-top: 1px solid var(--paper-border);
+    border-bottom: 1px solid var(--paper-border);
+  }
+  .clipping-score-num {
+    font-family: var(--font-serif);
+    font-size: 72px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--ink);
+  }
+  .clipping-score-of {
+    font-family: var(--font-serif);
+    font-size: 26px;
+    color: var(--ink-muted);
+    padding-top: 24px;
+  }
+
+  /* ── Publication Variant: The Silicon Chronicle ── */
+  .clipping-card.chronicle {
+    background: #ece7da;
+    border-top: 4px solid #8b2332;
+  }
+  .chronicle .clipping-masthead {
+    border-bottom: 1px solid #8b2332;
+    padding-bottom: 14px;
+    margin-bottom: 20px;
+  }
+  .chronicle .clipping-masthead::after {
+    border-bottom-color: #8b2332;
+    bottom: -5px;
+  }
+  .chronicle .clipping-outlet {
+    font-size: 32px;
+    letter-spacing: 6px;
+    font-weight: 400;
+    font-variant: small-caps;
+  }
+  .chronicle .clipping-headline {
+    font-size: 32px;
+    font-weight: 400;
+    font-style: italic;
+  }
+  .chronicle .clipping-subhead {
+    font-size: 16px;
+    font-weight: 400;
+    border-bottom-color: rgba(139,35,50,0.2);
+  }
+  .chronicle .dropcap::first-letter {
+    color: #8b2332;
+  }
+  .chronicle .clipping-specs {
+    border-color: rgba(139,35,50,0.2);
+    background: rgba(139,35,50,0.04);
+  }
+
+  /* ── Publication Variant: Magazine (for reviews) ── */
+  .clipping-card.magazine {
+    background: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .magazine .mag-header {
+    background: #0055a5;
+    padding: 20px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .magazine .mag-outlet {
+    font-family: var(--font);
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .magazine .mag-label {
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.7);
+  }
+
+  .magazine .mag-body {
+    padding: 36px 48px 40px;
+  }
+
+  .magazine .mag-title {
+    font-family: var(--font);
+    font-size: 34px;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: 6px;
+    line-height: 1.15;
+  }
+  .magazine .mag-subtitle {
+    font-family: var(--font);
+    font-size: 16px;
+    color: #777;
+    margin-bottom: 24px;
+  }
+  .magazine .mag-date {
+    font-family: var(--font);
+    font-size: 13px;
+    color: #999;
+    margin-bottom: 24px;
+  }
+
+  .magazine .mag-score-section {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+    margin-bottom: 28px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid #e5e5e5;
+  }
+  .magazine .mag-score-badge {
+    flex-shrink: 0;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: #0055a5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .magazine .mag-score-num {
+    font-family: var(--font);
+    font-size: 42px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+  }
+  .magazine .mag-score-of {
+    font-family: var(--font);
+    font-size: 14px;
+    color: rgba(255,255,255,0.7);
+  }
+  .magazine .mag-ratings {
+    flex: 1;
+  }
+  .magazine .mag-rating-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .magazine .mag-rating-label {
+    font-family: var(--font);
+    font-size: 14px;
+    color: #555;
+    width: 90px;
+    flex-shrink: 0;
+  }
+  .magazine .mag-rating-track {
+    flex: 1;
+    height: 8px;
+    background: #e8e8e8;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .magazine .mag-rating-fill {
+    height: 100%;
+    background: #0055a5;
+    border-radius: 4px;
+  }
+  .magazine .mag-rating-val {
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    width: 24px;
+    text-align: right;
+  }
+
+  .magazine .mag-text {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 1.8;
+    color: #333;
+    margin-bottom: 24px;
+  }
+  .magazine .mag-text p {
+    margin-bottom: 14px;
+  }
+
+  .magazine .mag-verdict {
+    display: flex;
+    gap: 20px;
+    margin-top: 4px;
+  }
+  .magazine .mag-verdict-col {
+    flex: 1;
+  }
+  .magazine .mag-verdict-title {
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+  }
+  .magazine .mag-verdict-title.pros {
+    color: #2e7d32;
+    border-bottom: 2px solid #2e7d32;
+  }
+  .magazine .mag-verdict-title.cons {
+    color: #c62828;
+    border-bottom: 2px solid #c62828;
+  }
+  .magazine .mag-verdict-list {
+    list-style: none;
+    font-family: var(--font);
+    font-size: 14px;
+    color: #555;
+    line-height: 1.7;
+  }
+  .magazine .mag-verdict-list li::before {
+    margin-right: 6px;
+  }
+  .magazine .mag-verdict-list.pros li::before {
+    content: '+';
+    color: #2e7d32;
+    font-weight: 700;
+  }
+  .magazine .mag-verdict-list.cons li::before {
+    content: '\2013';
+    color: #c62828;
+    font-weight: 700;
+  }
+
+  /* ── Summary Slide (game UI, not newspaper) ── */
+  .summary-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    padding: 48px 56px;
+    text-align: center;
+    color: var(--text);
+  }
+  .summary-card h2 {
+    font-size: 30px;
+    font-weight: 700;
+    margin-bottom: var(--space-sm);
+    font-family: var(--font);
+  }
+  .summary-card .summary-sub {
+    color: var(--text-muted);
+    margin-bottom: var(--space-xl);
+    font-size: var(--size-large);
+  }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+  }
+  .summary-stat {
+    text-align: center;
+  }
+  .summary-stat .value {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .summary-stat .label {
+    font-size: var(--size-base);
+    color: var(--text-muted);
+  }
+  .summary-card .btn {
+    margin-top: var(--space-sm);
+  }
+
+  /* ══════════════════════════════════════════
+     SCREEN 2: SIM TICKER
+     ══════════════════════════════════════════ */
+
+  .progress-section {
+    margin-bottom: var(--space-lg);
+    flex-shrink: 0;
+  }
+  .progress-track {
+    height: 6px;
+    background: var(--surface);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: var(--space-sm);
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+  .progress-date {
+    font-size: var(--size-base);
+    color: var(--text-muted);
+    text-align: center;
+    font-weight: 500;
+  }
+
+  .sales-section {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .sales-group-label {
+    font-size: var(--size-small);
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--space-sm);
+  }
+  .sales-group-label:not(:first-child) {
+    margin-top: var(--space-lg);
+  }
+
+  .model-row {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-md);
+    margin-bottom: var(--space-sm);
+  }
+  .model-row.player {
+    border-left: 3px solid var(--accent);
+  }
+
+  .model-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: var(--space-sm);
+  }
+  .model-name {
+    font-weight: 600;
+    font-size: var(--size-base);
+  }
+  .model-company {
+    color: var(--text-muted);
+    font-size: var(--size-small);
+    margin-left: var(--space-sm);
+  }
+  .model-price {
+    color: var(--cash);
+    font-weight: 600;
+    font-size: var(--size-base);
+  }
+
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+  .bar-track {
+    flex: 1;
+    height: 20px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.15s ease-out;
+  }
+  .bar-fill.player-bar { background: var(--accent); }
+  .bar-fill.competitor-bar { background: #666; }
+  .bar-fill.near-sellout { background: var(--warning); }
+
+  .bar-numbers {
+    font-size: var(--size-small);
+    color: var(--text-muted);
+    white-space: nowrap;
+    min-width: 130px;
+    text-align: right;
+  }
+  .bar-numbers .sold-count {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .financials-row {
+    display: flex;
+    gap: var(--space-xl);
+    padding: var(--space-md) 0;
+    border-top: 1px solid var(--surface);
+    margin-top: var(--space-md);
+    flex-shrink: 0;
+  }
+  .financial-item {
+    display: flex;
+    flex-direction: column;
+  }
+  .financial-label {
+    font-size: var(--size-small);
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+  .financial-value {
+    font-size: var(--size-large);
+    font-weight: 700;
+  }
+  .financial-value.revenue { color: var(--success); }
+  .financial-value.cash { color: var(--cash); }
+
+  .headline-area {
+    position: relative;
+    min-height: 56px;
+    flex-shrink: 0;
+    margin-bottom: var(--space-sm);
+  }
+
+  .headline-banner {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-sm) var(--space-md);
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    cursor: pointer;
+    transform: translateY(100%);
+    opacity: 0;
+    transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+  }
+  .headline-banner.visible {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  .headline-banner:hover {
+    background: var(--card-bg-hover);
+    border-color: var(--accent);
+  }
+
+  .headline-type {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .headline-type.market { background: rgba(102,187,106,0.15); color: var(--success); }
+  .headline-type.milestone { background: var(--accent-bg); color: var(--accent); }
+  .headline-type.alert { background: rgba(255,167,38,0.15); color: var(--warning); }
+
+  .headline-text {
+    flex: 1;
+    font-size: var(--size-base);
+    font-weight: 500;
+  }
+  .headline-cta {
+    font-size: var(--size-small);
+    color: var(--accent);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .sim-complete {
+    display: none;
+    justify-content: center;
+    padding: var(--space-md) 0;
+    flex-shrink: 0;
+  }
+  .sim-complete.visible { display: flex; }
+
+  /* ══════════════════════════════════════════
+     ARTICLE OVERLAY
+     ══════════════════════════════════════════ */
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .overlay.visible { display: flex; }
+
+  .overlay-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+  }
+
+  .article-card {
+    position: relative;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-xl);
+    max-width: 560px;
+    width: 90%;
+    max-height: 70vh;
+    overflow-y: auto;
+    animation: articleIn 0.25s ease-out;
+  }
+
+  @keyframes articleIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .paused-badge {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--warning);
+    background: var(--warning-bg);
+    border: 1px solid var(--warning-border);
+    padding: 2px 10px;
+    border-radius: 3px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .article-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-bottom: var(--space-sm);
+  }
+  .article-badge.market { background: rgba(102,187,106,0.15); color: var(--success); }
+  .article-badge.milestone { background: var(--accent-bg); color: var(--accent); }
+  .article-badge.alert { background: rgba(255,167,38,0.15); color: var(--warning); }
+
+  .article-card h2 {
+    font-size: var(--size-large);
+    font-weight: 700;
+    margin-bottom: var(--space-md);
+    padding-right: 80px;
+  }
+  .article-card p {
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-bottom: var(--space-md);
+  }
+  .article-source {
+    font-size: var(--size-small);
+    color: var(--text-muted);
+    font-style: italic;
+    margin-bottom: var(--space-lg);
+  }
+  .article-card .btn {
+    width: 100%;
+    text-align: center;
+    margin-top: var(--space-sm);
+  }
+
+  /* ══════════════════════════════════════════
+     DESIGN NOTES
+     ══════════════════════════════════════════ */
+
+  .design-notes {
+    width: 92vw;
+    max-width: 1200px;
+    margin-top: var(--space-xl);
+    padding: var(--space-xl);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-xl);
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+  .design-notes h2 {
+    color: var(--accent);
+    font-size: var(--size-large);
+    margin-bottom: var(--space-md);
+  }
+  .design-notes h3 {
+    color: var(--text);
+    font-size: var(--size-base);
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-sm);
+  }
+  .design-notes ul {
+    padding-left: var(--space-lg);
+    margin-bottom: var(--space-sm);
+  }
+  .design-notes li {
+    margin-bottom: var(--space-xs);
+  }
+  .design-notes code {
+    background: var(--surface);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: var(--size-small);
+  }
+</style>
+</head>
+<body>
+
+<div class="panel">
+
+  <!-- ═══ SCREEN 1: PRE-SIM NEWS ═══ -->
+  <div id="presim" class="screen active">
+
+    <div class="news-carousel">
+      <button class="nav-arrow" id="navLeft" onclick="navArticle(-1)" disabled>&#8249;</button>
+
+      <div class="clipping-container">
+
+        <!-- ARTICLE 1: CompTech Apex 15 Launch -->
+        <div class="clipping active" data-index="0">
+          <div class="clipping-card">
+            <div class="clipping-masthead">
+              <div class="clipping-outlet">TechDaily</div>
+              <div class="clipping-date">January 3, 2027</div>
+            </div>
+            <h2 class="clipping-headline">CompTech Launches the Apex 15</h2>
+            <div class="clipping-subhead">Premium workhorse targets professionals with discrete graphics</div>
+            <div class="clipping-body">
+              <p class="dropcap">CompTech has unveiled the Apex 15, its latest bid for the professional laptop market. Priced at $1,299, the machine slots in at the premium end of the segment, betting that professionals will pay more for a polished chassis and dedicated GPU.</p>
+              <div class="clipping-specs">
+                <div class="spec-price">$1,299</div>
+                15.6" IPS &bull; Intel i7-13700H &bull; 16 GB DDR5<br>
+                NVIDIA RTX 4060 &bull; 512 GB NVMe SSD
+              </div>
+              <p>Industry watchers note that CompTech is leaning heavily on build quality and brand prestige to justify the price premium. Whether that proposition holds against more aggressively priced competitors remains to be seen.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ARTICLE 2: BudgetPC ValueBook 14 Launch (The Silicon Chronicle) -->
+        <div class="clipping" data-index="1">
+          <div class="clipping-card chronicle">
+            <div class="clipping-masthead">
+              <div class="clipping-outlet">The Silicon Chronicle</div>
+              <div class="clipping-date">January 5, 2027</div>
+            </div>
+            <h2 class="clipping-headline">BudgetPC Unveils the ValueBook 14</h2>
+            <div class="clipping-subhead">Sub-$600 laptop aims squarely at students and everyday users</div>
+            <div class="clipping-body">
+              <p class="dropcap">BudgetPC is entering the year with the ValueBook 14, a no-frills laptop priced at just $549. The company is making no apologies about its strategy: undercut the market and capture volume.</p>
+              <div class="clipping-specs">
+                <div class="spec-price">$549</div>
+                14" IPS &bull; Intel i5-13400 &bull; 8 GB DDR5<br>
+                Integrated Graphics &bull; 256 GB NVMe SSD
+              </div>
+              <p>With the Student segment showing strong year-over-year growth in demand, BudgetPC appears well-positioned. The integrated graphics and modest storage may limit appeal among power users, but for the target demographic, the price may be the only spec that matters.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ARTICLE 3: Aurora Pro Review (Magazine Style) -->
+        <div class="clipping" data-index="2">
+          <div class="clipping-card magazine">
+            <div class="mag-header">
+              <div class="mag-outlet">PCWorld</div>
+              <div class="mag-label">Product Review</div>
+            </div>
+            <div class="mag-body">
+              <div class="mag-title">Aurora Pro</div>
+              <div class="mag-subtitle">A compelling mid-range option with strong fundamentals</div>
+              <div class="mag-date">January 8, 2027</div>
+
+              <div class="mag-score-section">
+                <div class="mag-score-badge">
+                  <div class="mag-score-num">8.1</div>
+                  <div class="mag-score-of">/10</div>
+                </div>
+                <div class="mag-ratings">
+                  <div class="mag-rating-row">
+                    <span class="mag-rating-label">Performance</span>
+                    <div class="mag-rating-track"><div class="mag-rating-fill" style="width:85%"></div></div>
+                    <span class="mag-rating-val">8.5</span>
+                  </div>
+                  <div class="mag-rating-row">
+                    <span class="mag-rating-label">Display</span>
+                    <div class="mag-rating-track"><div class="mag-rating-fill" style="width:80%"></div></div>
+                    <span class="mag-rating-val">8.0</span>
+                  </div>
+                  <div class="mag-rating-row">
+                    <span class="mag-rating-label">Build Quality</span>
+                    <div class="mag-rating-track"><div class="mag-rating-fill" style="width:82%"></div></div>
+                    <span class="mag-rating-val">8.2</span>
+                  </div>
+                  <div class="mag-rating-row">
+                    <span class="mag-rating-label">Battery</span>
+                    <div class="mag-rating-track"><div class="mag-rating-fill" style="width:68%"></div></div>
+                    <span class="mag-rating-val">6.8</span>
+                  </div>
+                  <div class="mag-rating-row">
+                    <span class="mag-rating-label">Value</span>
+                    <div class="mag-rating-track"><div class="mag-rating-fill" style="width:88%"></div></div>
+                    <span class="mag-rating-val">8.8</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mag-text">
+                <p>The Aurora Pro delivers solid performance at a competitive price point. Strong CPU benchmarks and a comfortable keyboard make it a compelling option for professionals who don't want to pay the premium tax.</p>
+                <p>Build quality is above average for the price range, with a sturdy aluminum lid and minimal chassis flex. The 15.6-inch IPS display offers good colour accuracy out of the box, and the port selection is generous &mdash; including full-size HDMI and an SD card slot, a rarity at this price.</p>
+                <p>Where the Aurora Pro falls short is battery life. At just under six hours in our mixed-use test, it trails the competition by roughly an hour. For desk-bound professionals that won't matter. For road warriors, it might.</p>
+              </div>
+
+              <div class="mag-verdict">
+                <div class="mag-verdict-col">
+                  <div class="mag-verdict-title pros">Pros</div>
+                  <ul class="mag-verdict-list pros">
+                    <li>Strong CPU performance</li>
+                    <li>Excellent value for money</li>
+                    <li>Generous port selection</li>
+                    <li>Good display accuracy</li>
+                  </ul>
+                </div>
+                <div class="mag-verdict-col">
+                  <div class="mag-verdict-title cons">Cons</div>
+                  <ul class="mag-verdict-list cons">
+                    <li>Below-average battery life</li>
+                    <li>No Thunderbolt support</li>
+                    <li>Speakers lack bass</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SLIDE 4: Market Snapshot (game UI style) -->
+        <div class="clipping" data-index="3">
+          <div class="summary-card">
+            <h2>Market Snapshot</h2>
+            <div class="summary-sub">Q1 2027 &mdash; Ready to simulate</div>
+            <div class="summary-grid">
+              <div class="summary-stat">
+                <div class="value">3</div>
+                <div class="label">Models competing</div>
+              </div>
+              <div class="summary-stat">
+                <div class="value">$549 &ndash; $1,299</div>
+                <div class="label">Price range</div>
+              </div>
+              <div class="summary-stat">
+                <div class="value">3,000</div>
+                <div class="label">Your inventory</div>
+              </div>
+            </div>
+            <div class="summary-grid" style="margin-bottom: var(--space-lg);">
+              <div class="summary-stat">
+                <div class="value" style="color:var(--success)">Peak</div>
+                <div class="label">Q1 seasonal demand</div>
+              </div>
+              <div class="summary-stat">
+                <div class="value">1</div>
+                <div class="label">Active campaign</div>
+              </div>
+              <div class="summary-stat">
+                <div class="value" style="color:var(--cash)">$1.2M</div>
+                <div class="label">Cash on hand</div>
+              </div>
+            </div>
+            <button class="btn btn-accent btn-large" onclick="startSim()">Start Simulation &rarr;</button>
+          </div>
+        </div>
+
+      </div>
+
+      <button class="nav-arrow" id="navRight" onclick="navArticle(1)">&#8250;</button>
+    </div>
+
+    <div class="carousel-dots" id="carouselDots">
+      <div class="carousel-dot active"></div>
+      <div class="carousel-dot"></div>
+      <div class="carousel-dot"></div>
+      <div class="carousel-dot"></div>
+    </div>
+
+    <div class="status-bar">
+      <span class="status-item"><span class="status-icon">&#128197;</span> Q1 2027</span>
+      <span class="status-item"><span class="status-icon">&#128176;</span> <span class="cash-value">$1,200,000</span></span>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN 2: SIM TICKER ═══ -->
+  <div id="ticker" class="screen" style="align-items:center;">
+    <div style="width:100%;max-width:900px;display:flex;flex-direction:column;flex:1;overflow:hidden;">
+    <div class="screen-header">
+      <h1>Q1 2027 Simulation</h1>
+      <button class="btn btn-ghost" id="skipBtn" onclick="skipSim()">Skip &#9654;</button>
+    </div>
+
+    <div class="progress-section">
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-date" id="progressDate">January 1, 2027</div>
+    </div>
+
+    <div class="sales-section">
+      <div class="sales-group-label">Your Models</div>
+      <div class="model-row player">
+        <div class="model-info">
+          <div><span class="model-name">Aurora Pro</span></div>
+          <div class="model-price">$999</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-track">
+            <div class="bar-fill player-bar" id="bar-aurora"></div>
+          </div>
+          <div class="bar-numbers">
+            <span class="sold-count" id="sold-aurora">0</span> / 3,000 sold
+          </div>
+        </div>
+      </div>
+
+      <div class="sales-group-label">Competitors</div>
+      <div class="model-row">
+        <div class="model-info">
+          <div><span class="model-name">Apex 15</span> <span class="model-company">CompTech</span></div>
+          <div class="model-price">$1,299</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-track">
+            <div class="bar-fill competitor-bar" id="bar-apex"></div>
+          </div>
+          <div class="bar-numbers">
+            <span class="sold-count" id="sold-apex">0</span> / 2,500 sold
+          </div>
+        </div>
+      </div>
+
+      <div class="model-row">
+        <div class="model-info">
+          <div><span class="model-name">ValueBook 14</span> <span class="model-company">BudgetPC</span></div>
+          <div class="model-price">$549</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-track">
+            <div class="bar-fill competitor-bar" id="bar-value"></div>
+          </div>
+          <div class="bar-numbers">
+            <span class="sold-count" id="sold-value">0</span> / 5,000 sold
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="financials-row">
+      <div class="financial-item">
+        <span class="financial-label">Revenue</span>
+        <span class="financial-value revenue" id="fin-revenue">$0</span>
+      </div>
+      <div class="financial-item">
+        <span class="financial-label">Cash</span>
+        <span class="financial-value cash" id="fin-cash">$1,200,000</span>
+      </div>
+    </div>
+
+    <div class="headline-area">
+      <div class="headline-banner" id="headlineBanner" onclick="openArticle()">
+        <span class="headline-type" id="headlineType">NEWS</span>
+        <span class="headline-text" id="headlineText"></span>
+        <span class="headline-cta">Click to read &rarr;</span>
+      </div>
+    </div>
+
+    <div class="sim-complete" id="simComplete">
+      <button class="btn btn-accent btn-large" onclick="viewResults()">View Results &rarr;</button>
+    </div>
+    </div><!-- /max-width wrapper -->
+
+    <div class="status-bar">
+      <span class="status-item"><span class="status-icon">&#128197;</span> Q1 2027</span>
+      <span class="status-item"><span class="status-icon">&#128176;</span> <span class="cash-value" id="statusCash">$1,200,000</span></span>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN 3: RESULTS PLACEHOLDER ═══ -->
+  <div id="results" class="screen">
+    <div class="screen-header">
+      <h1>Q1 2027 Results</h1>
+      <button class="btn btn-ghost" onclick="resetDemo()">&larr; Reset Demo</button>
+    </div>
+    <div class="screen-body" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:var(--space-md);">
+      <p style="color:var(--text-muted);font-size:var(--size-large);">Existing QuarterlySummaryScreen would render here</p>
+      <p style="color:var(--text-muted);font-size:var(--size-small);">
+        (Hero KPI bar, per-model breakdown, demographic detail, reviews)
+      </p>
+      <p style="color:var(--text-muted);font-size:var(--size-small);margin-top:var(--space-lg);">
+        This screen would now be accessible from the History tab after advancing.
+      </p>
+    </div>
+    <div class="status-bar">
+      <span class="status-item"><span class="status-icon">&#128197;</span> Q1 2027</span>
+      <span class="status-item"><span class="status-icon">&#128176;</span> <span class="cash-value">$2,907,000</span></span>
+    </div>
+  </div>
+
+  <!-- ═══ ARTICLE OVERLAY (during sim) ═══ -->
+  <div class="overlay" id="articleOverlay">
+    <div class="overlay-backdrop" onclick="closeArticle()"></div>
+    <div class="article-card">
+      <div class="paused-badge">SIM PAUSED</div>
+      <div class="article-badge" id="articleBadge">NEWS</div>
+      <h2 id="articleTitle"></h2>
+      <div class="article-source" id="articleSource"></div>
+      <p id="articleBody"></p>
+      <button class="btn btn-accent" onclick="closeArticle()">Resume Simulation</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ DESIGN NOTES ═══ -->
+<div class="design-notes">
+  <h2>Design Notes</h2>
+
+  <h3>Flow Overview</h3>
+  <ul>
+    <li><strong>Pre-Sim News</strong> (player-paced) &mdash; Newspaper-style article clippings shown one at a time. Navigate with left/right arrows or Enter key. Final slide is a Market Snapshot with the "Start Simulation" button.</li>
+    <li><strong>Sim Ticker</strong> (time-paced) &mdash; Sales bars fill over ~12 seconds. News headlines slide in at key moments. Clicking a headline pauses the sim and opens the full article.</li>
+    <li><strong>Results Screen</strong> (player-paced) &mdash; Existing QuarterlySummaryScreen with full breakdown. Now also accessible from History after advancing.</li>
+  </ul>
+
+  <h3>Newspaper Aesthetic</h3>
+  <ul>
+    <li><strong>Typography:</strong> Serif fonts (Georgia) for mastheads, headlines, and body text. Sans-serif for specs blocks to create contrast.</li>
+    <li><strong>Drop caps:</strong> First paragraph of each article uses a large initial letter, reinforcing the editorial feel.</li>
+    <li><strong>Layout:</strong> Each article is a "clipping" &mdash; warm cream card (#f0ebe0) floating against the dark game UI. Double-rule masthead borders, justified body text.</li>
+    <li><strong>Outlets:</strong> Each article has a named outlet (TechDaily, PCWorld, etc.). Future: outlets can have logo SVGs placed next to the name.</li>
+    <li><strong>The final slide</strong> reverts to game UI style (dark card) for the Market Snapshot + Start Simulation, creating a clear transition from "reading the news" to "playing the game."</li>
+  </ul>
+
+  <h3>Interaction Model</h3>
+  <ul>
+    <li><strong>Navigation:</strong> Left/right arrow buttons + keyboard arrows. Enter key advances to next article (or starts sim on the final slide).</li>
+    <li>No other interactions on the pre-sim screen &mdash; just reading and advancing.</li>
+    <li>Dot indicators show position in the article sequence.</li>
+    <li>Left arrow disabled on first article; right arrow always enabled.</li>
+  </ul>
+
+  <h3>Pre-Sim News Content Types</h3>
+  <ul>
+    <li><strong>Product launches:</strong> Competitor (and player) models entering the market. Shows specs in a structured block within the article.</li>
+    <li><strong>Reviews:</strong> Large score display, editorial body text. Would need to move review generation to pre-sim since reviews evaluate the product, not sales.</li>
+    <li><strong>Market snapshot:</strong> Always the final slide. Game UI style (not newspaper). Shows inventory, competition count, seasonal demand, cash.</li>
+    <li><strong>Future article types:</strong> Component announcements, industry trend pieces, player brand profiles.</li>
+    <li><strong>Competitor launches not hardcoded to Q1</strong> &mdash; can appear in any quarter.</li>
+  </ul>
+
+  <h3>Sim Ticker Headlines</h3>
+  <ul>
+    <li><strong>Clickable headlines</strong> pause the sim and open the full article. Sim resumes on close.</li>
+    <li>Headlines auto-dismiss after ~5 seconds if not clicked.</li>
+    <li>All articles (pre-sim and during-sim) persist in game state for the future standalone News screen.</li>
+  </ul>
+
+  <h3>Pacing &amp; Quiet Quarters</h3>
+  <ul>
+    <li>Pre-sim screen is player-paced, so thin quarters (0-1 articles) resolve in seconds.</li>
+    <li>Sim ticker always has sales data regardless of quarter.</li>
+    <li>"Skip" button jumps to end state for veteran players.</li>
+    <li>Consider a speed setting (1x / 2x / instant) for replayability.</li>
+  </ul>
+
+  <h3>Revisiting Past Results</h3>
+  <ul>
+    <li>History screen could link to past quarterly result views (data persisted in <code>yearHistory</code>).</li>
+    <li>Render QuarterlySummaryScreen in read-only mode from historical data.</li>
+  </ul>
+
+  <h3>News System Architecture</h3>
+  <ul>
+    <li>News articles as first-class game state: <code>NewsArticle { id, type, quarter, year, outlet, headline, body, specs?, score?, publishDate, isRead }</code></li>
+    <li>Pre-sim articles generated before simulation; sim-derived articles generated from <code>QuarterSimulationResult</code>.</li>
+    <li>Same article store powers both the pre-sim carousel and the future standalone News screen.</li>
+  </ul>
+</div>
+
+<script>
+// ═══ CAROUSEL STATE ═══
+const TOTAL_SLIDES = 4;
+let currentSlide = 0;
+
+function navArticle(dir) {
+  const next = currentSlide + dir;
+  if (next < 0 || next >= TOTAL_SLIDES) return;
+  showSlide(next);
+}
+
+function showSlide(idx) {
+  currentSlide = idx;
+
+  // Update clippings
+  document.querySelectorAll('.clipping').forEach(c => c.classList.remove('active'));
+  document.querySelector(`.clipping[data-index="${idx}"]`).classList.add('active');
+
+  // Update dots
+  document.querySelectorAll('.carousel-dot').forEach((d, i) => {
+    d.classList.toggle('active', i === idx);
+  });
+
+  // Update arrows
+  document.getElementById('navLeft').disabled = idx === 0;
+  document.getElementById('navRight').disabled = idx === TOTAL_SLIDES - 1;
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  const presim = document.getElementById('presim');
+  if (!presim.classList.contains('active')) return;
+
+  if (e.key === 'ArrowRight' || e.key === 'Enter') {
+    e.preventDefault();
+    if (currentSlide < TOTAL_SLIDES - 1) {
+      navArticle(1);
+    } else if (e.key === 'Enter') {
+      startSim();
+    }
+  } else if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    navArticle(-1);
+  }
+});
+
+// ═══ SIMULATION ═══
+const SIM_DURATION = 12000;
+const START_CASH = 1200000;
+const MARKETING_COST = 35000;
+const CHANNEL_MARGIN = 0.20;
+
+const models = [
+  { id: 'aurora', name: 'Aurora Pro', price: 999, stock: 3000, finalSold: 2180, isPlayer: true },
+  { id: 'apex',  name: 'Apex 15',    price: 1299, stock: 2500, finalSold: 1450, isPlayer: false },
+  { id: 'value', name: 'ValueBook 14', price: 549, stock: 5000, finalSold: 4720, isPlayer: false },
+];
+
+const headlines = [
+  {
+    progress: 0.25,
+    type: 'market', typeLabel: 'Market',
+    text: 'Strong Student demand for budget laptops this quarter',
+    title: 'Strong Student Demand Drives Budget Laptop Sales',
+    source: 'Market Analysis Weekly &bull; January 22, 2027',
+    body: 'The Student demographic is showing significantly higher demand for budget-friendly laptops this quarter, driven by the start of the academic year. Analysts estimate a 12% increase in sub-$600 laptop purchases compared to last year. BudgetPC\'s ValueBook 14, priced at $549, is well-positioned to capture this demand with its competitive specs-to-price ratio.'
+  },
+  {
+    progress: 0.50,
+    type: 'milestone', typeLabel: 'Milestone',
+    text: 'Your Aurora Pro crosses 1,000 units sold',
+    title: 'Aurora Pro Crosses 1,000 Units Sold',
+    source: 'Internal Sales Report &bull; February 12, 2027',
+    body: 'Your Aurora Pro has crossed the 1,000-unit milestone in its debut quarter, showing strong traction in the Professional segment. At $999, it sits competitively between BudgetPC\'s $549 ValueBook and CompTech\'s $1,299 Apex 15, capturing buyers who want performance without the premium price tag.'
+  },
+  {
+    progress: 0.78,
+    type: 'alert', typeLabel: 'Alert',
+    text: 'ValueBook 14 nears sell-out — BudgetPC stock running low',
+    title: 'ValueBook 14 Nears Sell-Out as Inventory Runs Low',
+    source: 'Industry Watch &bull; March 8, 2027',
+    body: 'BudgetPC\'s ValueBook 14 is approaching a sell-out, with over 90% of initial inventory claimed. The $549 laptop has dominated the Student segment with strong volume despite thin margins. Industry analysts note that BudgetPC may have underestimated demand — a common first-year miscalculation that leaves revenue on the table.'
+  },
+];
+
+let simState = { running: false, paused: false, startTime: 0, elapsed: 0, progress: 0, headlineIdx: 0, rafId: null, dismissTimer: null };
+
+function fmt(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
+function fmtUnits(n) { return Math.round(n).toLocaleString('en-US'); }
+
+function lerp(a, b, t) {
+  const eased = 1 - Math.pow(1 - t, 2.2);
+  return a + (b - a) * eased;
+}
+
+function dateForProgress(p) {
+  const start = new Date(2027, 0, 1);
+  const end = new Date(2027, 2, 31);
+  const ms = start.getTime() + (end.getTime() - start.getTime()) * p;
+  return new Date(ms).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startSim() {
+  showScreen('ticker');
+  simState = { running: true, paused: false, startTime: performance.now(), elapsed: 0, progress: 0, headlineIdx: 0, rafId: null, dismissTimer: null };
+  hideHeadline();
+  document.getElementById('simComplete').classList.remove('visible');
+  document.getElementById('skipBtn').style.display = '';
+  tick(performance.now());
+}
+
+function tick(now) {
+  if (!simState.running || simState.paused) return;
+
+  simState.elapsed = now - simState.startTime;
+  simState.progress = Math.min(simState.elapsed / SIM_DURATION, 1);
+  const p = simState.progress;
+
+  document.getElementById('progressFill').style.width = (p * 100) + '%';
+  document.getElementById('progressDate').textContent = dateForProgress(p);
+
+  for (const m of models) {
+    const sold = lerp(0, m.finalSold, p);
+    const pct = (sold / m.stock) * 100;
+    const bar = document.getElementById('bar-' + m.id);
+    bar.style.width = Math.min(pct, 100) + '%';
+    if (!m.isPlayer && pct > 85) bar.classList.add('near-sellout');
+    document.getElementById('sold-' + m.id).textContent = fmtUnits(sold);
+  }
+
+  const playerSold = lerp(0, models[0].finalSold, p);
+  const revenue = playerSold * models[0].price * (1 - CHANNEL_MARGIN);
+  const marketingSpent = MARKETING_COST * p;
+  const cash = START_CASH + revenue - marketingSpent;
+  document.getElementById('fin-revenue').textContent = fmt(revenue);
+  document.getElementById('fin-cash').textContent = fmt(cash);
+  document.getElementById('statusCash').textContent = fmt(cash);
+
+  if (simState.headlineIdx < headlines.length) {
+    const hl = headlines[simState.headlineIdx];
+    if (p >= hl.progress) {
+      showHeadline(hl);
+      simState.headlineIdx++;
+      clearTimeout(simState.dismissTimer);
+      simState.dismissTimer = setTimeout(() => {
+        if (!simState.paused) hideHeadline();
+      }, 5000);
+    }
+  }
+
+  if (p < 1) {
+    simState.rafId = requestAnimationFrame(tick);
+  } else {
+    simComplete();
+  }
+}
+
+function showHeadline(hl) {
+  const banner = document.getElementById('headlineBanner');
+  document.getElementById('headlineType').textContent = hl.typeLabel;
+  document.getElementById('headlineType').className = 'headline-type ' + hl.type;
+  document.getElementById('headlineText').textContent = hl.text;
+  banner.dataset.headline = JSON.stringify(hl);
+  banner.classList.remove('visible');
+  void banner.offsetWidth;
+  banner.classList.add('visible');
+}
+
+function hideHeadline() {
+  document.getElementById('headlineBanner').classList.remove('visible');
+}
+
+function simComplete() {
+  simState.running = false;
+  document.getElementById('simComplete').classList.add('visible');
+  document.getElementById('skipBtn').style.display = 'none';
+  hideHeadline();
+}
+
+function skipSim() {
+  cancelAnimationFrame(simState.rafId);
+  clearTimeout(simState.dismissTimer);
+  simState.progress = 1;
+
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('progressDate').textContent = dateForProgress(1);
+
+  for (const m of models) {
+    const pct = (m.finalSold / m.stock) * 100;
+    const bar = document.getElementById('bar-' + m.id);
+    bar.style.width = Math.min(pct, 100) + '%';
+    if (!m.isPlayer && pct > 85) bar.classList.add('near-sellout');
+    document.getElementById('sold-' + m.id).textContent = fmtUnits(m.finalSold);
+  }
+
+  const revenue = models[0].finalSold * models[0].price * (1 - CHANNEL_MARGIN);
+  const cash = START_CASH + revenue - MARKETING_COST;
+  document.getElementById('fin-revenue').textContent = fmt(revenue);
+  document.getElementById('fin-cash').textContent = fmt(cash);
+  document.getElementById('statusCash').textContent = fmt(cash);
+
+  simComplete();
+}
+
+function openArticle() {
+  const banner = document.getElementById('headlineBanner');
+  if (!banner.dataset.headline) return;
+  const hl = JSON.parse(banner.dataset.headline);
+
+  simState.paused = true;
+  cancelAnimationFrame(simState.rafId);
+  clearTimeout(simState.dismissTimer);
+
+  const badgeEl = document.getElementById('articleBadge');
+  badgeEl.textContent = hl.typeLabel;
+  badgeEl.className = 'article-badge ' + hl.type;
+  document.getElementById('articleTitle').textContent = hl.title;
+  document.getElementById('articleSource').innerHTML = hl.source;
+  document.getElementById('articleBody').textContent = hl.body;
+
+  document.getElementById('articleOverlay').classList.add('visible');
+}
+
+function closeArticle() {
+  document.getElementById('articleOverlay').classList.remove('visible');
+
+  if (simState.progress < 1) {
+    simState.paused = false;
+    simState.startTime = performance.now() - simState.elapsed;
+    simState.rafId = requestAnimationFrame(tick);
+  }
+}
+
+function viewResults() {
+  showScreen('results');
+}
+
+function resetDemo() {
+  for (const m of models) {
+    document.getElementById('bar-' + m.id).style.width = '0%';
+    document.getElementById('bar-' + m.id).classList.remove('near-sellout');
+    document.getElementById('sold-' + m.id).textContent = '0';
+  }
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('progressDate').textContent = 'January 1, 2027';
+  document.getElementById('fin-revenue').textContent = '$0';
+  document.getElementById('fin-cash').textContent = fmt(START_CASH);
+  document.getElementById('statusCash').textContent = fmt(START_CASH);
+  document.getElementById('simComplete').classList.remove('visible');
+  hideHeadline();
+
+  cancelAnimationFrame(simState.rafId);
+  clearTimeout(simState.dismissTimer);
+  simState = { running: false, paused: false, startTime: 0, elapsed: 0, progress: 0, headlineIdx: 0, rafId: null, dismissTimer: null };
+
+  currentSlide = 0;
+  showSlide(0);
+  showScreen('presim');
+}
+</script>
+
+</body>
+</html>
