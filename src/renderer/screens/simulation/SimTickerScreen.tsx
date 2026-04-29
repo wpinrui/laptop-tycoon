@@ -34,7 +34,7 @@ function aggregateLaptopResults(quarters: QuarterSimulationResult[]): LaptopSale
 }
 
 const DURATION_MS = 12_000;
-const TOAST_DISPLAY_MS = 4_500;
+const TOAST_DISPLAY_MS = 7_500;
 const TOAST_EXIT_MS = 500;
 
 /** Ease-out cubic: fast start, slow finish. */

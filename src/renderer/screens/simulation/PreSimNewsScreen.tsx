@@ -1,5 +1,5 @@
 import { CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, DollarSign, Newspaper, BarChart3, Package, Star, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Newspaper, BarChart3, Package, Star, Users } from "lucide-react";
 import { useGame } from "../../state/GameContext";
 import { getPlayerCompany, modelDisplayName } from "../../state/gameTypes";
 import { useNavigation } from "../../navigation/NavigationContext";
@@ -222,7 +222,6 @@ function NewspaperClipping({ item }: { item: NewsItem }) {
 function MarketSnapshot() {
   const { state } = useGame();
   const player = getPlayerCompany(state);
-  const result = state.lastSimulationResult;
 
   const activeModels = player.models.filter((m) => m.status === "manufacturing" || m.status === "onSale");
   const totalInventory = activeModels.reduce((s, m) => s + m.unitsInStock, 0);
@@ -236,7 +235,6 @@ function MarketSnapshot() {
     { label: "Inventory", value: formatNumber(totalInventory), icon: <BarChart3 size={18} /> },
     { label: "Competitors", value: String(competitorCount), icon: <Users size={18} /> },
     { label: "Competing Models", value: String(competitorModels), icon: <Star size={18} /> },
-    { label: "Cash", value: formatCash(result?.cashAfterResolution ?? state.cash), color: tokens.colors.statusCash, icon: <DollarSign size={18} /> },
   ];
 
   return (
@@ -269,7 +267,7 @@ function MarketSnapshot() {
             <span style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
               {s.icon} {s.label}
             </span>
-            <span style={{ fontSize: tokens.font.sizeTitle, fontWeight: 700, color: s.color ?? tokens.colors.text }}>
+            <span style={{ fontSize: tokens.font.sizeTitle, fontWeight: 700, color: tokens.colors.text }}>
               {s.value}
             </span>
           </div>
