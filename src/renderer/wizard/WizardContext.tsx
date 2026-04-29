@@ -231,7 +231,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       const result = optimiseForDemographic(action.demographic, action.year, action.quarter);
       return {
         ...state,
-        name: `Optimised (${action.demographic.name})`,
+        name: state.name || `Optimised (${action.demographic.name})`,
         modelType: "brandNew",
         screenSize: result.screenSize,
         components: result.components,

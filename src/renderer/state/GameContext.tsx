@@ -216,9 +216,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
                   ...m,
                   status: "onSale" as const,
                   unitsInStock: newStock,
-                  manufacturingPlan: !discontinued && m.manufacturingPlan
-                    ? { ...m.manufacturingPlan, year: nextYear, quarter: 1 as const, results: undefined }
-                    : null,
+                  manufacturingPlan: null,
                 };
               }
 
