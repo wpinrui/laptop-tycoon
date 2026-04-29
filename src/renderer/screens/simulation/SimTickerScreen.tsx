@@ -1,5 +1,5 @@
 import { CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { SkipForward } from "lucide-react";
+import { SkipForward, X } from "lucide-react";
 import { useGame } from "../../state/GameContext";
 import { getPlayerCompany, modelDisplayName } from "../../state/gameTypes";
 import { useNavigation } from "../../navigation/NavigationContext";
@@ -42,6 +42,25 @@ function easeOutCubic(t: number): number {
   return 1 - Math.pow(1 - t, 3);
 }
 
+/** Convert (year, quarter, progress 0–1) to a full calendar date string like "January 22, 2027". */
+function quarterProgressToDate(year: number, quarter: number, progress: number): string {
+  const quarterStartMonths = [0, 3, 6, 9]; // Jan, Apr, Jul, Oct
+  const startMonth = quarterStartMonths[quarter - 1];
+  const startDate = new Date(year, startMonth, 1);
+  const dayOffset = Math.round(progress * 90);
+  const current = new Date(startDate.getTime() + dayOffset * 86_400_000);
+  return current.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+}
+
+// ─── Outlet name by headline type ────────────────────────────
+
+const HEADLINE_OUTLET: Record<TickerHeadline["type"], string> = {
+  milestone: "TechBuzz",
+  sellout: "TechBuzz",
+  trend: "The Silicon Standard",
+  perception: "Consumer Weekly",
+};
+
 // ─── Animated Counter ────────────────────────────────────────
 
 function AnimatedValue({ value, from = 0, progress, format }: { value: number; from?: number; progress: number; format: (n: number) => string }) {
@@ -53,14 +72,16 @@ function AnimatedValue({ value, from = 0, progress, format }: { value: number; f
 
 interface SalesBarProps {
   label: string;
+  retailPrice: number;
   unitsSold: number;
+  capacity: number;
   maxUnits: number;
   unsoldUnits: number;
   progress: number;
   isPlayer: boolean;
 }
 
-function SalesBar({ label, unitsSold, maxUnits, unsoldUnits, progress, isPlayer }: SalesBarProps) {
+function SalesBar({ label, retailPrice, unitsSold, capacity, maxUnits, unsoldUnits, progress, isPlayer }: SalesBarProps) {
   const easedProgress = easeOutCubic(progress);
   const currentUnits = Math.round(unitsSold * easedProgress);
   const pct = maxUnits > 0 ? (unitsSold / maxUnits) * easedProgress * 100 : 0;
@@ -74,23 +95,35 @@ function SalesBar({ label, unitsSold, maxUnits, unsoldUnits, progress, isPlayer 
         alignItems: "baseline",
         marginBottom: 3,
       }}>
-        <span style={{
-          fontSize: tokens.font.sizeBase,
-          fontWeight: isPlayer ? 600 : 400,
-          color: isPlayer ? tokens.colors.text : tokens.colors.textMuted,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-          maxWidth: "70%",
-        }}>
-          {label}
-        </span>
+        <div style={{ display: "flex", alignItems: "baseline", gap: tokens.spacing.sm, minWidth: 0 }}>
+          <span style={{
+            fontSize: tokens.font.sizeBase,
+            fontWeight: isPlayer ? 600 : 400,
+            color: isPlayer ? tokens.colors.text : tokens.colors.textMuted,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}>
+            {label}
+          </span>
+          <span style={{
+            fontSize: tokens.font.sizeSmall,
+            color: tokens.colors.textMuted,
+            whiteSpace: "nowrap",
+            flexShrink: 0,
+          }}>
+            {formatCash(retailPrice)}
+          </span>
+        </div>
         <span style={{
           fontSize: tokens.font.sizeSmall,
           color: tokens.colors.textMuted,
           fontVariantNumeric: "tabular-nums",
+          whiteSpace: "nowrap",
+          flexShrink: 0,
+          marginLeft: tokens.spacing.sm,
         }}>
-          {formatNumber(currentUnits)} units
+          {formatNumber(currentUnits)} / {formatNumber(capacity)} sold
         </span>
       </div>
       <div style={{
@@ -124,7 +157,15 @@ const HEADLINE_TYPE_COLOR: Record<TickerHeadline["type"], string> = {
   perception: tokens.colors.market,
 };
 
-function HeadlineToast({ headline, onDismiss }: { headline: TickerHeadline; onDismiss: () => void }) {
+function HeadlineToast({
+  headline,
+  onDismiss,
+  onClick,
+}: {
+  headline: TickerHeadline;
+  onDismiss: () => void;
+  onClick: () => void;
+}) {
   const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
@@ -140,33 +181,139 @@ function HeadlineToast({ headline, onDismiss }: { headline: TickerHeadline; onDi
   }, [exiting, onDismiss]);
 
   return (
-    <div style={{
-      background: tokens.colors.cardBg,
-      border: `1px solid ${tokens.colors.panelBorder}`,
-      borderLeft: `3px solid ${HEADLINE_TYPE_COLOR[headline.type]}`,
-      borderRadius: tokens.borderRadius.sm,
-      padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
-      fontSize: tokens.font.sizeBase,
-      color: tokens.colors.text,
-      animation: exiting ? "toastSlideOut 0.5s ease-in forwards" : "toastSlideIn 0.4s ease-out",
-      maxWidth: 480,
-    }}>
+    <div
+      onClick={onClick}
+      style={{
+        background: tokens.colors.cardBg,
+        border: `1px solid ${tokens.colors.panelBorder}`,
+        borderLeft: `3px solid ${HEADLINE_TYPE_COLOR[headline.type]}`,
+        borderRadius: tokens.borderRadius.sm,
+        padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`,
+        fontSize: tokens.font.sizeBase,
+        color: tokens.colors.text,
+        animation: exiting ? "toastSlideOut 0.5s ease-in forwards" : "toastSlideIn 0.4s ease-out",
+        cursor: "pointer",
+      }}
+    >
       {headline.text}
     </div>
   );
 }
 
+// ─── Headline Article Overlay ─────────────────────────────────
+
+function HeadlineOverlay({ headline, onClose }: { headline: TickerHeadline; onClose: () => void }) {
+  return (
+    <div style={{
+      position: "absolute",
+      inset: 0,
+      background: "rgba(0,0,0,0.7)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 100,
+    }}>
+      <div style={{
+        background: tokens.colors.cardBg,
+        border: `1px solid ${tokens.colors.panelBorder}`,
+        borderRadius: tokens.borderRadius.md,
+        padding: tokens.spacing.xl,
+        maxWidth: 560,
+        width: "90%",
+        position: "relative",
+      }}>
+        {/* Outlet header */}
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: tokens.spacing.md,
+        }}>
+          <span style={{
+            fontSize: tokens.font.sizeSmall,
+            fontWeight: 600,
+            color: HEADLINE_TYPE_COLOR[headline.type],
+            textTransform: "uppercase",
+            letterSpacing: 0.8,
+          }}>
+            {HEADLINE_OUTLET[headline.type]}
+          </span>
+          <button
+            onClick={onClose}
+            style={{
+              background: "none",
+              border: "none",
+              color: tokens.colors.textMuted,
+              cursor: "pointer",
+              padding: 4,
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Headline */}
+        <h2 style={{
+          margin: 0,
+          fontSize: tokens.font.sizeLarge,
+          fontWeight: 700,
+          color: tokens.colors.text,
+          lineHeight: 1.35,
+          marginBottom: tokens.spacing.md,
+        }}>
+          {headline.text}
+        </h2>
+
+        {/* Body */}
+        <p style={{
+          margin: 0,
+          fontSize: tokens.font.sizeBase,
+          color: tokens.colors.textMuted,
+          lineHeight: 1.6,
+        }}>
+          {overlayBodyText(headline)}
+        </p>
+
+        <button
+          onClick={onClose}
+          style={{
+            marginTop: tokens.spacing.lg,
+            background: "none",
+            border: `1px solid ${tokens.colors.panelBorder}`,
+            borderRadius: tokens.borderRadius.sm,
+            color: tokens.colors.textMuted,
+            cursor: "pointer",
+            fontSize: tokens.font.sizeSmall,
+            fontFamily: tokens.font.family,
+            padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`,
+          }}
+        >
+          Close (resume)
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function overlayBodyText(h: TickerHeadline): string {
+  switch (h.type) {
+    case "milestone":
+      return "Sales momentum continues to build as the quarter progresses. Analysts note strong consumer interest and healthy inventory turnover. The numbers tell a compelling story.";
+    case "sellout":
+      return "Demand outpaced supply this quarter. Retailers report empty shelves and frustrated buyers, a clear sign that production targets may need to be revisited heading into next quarter.";
+    case "trend":
+      return "Market data reveals clear winner-take-most dynamics across buyer segments this quarter. Brands that aligned their value proposition with this segment's priorities saw outsized returns.";
+    case "perception":
+      return "Brand sentiment tracking shows a measurable shift in how consumers view the company. Word of mouth, review coverage, and product availability all play a role in shaping perception over time.";
+  }
+}
+
 // ─── Date Progress Bar ───────────────────────────────────────
 
 function DateProgressBar({ progress, quarter, year }: { progress: number; quarter: number; year: number }) {
-  const months = [
-    ["Jan", "Feb", "Mar"],
-    ["Apr", "May", "Jun"],
-    ["Jul", "Aug", "Sep"],
-    ["Oct", "Nov", "Dec"],
-  ];
-  const qMonths = months[quarter - 1];
-  const monthIdx = Math.min(Math.floor(progress * 3), 2);
+  const dateLabel = quarterProgressToDate(year, quarter, progress);
 
   return (
     <div>
@@ -177,8 +324,7 @@ function DateProgressBar({ progress, quarter, year }: { progress: number; quarte
         fontSize: tokens.font.sizeSmall,
         color: tokens.colors.textMuted,
       }}>
-        <span>{QUARTER_LABELS[quarter - 1]} {year}</span>
-        <span>{qMonths[monthIdx]}</span>
+        <span>{dateLabel}</span>
       </div>
       <div style={{
         height: 6,
@@ -198,29 +344,64 @@ function DateProgressBar({ progress, quarter, year }: { progress: number; quarte
   );
 }
 
-// ─── KPI Counter ─────────────────────────────────────────────
+// ─── KPI Strip ────────────────────────────────────────────────
 
-function KpiCounter({ label, value, from, progress, format, color }: {
-  label: string;
-  value: number;
-  from?: number;
+function KpiStrip({ revenue, cash, cashBefore, progress }: {
+  revenue: number;
+  cash: number;
+  cashBefore: number;
   progress: number;
-  format: (n: number) => string;
-  color?: string;
 }) {
   return (
+    <div style={{
+      display: "flex",
+      gap: tokens.spacing.xl,
+      justifyContent: "center",
+      background: tokens.colors.cardBg,
+      border: `1px solid ${tokens.colors.panelBorder}`,
+      borderRadius: tokens.borderRadius.md,
+      padding: `${tokens.spacing.md}px ${tokens.spacing.xl}px`,
+    }}>
+      <KpiItem label="Revenue" color={tokens.colors.success}>
+        <AnimatedValue value={revenue} progress={progress} format={(n) => formatCash(Math.round(n))} />
+      </KpiItem>
+      <KpiItem label="Cash on Hand" color={tokens.colors.statusCash}>
+        <AnimatedValue value={cash} from={cashBefore} progress={progress} format={(n) => formatCash(Math.round(n))} />
+      </KpiItem>
+    </div>
+  );
+}
+
+function KpiItem({ label, color, children }: { label: string; color: string; children: React.ReactNode }) {
+  return (
     <div style={{ textAlign: "center" }}>
-      <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, marginBottom: 2 }}>
-        {label}
-      </div>
+      <div style={{ fontSize: tokens.font.sizeSmall, color: tokens.colors.textMuted, marginBottom: 2 }}>{label}</div>
       <div style={{
         fontSize: tokens.font.sizeTitle,
         fontWeight: 700,
         fontVariantNumeric: "tabular-nums",
-        color: color ?? tokens.colors.text,
+        color,
       }}>
-        <AnimatedValue value={value} from={from} progress={progress} format={format} />
+        {children}
       </div>
+    </div>
+  );
+}
+
+// ─── Group Label ──────────────────────────────────────────────
+
+function GroupLabel({ text }: { text: string }) {
+  return (
+    <div style={{
+      fontSize: tokens.font.sizeSmall,
+      fontWeight: 600,
+      color: tokens.colors.textMuted,
+      textTransform: "uppercase",
+      letterSpacing: 0.8,
+      marginBottom: tokens.spacing.sm,
+      marginTop: tokens.spacing.md,
+    }}>
+      {text}
     </div>
   );
 }
@@ -237,6 +418,7 @@ export function SimTickerScreen() {
   const [done, setDone] = useState(false);
   const [paused, setPaused] = useState(false);
   const [visibleHeadlines, setVisibleHeadlines] = useState<TickerHeadline[]>([]);
+  const [overlayHeadline, setOverlayHeadline] = useState<TickerHeadline | null>(null);
   const triggeredRef = useRef(new Set<number>());
   const startTimeRef = useRef<number | null>(null);
   const pausedAtRef = useRef(0);
@@ -248,20 +430,25 @@ export function SimTickerScreen() {
   }, [state, result]);
 
   // All sales results sorted: player first (by units desc), then competitors (by units desc)
-  const sortedResults = useMemo(() => {
+  const sortedPlayerResults = useMemo(() => {
     if (!result) return [];
-    const playerResults = result.playerResults.slice().sort((a, b) => b.unitsSold - a.unitsSold);
-    const compResults = result.laptopResults
+    return result.playerResults.slice().sort((a, b) => b.unitsSold - a.unitsSold);
+  }, [result]);
+
+  const sortedCompResults = useMemo(() => {
+    if (!result) return [];
+    return result.laptopResults
       .filter((lr) => lr.owner !== player.id)
       .sort((a, b) => b.unitsSold - a.unitsSold)
       .slice(0, MAX_COMPETITOR_MODELS);
-    return [...playerResults, ...compResults];
   }, [result, player.id]);
 
+  const allSortedResults = useMemo(() => [...sortedPlayerResults, ...sortedCompResults], [sortedPlayerResults, sortedCompResults]);
+
   const maxUnits = useMemo(() => {
-    if (sortedResults.length === 0) return 1;
-    return Math.max(...sortedResults.map((lr) => lr.unitsSold), 1);
-  }, [sortedResults]);
+    if (allSortedResults.length === 0) return 1;
+    return Math.max(...allSortedResults.map((lr) => lr.unitsSold), 1);
+  }, [allSortedResults]);
 
   const getModelLabel = useCallback((lr: LaptopSalesResult) => {
     const company = state.companies.find((c) => c.id === lr.owner);
@@ -271,9 +458,11 @@ export function SimTickerScreen() {
     return modelDisplayName(company.name, model.design.name);
   }, [state.companies]);
 
-  // RAF animation loop
+  const isOverlayOpen = overlayHeadline !== null;
+
+  // RAF animation loop — paused when overlay is open
   useEffect(() => {
-    if (done || paused || !result) return;
+    if (done || paused || isOverlayOpen || !result) return;
 
     function tick(timestamp: number) {
       if (startTimeRef.current === null) {
@@ -283,7 +472,6 @@ export function SimTickerScreen() {
       const p = Math.min(elapsed / DURATION_MS, 1);
       setProgress(p);
 
-      // Trigger headlines
       for (let i = 0; i < headlines.length; i++) {
         if (p >= headlines[i].triggerAt && !triggeredRef.current.has(i)) {
           triggeredRef.current.add(i);
@@ -300,7 +488,15 @@ export function SimTickerScreen() {
 
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [done, paused, result, headlines]);
+  }, [done, paused, isOverlayOpen, result, headlines]);
+
+  // When overlay closes, reset start time so animation resumes from current position
+  useEffect(() => {
+    if (!isOverlayOpen) {
+      startTimeRef.current = null;
+      pausedAtRef.current = progress * DURATION_MS;
+    }
+  }, [isOverlayOpen, progress]);
 
   const handleSkip = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
@@ -320,10 +516,20 @@ export function SimTickerScreen() {
     setPaused(false);
   }, []);
 
+  const openOverlay = useCallback((h: TickerHeadline) => {
+    cancelAnimationFrame(rafRef.current);
+    pausedAtRef.current = progress * DURATION_MS;
+    startTimeRef.current = null;
+    setOverlayHeadline(h);
+  }, [progress]);
+
+  const closeOverlay = useCallback(() => {
+    setOverlayHeadline(null);
+  }, []);
+
   const proceed = useCallback(() => {
     if (!result) return;
     if (result.quarter === 4) {
-      // Determine year-end awards after Q4 sales animation completes
       const yearLaptopResults = aggregateLaptopResults(state.quarterHistory);
       const awards = determineAwards(state, yearLaptopResults);
       dispatch({ type: "SET_AWARDS", awards });
@@ -338,9 +544,13 @@ export function SimTickerScreen() {
     }
   }, [result, state, dispatch, navigateTo]);
 
-  // Keyboard: Space to pause/resume, Enter/Escape to skip
+  // Keyboard: Space to pause/resume, Enter/Escape to skip or proceed
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      if (isOverlayOpen) {
+        if (e.key === "Escape" || e.key === "Enter") closeOverlay();
+        return;
+      }
       if (e.key === " ") {
         e.preventDefault();
         if (done) {
@@ -360,11 +570,10 @@ export function SimTickerScreen() {
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [done, paused, handlePause, handleResume, handleSkip, proceed]);
+  }, [done, paused, isOverlayOpen, handlePause, handleResume, handleSkip, proceed, closeOverlay]);
 
   if (!result) return null;
 
-  const totalUnits = result.playerResults.reduce((s, lr) => s + lr.unitsSold, 0);
   const cashBefore = result.cashAfterResolution - result.totalRevenue + result.marketingCost;
 
   return (
@@ -401,99 +610,84 @@ export function SimTickerScreen() {
         </div>
       </div>
 
-      {/* Date progress */}
-      <div style={{ padding: `0 ${tokens.spacing.xl}px`, marginBottom: tokens.spacing.lg }}>
+      {/* Centered single column */}
+      <div style={columnStyle}>
+        {/* Date progress */}
         <DateProgressBar progress={progress} quarter={result.quarter} year={result.year} />
-      </div>
 
-      {/* Main content: sales bars + KPIs */}
-      <div style={contentAreaStyle}>
-        {/* Left: Sales bars */}
-        <div style={{ flex: 1, minWidth: 0, overflow: "auto" }}>
-          <div style={{
-            fontSize: tokens.font.sizeBase,
-            fontWeight: 600,
-            marginBottom: tokens.spacing.md,
-            color: tokens.colors.text,
-          }}>
-            Sales
-          </div>
-          {sortedResults.map((lr) => (
-            <SalesBar
-              key={lr.laptopId}
-              label={getModelLabel(lr)}
-              unitsSold={lr.unitsSold}
-              maxUnits={maxUnits}
-              unsoldUnits={lr.unsoldUnits}
-              progress={progress}
-              isPlayer={lr.owner === player.id}
-            />
-          ))}
-          {sortedResults.length === 0 && (
+        {/* Sales bars */}
+        <div style={{ marginTop: tokens.spacing.lg }}>
+          {sortedPlayerResults.length > 0 && (
+            <>
+              <GroupLabel text="Your Models" />
+              {sortedPlayerResults.map((lr) => (
+                <SalesBar
+                  key={lr.laptopId}
+                  label={getModelLabel(lr)}
+                  retailPrice={lr.retailPrice}
+                  unitsSold={lr.unitsSold}
+                  capacity={lr.unitsSold + lr.unsoldUnits}
+                  maxUnits={maxUnits}
+                  unsoldUnits={lr.unsoldUnits}
+                  progress={progress}
+                  isPlayer
+                />
+              ))}
+            </>
+          )}
+          {sortedCompResults.length > 0 && (
+            <>
+              <GroupLabel text="Competitors" />
+              {sortedCompResults.map((lr) => (
+                <SalesBar
+                  key={lr.laptopId}
+                  label={getModelLabel(lr)}
+                  retailPrice={lr.retailPrice}
+                  unitsSold={lr.unitsSold}
+                  capacity={lr.unitsSold + lr.unsoldUnits}
+                  maxUnits={maxUnits}
+                  unsoldUnits={lr.unsoldUnits}
+                  progress={progress}
+                  isPlayer={false}
+                />
+              ))}
+            </>
+          )}
+          {allSortedResults.length === 0 && (
             <div style={{ color: tokens.colors.textMuted, fontSize: tokens.font.sizeBase }}>
               No models on sale this quarter.
             </div>
           )}
         </div>
 
-        {/* Right: KPIs + headlines */}
-        <div style={{ width: 280, flexShrink: 0, display: "flex", flexDirection: "column", gap: tokens.spacing.lg }}>
-          {/* KPI counters */}
-          <div style={{
-            background: tokens.colors.cardBg,
-            border: `1px solid ${tokens.colors.panelBorder}`,
-            borderRadius: tokens.borderRadius.md,
-            padding: tokens.spacing.lg,
-            display: "flex",
-            flexDirection: "column",
-            gap: tokens.spacing.md,
-          }}>
-            <KpiCounter
-              label="Units Sold"
-              value={totalUnits}
-              progress={progress}
-              format={(n) => formatNumber(Math.round(n))}
-            />
-            <KpiCounter
-              label="Revenue"
-              value={result.totalRevenue}
-              progress={progress}
-              format={(n) => formatCash(Math.round(n))}
-              color={tokens.colors.success}
-            />
-            <KpiCounter
-              label="Profit"
-              value={result.totalProfit}
-              progress={progress}
-              format={(n) => formatCash(Math.round(n))}
-              color={result.totalProfit >= 0 ? tokens.colors.success : tokens.colors.danger}
-            />
-            <KpiCounter
-              label="Cash"
-              value={result.cashAfterResolution}
-              from={cashBefore}
-              progress={progress}
-              format={(n) => formatCash(Math.round(n))}
-              color={tokens.colors.statusCash}
-            />
-          </div>
+        {/* KPI Strip */}
+        <div style={{ marginTop: tokens.spacing.lg }}>
+          <KpiStrip
+            revenue={result.totalRevenue}
+            cash={result.cashAfterResolution}
+            cashBefore={cashBefore}
+            progress={progress}
+          />
+        </div>
 
-          {/* Headlines */}
+        {/* Headlines */}
+        {visibleHeadlines.length > 0 && (
           <div style={{
+            marginTop: tokens.spacing.md,
             display: "flex",
             flexDirection: "column",
             gap: tokens.spacing.sm,
-            minHeight: 80,
           }}>
             {visibleHeadlines.map((h) => (
               <HeadlineToast
                 key={h.triggerAt}
                 headline={h}
                 onDismiss={() => setVisibleHeadlines((prev) => prev.filter((x) => x !== h))}
+                onClick={() => openOverlay(h)}
               />
             ))}
           </div>
-        </div>
+        )}
       </div>
 
       {/* Footer */}
@@ -520,6 +714,11 @@ export function SimTickerScreen() {
           </button>
         )}
       </div>
+
+      {/* Headline article overlay */}
+      {overlayHeadline && (
+        <HeadlineOverlay headline={overlayHeadline} onClose={closeOverlay} />
+      )}
     </div>
   );
 }
@@ -568,13 +767,14 @@ const headerStyle: CSSProperties = {
   flexShrink: 0,
 };
 
-const contentAreaStyle: CSSProperties = {
+const columnStyle: CSSProperties = {
   flex: 1,
-  display: "flex",
-  gap: tokens.spacing.xl,
+  maxWidth: 900,
+  width: "100%",
+  margin: "0 auto",
   padding: `0 ${tokens.spacing.xl}px`,
-  minHeight: 0,
-  overflow: "hidden",
+  overflowY: "auto",
+  overflowX: "hidden",
 };
 
 const footerStyle: CSSProperties = {
